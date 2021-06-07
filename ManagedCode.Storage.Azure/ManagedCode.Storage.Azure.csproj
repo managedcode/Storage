@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <LangVersion>9</LangVersion>
+        <DebugType>embedded</DebugType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <Title>ManagedCode.Storage.Azure</Title>
+        <Authors>ManagedCode</Authors>
+        <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
+        <PackageVersion>0.0.4</PackageVersion>
+        <Description>Storage for Azurey</Description>
+        <PackageIcon>logo.png</PackageIcon>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Humanizer.Core" Version="2.8.26" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+      <PackageReference Include="System.Linq.Async" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
+    </ItemGroup>
+
+</Project>
