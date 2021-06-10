@@ -11,8 +11,8 @@
         <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
-        <PackageVersion>0.0.4</PackageVersion>
-        <Description>Storage for Azurey</Description>
+        <PackageVersion>0.0.1</PackageVersion>
+        <Description>Storage for Azure</Description>
         <PackageIcon>logo.png</PackageIcon>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>

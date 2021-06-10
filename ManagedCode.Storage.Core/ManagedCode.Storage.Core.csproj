@@ -11,7 +11,7 @@
         <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
-        <PackageVersion>0.0.4</PackageVersion>
+        <PackageVersion>0.0.1</PackageVersion>
         <Description>Base implementation Storage, Include FTP and Local File system</Description>
         <PackageIcon>logo.png</PackageIcon>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
