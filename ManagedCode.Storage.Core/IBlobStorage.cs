@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core
 {
-    public interface IStorage : IDisposable
+    public interface IBlobStorage : IDisposable
     {
         IAsyncEnumerable<Blob> GetBlobListAsync(CancellationToken cancellationToken = default);
         IAsyncEnumerable<Blob> GetBlob(string blob, CancellationToken cancellationToken = default);
@@ -33,11 +34,5 @@ namespace ManagedCode.Storage.Core
         Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default);
         IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default);
         IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default);
-        
-    }
-    
-    public class Blob
-    {
-        public string Path { get; set; }
     }
 }
