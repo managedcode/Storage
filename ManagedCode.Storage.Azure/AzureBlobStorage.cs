@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace ManagedCode.Storage.Azure
 {
-    public class AzureBlobStorage : IBlobStorage
+    public class AzureBlobStorage : IAzureBlobStorage
     {
-        public AzureBlobStorage()
+        public AzureBlobStorage(/*AzureBlobStorageConnectionOptions connectionOptions*/)
         {
-            
+        //    var blobServiceClient = new BlobServiceClient(connectionOptions.ConnectionString);
         }
 
         public Task DeleteAsync(string blob, CancellationToken cancellationToken = default)
