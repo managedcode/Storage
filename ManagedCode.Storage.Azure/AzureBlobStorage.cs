@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace ManagedCode.Storage.Azure
 {
-    public class AzureBlobStorage : IAzureBlobStorage
+    public class AzureBlobStorage : IBlobStorage
     {
-        public AzureBlobStorage(/*AzureBlobStorageConnectionOptions connectionOptions*/)
+        public AzureBlobStorage(AzureBlobStorageConnectionOptions connectionOptions)
         {
         //    var blobServiceClient = new BlobServiceClient(connectionOptions.ConnectionString);
         }

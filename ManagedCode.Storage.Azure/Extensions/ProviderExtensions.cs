@@ -1,9 +1,8 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
-using Azure.Storage.Blobs;
 using ManagedCode.Storage.Core.Builders;
-using System.Reflection.Emit;
-using System.Reflection;
+using ManagedCode.Storage.Core.Helpers;
+using ManagedCode.Storage.Core;
 
 namespace ManagedCode.Storage.Azure.Extensions
 {
@@ -12,32 +11,17 @@ namespace ManagedCode.Storage.Azure.Extensions
         public static ProviderBuilder AddAzureBlobStorage<TAzureStorage>(
             this ProviderBuilder providerBuilder, 
             Action<AzureBlobStorageConnectionOptions> action)
-            where TAzureStorage : IAzureBlobStorage
+            where TAzureStorage : IBlobStorage
         {
             var connectionOptions = new AzureBlobStorageConnectionOptions();
             action.Invoke(connectionOptions);
 
-            var typeSignature = typeof(TAzureStorage).Name;
-            var an = new AssemblyName(typeSignature);
-            AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-            ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
-            TypeBuilder tb = moduleBuilder.DefineType(typeSignature,
-                    TypeAttributes.Public |
-                    TypeAttributes.Class |
-                    TypeAttributes.AutoClass |
-                    TypeAttributes.AnsiClass |
-                    TypeAttributes.BeforeFieldInit |
-                    TypeAttributes.AutoLayout,
-                    null);
+            var implementationType = TypeHelpers.GetImplementationType<TAzureStorage, AzureBlobStorage, AzureBlobStorageConnectionOptions>();
+            providerBuilder.ServiceCollection.AddScoped(typeof(TAzureStorage), x => Activator.CreateInstance(implementationType, connectionOptions));
 
-            tb.SetParent(typeof(AzureBlobStorage));
-            tb.AddInterfaceImplementation(typeof(TAzureStorage));
+            // Because of AzureBlobStorage does not inherits TAzureStorage, DI complains on unability of casting
+            // providerBuilder.ServiceCollection.AddScoped(typeof(TAzureStorage), x => new AzureBlobStorage(connectionOptions));
 
-            ConstructorBuilder constructor = tb.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName);
-            Type implType = tb.CreateType();
-
-            providerBuilder.ServiceCollection.AddScoped(typeof(TAzureStorage), implType);
-            
             return providerBuilder;
         }
     }
