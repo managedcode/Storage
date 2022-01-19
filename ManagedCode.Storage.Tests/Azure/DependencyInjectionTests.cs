@@ -14,21 +14,15 @@ namespace ManagedCode.Storage.Tests.Azure
 
         public DependencyInjectionTests()
         {
-           
-        }
-
-        [Fact]
-        public void WhenDIInitialized()
-        {
             var services = new ServiceCollection();
 
             services.AddManagedCodeStorage()
                 .AddAzureBlobStorage<IPhotoStorage>(opt => {
-                    opt.ConnectionString = "";
+                    opt.ConnectionString = "DefaultEndpointsProtocol=https;AccountName=storagestudying;AccountKey=4Y4IBrITEoWYMGe0gNju9wvUQrWi//1VvPIDN2dYWccWKy9uuKWnMBXxQlmcy3Q9UIU70ZJiy8ULD9QITxyeTQ==;EndpointSuffix=core.windows.net";
                     opt.Container = "photos";
                 })
                 .AddAzureBlobStorage<IDocumentStorage>(opt => {
-                    opt.ConnectionString = "";
+                    opt.ConnectionString = "DefaultEndpointsProtocol=https;AccountName=storagestudying;AccountKey=4Y4IBrITEoWYMGe0gNju9wvUQrWi//1VvPIDN2dYWccWKy9uuKWnMBXxQlmcy3Q9UIU70ZJiy8ULD9QITxyeTQ==;EndpointSuffix=core.windows.net";
                     opt.Container = "documents";
                 });
 
@@ -36,9 +30,21 @@ namespace ManagedCode.Storage.Tests.Azure
 
             _photoStorage = provider.GetService<IPhotoStorage>();
             _documentStorage = provider.GetService<IDocumentStorage>();
+        }
 
+        [Fact]
+        public void WhenDIInitialized()
+        {
             _photoStorage.Should().NotBeNull();
             _documentStorage.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task WhenSingleBlobExistsIsCalled()
+        {
+            var result = await _photoStorage.ExistsAsync("34.png");
+
+            result.Should().BeTrue();
         }
     }
 }

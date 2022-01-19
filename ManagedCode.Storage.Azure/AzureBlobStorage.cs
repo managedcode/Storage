@@ -1,8 +1,11 @@
-﻿using ManagedCode.Storage.Core;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using ManagedCode.Storage.Azure.Options;
+using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
-using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,92 +13,134 @@ namespace ManagedCode.Storage.Azure
 {
     public class AzureBlobStorage : IBlobStorage
     {
+        private readonly BlobContainerClient _blobContainerClient;
+
         public AzureBlobStorage(AzureBlobStorageConnectionOptions connectionOptions)
         {
-        //    var blobServiceClient = new BlobServiceClient(connectionOptions.ConnectionString);
-        }
+            _blobContainerClient = new BlobContainerClient(
+                connectionOptions.ConnectionString,
+                connectionOptions.Container
+            );
 
-        public Task DeleteAsync(string blob, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task DeleteAsync(Blob blob, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task DeleteAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
+            _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
         }
 
         public void Dispose()
         {
-            throw new System.NotImplementedException();
         }
 
-        public Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
+        #region Delete
+
+        public async Task DeleteAsync(string blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+            await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
         }
 
-        public Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(Blob blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
+            await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
         }
 
-        public Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            foreach (var blobName in blobs)
+            {
+                await DeleteAsync(blobName, cancellationToken);
+            }
         }
 
-        public Task<LocalFile> DownloadAsync(Blob blob, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            foreach (var blob in blobs)
+            {
+                await DeleteAsync(blob, cancellationToken);
+            }
         }
 
-        public Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+        #endregion
+
+        public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+            var res = await blobClient.DownloadStreamingAsync();
+
+            return res.Value.Content;
         }
 
-        public Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
+        public async Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            return await DownloadAsStreamAsync(blob.Name, cancellationToken);
         }
 
-        public IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+        public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+            var localFile = new LocalFile();
+
+            await blobClient.DownloadToAsync(localFile.FileStream, cancellationToken);
+
+            return localFile;
         }
 
-        public IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+        public async Task<LocalFile> DownloadAsync(Blob blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            return await DownloadAsync(blob.Name, cancellationToken);
         }
 
-        public IAsyncEnumerable<Blob> GetBlob(string blob, CancellationToken cancellationToken = default)
+        #region Exists
+
+        public async Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+
+            return await blobClient.ExistsAsync(cancellationToken);
         }
 
-        public IAsyncEnumerable<Blob> GetBlob(Blob blob, CancellationToken cancellationToken = default)
+        public async Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
+
+            return await blobClient.ExistsAsync(cancellationToken);
         }
 
-        public IAsyncEnumerable<Blob> GetBlob(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs, 
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            foreach(var blob in blobs)
+            {
+                var blobClient = _blobContainerClient.GetBlobClient(blob);
+                yield return await blobClient.ExistsAsync(cancellationToken);
+            }
         }
 
-        public IAsyncEnumerable<Blob> GetBlob(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs,
+             [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            foreach (var blob in blobs)
+            {
+                var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
+                yield return await blobClient.ExistsAsync(cancellationToken);
+            }
+        }
+
+        #endregion
+
+        public async Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
+        {
+            await Task.Yield();
+
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+           
+            return new Blob()
+            {
+                Name = blobClient.Name,
+                Uri = blobClient.Uri
+            };
+        }
+
+        public IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();
         }
@@ -105,24 +150,34 @@ namespace ManagedCode.Storage.Azure
             throw new System.NotImplementedException();
         }
 
-        public Task UploadAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        #region Upload
+
+        public async Task UploadAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+            await blobClient.UploadAsync(dataStream, cancellationToken);
         }
 
-        public Task UploadAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+
+            using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
+            {
+                await blobClient.UploadAsync(fs, cancellationToken);
+            }
         }
 
-        public Task UploadAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            await UploadAsync(blob.Name, dataStream, append, cancellationToken);
         }
 
-        public Task UploadAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            await UploadAsync(blob.Name, pathToFile, append, cancellationToken);
         }
+
+        #endregion
     }
 }

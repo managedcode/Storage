@@ -1,4 +1,4 @@
-﻿namespace ManagedCode.Storage.Azure
+﻿namespace ManagedCode.Storage.Azure.Options
 {
     public class AzureBlobStorageConnectionOptions
     {

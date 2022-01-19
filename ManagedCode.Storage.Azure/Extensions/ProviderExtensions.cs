@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ManagedCode.Storage.Core.Builders;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Azure.Options;
 
 namespace ManagedCode.Storage.Azure.Extensions
 {
