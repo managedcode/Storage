@@ -61,6 +61,8 @@ namespace ManagedCode.Storage.Azure
 
         #endregion
 
+        #region Download
+
         public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
         {
             var blobClient = _blobContainerClient.GetBlobClient(blob);
@@ -88,6 +90,8 @@ namespace ManagedCode.Storage.Azure
         {
             return await DownloadAsync(blob.Name, cancellationToken);
         }
+
+        #endregion
 
         #region Exists
 
@@ -127,6 +131,8 @@ namespace ManagedCode.Storage.Azure
 
         #endregion
 
+        #region Get
+
         public async Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
         {
             await Task.Yield();
@@ -149,6 +155,8 @@ namespace ManagedCode.Storage.Azure
         {
             throw new System.NotImplementedException();
         }
+
+        #endregion
 
         #region Upload
 
