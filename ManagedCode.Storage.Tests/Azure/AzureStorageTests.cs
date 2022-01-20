@@ -19,14 +19,18 @@ namespace ManagedCode.Storage.Tests.Azure
             var services = new ServiceCollection();
 
             services.AddManagedCodeStorage()
-                .AddAzureBlobStorage<IPhotoStorage>(opt => {
+                .AddAzureBlobStorage(opt =>
+                {
                     opt.ConnectionString = "DefaultEndpointsProtocol=https;AccountName=storagestudying;AccountKey=4Y4IBrITEoWYMGe0gNju9wvUQrWi//1VvPIDN2dYWccWKy9uuKWnMBXxQlmcy3Q9UIU70ZJiy8ULD9QITxyeTQ==;EndpointSuffix=core.windows.net";
-                    opt.Container = "photos";
                 })
-                .AddAzureBlobStorage<IDocumentStorage>(opt => {
-                    opt.ConnectionString = "DefaultEndpointsProtocol=https;AccountName=storagestudying;AccountKey=4Y4IBrITEoWYMGe0gNju9wvUQrWi//1VvPIDN2dYWccWKy9uuKWnMBXxQlmcy3Q9UIU70ZJiy8ULD9QITxyeTQ==;EndpointSuffix=core.windows.net";
-                    opt.Container = "documents";
-                });
+                    .Add<IPhotoStorage>(opt =>
+                    {
+                        opt.Container = "photos";
+                    })
+                    .Add<IDocumentStorage>(opt =>
+                    {
+                        opt.Container = "documents";
+                    });
 
             var provider = services.BuildServiceProvider();
 
