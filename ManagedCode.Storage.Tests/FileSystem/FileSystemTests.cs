@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System;
+using FluentAssertions;
 using ManagedCode.Storage.Core.Extensions;
 using ManagedCode.Storage.FileSystem.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,15 +14,18 @@ namespace ManagedCode.Storage.Tests.FileSystem
     {
         private IPhotoStorage _photoStorage;
         private IDocumentStorage _documentStorage;
+        private string _testDirectory;
 
         public FileSystemTests()
         {
             var services = new ServiceCollection();
 
+            _testDirectory = Path.Combine(Environment.CurrentDirectory, "my_tests_files");
+            
             services.AddManagedCodeStorage()
                 .AddFileSystemStorage(opt =>
                 {
-                    opt.Path = "C:/myfiles";
+                    opt.Path = _testDirectory;
                 })
                     .Add<IPhotoStorage>(opt =>
                     {
@@ -48,19 +52,19 @@ namespace ManagedCode.Storage.Tests.FileSystem
         [Fact]
         public async Task WhenSingleBlobExistsIsCalled()
         {
-            var result = await _documentStorage.ExistsAsync("a.txt");
-
-            result.Should().BeTrue();
+            var result = await _documentStorage.ExistsAsync("random.txt");
+            result.Should().BeFalse();
         }
 
         [Fact]
         public async Task WhenDownloadAsyncIsCalled()
         {
+            await _documentStorage.UploadAsync("a.txt", "test content for a.txt");
             var stream = await _documentStorage.DownloadAsStreamAsync("a.txt");
             stream.Seek(0, SeekOrigin.Begin);
             using var sr = new StreamReader(stream, Encoding.UTF8);
 
-            string content = sr.ReadToEnd();
+            string content = await sr.ReadToEndAsync();
 
             content.Should().NotBeNull();
         }
@@ -68,10 +72,11 @@ namespace ManagedCode.Storage.Tests.FileSystem
         [Fact]
         public async Task WhenDownloadAsyncToFileIsCalled()
         {
-            var tempFile = await _documentStorage.DownloadAsync("a.txt");
+            await _documentStorage.UploadAsync("a1.txt", "test content for a1.txt");
+            var tempFile = await _documentStorage.DownloadAsync("a1.txt");
             using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
 
-            string content = sr.ReadToEnd();
+            string content = await sr.ReadToEndAsync();
 
             content.Should().NotBeNull();
         }
@@ -79,12 +84,12 @@ namespace ManagedCode.Storage.Tests.FileSystem
         [Fact]
         public async Task WhenUploadAsyncIsCalled()
         {
-            var lineToUpload = "some crazy text";
+            var lineToUpload = "some text";
 
             var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
             var stream = new MemoryStream(byteArray);
 
-            await _documentStorage.UploadAsync("b.txt", stream);
+            await _documentStorage.UploadStreamAsync("b.txt", stream);
         }
 
         [Fact]

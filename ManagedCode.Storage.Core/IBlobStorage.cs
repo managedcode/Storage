@@ -13,10 +13,12 @@ namespace ManagedCode.Storage.Core
         IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default);
         Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default);
 
-        Task UploadAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default);
-        Task UploadAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default);
-        Task UploadAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default);
-        Task UploadAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default);
+        Task UploadStreamAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default);
+        Task UploadFileAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default);
+        Task UploadAsync(string blob, string content, bool append = false, CancellationToken cancellationToken = default);
+        Task UploadStreamAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default);
+        Task UploadFileAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default);
+        Task UploadAsync(Blob blob, string content, bool append = false, CancellationToken cancellationToken = default);
 
         Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default);
         Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default);

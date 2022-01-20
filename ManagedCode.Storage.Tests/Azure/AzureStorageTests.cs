@@ -83,7 +83,7 @@ namespace ManagedCode.Storage.Tests.Azure
             var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
             var stream = new MemoryStream(byteArray);
 
-            await _documentStorage.UploadAsync("b.txt", stream);
+            await _documentStorage.UploadStreamAsync("b.txt", stream);
         }
 
         [Fact]

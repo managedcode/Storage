@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿using System;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
@@ -160,13 +161,19 @@ namespace ManagedCode.Storage.Azure
 
         #region Upload
 
-        public async Task UploadAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadStreamAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
         {
             var blobClient = _blobContainerClient.GetBlobClient(blob);
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
+        
+        public async Task UploadAsync(string blob, string content, bool append = false, CancellationToken cancellationToken = default)
+        {
+            var blobClient = _blobContainerClient.GetBlobClient(blob);
+            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+        }
 
-        public async Task UploadAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadFileAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
         {
             var blobClient = _blobContainerClient.GetBlobClient(blob);
 
@@ -176,14 +183,19 @@ namespace ManagedCode.Storage.Azure
             }
         }
 
-        public async Task UploadAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadStreamAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
         {
-            await UploadAsync(blob.Name, dataStream, append, cancellationToken);
+            await UploadStreamAsync(blob.Name, dataStream, append, cancellationToken);
         }
 
-        public async Task UploadAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadFileAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
         {
-            await UploadAsync(blob.Name, pathToFile, append, cancellationToken);
+            await UploadFileAsync(blob.Name, pathToFile, append, cancellationToken);
+        }
+        
+        public async Task UploadAsync(Blob blob, string content, bool append = false, CancellationToken cancellationToken = default)
+        {
+            await UploadAsync(blob.Name, content, append, cancellationToken);
         }
 
         #endregion
