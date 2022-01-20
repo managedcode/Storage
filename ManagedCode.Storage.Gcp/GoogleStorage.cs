@@ -16,10 +16,14 @@ namespace ManagedCode.Storage.Gcp
         private readonly string _bucket;
         private readonly StorageClient _storageClient;
 
-        public GoogleStorage(GoogleCredential googleCredential, string bucket)
+        public GoogleStorage(GoogleCredential googleCredential, string bucket, string projectId)
         {
             _bucket = bucket;
             _storageClient = StorageClient.Create(googleCredential);
+
+            var b = _storageClient.GetBucket(bucket);
+            
+            _storageClient.CreateBucket(projectId, bucket);
         }
 
         public void Dispose() { }
