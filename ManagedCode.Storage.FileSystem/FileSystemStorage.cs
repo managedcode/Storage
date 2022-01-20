@@ -163,7 +163,7 @@ namespace ManagedCode.Storage.FileSystem
 
             var filePath = Path.Combine(_path, blob);
 
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Write))
+            using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 dataStream.Seek(0, SeekOrigin.Begin);
                 await dataStream.CopyToAsync(fs, cancellationToken);
