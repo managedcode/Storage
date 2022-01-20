@@ -26,6 +26,7 @@
     <ItemGroup>
       <ProjectReference Include="..\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
       <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+      <ProjectReference Include="..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj" />
     </ItemGroup>
 
 </Project>

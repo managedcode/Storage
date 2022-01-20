@@ -1,53 +1,49 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using ManagedCode.Storage.Azure.Options;
-using ManagedCode.Storage.Core;
+﻿using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.FileSystem.Options;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ManagedCode.Storage.Azure
+namespace ManagedCode.Storage.FileSystem
 {
-    public class AzureBlobStorage : IBlobStorage
+    public class FileSystemStorage : IBlobStorage
     {
-        private readonly BlobContainerClient _blobContainerClient;
+        private string _path;
 
-        public AzureBlobStorage(StorageOptions connectionOptions)
+        public FileSystemStorage(StorageOptions storageOptions)
         {
-            _blobContainerClient = new BlobContainerClient(
-                connectionOptions.ConnectionString,
-                connectionOptions.Container
-            );
-
-            _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
+            _path = Path.Combine(storageOptions.CommonPath, storageOptions.Path);
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         #region Delete
 
         public async Task DeleteAsync(string blob, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
-            await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+            await Task.Yield();
+
+            var filePath = Path.Combine(_path, blob);
+
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
         }
 
         public async Task DeleteAsync(Blob blob, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
-            await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+            await DeleteAsync(blob.Name);
         }
 
         public async Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
         {
-            foreach (var blobName in blobs)
+            foreach (var blob in blobs)
             {
-                await DeleteAsync(blobName, cancellationToken);
+                await DeleteAsync(blob, cancellationToken);
             }
         }
 
@@ -65,10 +61,15 @@ namespace ManagedCode.Storage.Azure
 
         public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
-            var res = await blobClient.DownloadStreamingAsync();
+            var memoryStream = new MemoryStream();
+            var filePath = Path.Combine(_path, blob);
 
-            return res.Value.Content;
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                await fs.CopyToAsync(memoryStream, cancellationToken);
+            }
+
+            return memoryStream;
         }
 
         public async Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default)
@@ -78,10 +79,13 @@ namespace ManagedCode.Storage.Azure
 
         public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
             var localFile = new LocalFile();
+            var filePath = Path.Combine(_path, blob);
 
-            await blobClient.DownloadToAsync(localFile.FileStream, cancellationToken);
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                await fs.CopyToAsync(localFile.FileStream, cancellationToken);
+            }
 
             return localFile;
         }
@@ -97,35 +101,33 @@ namespace ManagedCode.Storage.Azure
 
         public async Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
+            await Task.Yield();
 
-            return await blobClient.ExistsAsync(cancellationToken);
+            var filePath = Path.Combine(_path, blob);
+
+            return File.Exists(filePath);
         }
 
         public async Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
-
-            return await blobClient.ExistsAsync(cancellationToken);
+            return await ExistsAsync(blob.Name, cancellationToken);
         }
 
-        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs, 
+        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            foreach(var blob in blobs)
+            foreach (var blob in blobs)
             {
-                var blobClient = _blobContainerClient.GetBlobClient(blob);
-                yield return await blobClient.ExistsAsync(cancellationToken);
+                yield return await ExistsAsync(blob, cancellationToken);
             }
         }
 
         public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs,
-             [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             foreach (var blob in blobs)
             {
-                var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
-                yield return await blobClient.ExistsAsync(cancellationToken);
+                yield return await ExistsAsync(blob, cancellationToken);
             }
         }
 
@@ -133,25 +135,17 @@ namespace ManagedCode.Storage.Azure
 
         #region Get
 
-        public async Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
-        {
-            await Task.Yield();
-
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
-           
-            return new Blob()
-            {
-                Name = blobClient.Name,
-                Uri = blobClient.Uri
-            };
-        }
-
-        public IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+        public Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();
         }
 
         public IAsyncEnumerable<Blob> GetBlobListAsync(CancellationToken cancellationToken = default)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();
         }
@@ -162,17 +156,25 @@ namespace ManagedCode.Storage.Azure
 
         public async Task UploadAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
-            await blobClient.UploadAsync(dataStream, cancellationToken);
+            if (!Directory.Exists(_path))
+            {
+                Directory.CreateDirectory(_path);
+            }
+
+            var filePath = Path.Combine(_path, blob);
+
+            using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                dataStream.Seek(0, SeekOrigin.Begin);
+                await dataStream.CopyToAsync(fs, cancellationToken);
+            }
         }
 
-        public async Task UploadAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(string blob, string pathToFile = null, bool append = false, CancellationToken cancellationToken = default)
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
-
             using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
             {
-                await blobClient.UploadAsync(fs, cancellationToken);
+                await UploadAsync(blob, fs, append, cancellationToken);
             }
         }
 

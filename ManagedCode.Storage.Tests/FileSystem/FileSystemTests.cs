@@ -1,35 +1,35 @@
-﻿using ManagedCode.Storage.Core.Extensions;
-using ManagedCode.Storage.Azure.Extensions;
+﻿using FluentAssertions;
+using ManagedCode.Storage.Core.Extensions;
+using ManagedCode.Storage.FileSystem.Extensions;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
-using Xunit;
-using FluentAssertions;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
+using Xunit;
 
-namespace ManagedCode.Storage.Tests.Azure
+namespace ManagedCode.Storage.Tests.FileSystem
 {
-    public class AzureStorageTests
+    public class FileSystemTests
     {
         private IPhotoStorage _photoStorage;
         private IDocumentStorage _documentStorage;
 
-        public AzureStorageTests()
+        public FileSystemTests()
         {
             var services = new ServiceCollection();
 
             services.AddManagedCodeStorage()
-                .AddAzureBlobStorage(opt =>
+                .AddFileSystemStorage(opt =>
                 {
-                    opt.ConnectionString = "DefaultEndpointsProtocol=https;AccountName=storagestudying;AccountKey=4Y4IBrITEoWYMGe0gNju9wvUQrWi//1VvPIDN2dYWccWKy9uuKWnMBXxQlmcy3Q9UIU70ZJiy8ULD9QITxyeTQ==;EndpointSuffix=core.windows.net";
+                    opt.Path = "C:/myfiles";
                 })
                     .Add<IPhotoStorage>(opt =>
                     {
-                        opt.Container = "photos";
+                        opt.Path = "photos";
                     })
                     .Add<IDocumentStorage>(opt =>
                     {
-                        opt.Container = "documents";
+                        opt.Path = "documents";
                     });
 
             var provider = services.BuildServiceProvider();
@@ -48,7 +48,7 @@ namespace ManagedCode.Storage.Tests.Azure
         [Fact]
         public async Task WhenSingleBlobExistsIsCalled()
         {
-            var result = await _photoStorage.ExistsAsync("34.png");
+            var result = await _documentStorage.ExistsAsync("a.txt");
 
             result.Should().BeTrue();
         }
@@ -57,6 +57,7 @@ namespace ManagedCode.Storage.Tests.Azure
         public async Task WhenDownloadAsyncIsCalled()
         {
             var stream = await _documentStorage.DownloadAsStreamAsync("a.txt");
+            stream.Seek(0, SeekOrigin.Begin);
             using var sr = new StreamReader(stream, Encoding.UTF8);
 
             string content = sr.ReadToEnd();
