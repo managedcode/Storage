@@ -1,19 +1,13 @@
-﻿using ManagedCode.Storage.Core.Extensions;
+﻿using System.Threading.Tasks;
+using ManagedCode.Storage.Core.Extensions;
 using ManagedCode.Storage.Azure.Extensions;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 using Xunit;
-using FluentAssertions;
-using System.IO;
-using System.Text;
 
 namespace ManagedCode.Storage.Tests.Azure
 {
-    public class AzureStorageTests
+    public class AzureStorageTests : StorageBaseTests
     {
-        private IPhotoStorage _photoStorage;
-        private IDocumentStorage _documentStorage;
-
         public AzureStorageTests()
         {
             var services = new ServiceCollection();
@@ -34,62 +28,43 @@ namespace ManagedCode.Storage.Tests.Azure
 
             var provider = services.BuildServiceProvider();
 
-            _photoStorage = provider.GetService<IPhotoStorage>();
-            _documentStorage = provider.GetService<IDocumentStorage>();
+            _blobStorage = provider.GetService<IDocumentStorage>();
         }
 
         [Fact]
         public void WhenDIInitialized()
         {
-            _photoStorage.Should().NotBeNull();
-            _documentStorage.Should().NotBeNull();
+            DIInitialized();
         }
 
         [Fact]
         public async Task WhenSingleBlobExistsIsCalled()
         {
-            var result = await _photoStorage.ExistsAsync("34.png");
-
-            result.Should().BeTrue();
+            await SingleBlobExistsIsCalled("a.txt");
         }
 
         [Fact]
         public async Task WhenDownloadAsyncIsCalled()
         {
-            var stream = await _documentStorage.DownloadAsStreamAsync("a.txt");
-            using var sr = new StreamReader(stream, Encoding.UTF8);
-
-            string content = sr.ReadToEnd();
-
-            content.Should().NotBeNull();
+            await DownloadAsyncIsCalled("a.txt");
         }
 
         [Fact]
         public async Task WhenDownloadAsyncToFileIsCalled()
         {
-            var tempFile = await _documentStorage.DownloadAsync("a.txt");
-            using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
-
-            string content = sr.ReadToEnd();
-
-            content.Should().NotBeNull();
+            await DownloadAsyncToFileIsCalled("a.txt");
         }
 
         [Fact]
         public async Task WhenUploadAsyncIsCalled()
         {
-            var lineToUpload = "some crazy text";
-
-            var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
-            var stream = new MemoryStream(byteArray);
-
-            await _documentStorage.UploadStreamAsync("b.txt", stream);
+            await UploadAsyncIsCalled("a.txt");
         }
 
         [Fact]
         public async Task WhenDeleteAsyncIsCalled()
         {
-            await _documentStorage.DeleteAsync("a.txt");
+            await DeleteAsyncIsCalled("a.txt");
         }
     }
 }
