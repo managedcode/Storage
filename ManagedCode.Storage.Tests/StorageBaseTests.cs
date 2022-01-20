@@ -50,12 +50,12 @@ namespace ManagedCode.Storage.Tests
 
         protected async Task UploadAsyncIsCalled(string fileName)
         {
-            var lineToUpload = "some crazy text";
+            var lineToUpload = "some text";
 
             var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
             var stream = new MemoryStream(byteArray);
 
-            await _blobStorage.UploadAsync(fileName, stream);
+            await _blobStorage.UploadStreamAsync(fileName, stream);
         }
 
         protected async Task DeleteAsyncIsCalled(string fileName)

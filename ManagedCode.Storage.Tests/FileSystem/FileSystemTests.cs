@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using ManagedCode.Storage.Core.Extensions;
 using ManagedCode.Storage.FileSystem.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +14,7 @@ namespace ManagedCode.Storage.Tests.FileSystem
         {
             var services = new ServiceCollection();
 
-            _testDirectory = Path.Combine(Environment.CurrentDirectory, "my_tests_files");
+            var _testDirectory = Path.Combine(Environment.CurrentDirectory, "my_tests_files");
             
             services.AddManagedCodeStorage()
                 .AddFileSystemStorage(opt =>
