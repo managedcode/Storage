@@ -1,18 +1,13 @@
-﻿using FluentAssertions;
-using Google.Apis.Auth.OAuth2;
-using ManagedCode.Storage.Core;
-using ManagedCode.Storage.Gcp;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using ManagedCode.Storage.Gcp;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.GCP
 {
-    public class GoogleStorageTests
+    public class GoogleStorageTests : StorageBaseTests
     {
-        private IBlobStorage _blobStorage;
-
         public GoogleStorageTests()
         {
             GoogleCredential googleCredential;
@@ -25,26 +20,45 @@ namespace ManagedCode.Storage.Tests.GCP
         }
 
         [Fact]
-        public async Task WhenUploadAsyncIsCalled()
+        public void WhenDIInitialized()
         {
-            var lineToUpload = "some crazy text";
+            DIInitialized();
+        }
 
-            var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
-            var stream = new MemoryStream(byteArray);
-
-            await _blobStorage.UploadAsync("b.txt", stream);
+        [Fact]
+        public async Task WhenSingleBlobExistsIsCalled()
+        {
+            await SingleBlobExistsIsCalled("a.txt");
         }
 
         [Fact]
         public async Task WhenDownloadAsyncIsCalled()
         {
-            var stream = await _blobStorage.DownloadAsStreamAsync("b.txt");
-            stream.Seek(0, SeekOrigin.Begin);
-            using var sr = new StreamReader(stream, Encoding.UTF8);
+            await DownloadAsyncIsCalled("a.txt");
+        }
 
-            string content = sr.ReadToEnd();
+        [Fact]
+        public async Task WhenDownloadAsyncToFileIsCalled()
+        {
+            await DownloadAsyncToFileIsCalled("a.txt");
+        }
 
-            content.Should().NotBeNull();
+        [Fact]
+        public async Task WhenUploadAsyncIsCalled()
+        {
+            await UploadAsyncIsCalled("b.txt");
+        }
+
+        [Fact]
+        public async Task WhenDeleteAsyncIsCalled()
+        {
+            await DeleteAsyncIsCalled("a.txt");
+        }
+
+        [Fact]
+        protected async Task WhenGetBlobListAsyncIsCalled()
+        {
+            await GetBlobListAsyncIsCalled();
         }
     }
 }

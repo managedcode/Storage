@@ -13,7 +13,6 @@
         <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
         <PackageVersion>0.0.1</PackageVersion>
         <Description>Storage for GCP</Description>
-        <PackageIcon>logo.png</PackageIcon>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
@@ -31,9 +30,4 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
       <PackageReference Include="System.Linq.Async" Version="5.0.0" />
     </ItemGroup>
-
-    <ItemGroup>
-        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
-    </ItemGroup>
-
 </Project>

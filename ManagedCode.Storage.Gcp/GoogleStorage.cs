@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Core;
@@ -19,11 +20,15 @@ namespace ManagedCode.Storage.Gcp
         public GoogleStorage(GoogleCredential googleCredential, string bucket, string projectId)
         {
             _bucket = bucket;
+
             _storageClient = StorageClient.Create(googleCredential);
 
-            var b = _storageClient.GetBucket(bucket);
-            
-            _storageClient.CreateBucket(projectId, bucket);
+            try
+            {
+                _storageClient.CreateBucket(projectId, bucket);
+            }
+            catch 
+            { }
         }
 
         public void Dispose() { }
@@ -96,9 +101,16 @@ namespace ManagedCode.Storage.Gcp
 
         public async Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
         {
-            var obj = await _storageClient.GetObjectAsync(_bucket, blob, null, cancellationToken);
-            
-            return obj == null; // not sure
+            try
+            {
+                await _storageClient.GetObjectAsync(_bucket, blob, null, cancellationToken);
+
+                return true;
+            }
+            catch (GoogleApiException)
+            {
+                return false;
+            }
         }
 
         public async Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
