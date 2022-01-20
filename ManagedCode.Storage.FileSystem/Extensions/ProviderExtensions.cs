@@ -9,9 +9,9 @@ namespace ManagedCode.Storage.FileSystem.Extensions
     {
         public static FileSystemProviderBuilder AddFileSystemStorage(
             this ProviderBuilder providerBuilder,
-            Action<CommonPathOptions> action)
+            Action<PathOptions> action)
         {
-            var commonPathOptions = new CommonPathOptions();
+            var commonPathOptions = new PathOptions();
             action.Invoke(commonPathOptions);
 
             return new FileSystemProviderBuilder(providerBuilder.ServiceCollection, commonPathOptions.Path);
