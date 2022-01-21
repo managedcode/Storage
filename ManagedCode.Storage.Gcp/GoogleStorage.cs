@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Google;
-using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.Gcp.Options;
 
 namespace ManagedCode.Storage.Gcp
 {
@@ -18,15 +18,14 @@ namespace ManagedCode.Storage.Gcp
         private readonly string _bucket;
         private readonly StorageClient _storageClient;
 
-        public GoogleStorage(GoogleCredential googleCredential, string bucket, string projectId)
+        public GoogleStorage(StorageOptions storageOptions)
         {
-            _bucket = bucket;
-
-            _storageClient = StorageClient.Create(googleCredential);
+            _bucket = storageOptions.BucketOptions.Bucket;
+            _storageClient = StorageClient.Create(storageOptions.GoogleCredential);
 
             try
             {
-                _storageClient.CreateBucket(projectId, bucket);
+                _storageClient.CreateBucket(storageOptions.BucketOptions.ProjectId, _bucket);
             }
             catch 
             { }
@@ -178,40 +177,45 @@ namespace ManagedCode.Storage.Gcp
 
         #region Upload
 
-        public async Task UploadAsync(string blob, string content, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(string blob, string content, CancellationToken cancellationToken = default)
         {
             await _storageClient.UploadObjectAsync(_bucket, blob, null, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
         }
         
-        public async Task UploadStreamAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadStreamAsync(string blob, Stream dataStream, CancellationToken cancellationToken = default)
         {
             await _storageClient.UploadObjectAsync(_bucket, blob, null, dataStream, null, cancellationToken);
         }
 
-        public async Task UploadFileAsync(string blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadFileAsync(string blob, string pathToFile, CancellationToken cancellationToken = default)
         {
             using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
             {
-                await UploadStreamAsync(blob, fs, append, cancellationToken);
+                await UploadStreamAsync(blob, fs, cancellationToken);
             }
         }
 
-        public async Task UploadStreamAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadStreamAsync(Blob blob, Stream dataStream, CancellationToken cancellationToken = default)
         {
-            await UploadStreamAsync(blob.Name, dataStream, append, cancellationToken);
+            await UploadStreamAsync(blob.Name, dataStream, cancellationToken);
         }
 
-        public async Task UploadFileAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadFileAsync(Blob blob, string pathToFile, CancellationToken cancellationToken = default)
         {
             using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
             {
-                await UploadStreamAsync(blob, fs, append, cancellationToken);
+                await UploadStreamAsync(blob, fs, cancellationToken);
             }
         }
         
-        public async Task UploadAsync(Blob blob, string content, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(Blob blob, string content, CancellationToken cancellationToken = default)
         {
-            await UploadAsync(blob.Name, content, append, cancellationToken);
+            await UploadAsync(blob.Name, content, cancellationToken);
+        }
+
+        public async Task UploadAsync(Blob blob, byte[] data, CancellationToken cancellationToken = default)
+        {
+            await _storageClient.UploadObjectAsync(_bucket, blob.Name, null, new MemoryStream(data), null, cancellationToken);
         }
 
         #endregion

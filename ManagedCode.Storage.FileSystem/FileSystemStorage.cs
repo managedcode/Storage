@@ -1,12 +1,12 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ManagedCode.Storage.FileSystem
 {
@@ -197,7 +197,7 @@ namespace ManagedCode.Storage.FileSystem
 
         #region Upload
         
-        public async Task UploadStreamAsync(string blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadStreamAsync(string blob, Stream dataStream, CancellationToken cancellationToken = default)
         {
             EnsureDirectoryExists();
             var filePath = Path.Combine(_path, blob);
@@ -209,36 +209,43 @@ namespace ManagedCode.Storage.FileSystem
             }
         }
 
-        public async Task UploadFileAsync(string blob, string pathToFile = null, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadFileAsync(string blob, string pathToFile = null, CancellationToken cancellationToken = default)
         {
             using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
             {
-                await UploadStreamAsync(blob, fs, append, cancellationToken);
+                await UploadStreamAsync(blob, fs, cancellationToken);
             }
         }
 
-        public async Task UploadAsync(string blob, string content, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(string blob, string content, CancellationToken cancellationToken = default)
         {
             EnsureDirectoryExists();
             var filePath = Path.Combine(_path, blob);
-            await File.WriteAllTextAsync(content, filePath, cancellationToken);
+            await File.WriteAllTextAsync(filePath, content, cancellationToken);
         }
         
-        public Task UploadStreamAsync(Blob blob, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+        public Task UploadStreamAsync(Blob blob, Stream dataStream, CancellationToken cancellationToken = default)
         {
-            return UploadStreamAsync(blob.Name, dataStream, append, cancellationToken);
+            return UploadStreamAsync(blob.Name, dataStream, cancellationToken);
         }
 
-        public Task UploadFileAsync(Blob blob, string pathToFile, bool append = false, CancellationToken cancellationToken = default)
+        public Task UploadFileAsync(Blob blob, string pathToFile, CancellationToken cancellationToken = default)
         {
-            return UploadFileAsync(blob.Name, pathToFile, append, cancellationToken);
+            return UploadFileAsync(blob.Name, pathToFile, cancellationToken);
         }
 
-        public async Task UploadAsync(Blob blob, string content, bool append = false, CancellationToken cancellationToken = default)
+        public async Task UploadAsync(Blob blob, string content, CancellationToken cancellationToken = default)
         {
-            await UploadAsync(blob.Name, content, append, cancellationToken);
+            await UploadAsync(blob.Name, content, cancellationToken);
         }
 
+        public async Task UploadAsync(Blob blob, byte[] data, CancellationToken cancellationToken = default)
+        {
+            EnsureDirectoryExists();
+            var filePath = Path.Combine(_path, blob.Name);
+
+            await File.WriteAllBytesAsync(filePath, data, cancellationToken);
+        }
         #endregion
     }
 }

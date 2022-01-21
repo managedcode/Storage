@@ -17,10 +17,6 @@ namespace ManagedCode.Storage.Tests.Azure
                 {
                     opt.ConnectionString = "DefaultEndpointsProtocol=https;AccountName=storagestudying;AccountKey=4Y4IBrITEoWYMGe0gNju9wvUQrWi//1VvPIDN2dYWccWKy9uuKWnMBXxQlmcy3Q9UIU70ZJiy8ULD9QITxyeTQ==;EndpointSuffix=core.windows.net";
                 })
-                    .Add<IPhotoStorage>(opt =>
-                    {
-                        opt.Container = "photos";
-                    })
                     .Add<IDocumentStorage>(opt =>
                     {
                         opt.Container = "documents";

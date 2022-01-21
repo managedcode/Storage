@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-using Google.Apis.Auth.OAuth2;
-using ManagedCode.Storage.Gcp;
+﻿using System.Threading.Tasks;
+using ManagedCode.Storage.Core.Extensions;
+using ManagedCode.Storage.Gcp.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.GCP
@@ -10,13 +10,22 @@ namespace ManagedCode.Storage.Tests.GCP
     {
         public GoogleStorageTests()
         {
-            GoogleCredential googleCredential;
-            using (Stream m = new FileStream("C:/myfiles/creds.json", FileMode.Open))
-            {
-                googleCredential = GoogleCredential.FromStream(m);
-            }
+            var services = new ServiceCollection();
 
-            _blobStorage = new GoogleStorage(googleCredential, "my-dcs-1", "api-project-1073333651334");
+            services.AddManagedCodeStorage()
+                .AddGoogleStorage(opt =>
+                {
+                    opt.FileName = "google-creds.json";
+                })
+                    .Add<IDocumentStorage>(opt =>
+                    {
+                        opt.ProjectId = "api-project-1073333651334";
+                        opt.Bucket = "my-docs-1";
+                    });
+
+            var provider = services.BuildServiceProvider();
+
+            _blobStorage = provider.GetService<IDocumentStorage>();
         }
 
         [Fact]
@@ -46,7 +55,7 @@ namespace ManagedCode.Storage.Tests.GCP
         [Fact]
         public async Task WhenUploadAsyncIsCalled()
         {
-            await UploadAsyncIsCalled("b.txt");
+            await UploadAsyncIsCalled("a.txt");
         }
 
         [Fact]

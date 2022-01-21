@@ -21,10 +21,6 @@ namespace ManagedCode.Storage.Tests.FileSystem
                 {
                     opt.Path = _testDirectory;
                 })
-                    .Add<IPhotoStorage>(opt =>
-                    {
-                        opt.Path = "photos";
-                    })
                     .Add<IDocumentStorage>(opt =>
                     {
                         opt.Path = "documents";
