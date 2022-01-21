@@ -26,6 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="AWSSDK.S3" Version="3.7.7.14" />
       <PackageReference Include="Humanizer.Core" Version="2.8.26" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
       <PackageReference Include="System.Linq.Async" Version="5.0.0" />

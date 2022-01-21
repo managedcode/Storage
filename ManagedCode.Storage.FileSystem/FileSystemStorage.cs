@@ -177,7 +177,8 @@ namespace ManagedCode.Storage.FileSystem
             return null;
         }
 
-        public async IAsyncEnumerable<Blob> GetBlobListAsync(CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<Blob> GetBlobListAsync(
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             foreach (var file in Directory.EnumerateFiles(_path))
             {
@@ -185,7 +186,8 @@ namespace ManagedCode.Storage.FileSystem
             }
         }
 
-        public async IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             foreach (var file in blobs)
             {
