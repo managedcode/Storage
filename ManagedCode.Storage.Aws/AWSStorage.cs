@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -7,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Runtime;
-using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
 using Amazon.S3.Model;
 using ManagedCode.Storage.Aws.Options;
@@ -18,46 +16,20 @@ namespace ManagedCode.Storage.Aws
 {
     public class AWSStorage : IBlobStorage
     {
-        private const string DefaultServiceUrl = "https://s3.amazonaws.com";
         private readonly IAmazonS3 _s3Client;
         private readonly string _bucket;
-        private readonly string _serverSideEncryptionMethod;
-        private readonly string _serviceUrl;
 
         public AWSStorage(StorageOptions options)
         {
-            _serviceUrl = string.IsNullOrEmpty(options.ServiceUrl) ? DefaultServiceUrl : options.ServiceUrl;
             _bucket = options.Bucket;
-            _serverSideEncryptionMethod = options.ServerSideEncryptionMethod;
 
-            var S3Config = new AmazonS3Config
+            var config = new AmazonS3Config
             {
-                ServiceURL = _serviceUrl,
+                ServiceURL = Constants.ServiceUrl,
                 Timeout = ClientConfig.MaxTimeout,
             };
 
-            _s3Client = new AmazonS3Client(ReadCreds(options), S3Config);
-        }
-
-        private AWSCredentials ReadCreds(StorageOptions options)
-        {
-            if (!string.IsNullOrWhiteSpace(options.ProfileName))
-            {
-                var credentialProfileStoreChain = new CredentialProfileStoreChain();
-                if (credentialProfileStoreChain.TryGetAWSCredentials(options.ProfileName, out AWSCredentials defaultCredentials))
-                {
-                    return defaultCredentials;
-                }
-
-                throw new AmazonClientException("Unable to find a default profile in CredentialProfileStoreChain.");
-            }
-
-            if (!string.IsNullOrEmpty(options.PublicKey) && !string.IsNullOrWhiteSpace(options.SecretKey))
-            {
-                return new BasicAWSCredentials(options.PublicKey, options.SecretKey);
-            }
-
-            return FallbackCredentialsFactory.GetCredentials();
+            _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
         }
 
         public void Dispose() { }
@@ -129,33 +101,79 @@ namespace ManagedCode.Storage.Aws
 
         #region Exists
 
-        public Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+        public async Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await _s3Client.GetObjectAsync(_bucket, blob, cancellationToken);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
+        public async Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return await ExistsAsync(blob.Name, cancellationToken);
         }
 
-        public IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            foreach (var blob in blobs)
+            {
+                yield return await ExistsAsync(blob, cancellationToken);
+            }
         }
 
-        public IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            foreach (var blob in blobs)
+            {
+                yield return await ExistsAsync(blob, cancellationToken);
+            }
         }
 
         #endregion
 
         #region Get
 
-        public Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
+        public async Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var objectMetaRequest = new GetObjectMetadataRequest
+            {
+                BucketName = _bucket,
+                Key = blob
+            };
+
+            var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest);
+
+            var objectAclRequest = new GetACLRequest
+            {
+                BucketName = _bucket,
+                Key = blob
+            };
+
+            var objectAclResponse = await _s3Client.GetACLAsync(objectAclRequest);
+            var isPublic = objectAclResponse.AccessControlList.Grants.Any(x => x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
+
+            return new Blob
+            {
+                Name = blob
+                //Container = containerName,
+                //Length = objectMetaResponse.Headers.ContentLength,
+                //ETag = objectMetaResponse.ETag,
+                //ContentMD5 = objectMetaResponse.ETag,
+                //ContentType = objectMetaResponse.Headers.ContentType,
+                //ContentDisposition = objectMetaResponse.Headers.ContentDisposition,
+                //LastModified = objectMetaResponse.LastModified,
+                //Security = isPublic ? BlobSecurity.Public : BlobSecurity.Private,
+                //Metadata = objectMetaResponse.Metadata.ToMetadata(),
+            };
         }
 
         public async IAsyncEnumerable<Blob> GetBlobListAsync(
@@ -193,7 +211,7 @@ namespace ManagedCode.Storage.Aws
 
                     yield return new Blob
                     {
-                        Name = entry.Key.Remove(0, 1)
+                        Name = entry.Key
                     };
                 }
 
@@ -209,9 +227,13 @@ namespace ManagedCode.Storage.Aws
             } while (objectsRequest != null);
         }
 
-        public IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs,
+             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            foreach (var blob in blobs)
+            {
+                yield return await GetBlobAsync(blob, cancellationToken);
+            }
         }
 
         #endregion
@@ -254,9 +276,10 @@ namespace ManagedCode.Storage.Aws
                 Key = blob,
                 InputStream = dataStream,
                 AutoCloseStream = true,
-                ServerSideEncryptionMethod = _serverSideEncryptionMethod
+                ServerSideEncryptionMethod = null
             };
 
+            await _s3Client.EnsureBucketExistsAsync(_bucket);
             await _s3Client.PutObjectAsync(putRequest, cancellationToken);
         }
 
