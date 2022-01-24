@@ -1,0 +1,82 @@
+name: .NET
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      #fake-gcs-server:
+      #  image: fsouza/fake-gcs-server
+      #  ports:
+      #    - 4443:4443
+      localstack:
+        image: localstack/localstack:latest
+        ports:
+          - 4563-4599:4563-4599
+          - 8055:8080
+        env:
+          SERVICES: s3
+          DEBUG: 1
+          DATA_DIR: /tmp/localstack/data
+          AWS_SECRET_KEY: 'localkey'
+          AWS_BUCKET_NAME: 'managed-code-bucket'
+          AWS_ACCESS_KEY_ID: 'localkey'
+          AWS_SECRET_ACCESS_KEY: 'localsecret'
+          DEFAULT_REGION: 'eu-west-1'
+          
+    steps:
+      
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+        
+    - name: azuright
+      uses: potatoqualitee/azuright@v1.1      
+      
+    - name: docker runu
+      run: |
+        docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http -external-url "http://localhost:4443"
+        sleep 5s
+      
+    - name: check storage emulators
+      run: |
+        curl http://localhost:4443/
+        curl http://localhost:4566/
+        curl http://localhost:10000/     
+      
+      # run build and test           
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Storage.Tests/lcov.info
+      env:
+        DEFAULT_REGION: eu-west-1
+        AWS_ACCESS_KEY_ID: localkey
+        AWS_SECRET_ACCESS_KEY: localsecret
+        
+    - name : coverlet
+      uses: b3b00/coverlet-action@1.1.9
+      with:
+        testProject: 'ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj'
+        output: 'lcov.info'
+        outputFormat: 'lcov'
+        excludes: '[program]*,[test]test.*'
+    - name: coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN }}
+        path-to-lcov: ManagedCode.Storage.Tests/lcov.info

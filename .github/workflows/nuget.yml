@@ -1,0 +1,36 @@
+name: nuget
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  nuget-pack:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+          
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    - name: Pack
+      run: dotnet pack --configuration Release
+
+    - name: publish nuget packages
+      run: |
+        shopt -s globstar
+        for file in **/*.nupkg
+        do
+          dotnet nuget push "$file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        done  
+        
+
+      
+      #     dotnet nuget push "${file##*.} --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json

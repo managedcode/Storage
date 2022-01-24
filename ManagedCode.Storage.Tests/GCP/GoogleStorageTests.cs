@@ -1,6 +1,15 @@
-﻿using System.Threading.Tasks;
-using ManagedCode.Storage.Core.Extensions;
+﻿using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using Amazon.Runtime.Documents;
+using FluentAssertions;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
+using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Gcp;
 using ManagedCode.Storage.Gcp.Extensions;
+using ManagedCode.Storage.Gcp.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -8,62 +17,41 @@ namespace ManagedCode.Storage.Tests.GCP;
 
 public class GoogleStorageTests : StorageBaseTests
 {
-    public GoogleStorageTests()
+    protected override ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
 
-        services.AddManagedCodeStorage()
-            .AddGoogleStorage(opt => { opt.FileName = "google-creds.json"; })
-            .Add<IDocumentStorage>(opt =>
+        services.AddGCPStorageAsDefault(opt =>
+        {
+            //opt.GoogleCredential = GoogleCredential.FromFile("google_auth.json");
+            opt.BucketOptions = new BucketOptions()
             {
-                opt.ProjectId = "api-project-0000000000000";
-                opt.Bucket = "my-docs-1";
-            });
-
-        var provider = services.BuildServiceProvider();
-
-        Storage = provider.GetService<IDocumentStorage>();
+                ProjectId = "api-project-0000000000000",
+                Bucket = "managed-code-bucket",
+            };
+            opt.StorageClientBuilder = new StorageClientBuilder
+            {
+                UnauthenticatedAccess = true,
+                BaseUri = "http://localhost:4443/storage/v1/",
+            };
+        });
+        
+        services.AddGCPStorage(new GCPStorageOptions
+        {
+            BucketOptions = new BucketOptions()
+            {
+                ProjectId = "api-project-0000000000000",
+                Bucket = "managed-code-bucket",
+            }
+        });
+        return services.BuildServiceProvider();
     }
-
+    
     [Fact]
-    public void WhenDIInitialized()
+    public void StorageAsDefaultTest()
     {
-        DIInitialized();
-    }
-
-    [Fact]
-    public async Task WhenSingleBlobExistsIsCalled()
-    {
-        await SingleBlobExistsIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncIsCalled()
-    {
-        await DownloadAsyncIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncToFileIsCalled()
-    {
-        await DownloadAsyncToFileIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenUploadAsyncIsCalled()
-    {
-        await UploadAsyncIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenDeleteAsyncIsCalled()
-    {
-        await DeleteAsyncIsCalled("a.txt");
-    }
-
-    [Fact]
-    protected async Task WhenGetBlobListAsyncIsCalled()
-    {
-        await GetBlobListAsyncIsCalled();
+        var storage = ServiceProvider.GetService<IGCPStorage>();
+        var defaultStorage = ServiceProvider.GetService<IStorage>();
+        storage.GetType().FullName.Should().Be(defaultStorage.GetType().FullName);
     }
 }

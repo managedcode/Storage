@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Gcp", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.FileSystem", "ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.AspNetExtensions", "ManagedCode.Storage.AspNetExtensions\ManagedCode.Storage.AspNetExtensions.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{EDFA1CB7-1721-4447-9C25-AE110821717C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDFA1CB7-1721-4447-9C25-AE110821717C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDFA1CB7-1721-4447-9C25-AE110821717C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

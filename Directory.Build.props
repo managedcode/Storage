@@ -1,0 +1,23 @@
+<Project>
+    <!--NuGet-->
+    <PropertyGroup>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <Authors>ManagedCode</Authors>
+        <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
+        <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
+        <RepositoryType>Github</RepositoryType>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Product>Managed Code - Storage</Product>
+        <Version>0.0.1</Version>
+        <PackageVersion>0.0.1</PackageVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="" />
+    </ItemGroup>
+</Project>
