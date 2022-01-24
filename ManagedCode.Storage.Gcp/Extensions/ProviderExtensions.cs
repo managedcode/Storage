@@ -18,7 +18,7 @@ namespace ManagedCode.Storage.Gcp.Extensions
             var fileNameOptions = new AuthFileNameOptions();
             action.Invoke(fileNameOptions);
 
-            string path = Path.Combine(
+            var path = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 fileNameOptions.FileName
             );

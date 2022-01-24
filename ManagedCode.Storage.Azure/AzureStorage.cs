@@ -1,22 +1,22 @@
 ﻿using System;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using ManagedCode.Storage.Azure.Options;
-using ManagedCode.Storage.Core;
-using ManagedCode.Storage.Core.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using ManagedCode.Storage.Azure.Options;
+using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Azure
 {
-    public class AzureBlobStorage : IBlobStorage
+    public class AzureStorage : IStorage
     {
         private readonly BlobContainerClient _blobContainerClient;
 
-        public AzureBlobStorage(StorageOptions connectionOptions)
+        public AzureStorage(StorageOptions connectionOptions)
         {
             _blobContainerClient = new BlobContainerClient(
                 connectionOptions.ConnectionString,
@@ -110,10 +110,10 @@ namespace ManagedCode.Storage.Azure
             return await blobClient.ExistsAsync(cancellationToken);
         }
 
-        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs, 
+        public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            foreach(var blob in blobs)
+            foreach (var blob in blobs)
             {
                 var blobClient = _blobContainerClient.GetBlobClient(blob);
                 yield return await blobClient.ExistsAsync(cancellationToken);
@@ -121,7 +121,7 @@ namespace ManagedCode.Storage.Azure
         }
 
         public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs,
-             [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             foreach (var blob in blobs)
             {
@@ -139,8 +139,8 @@ namespace ManagedCode.Storage.Azure
             await Task.Yield();
 
             var blobClient = _blobContainerClient.GetBlobClient(blob);
-           
-            return new Blob()
+
+            return new Blob
             {
                 Name = blobClient.Name,
                 Uri = blobClient.Uri
@@ -149,12 +149,12 @@ namespace ManagedCode.Storage.Azure
 
         public IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public IAsyncEnumerable<Blob> GetBlobListAsync(CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         #endregion
@@ -166,7 +166,7 @@ namespace ManagedCode.Storage.Azure
             var blobClient = _blobContainerClient.GetBlobClient(blob);
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
-        
+
         public async Task UploadAsync(string blob, string content, CancellationToken cancellationToken = default)
         {
             var blobClient = _blobContainerClient.GetBlobClient(blob);
@@ -192,7 +192,7 @@ namespace ManagedCode.Storage.Azure
         {
             await UploadFileAsync(blob.Name, pathToFile, cancellationToken);
         }
-        
+
         public async Task UploadAsync(Blob blob, string content, CancellationToken cancellationToken = default)
         {
             await UploadAsync(blob.Name, content, cancellationToken);

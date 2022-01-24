@@ -18,7 +18,7 @@ namespace ManagedCode.Storage.Core
         {
             string directory;
             KeepAlive = keepAlive;
-            
+
             if (string.IsNullOrEmpty(Path.GetExtension(path)))
             {
                 directory = path;
@@ -78,7 +78,7 @@ namespace ManagedCode.Storage.Core
 
         public ValueTask DisposeAsync()
         {
-            return new(Task.Run(Dispose));
+            return new ValueTask(Task.Run(Dispose));
         }
 
         public void Dispose()

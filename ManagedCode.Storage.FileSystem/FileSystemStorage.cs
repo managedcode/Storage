@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
@@ -10,14 +10,18 @@ using ManagedCode.Storage.FileSystem.Options;
 
 namespace ManagedCode.Storage.FileSystem
 {
-    public class FileSystemStorage : IBlobStorage
+    public class FileSystemStorage : IStorage
     {
-        private string _path;
+        private readonly string _path;
 
         public FileSystemStorage(StorageOptions storageOptions)
         {
             _path = Path.Combine(storageOptions.CommonPath, storageOptions.Path);
             EnsureDirectoryExists();
+        }
+
+        public void Dispose()
+        {
         }
 
         private void EnsureDirectoryExists()
@@ -27,15 +31,13 @@ namespace ManagedCode.Storage.FileSystem
                 Directory.CreateDirectory(_path);
             }
         }
-        
-        public void Dispose() { }
 
         #region Delete
 
         public async Task DeleteAsync(string blob, CancellationToken cancellationToken = default)
         {
             EnsureDirectoryExists();
-            
+
             await Task.Yield();
 
             var filePath = Path.Combine(_path, blob);
@@ -99,7 +101,7 @@ namespace ManagedCode.Storage.FileSystem
         public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
         {
             EnsureDirectoryExists();
-            
+
             var localFile = new LocalFile();
             var filePath = Path.Combine(_path, blob);
 
@@ -123,7 +125,7 @@ namespace ManagedCode.Storage.FileSystem
         public async Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
         {
             EnsureDirectoryExists();
-            
+
             await Task.Yield();
 
             var filePath = Path.Combine(_path, blob);
@@ -161,7 +163,7 @@ namespace ManagedCode.Storage.FileSystem
         public Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
         {
             EnsureDirectoryExists();
-            
+
             var fileInfo = new FileInfo(Path.Combine(_path, blob));
 
             if (fileInfo.Exists)
@@ -198,7 +200,7 @@ namespace ManagedCode.Storage.FileSystem
         #endregion
 
         #region Upload
-        
+
         public async Task UploadStreamAsync(string blob, Stream dataStream, CancellationToken cancellationToken = default)
         {
             EnsureDirectoryExists();
@@ -225,7 +227,7 @@ namespace ManagedCode.Storage.FileSystem
             var filePath = Path.Combine(_path, blob);
             await File.WriteAllTextAsync(filePath, content, cancellationToken);
         }
-        
+
         public Task UploadStreamAsync(Blob blob, Stream dataStream, CancellationToken cancellationToken = default)
         {
             return UploadStreamAsync(blob.Name, dataStream, cancellationToken);
@@ -248,6 +250,7 @@ namespace ManagedCode.Storage.FileSystem
 
             await File.WriteAllBytesAsync(filePath, data, cancellationToken);
         }
+
         #endregion
     }
 }

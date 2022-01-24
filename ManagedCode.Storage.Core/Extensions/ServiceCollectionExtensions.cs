@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using ManagedCode.Storage.Core.Builders;
+﻿using ManagedCode.Storage.Core.Builders;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Core.Extensions
 {

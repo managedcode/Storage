@@ -1,15 +1,15 @@
 ﻿using System;
-using Microsoft.Extensions.DependencyInjection;
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Builders;
 using ManagedCode.Storage.Core.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Aws.Builders
 {
     public class AWSProviderBuilder : ProviderBuilder
     {
-        private AuthOptions _authOptions;
+        private readonly AuthOptions _authOptions;
 
         public AWSProviderBuilder(
             IServiceCollection serviceCollection,
@@ -19,7 +19,7 @@ namespace ManagedCode.Storage.Aws.Builders
         }
 
         public AWSProviderBuilder Add<TAWSStorage>(Action<BucketOptions> action)
-            where TAWSStorage : IBlobStorage
+            where TAWSStorage : IStorage
         {
             var bucketOptions = new BucketOptions();
             action.Invoke(bucketOptions);

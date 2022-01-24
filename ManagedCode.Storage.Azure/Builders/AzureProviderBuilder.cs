@@ -1,36 +1,36 @@
 ﻿using System;
-using Microsoft.Extensions.DependencyInjection;
 using ManagedCode.Storage.Azure.Options;
+using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Builders;
 using ManagedCode.Storage.Core.Helpers;
-using ManagedCode.Storage.Core;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Azure.Builders
 {
     public class AzureProviderBuilder : ProviderBuilder
     {
-        private string _connectionString { get; set; }
-
         public AzureProviderBuilder(
-            IServiceCollection serviceCollection, 
-            string connectionString) : base(serviceCollection) 
+            IServiceCollection serviceCollection,
+            string connectionString) : base(serviceCollection)
         {
             _connectionString = connectionString;
         }
 
+        private string _connectionString { get; }
+
         public AzureProviderBuilder Add<TAzureStorage>(Action<ContainerOptions> action)
-            where TAzureStorage : IBlobStorage
+            where TAzureStorage : IStorage
         {
             var containerOptions = new ContainerOptions();
             action.Invoke(containerOptions);
 
             var storageOptions = new StorageOptions
-            { 
+            {
                 ConnectionString = _connectionString,
                 Container = containerOptions.Container
             };
 
-            var implementationType = TypeHelpers.GetImplementationType<TAzureStorage, AzureBlobStorage, StorageOptions>();
+            var implementationType = TypeHelpers.GetImplementationType<TAzureStorage, AzureStorage, StorageOptions>();
             ServiceCollection.AddScoped(typeof(TAzureStorage), x => Activator.CreateInstance(implementationType, storageOptions));
 
             return this;

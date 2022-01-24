@@ -14,10 +14,10 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Aws
 {
-    public class AWSStorage : IBlobStorage
+    public class AWSStorage : IStorage
     {
-        private readonly IAmazonS3 _s3Client;
         private readonly string _bucket;
+        private readonly IAmazonS3 _s3Client;
 
         public AWSStorage(StorageOptions options)
         {
@@ -26,13 +26,15 @@ namespace ManagedCode.Storage.Aws
             var config = new AmazonS3Config
             {
                 ServiceURL = Constants.ServiceUrl,
-                Timeout = ClientConfig.MaxTimeout,
+                Timeout = ClientConfig.MaxTimeout
             };
 
             _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
 
         #region Delete
 
@@ -190,7 +192,7 @@ namespace ManagedCode.Storage.Aws
             {
                 var objectsResponse = await _s3Client.ListObjectsAsync(objectsRequest);
 
-                foreach (S3Object entry in objectsResponse.S3Objects)
+                foreach (var entry in objectsResponse.S3Objects)
                 {
                     var objectMetaRequest = new GetObjectMetadataRequest
                     {
@@ -228,7 +230,7 @@ namespace ManagedCode.Storage.Aws
         }
 
         public async IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs,
-             [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             foreach (var blob in blobs)
             {

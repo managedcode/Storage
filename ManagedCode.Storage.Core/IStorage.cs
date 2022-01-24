@@ -7,7 +7,7 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core
 {
-    public interface IBlobStorage : IDisposable
+    public interface IStorage : IDisposable
     {
         IAsyncEnumerable<Blob> GetBlobListAsync(CancellationToken cancellationToken = default);
         IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default);
@@ -25,12 +25,12 @@ namespace ManagedCode.Storage.Core
         Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default);
         Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default);
         Task<LocalFile> DownloadAsync(Blob blob, CancellationToken cancellationToken = default);
-        
+
         Task DeleteAsync(string blob, CancellationToken cancellationToken = default);
         Task DeleteAsync(Blob blob, CancellationToken cancellationToken = default);
         Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default);
         Task DeleteAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default);
-        
+
         Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default);
         Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default);
         IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default);

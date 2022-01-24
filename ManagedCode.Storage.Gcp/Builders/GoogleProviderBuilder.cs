@@ -1,16 +1,16 @@
 ﻿using System;
-using Microsoft.Extensions.DependencyInjection;
 using Google.Apis.Auth.OAuth2;
-using ManagedCode.Storage.Core.Builders;
-using ManagedCode.Storage.Gcp.Options;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Builders;
 using ManagedCode.Storage.Core.Helpers;
+using ManagedCode.Storage.Gcp.Options;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Gcp.Builders
 {
     public class GoogleProviderBuilder : ProviderBuilder
     {
-        private GoogleCredential _googleCredential;
+        private readonly GoogleCredential _googleCredential;
 
         public GoogleProviderBuilder(
             IServiceCollection serviceCollection,
@@ -20,7 +20,7 @@ namespace ManagedCode.Storage.Gcp.Builders
         }
 
         public GoogleProviderBuilder Add<TGoogleStorage>(Action<BucketOptions> action)
-            where TGoogleStorage : IBlobStorage
+            where TGoogleStorage : IStorage
         {
             var bucketOptions = new BucketOptions();
             action.Invoke(bucketOptions);

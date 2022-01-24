@@ -1,8 +1,7 @@
 ﻿using ManagedCode.Storage.Core;
 
-namespace ManagedCode.Storage.Tests
+namespace ManagedCode.Storage.Tests;
+
+public interface IDocumentStorage : IStorage
 {
-    public interface IDocumentStorage : IBlobStorage
-    {
-    }
 }

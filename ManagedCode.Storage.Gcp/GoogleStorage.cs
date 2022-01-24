@@ -1,7 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ using ManagedCode.Storage.Gcp.Options;
 
 namespace ManagedCode.Storage.Gcp
 {
-    public class GoogleStorage : IBlobStorage
+    public class GoogleStorage : IStorage
     {
         private readonly string _bucket;
         private readonly StorageClient _storageClient;
@@ -27,11 +28,14 @@ namespace ManagedCode.Storage.Gcp
             {
                 _storageClient.CreateBucket(storageOptions.BucketOptions.ProjectId, _bucket);
             }
-            catch 
-            { }
+            catch
+            {
+            }
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
 
         #region Delete
 
@@ -84,9 +88,9 @@ namespace ManagedCode.Storage.Gcp
         {
             var localFile = new LocalFile();
 
-            await _storageClient.DownloadObjectAsync(_bucket, blob, 
+            await _storageClient.DownloadObjectAsync(_bucket, blob,
                 localFile.FileStream, null, cancellationToken);
-            
+
             return localFile;
         }
 
@@ -119,7 +123,7 @@ namespace ManagedCode.Storage.Gcp
         }
 
         public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs,
-             [EnumeratorCancellation] CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             foreach (var blob in blobs)
             {
@@ -147,19 +151,19 @@ namespace ManagedCode.Storage.Gcp
             return new Blob
             {
                 Name = obj.Name,
-                Uri = new System.Uri(obj.MediaLink)
+                Uri = new Uri(obj.MediaLink)
             };
         }
 
         public IAsyncEnumerable<Blob> GetBlobListAsync(CancellationToken cancellationToken = default)
         {
-            return _storageClient.ListObjectsAsync(_bucket, string.Empty, 
-                new ListObjectsOptions { Projection = Projection.Full })
+            return _storageClient.ListObjectsAsync(_bucket, string.Empty,
+                    new ListObjectsOptions { Projection = Projection.Full })
                 .Select(
                     x => new Blob
                     {
                         Name = x.Name,
-                        Uri = new System.Uri(x.MediaLink)
+                        Uri = new Uri(x.MediaLink)
                     }
                 );
         }
@@ -181,7 +185,7 @@ namespace ManagedCode.Storage.Gcp
         {
             await _storageClient.UploadObjectAsync(_bucket, blob, null, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
         }
-        
+
         public async Task UploadStreamAsync(string blob, Stream dataStream, CancellationToken cancellationToken = default)
         {
             await _storageClient.UploadObjectAsync(_bucket, blob, null, dataStream, null, cancellationToken);
@@ -207,7 +211,7 @@ namespace ManagedCode.Storage.Gcp
                 await UploadStreamAsync(blob, fs, cancellationToken);
             }
         }
-        
+
         public async Task UploadAsync(Blob blob, string content, CancellationToken cancellationToken = default)
         {
             await UploadAsync(blob.Name, content, cancellationToken);

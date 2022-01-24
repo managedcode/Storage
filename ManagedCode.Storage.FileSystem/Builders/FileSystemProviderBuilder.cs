@@ -1,16 +1,14 @@
 ﻿using System;
-using Microsoft.Extensions.DependencyInjection;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Builders;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.FileSystem.Options;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.FileSystem.Builders
 {
     public class FileSystemProviderBuilder : ProviderBuilder
     {
-        private string _commonPath { get; set; }
-
         public FileSystemProviderBuilder(
             IServiceCollection serviceCollection,
             string commonPath) : base(serviceCollection)
@@ -18,8 +16,10 @@ namespace ManagedCode.Storage.FileSystem.Builders
             _commonPath = commonPath;
         }
 
+        private string _commonPath { get; }
+
         public FileSystemProviderBuilder Add<TFileStorage>(Action<PathOptions> action)
-            where TFileStorage : IBlobStorage
+            where TFileStorage : IStorage
         {
             var pathOptions = new PathOptions();
             action.Invoke(pathOptions);
