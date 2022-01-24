@@ -2,18 +2,24 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <LangVersion>9</LangVersion>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <LangVersion>latest</LangVersion>
+
         <DebugType>embedded</DebugType>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        <Title>ManagedCode.Storage.Gcp</Title>
+
         <Authors>ManagedCode</Authors>
-        <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
-        <PackageVersion>0.0.1</PackageVersion>
+        <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
+        <RepositoryType>Github</RepositoryType>
+        <Product>Managed Storage</Product>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <Title>ManagedCode.Storage.AzureTable</Title>
         <Description>Storage for GCP</Description>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageVersion>0.0.1</PackageVersion>
+
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
@@ -21,10 +27,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
         <PackageReference Include="Google.Cloud.Storage.V1" Version="3.6.0"/>
         <PackageReference Include="Humanizer.Core" Version="2.13.14"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0"/>

@@ -1,0 +1,69 @@
+name: nuget
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+          
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+      
+    - name: Publish Storage.Core to NuGet
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ManagedCode.Storage.Core/ManagedCode.Storage.Core.csproj
+        VERSION_REGEX: ^\s*<PackageVersion>(.*)<\/PackageVersion>
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+ 
+    - name: Publish Storage.Aws to NuGet
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ManagedCode.Storage.Aws/ManagedCode.Storage.Aws.csproj
+        VERSION_REGEX: ^\s*<PackageVersion>(.*)<\/PackageVersion>
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+
+    - name: Publish Storage.Gcp to NuGet
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ManagedCode.Storage.Gcp/ManagedCode.Storage.Gcp.csproj
+        VERSION_REGEX: ^\s*<PackageVersion>(.*)<\/PackageVersion>
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+
+    - name: Publish Storage.Azure to NuGet
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ManagedCode.Storage.Azure/ManagedCode.Storage.Azure.csproj
+        VERSION_REGEX: ^\s*<PackageVersion>(.*)<\/PackageVersion>
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+
+    - name: Publish Storage.FileSystem to NuGet
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ManagedCode.Storage.FileSystem/ManagedCode.Storage.FileSystem.csproj
+        VERSION_REGEX: ^\s*<PackageVersion>(.*)<\/PackageVersion>
+        NUGET_KEY: ${{ secrets.NUGET_API_KEY }}                
+
+
+      
+ 
+        
+        
+        
+        
+        
+        
