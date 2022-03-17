@@ -1,7 +1,6 @@
-﻿namespace ManagedCode.Storage.Azure.Options
+﻿namespace ManagedCode.Storage.Azure.Options;
+
+public class ContainerOptions
 {
-    public class ContainerOptions
-    {
-        public string Container { get; set; }
-    }
+    public string Container { get; set; }
 }

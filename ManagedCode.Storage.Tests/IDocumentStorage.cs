@@ -5,8 +5,3 @@ namespace ManagedCode.Storage.Tests;
 public interface IDocumentStorage : IStorage
 {
 }
-
-
-public interface IPhotoStorage : IStorage
-{
-}

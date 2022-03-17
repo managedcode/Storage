@@ -26,7 +26,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
+        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath=""/>
     </ItemGroup>
 
     <ItemGroup>
@@ -34,7 +34,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
         <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0"/>
         <PackageReference Include="Humanizer.Core" Version="2.13.14"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0"/>

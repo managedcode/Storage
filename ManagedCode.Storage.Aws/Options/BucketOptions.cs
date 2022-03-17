@@ -1,7 +1,6 @@
-﻿namespace ManagedCode.Storage.Aws.Options
+﻿namespace ManagedCode.Storage.Aws.Options;
+
+public class BucketOptions
 {
-    public class BucketOptions
-    {
-        public string Bucket { get; set; }
-    }
+    public string Bucket { get; set; }
 }

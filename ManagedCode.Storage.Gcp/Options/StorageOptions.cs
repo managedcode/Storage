@@ -1,10 +1,9 @@
 ﻿using Google.Apis.Auth.OAuth2;
 
-namespace ManagedCode.Storage.Gcp.Options
+namespace ManagedCode.Storage.Gcp.Options;
+
+public class StorageOptions
 {
-    public class StorageOptions
-    {
-        public GoogleCredential GoogleCredential { get; set; }
-        public BucketOptions BucketOptions { get; set; }
-    }
+    public GoogleCredential GoogleCredential { get; set; }
+    public BucketOptions BucketOptions { get; set; }
 }

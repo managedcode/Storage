@@ -1,97 +1,90 @@
 ﻿using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.Core.Extensions;
 using ManagedCode.Storage.FileSystem.Extensions;
 using Microsoft.Extensions.DependencyInjection;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.FileSystem
+namespace ManagedCode.Storage.Tests.FileSystem;
+
+public class FileSystemTests
 {
-    public class FileSystemTests
+    private readonly IDocumentStorage _documentStorage;
+    private readonly IPhotoStorage _photoStorage;
+    private readonly string _testDirectory;
+
+    public FileSystemTests()
     {
-        private IPhotoStorage _photoStorage;
-        private IDocumentStorage _documentStorage;
-        private string _testDirectory;
+        var services = new ServiceCollection();
 
-        public FileSystemTests()
-        {
-            var services = new ServiceCollection();
+        _testDirectory = Path.Combine(Environment.CurrentDirectory, "my_tests_files");
 
-            _testDirectory = Path.Combine(Environment.CurrentDirectory, "my_tests_files");
-            
-            services.AddManagedCodeStorage()
-                .AddFileSystemStorage(opt =>
-                {
-                    opt.Path = _testDirectory;
-                })
-                    .Add<IDocumentStorage>(opt =>
-                    {
-                        opt.Path = "documents";
-                    });
+        services.AddManagedCodeStorage()
+            .AddFileSystemStorage(opt => { opt.Path = _testDirectory; })
+            .Add<IDocumentStorage>(opt => { opt.Path = "documents"; });
 
-            var provider = services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
 
-            _photoStorage = provider.GetService<IPhotoStorage>();
-            _documentStorage = provider.GetService<IDocumentStorage>();
-        }
+        _photoStorage = provider.GetService<IPhotoStorage>();
+        _documentStorage = provider.GetService<IDocumentStorage>();
+    }
 
-        [Fact]
-        public void WhenDIInitialized()
-        {
-            _photoStorage.Should().NotBeNull();
-            _documentStorage.Should().NotBeNull();
-        }
+    [Fact]
+    public void WhenDIInitialized()
+    {
+        _photoStorage.Should().NotBeNull();
+        _documentStorage.Should().NotBeNull();
+    }
 
-        [Fact]
-        public async Task WhenSingleBlobExistsIsCalled()
-        {
-            var result = await _documentStorage.ExistsAsync("random.txt");
-            result.Should().BeFalse();
-        }
+    [Fact]
+    public async Task WhenSingleBlobExistsIsCalled()
+    {
+        var result = await _documentStorage.ExistsAsync("random.txt");
+        result.Should().BeFalse();
+    }
 
-        [Fact]
-        public async Task WhenDownloadAsyncIsCalled()
-        {
-            await _documentStorage.UploadAsync("a.txt", "test content for a.txt");
-            var stream = await _documentStorage.DownloadAsStreamAsync("a.txt");
-            stream.Seek(0, SeekOrigin.Begin);
-            using var sr = new StreamReader(stream, Encoding.UTF8);
+    [Fact]
+    public async Task WhenDownloadAsyncIsCalled()
+    {
+        await _documentStorage.UploadAsync("a.txt", "test content for a.txt");
+        var stream = await _documentStorage.DownloadAsStreamAsync("a.txt");
+        stream.Seek(0, SeekOrigin.Begin);
+        using var sr = new StreamReader(stream, Encoding.UTF8);
 
-            string content = await sr.ReadToEndAsync();
+        var content = await sr.ReadToEndAsync();
 
-            content.Should().NotBeNull();
-        }
+        content.Should().NotBeNull();
+    }
 
-        [Fact]
-        public async Task WhenDownloadAsyncToFileIsCalled()
-        {
-            await _documentStorage.UploadAsync("a1.txt", "test content for a1.txt");
-            var tempFile = await _documentStorage.DownloadAsync("a1.txt");
-            using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
+    [Fact]
+    public async Task WhenDownloadAsyncToFileIsCalled()
+    {
+        await _documentStorage.UploadAsync("a1.txt", "test content for a1.txt");
+        var tempFile = await _documentStorage.DownloadAsync("a1.txt");
+        using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
 
-            string content = await sr.ReadToEndAsync();
+        var content = await sr.ReadToEndAsync();
 
-            content.Should().NotBeNull();
-        }
+        content.Should().NotBeNull();
+    }
 
-        [Fact]
-        public async Task WhenUploadAsyncIsCalled()
-        {
-            var lineToUpload = "some text";
+    [Fact]
+    public async Task WhenUploadAsyncIsCalled()
+    {
+        var lineToUpload = "some text";
 
-            var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
-            var stream = new MemoryStream(byteArray);
+        var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
+        var stream = new MemoryStream(byteArray);
 
-            await _documentStorage.UploadStreamAsync("b.txt", stream);
-        }
+        await _documentStorage.UploadStreamAsync("b.txt", stream);
+    }
 
-        [Fact]
-        public async Task WhenDeleteAsyncIsCalled()
-        {
-            await _documentStorage.DeleteAsync("a.txt");
-        }
+    [Fact]
+    public async Task WhenDeleteAsyncIsCalled()
+    {
+        await _documentStorage.DeleteAsync("a.txt");
     }
 }

@@ -17,7 +17,7 @@
         <Product>Managed Storage</Product>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
         <Title>ManagedCode.Storage.Core</Title>
-        <Description>Storage </Description>
+        <Description>Storage</Description>
         <PackageVersion>0.0.1</PackageVersion>
     </PropertyGroup>
 
@@ -26,11 +26,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
+        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath=""/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0"/>
     </ItemGroup>

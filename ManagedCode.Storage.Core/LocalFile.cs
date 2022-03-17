@@ -2,141 +2,140 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ManagedCode.Storage.Core
+namespace ManagedCode.Storage.Core;
+
+public class LocalFile : IDisposable, IAsyncDisposable
 {
-    public class LocalFile : IDisposable, IAsyncDisposable
+    private readonly object _lockObject = new();
+    private bool _disposed;
+    private FileStream _stream;
+
+    public LocalFile(bool keepAlive = false) : this(Path.GetTempFileName(), keepAlive)
     {
-        private readonly object _lockObject = new();
-        private bool _disposed;
-        private FileStream _stream;
+    }
 
-        public LocalFile(bool keepAlive = false) : this(Path.GetTempFileName(), keepAlive)
+    public LocalFile(string path, bool keepAlive = false)
+    {
+        string directory;
+        KeepAlive = keepAlive;
+
+        if (string.IsNullOrEmpty(Path.GetExtension(path)))
         {
+            directory = path;
+            var tempName = Guid.NewGuid().ToString("N");
+            FilePath = Path.Combine(path, $"{tempName}.tmp");
+        }
+        else
+        {
+            directory = Path.GetDirectoryName(path);
+            FilePath = path;
         }
 
-        public LocalFile(string path, bool keepAlive = false)
+        if (!Directory.Exists(directory))
         {
-            string directory;
-            KeepAlive = keepAlive;
-
-            if (string.IsNullOrEmpty(Path.GetExtension(path)))
-            {
-                directory = path;
-                var tempName = Guid.NewGuid().ToString("N");
-                FilePath = Path.Combine(path, $"{tempName}.tmp");
-            }
-            else
-            {
-                directory = Path.GetDirectoryName(path);
-                FilePath = path;
-            }
-
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory ?? throw new InvalidOperationException());
-            }
-
-            if (!File.Exists(FilePath))
-            {
-                File.Create(FilePath);
-            }
-
-            FileName = FileInfo.Name;
+            Directory.CreateDirectory(directory ?? throw new InvalidOperationException());
         }
 
-        public string FilePath { get; }
-
-        public string FileName { get; }
-
-        public bool KeepAlive { get; set; }
-
-        public FileInfo FileInfo => new(FilePath);
-
-        public FileStream FileStream
+        if (!File.Exists(FilePath))
         {
-            get
-            {
-                lock (_lockObject)
-                {
-                    CloseFileStream();
-
-                    if (_disposed)
-                    {
-                        throw new ObjectDisposedException(FilePath);
-                    }
-
-                    if (!FileInfo.Exists)
-                    {
-                        throw new FileNotFoundException(FilePath);
-                    }
-
-                    _stream = new FileStream(FilePath, FileMode.Open, FileAccess.ReadWrite);
-                    return _stream;
-                }
-            }
+            File.Create(FilePath);
         }
 
-        public ValueTask DisposeAsync()
-        {
-            return new ValueTask(Task.Run(Dispose));
-        }
+        FileName = FileInfo.Name;
+    }
 
-        public void Dispose()
-        {
-            if (_disposed)
-            {
-                return;
-            }
+    public string FilePath { get; }
 
-            lock (_lockObject)
-            {
-                try
-                {
-                    CloseFileStream();
+    public string FileName { get; }
 
-                    if (KeepAlive)
-                    {
-                        return;
-                    }
+    public bool KeepAlive { get; set; }
 
-                    if (File.Exists(FilePath))
-                    {
-                        File.Delete(FilePath);
-                    }
-                }
-                finally
-                {
-                    _disposed = true;
-                }
-            }
-        }
+    public FileInfo FileInfo => new(FilePath);
 
-        ~LocalFile()
-        {
-            Dispose();
-        }
-
-        private void CloseFileStream()
-        {
-            _stream?.Dispose();
-            _stream = null;
-        }
-
-        public void Close()
+    public FileStream FileStream
+    {
+        get
         {
             lock (_lockObject)
             {
                 CloseFileStream();
+
+                if (_disposed)
+                {
+                    throw new ObjectDisposedException(FilePath);
+                }
+
+                if (!FileInfo.Exists)
+                {
+                    throw new FileNotFoundException(FilePath);
+                }
+
+                _stream = new FileStream(FilePath, FileMode.Open, FileAccess.ReadWrite);
+                return _stream;
             }
         }
+    }
 
-        public static async Task<LocalFile> FromStream(Stream stream)
+    public ValueTask DisposeAsync()
+    {
+        return new ValueTask(Task.Run(Dispose));
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
         {
-            var file = new LocalFile();
-            await stream.CopyToAsync(file.FileStream);
-            await file.FileStream.DisposeAsync();
-            file.Close();
-            return file;
+            return;
         }
+
+        lock (_lockObject)
+        {
+            try
+            {
+                CloseFileStream();
+
+                if (KeepAlive)
+                {
+                    return;
+                }
+
+                if (File.Exists(FilePath))
+                {
+                    File.Delete(FilePath);
+                }
+            }
+            finally
+            {
+                _disposed = true;
+            }
+        }
+    }
+
+    ~LocalFile()
+    {
+        Dispose();
+    }
+
+    private void CloseFileStream()
+    {
+        _stream?.Dispose();
+        _stream = null;
+    }
+
+    public void Close()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+        }
+    }
+
+    public static async Task<LocalFile> FromStream(Stream stream)
+    {
+        var file = new LocalFile();
+        await stream.CopyToAsync(file.FileStream);
+        await file.FileStream.DisposeAsync();
+        file.Close();
+        return file;
     }
 }

@@ -1,7 +1,6 @@
-﻿namespace ManagedCode.Storage.Aws
+﻿namespace ManagedCode.Storage.Aws;
+
+public static class Constants
 {
-    public static class Constants
-    {
-        public const string ServiceUrl = "https://s3.amazonaws.com";
-    }
+    public const string ServiceUrl = "https://s3.amazonaws.com";
 }

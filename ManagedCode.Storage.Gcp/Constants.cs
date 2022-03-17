@@ -1,8 +1,7 @@
-﻿namespace ManagedCode.Storage.Gcp
+﻿namespace ManagedCode.Storage.Gcp;
+
+public static class Constants
 {
-    public static class Constants
-    {
-        private const string ContentType = "application/octet-stream";
-        private const string NameRegex = @"(?<Container>[^/]+)/(?<Blob>.+)";
-    }
+    private const string ContentType = "application/octet-stream";
+    private const string NameRegex = @"(?<Container>[^/]+)/(?<Blob>.+)";
 }

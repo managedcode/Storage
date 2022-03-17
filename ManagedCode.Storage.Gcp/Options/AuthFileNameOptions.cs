@@ -1,7 +1,6 @@
-﻿namespace ManagedCode.Storage.Gcp.Options
+﻿namespace ManagedCode.Storage.Gcp.Options;
+
+public class AuthFileNameOptions
 {
-    public class AuthFileNameOptions
-    {
-        public string FileName { get; set; }
-    }
+    public string FileName { get; set; }
 }

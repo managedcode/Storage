@@ -6,35 +6,34 @@ using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Gcp.Options;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ManagedCode.Storage.Gcp.Builders
+namespace ManagedCode.Storage.Gcp.Builders;
+
+public class GoogleProviderBuilder : ProviderBuilder
 {
-    public class GoogleProviderBuilder : ProviderBuilder
+    private readonly GoogleCredential _googleCredential;
+
+    public GoogleProviderBuilder(
+        IServiceCollection serviceCollection,
+        GoogleCredential googleCredential) : base(serviceCollection)
     {
-        private readonly GoogleCredential _googleCredential;
+        _googleCredential = googleCredential;
+    }
 
-        public GoogleProviderBuilder(
-            IServiceCollection serviceCollection,
-            GoogleCredential googleCredential) : base(serviceCollection)
+    public GoogleProviderBuilder Add<TGoogleStorage>(Action<BucketOptions> action)
+        where TGoogleStorage : IStorage
+    {
+        var bucketOptions = new BucketOptions();
+        action.Invoke(bucketOptions);
+
+        var storageOptions = new StorageOptions
         {
-            _googleCredential = googleCredential;
-        }
+            GoogleCredential = _googleCredential,
+            BucketOptions = bucketOptions
+        };
 
-        public GoogleProviderBuilder Add<TGoogleStorage>(Action<BucketOptions> action)
-            where TGoogleStorage : IStorage
-        {
-            var bucketOptions = new BucketOptions();
-            action.Invoke(bucketOptions);
+        var implementationType = TypeHelpers.GetImplementationType<TGoogleStorage, GoogleStorage, StorageOptions>();
+        ServiceCollection.AddScoped(typeof(TGoogleStorage), x => Activator.CreateInstance(implementationType, storageOptions));
 
-            var storageOptions = new StorageOptions
-            {
-                GoogleCredential = _googleCredential,
-                BucketOptions = bucketOptions
-            };
-
-            var implementationType = TypeHelpers.GetImplementationType<TGoogleStorage, GoogleStorage, StorageOptions>();
-            ServiceCollection.AddScoped(typeof(TGoogleStorage), x => Activator.CreateInstance(implementationType, storageOptions));
-
-            return this;
-        }
+        return this;
     }
 }
