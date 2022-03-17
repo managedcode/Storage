@@ -21,8 +21,9 @@ public class AzureStorageTests
         services.AddManagedCodeStorage()
             .AddAzureBlobStorage(opt =>
             {
+                //https://github.com/marketplace/actions/azuright
                 opt.ConnectionString =
-                    "DefaultEndpointsProtocol=https;AccountName=storagestudying;AccountKey=4Y4IBrITEoWYMGe0gNju9wvUQrWi//1VvPIDN2dYWccWKy9uuKWnMBXxQlmcy3Q9UIU70ZJiy8ULD9QITxyeTQ==;EndpointSuffix=core.windows.net";
+                    "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;";
             })
             .Add<IDocumentStorage>(opt => { opt.Container = "documents"; });
 
