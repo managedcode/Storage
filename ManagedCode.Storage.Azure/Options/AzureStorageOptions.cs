@@ -1,7 +1,11 @@
-﻿namespace ManagedCode.Storage.Azure.Options;
+﻿using Azure.Storage.Blobs.Models;
+
+namespace ManagedCode.Storage.Azure.Options;
 
 public class AzureStorageOptions
 {
     public string ConnectionString { get; set; }
     public string Container { get; set; }
+    public bool ShouldCreateIfNotExists { get; set; }
+    public PublicAccessType PublicAccessType { get; set; }
 }

@@ -16,14 +16,19 @@ public class AzureStorage : IAzureStorage
 {
     private readonly BlobContainerClient _blobContainerClient;
 
-    public AzureStorage(AzureStorageOptions connectionOptions)
+    public AzureStorage(AzureStorageOptions options)
     {
         _blobContainerClient = new BlobContainerClient(
-            connectionOptions.ConnectionString,
-            connectionOptions.Container
+            options.ConnectionString,
+            options.Container
         );
 
-        _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
+        if (options.ShouldCreateIfNotExists)
+        {
+            _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
+        }
+
+        _blobContainerClient.SetAccessPolicy(options.PublicAccessType);
     }
 
     public void Dispose()
