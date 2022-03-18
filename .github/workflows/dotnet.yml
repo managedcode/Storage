@@ -15,15 +15,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     services:
-      localstack:
+      myapp.s3:
         image: localstack/localstack:latest
-        env:
-          SERVICES: s3 #cloudformation,iam,sts,ssm,s3,cloudwatch,cloudwatch-logs,lambda,dynamodb,apigateway
-          DEFAULT_REGION: eu-west-1
-          AWS_ACCESS_KEY_ID: localkey
-          AWS_SECRET_ACCESS_KEY: localsecret
+        container_name: "myapp-localstack"
         ports:
-          - 4566:4566
+          - "14566:4566"
+        environment:
+          - SERVICES=s3
+          - DEFAULT_REGION=eu-west-1
+          - AWS_REGION=us-west-1
+          - DEBUG=1
+        user: root
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET
@@ -46,3 +48,5 @@ jobs:
         DEFAULT_REGION: eu-west-1
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
+
+
