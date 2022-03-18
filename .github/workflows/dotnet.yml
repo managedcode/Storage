@@ -19,11 +19,17 @@ jobs:
         image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
-      s3mock:
-        image: fadobe/s3mock:latest
+      localstack:
+        image: localstack/localstack:latest
         ports:
-          - 9090:9090
-          - 9191:9191
+          - '4563-4599:4563-4599'
+          - '8055:8080'
+        env:
+          SERVICES: s3
+          DEBUG: 1
+          DATA_DIR: /tmp/localstack/data
+        volumes:
+          - './.localstack:/tmp/localstack'
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET
