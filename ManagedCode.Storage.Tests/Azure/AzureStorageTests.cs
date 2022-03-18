@@ -20,7 +20,7 @@ public class AzureStorageTests : StorageBaseTests
             opt.Container = "documents";
             //https://github.com/marketplace/actions/azuright
             opt.ConnectionString =
-                "DefaultEndpointsProtocol=https;AccountName=winktdev;AccountKey=F7F9vhS+SxgY8b0/mrGYZCV6QOoKwv8FqAHsDN/aZC4OPeyPhHS8OKRi3Uc9VIHcel5+oweEmRQs4Be+r0pFMg==;EndpointSuffix=core.windows.net";
+                "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;";
         });
 
         var provider = services.BuildServiceProvider();
