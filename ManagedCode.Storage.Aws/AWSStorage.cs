@@ -88,7 +88,8 @@ public class AWSStorage : IAWSStorage
 
         using (var stream = await DownloadAsStreamAsync(blob, cancellationToken))
         {
-            await stream.CopyToAsync(localFile.FileStream, cancellationToken);
+            // TODO: temporary added bufferSize
+            await stream.CopyToAsync(localFile.FileStream, 1024, cancellationToken);
         }
 
         return localFile;

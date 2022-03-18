@@ -15,13 +15,12 @@ public class AWSStorageTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        services.AddManagedCodeStorage()
-            .AddAWSStorage(opt =>
-            {
-                opt.PublicKey = "KEY";
-                opt.SecretKey = "SECRET";
-            })
-            .Add<IDocumentStorage>(opt => { opt.Bucket = "my-docs-1"; });
+        services.AddAWSStorage(opt =>
+        {
+            opt.PublicKey = "KEY";
+            opt.SecretKey = "SECRET";
+            opt.Bucket = "my-docs-1";
+        });
 
         var provider = services.BuildServiceProvider();
 
