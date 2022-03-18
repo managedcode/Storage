@@ -20,7 +20,8 @@ public class AzureStorage : IAzureStorage
     {
         _blobContainerClient = new BlobContainerClient(
             options.ConnectionString,
-            options.Container
+            options.Container,
+            options.OriginalOptions
         );
 
         if (options.ShouldCreateIfNotExists)

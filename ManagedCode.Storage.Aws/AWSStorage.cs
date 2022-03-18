@@ -23,11 +23,10 @@ public class AWSStorage : IAWSStorage
     {
         _bucket = options.Bucket;
 
-        var config = new AmazonS3Config
+        var config = options.OriginalOptions ?? new AmazonS3Config
         {
             ServiceURL = Constants.ServiceUrl,
             Timeout = ClientConfig.MaxTimeout,
-            
         };
 
         _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
