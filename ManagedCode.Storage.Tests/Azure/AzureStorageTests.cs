@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.Azure;
-/*
+
 public class AzureStorageTests : StorageBaseTests
 {
     public AzureStorageTests()
@@ -20,7 +20,7 @@ public class AzureStorageTests : StorageBaseTests
             opt.Container = "documents";
             //https://github.com/marketplace/actions/azuright
             opt.ConnectionString =
-                "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;";
+                "DefaultEndpointsProtocol=https;AccountName=winktdev;AccountKey=F7F9vhS+SxgY8b0/mrGYZCV6QOoKwv8FqAHsDN/aZC4OPeyPhHS8OKRi3Uc9VIHcel5+oweEmRQs4Be+r0pFMg==;EndpointSuffix=core.windows.net";
         });
 
         var provider = services.BuildServiceProvider();
@@ -31,7 +31,7 @@ public class AzureStorageTests : StorageBaseTests
     [Fact]
     public async Task WhenSingleBlobExistsIsCalled()
     {
-        var result = await Storage.ExistsAsync("34.png");
+        var result = await Storage.ExistsAsync("b.txt");
 
         result.Should().BeTrue();
     }
@@ -39,7 +39,7 @@ public class AzureStorageTests : StorageBaseTests
     [Fact]
     public async Task WhenDownloadAsyncIsCalled()
     {
-        var stream = await Storage.DownloadAsStreamAsync("a.txt");
+        var stream = await Storage.DownloadAsStreamAsync("b.txt");
         using var sr = new StreamReader(stream, Encoding.UTF8);
 
         var content = sr.ReadToEnd();
@@ -50,7 +50,7 @@ public class AzureStorageTests : StorageBaseTests
     [Fact]
     public async Task WhenDownloadAsyncToFileIsCalled()
     {
-        var tempFile = await Storage.DownloadAsync("a.txt");
+        var tempFile = await Storage.DownloadAsync("b.txt");
         using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
 
         var content = sr.ReadToEnd();
@@ -72,6 +72,6 @@ public class AzureStorageTests : StorageBaseTests
     [Fact]
     public async Task WhenDeleteAsyncIsCalled()
     {
-        await Storage.DeleteAsync("a.txt");
+        await Storage.DeleteAsync("b.txt");
     }
-}*/
+}
