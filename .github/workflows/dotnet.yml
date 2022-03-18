@@ -25,12 +25,12 @@ jobs:
     - name: azuright
       uses: potatoqualitee/azuright@v1.1
       
-    - name: install localstack
-      run: python3 -m pip install localstack
-      shell: bash   
-    - name: install localstack
-      run: localstack start
-      shell: bash
+  #  - name: install localstack
+  #    run: python3 -m pip install localstack
+  #    shell: bash   
+  #  - name: localstack start
+  #    run: localstack start
+  #    shell: bash
       
 # setup cloud emulators             
     - name: Restore dependencies
