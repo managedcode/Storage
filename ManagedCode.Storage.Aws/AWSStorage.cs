@@ -31,8 +31,7 @@ public class AWSStorage : IAWSStorage
             RegionEndpoint = RegionEndpoint.EUWest1
         };
 
-       // _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
-       _s3Client = new AmazonS3Client();
+        _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
     }
 
     public void Dispose()
