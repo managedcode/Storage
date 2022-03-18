@@ -25,7 +25,7 @@ public class AWSStorageTests : StorageBaseTests
             opt.Bucket = "my-docs-1";
             opt.OriginalOptions = new AmazonS3Config
             {
-                ServiceURL = "127.0.0.1:4571",
+                ServiceURL = "127.0.0.1:4510",
                 RegionEndpoint = RegionEndpoint.EUWest1,
                 ForcePathStyle = true,
                 UseHttp = true,
@@ -55,7 +55,7 @@ public class AWSStorageTests : StorageBaseTests
         var stream = await Storage.DownloadAsStreamAsync("a.txt");
         using var sr = new StreamReader(stream, Encoding.UTF8);
 
-        var content = sr.ReadToEnd();
+        var content = await sr.ReadToEndAsync();
 
         content.Should().NotBeNull();
     }
