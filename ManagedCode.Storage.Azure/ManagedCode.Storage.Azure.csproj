@@ -19,6 +19,7 @@
         <Title>ManagedCode.Storage.Azure</Title>
         <Description>Storage for Azure</Description>
         <PackageVersion>0.0.1</PackageVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

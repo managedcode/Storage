@@ -26,7 +26,8 @@ public class AWSStorage : IAWSStorage
         var config = new AmazonS3Config
         {
             ServiceURL = Constants.ServiceUrl,
-            Timeout = ClientConfig.MaxTimeout
+            Timeout = ClientConfig.MaxTimeout,
+            
         };
 
         _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
@@ -88,8 +89,7 @@ public class AWSStorage : IAWSStorage
 
         using (var stream = await DownloadAsStreamAsync(blob, cancellationToken))
         {
-            // TODO: temporary added bufferSize
-            await stream.CopyToAsync(localFile.FileStream, 1024, cancellationToken);
+            await stream.CopyToAsync(localFile.FileStream, 81920, cancellationToken);
         }
 
         return localFile;

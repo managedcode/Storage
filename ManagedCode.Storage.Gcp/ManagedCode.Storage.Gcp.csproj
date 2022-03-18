@@ -19,6 +19,7 @@
         <Title>ManagedCode.Storage.AzureTable</Title>
         <Description>Storage for GCP</Description>
         <PackageVersion>0.0.1</PackageVersion>
+        <Nullable>enable</Nullable>
 
     </PropertyGroup>
 

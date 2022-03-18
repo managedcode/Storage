@@ -19,6 +19,7 @@
         <Title>ManagedCode.Storage.FileSystem</Title>
         <Description>Storage for FileSystem</Description>
         <PackageVersion>0.0.1</PackageVersion>
+        <Nullable>enable</Nullable>
 
     </PropertyGroup>
 

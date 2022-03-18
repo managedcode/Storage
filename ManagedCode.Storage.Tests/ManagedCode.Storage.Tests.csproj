@@ -5,6 +5,7 @@
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <IsPackable>false</IsPackable>
         <LangVersion>10</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
