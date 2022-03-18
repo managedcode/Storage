@@ -14,7 +14,7 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Aws;
 
-public class AWSStorage : IStorage
+public class AWSStorage : IAWSStorage
 {
     private readonly string _bucket;
     private readonly IAmazonS3 _s3Client;
@@ -209,7 +209,8 @@ public class AWSStorage : IStorage
                 };
 
                 var objectAclResponse = await _s3Client.GetACLAsync(objectAclRequest);
-                var isPublic = objectAclResponse.AccessControlList.Grants.Any(x => x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
+                var isPublic = objectAclResponse.AccessControlList.Grants.Any(x =>
+                    x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
 
                 yield return new BlobMetadata
                 {

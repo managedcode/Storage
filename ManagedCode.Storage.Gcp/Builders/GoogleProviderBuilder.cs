@@ -31,7 +31,7 @@ public class GoogleProviderBuilder : ProviderBuilder
             BucketOptions = bucketOptions
         };
 
-        var implementationType = TypeHelpers.GetImplementationType<TGoogleStorage, GoogleStorage, GCPStorageOptions>();
+        var implementationType = TypeHelpers.GetImplementationType<TGoogleStorage, GCPStorage, GCPStorageOptions>();
         ServiceCollection.AddScoped(typeof(TGoogleStorage), x => Activator.CreateInstance(implementationType, storageOptions));
 
         return this;

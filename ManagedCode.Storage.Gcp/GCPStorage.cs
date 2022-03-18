@@ -14,12 +14,12 @@ using ManagedCode.Storage.Gcp.Options;
 
 namespace ManagedCode.Storage.Gcp;
 
-public class GoogleStorage : IStorage
+public class GCPStorage : IGCPStorage
 {
     private readonly string _bucket;
     private readonly StorageClient _storageClient;
 
-    public GoogleStorage(GCPStorageOptions gcpStorageOptions)
+    public GCPStorage(GCPStorageOptions gcpStorageOptions)
     {
         _bucket = gcpStorageOptions.BucketOptions.Bucket;
         _storageClient = StorageClient.Create(gcpStorageOptions.GoogleCredential);
@@ -158,7 +158,7 @@ public class GoogleStorage : IStorage
     public IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default)
     {
         return _storageClient.ListObjectsAsync(_bucket, string.Empty,
-                new ListObjectsOptions { Projection = Projection.Full })
+                new ListObjectsOptions {Projection = Projection.Full})
             .Select(
                 x => new BlobMetadata
                 {

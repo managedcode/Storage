@@ -16,7 +16,7 @@ public class FileSystemProviderBuilder : ProviderBuilder
         _commonPath = commonPath;
     }
 
-    private string _commonPath { get; }
+    private readonly string _commonPath;
 
     public FileSystemProviderBuilder Add<TFileStorage>(Action<PathOptions> action)
         where TFileStorage : IStorage
@@ -24,13 +24,13 @@ public class FileSystemProviderBuilder : ProviderBuilder
         var pathOptions = new PathOptions();
         action.Invoke(pathOptions);
 
-        var storageOptions = new StorageOptions
+        var storageOptions = new FSStorageOptions
         {
             CommonPath = _commonPath,
             Path = pathOptions.Path
         };
 
-        var implementationType = TypeHelpers.GetImplementationType<TFileStorage, FileSystemStorage, StorageOptions>();
+        var implementationType = TypeHelpers.GetImplementationType<TFileStorage, FileSystemStorage, FSStorageOptions>();
         ServiceCollection.AddScoped(typeof(TFileStorage), x => Activator.CreateInstance(implementationType, storageOptions));
 
         return this;

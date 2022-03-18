@@ -10,13 +10,13 @@ using ManagedCode.Storage.FileSystem.Options;
 
 namespace ManagedCode.Storage.FileSystem;
 
-public class FileSystemStorage : IStorage
+public class FileSystemStorage : IFileSystemStorage
 {
     private readonly string _path;
 
-    public FileSystemStorage(StorageOptions storageOptions)
+    public FileSystemStorage(FSStorageOptions fsStorageOptions)
     {
-        _path = Path.Combine(storageOptions.CommonPath, storageOptions.Path);
+        _path = Path.Combine(fsStorageOptions.CommonPath, fsStorageOptions.Path);
         EnsureDirectoryExists();
     }
 

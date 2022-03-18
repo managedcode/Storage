@@ -12,7 +12,7 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Azure;
 
-public class AzureStorage : IStorage
+public class AzureStorage : IAzureStorage
 {
     private readonly BlobContainerClient _blobContainerClient;
 
