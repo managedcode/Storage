@@ -24,13 +24,13 @@ public class AzureProviderBuilder : ProviderBuilder
         var containerOptions = new ContainerOptions();
         action.Invoke(containerOptions);
 
-        var storageOptions = new StorageOptions
+        var storageOptions = new AzureStorageOptions
         {
             ConnectionString = _connectionString,
             Container = containerOptions.Container
         };
 
-        var implementationType = TypeHelpers.GetImplementationType<TAzureStorage, AzureStorage, StorageOptions>();
+        var implementationType = TypeHelpers.GetImplementationType<TAzureStorage, AzureStorage, AzureStorageOptions>();
         ServiceCollection.AddScoped(typeof(TAzureStorage), x => Activator.CreateInstance(implementationType, storageOptions));
 
         return this;

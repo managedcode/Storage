@@ -26,19 +26,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath=""/>
+        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
-        <PackageReference Include="AWSSDK.S3" Version="3.7.7.15"/>
-        <PackageReference Include="Humanizer.Core" Version="2.13.14"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0"/>
-        <PackageReference Include="System.Linq.Async" Version="5.1.0"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.7.15" />
+        <PackageReference Include="Humanizer.Core" Version="2.13.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+        <PackageReference Include="System.Linq.Async" Version="5.1.0" />
     </ItemGroup>
 
 

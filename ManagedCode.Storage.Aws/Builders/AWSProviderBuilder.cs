@@ -24,14 +24,14 @@ public class AWSProviderBuilder : ProviderBuilder
         var bucketOptions = new BucketOptions();
         action.Invoke(bucketOptions);
 
-        var storageOptions = new StorageOptions
+        var storageOptions = new AWSStorageOptions
         {
             PublicKey = _authOptions.PublicKey,
             SecretKey = _authOptions.SecretKey,
             Bucket = bucketOptions.Bucket
         };
 
-        var implementationType = TypeHelpers.GetImplementationType<TAWSStorage, AWSStorage, StorageOptions>();
+        var implementationType = TypeHelpers.GetImplementationType<TAWSStorage, AWSStorage, AWSStorageOptions>();
         ServiceCollection.AddScoped(typeof(TAWSStorage), x => Activator.CreateInstance(implementationType, storageOptions));
 
         return this;

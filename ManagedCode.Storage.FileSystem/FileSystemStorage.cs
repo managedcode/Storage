@@ -48,10 +48,10 @@ public class FileSystemStorage : IStorage
         }
     }
 
-    public async Task DeleteAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         EnsureDirectoryExists();
-        await DeleteAsync(blob.Name, cancellationToken);
+        await DeleteAsync(blobMetadata.Name, cancellationToken);
     }
 
     public async Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
@@ -62,7 +62,7 @@ public class FileSystemStorage : IStorage
         }
     }
 
-    public async Task DeleteAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobs, CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobs)
         {
@@ -93,9 +93,9 @@ public class FileSystemStorage : IStorage
         return memoryStream;
     }
 
-    public async Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await DownloadAsStreamAsync(blob.Name, cancellationToken);
+        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
     public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
@@ -113,9 +113,9 @@ public class FileSystemStorage : IStorage
         return localFile;
     }
 
-    public async Task<LocalFile> DownloadAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await DownloadAsync(blob.Name, cancellationToken);
+        return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
 
     #endregion
@@ -133,9 +133,9 @@ public class FileSystemStorage : IStorage
         return File.Exists(filePath);
     }
 
-    public async Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await ExistsAsync(blob.Name, cancellationToken);
+        return await ExistsAsync(blobMetadata.Name, cancellationToken);
     }
 
     public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs,
@@ -147,7 +147,7 @@ public class FileSystemStorage : IStorage
         }
     }
 
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs,
+    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobs)
@@ -160,7 +160,7 @@ public class FileSystemStorage : IStorage
 
     #region Get
 
-    public Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
+    public Task<BlobMetadata> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
     {
         EnsureDirectoryExists();
 
@@ -168,7 +168,7 @@ public class FileSystemStorage : IStorage
 
         if (fileInfo.Exists)
         {
-            var result = new Blob
+            var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
                 Uri = new Uri(Path.Combine(_path, blob))
@@ -179,7 +179,7 @@ public class FileSystemStorage : IStorage
         return null;
     }
 
-    public async IAsyncEnumerable<Blob> GetBlobListAsync(
+    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var file in Directory.EnumerateFiles(_path))
@@ -188,7 +188,7 @@ public class FileSystemStorage : IStorage
         }
     }
 
-    public async IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs,
+    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobs,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var file in blobs)
@@ -228,25 +228,25 @@ public class FileSystemStorage : IStorage
         await File.WriteAllTextAsync(filePath, content, cancellationToken);
     }
 
-    public Task UploadStreamAsync(Blob blob, Stream dataStream, CancellationToken cancellationToken = default)
+    public Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
     {
-        return UploadStreamAsync(blob.Name, dataStream, cancellationToken);
+        return UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
     }
 
-    public Task UploadFileAsync(Blob blob, string pathToFile, CancellationToken cancellationToken = default)
+    public Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
     {
-        return UploadFileAsync(blob.Name, pathToFile, cancellationToken);
+        return UploadFileAsync(blobMetadata.Name, pathToFile, cancellationToken);
     }
 
-    public async Task UploadAsync(Blob blob, string content, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
     {
-        await UploadAsync(blob.Name, content, cancellationToken);
+        await UploadAsync(blobMetadata.Name, content, cancellationToken);
     }
 
-    public async Task UploadAsync(Blob blob, byte[] data, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
     {
         EnsureDirectoryExists();
-        var filePath = Path.Combine(_path, blob.Name);
+        var filePath = Path.Combine(_path, blobMetadata.Name);
 
         await File.WriteAllBytesAsync(filePath, data, cancellationToken);
     }

@@ -25,13 +25,13 @@ public class GoogleProviderBuilder : ProviderBuilder
         var bucketOptions = new BucketOptions();
         action.Invoke(bucketOptions);
 
-        var storageOptions = new StorageOptions
+        var storageOptions = new GCPStorageOptions
         {
             GoogleCredential = _googleCredential,
             BucketOptions = bucketOptions
         };
 
-        var implementationType = TypeHelpers.GetImplementationType<TGoogleStorage, GoogleStorage, StorageOptions>();
+        var implementationType = TypeHelpers.GetImplementationType<TGoogleStorage, GoogleStorage, GCPStorageOptions>();
         ServiceCollection.AddScoped(typeof(TGoogleStorage), x => Activator.CreateInstance(implementationType, storageOptions));
 
         return this;

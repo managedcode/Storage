@@ -134,7 +134,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
     {
         var file = new LocalFile();
         await stream.CopyToAsync(file.FileStream);
-        await file.FileStream.DisposeAsync();
+        await file.DisposeAsync();
         file.Close();
         return file;
     }
