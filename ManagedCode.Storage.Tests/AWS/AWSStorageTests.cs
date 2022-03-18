@@ -3,7 +3,6 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.Aws.Extensions;
-using ManagedCode.Storage.Core.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
