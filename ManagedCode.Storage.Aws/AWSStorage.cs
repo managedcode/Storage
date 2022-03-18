@@ -29,7 +29,8 @@ public class AWSStorage : IAWSStorage
             Timeout = ClientConfig.MaxTimeout,
         };
 
-        _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
+       // _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
+       _s3Client = new AmazonS3Client();
     }
 
     public void Dispose()
