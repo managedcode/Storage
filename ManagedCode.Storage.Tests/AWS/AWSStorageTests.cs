@@ -26,9 +26,9 @@ public class AWSStorageTests : StorageBaseTests
             opt.OriginalOptions = new AmazonS3Config
             {
                 ServiceURL = "http://localhost:4566",
-                Timeout = ClientConfig.MaxTimeout,
                 RegionEndpoint = RegionEndpoint.EUWest1,
-                ForcePathStyle = true
+                ForcePathStyle = true,
+                UseHttp = true
             };
         });
 
