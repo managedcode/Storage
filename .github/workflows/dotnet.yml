@@ -17,10 +17,9 @@ jobs:
     services:
       myapp.s3:
         image: localstack/localstack:latest
-        container_name: "myapp-localstack"
         ports:
           - "14566:4566"
-        environment:
+        env:
           - SERVICES=s3
           - DEFAULT_REGION=eu-west-1
           - AWS_REGION=us-west-1
