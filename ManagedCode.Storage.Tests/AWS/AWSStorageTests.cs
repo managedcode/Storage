@@ -27,7 +27,8 @@ public class AWSStorageTests : StorageBaseTests
             {
                 ServiceURL = "http://localhost:4566",
                 Timeout = ClientConfig.MaxTimeout,
-                RegionEndpoint = RegionEndpoint.EUWest1
+                RegionEndpoint = RegionEndpoint.EUWest1,
+                ForcePathStyle = true
             };
         });
 
