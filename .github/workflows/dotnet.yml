@@ -20,11 +20,19 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
-        
+
+# setup cloud emulators        
     - name: azuright
       uses: potatoqualitee/azuright@v1.1
-    
-    
+      
+    - name: install localstack
+      run: python3 -m pip install localstack
+      shell: bash   
+    - name: install localstack
+      run: localstack start
+      shell: bash
+      
+# setup cloud emulators             
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
