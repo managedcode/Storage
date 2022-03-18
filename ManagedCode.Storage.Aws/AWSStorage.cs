@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -25,15 +26,18 @@ public class AWSStorage : IAWSStorage
 
         var config = new AmazonS3Config
         {
-            ServiceURL = Constants.ServiceUrl,
-            Timeout = ClientConfig.MaxTimeout
+            ServiceURL = "http://localhost:4566", //Constants.ServiceUrl,
+            Timeout = ClientConfig.MaxTimeout,
+            RegionEndpoint = RegionEndpoint.EUWest1
         };
 
-        _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
+       // _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
+       _s3Client = new AmazonS3Client();
     }
 
     public void Dispose()
     {
+        _s3Client.Dispose();
     }
 
     #region Delete

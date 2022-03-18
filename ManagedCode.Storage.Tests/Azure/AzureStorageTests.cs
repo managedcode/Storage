@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.Azure;
-
+/*
 public class AzureStorageTests : StorageBaseTests
 {
     public AzureStorageTests()
@@ -74,4 +74,4 @@ public class AzureStorageTests : StorageBaseTests
     {
         await Storage.DeleteAsync("a.txt");
     }
-}
+}*/

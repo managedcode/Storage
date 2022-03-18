@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.AWS;
-/*
+
 public class AWSStorageTests : StorageBaseTests
 {
     public AWSStorageTests()
@@ -17,8 +17,8 @@ public class AWSStorageTests : StorageBaseTests
 
         services.AddAWSStorage(opt =>
         {
-            opt.PublicKey = "KEY";
-            opt.SecretKey = "SECRET";
+            opt.PublicKey = "localkey";
+            opt.SecretKey = "localsecret";
             opt.Bucket = "my-docs-1";
         });
 
@@ -74,4 +74,3 @@ public class AWSStorageTests : StorageBaseTests
         await GetBlobListAsyncIsCalled();
     }
 }
-*/
