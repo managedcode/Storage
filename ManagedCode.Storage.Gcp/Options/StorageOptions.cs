@@ -2,7 +2,7 @@
 
 namespace ManagedCode.Storage.Gcp.Options;
 
-public class StorageOptions
+public class GcpStorageOptions
 {
     public GoogleCredential GoogleCredential { get; set; }
     public BucketOptions BucketOptions { get; set; }
