@@ -35,23 +35,21 @@ jobs:
     - name: azuright
       uses: potatoqualitee/azuright@v1.1      
       
-    - name: Start LocalStack
+    - name: Start GCP storage
       run: |
-        # install LocalStack cli and awslocal
-        pip install localstack awscli-local
-        # Make sure to pull the latest version of the image
-        docker pull localstack/localstack
-        # Start LocalStack in the background
-        localstack start -d
-        # Wait 30 seconds for the LocalStack container to become ready before timing out
-        echo "Waiting for LocalStack startup..."
-        localstack wait -t 30
-        echo "Startup complete"          
-    - name: Run some Tests against LocalStack
+        docker run -d --name fake-gcs-server -p 4443:4443 fsouza/fake-gcs-server
+    - name:  test GCP storage
       run: |
-        awslocal s3 mb s3://test
-        awslocal s3 ls
-        echo "Test Execution complete!"         
+        curl --insecure https://0.0.0.0:4443/storage/v1/b
+        {"kind":"storage#buckets","items":[{"kind":"storage#bucket","id":"sample-bucket","name":"sample-bucket"}],"prefixes":null}
+        curl --insecure https://0.0.0.0:4443/storage/v1/b/sample-bucket/o
+        {"kind":"storage#objects","items":[{"kind":"storage#object","name":"some_file.txt","id":"sample-bucket/some_file.txt","bucket":"sample-bucket","size":"33"}],"prefixes":[]}       
+      
+    - name: Start S3
+      run: |
+        docker run -p 9090:9090 -p 9191:9191 -t adobe/s3mock
+
+      
       
 # run build and test           
     - name: Restore dependencies
