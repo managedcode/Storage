@@ -26,7 +26,7 @@ public class GCPStorage : IGCPStorage
 
         try
         {
-            _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket);
+            _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket, gcpStorageOptions.OriginalOptions);
         }
         catch
         {

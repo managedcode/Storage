@@ -27,7 +27,6 @@ public static class ServiceCollectionExtensions
             gcpStorageOptions.GoogleCredential = GoogleCredential.FromStream(m);
         }
 
-
         return serviceCollection
             .AddScoped<IGCPStorage>(_ => new GCPStorage(gcpStorageOptions));
     }
