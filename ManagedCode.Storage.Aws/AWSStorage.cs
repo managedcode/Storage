@@ -14,12 +14,12 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Aws;
 
-public class AWSStorage : IStorage
+public class AWSStorage : IAWSStorage
 {
     private readonly string _bucket;
     private readonly IAmazonS3 _s3Client;
 
-    public AWSStorage(StorageOptions options)
+    public AWSStorage(AWSStorageOptions options)
     {
         _bucket = options.Bucket;
 
@@ -47,9 +47,9 @@ public class AWSStorage : IStorage
         }, cancellationToken);
     }
 
-    public async Task DeleteAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        await DeleteAsync(blob.Name, cancellationToken);
+        await DeleteAsync(blobMetadata.Name, cancellationToken);
     }
 
     public async Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
@@ -60,7 +60,7 @@ public class AWSStorage : IStorage
         }
     }
 
-    public async Task DeleteAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobs, CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobs)
         {
@@ -77,9 +77,9 @@ public class AWSStorage : IStorage
         return await _s3Client.GetObjectStreamAsync(_bucket, blob, null, cancellationToken);
     }
 
-    public async Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await DownloadAsStreamAsync(blob.Name, cancellationToken);
+        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
     public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
@@ -88,15 +88,16 @@ public class AWSStorage : IStorage
 
         using (var stream = await DownloadAsStreamAsync(blob, cancellationToken))
         {
-            await stream.CopyToAsync(localFile.FileStream, cancellationToken);
+            // TODO: temporary added bufferSize
+            await stream.CopyToAsync(localFile.FileStream, 1024, cancellationToken);
         }
 
         return localFile;
     }
 
-    public async Task<LocalFile> DownloadAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await DownloadAsync(blob.Name, cancellationToken);
+        return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
 
     #endregion
@@ -117,9 +118,9 @@ public class AWSStorage : IStorage
         }
     }
 
-    public async Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await ExistsAsync(blob.Name, cancellationToken);
+        return await ExistsAsync(blobMetadata.Name, cancellationToken);
     }
 
     public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs,
@@ -131,7 +132,7 @@ public class AWSStorage : IStorage
         }
     }
 
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs,
+    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobs)
@@ -144,7 +145,7 @@ public class AWSStorage : IStorage
 
     #region Get
 
-    public async Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<BlobMetadata> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
     {
         var objectMetaRequest = new GetObjectMetadataRequest
         {
@@ -163,7 +164,7 @@ public class AWSStorage : IStorage
         var objectAclResponse = await _s3Client.GetACLAsync(objectAclRequest);
         var isPublic = objectAclResponse.AccessControlList.Grants.Any(x => x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
 
-        return new Blob
+        return new BlobMetadata
         {
             Name = blob
             //Container = containerName,
@@ -178,7 +179,7 @@ public class AWSStorage : IStorage
         };
     }
 
-    public async IAsyncEnumerable<Blob> GetBlobListAsync(
+    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var objectsRequest = new ListObjectsRequest
@@ -209,9 +210,10 @@ public class AWSStorage : IStorage
                 };
 
                 var objectAclResponse = await _s3Client.GetACLAsync(objectAclRequest);
-                var isPublic = objectAclResponse.AccessControlList.Grants.Any(x => x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
+                var isPublic = objectAclResponse.AccessControlList.Grants.Any(x =>
+                    x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
 
-                yield return new Blob
+                yield return new BlobMetadata
                 {
                     Name = entry.Key
                 };
@@ -229,7 +231,7 @@ public class AWSStorage : IStorage
         } while (objectsRequest != null);
     }
 
-    public async IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs,
+    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobs,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobs)
@@ -247,14 +249,14 @@ public class AWSStorage : IStorage
         await UploadStreamAsync(blob, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken);
     }
 
-    public async Task UploadAsync(Blob blob, string content, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
     {
-        await UploadAsync(blob.Name, content, cancellationToken);
+        await UploadAsync(blobMetadata.Name, content, cancellationToken);
     }
 
-    public async Task UploadAsync(Blob blob, byte[] data, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
     {
-        await UploadStreamAsync(blob.Name, new MemoryStream(data), cancellationToken);
+        await UploadStreamAsync(blobMetadata.Name, new MemoryStream(data), cancellationToken);
     }
 
     public async Task UploadFileAsync(string blob, string pathToFile, CancellationToken cancellationToken = default)
@@ -265,9 +267,9 @@ public class AWSStorage : IStorage
         }
     }
 
-    public async Task UploadFileAsync(Blob blob, string pathToFile, CancellationToken cancellationToken = default)
+    public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
     {
-        await UploadFileAsync(blob.Name, pathToFile, cancellationToken);
+        await UploadFileAsync(blobMetadata.Name, pathToFile, cancellationToken);
     }
 
     public async Task UploadStreamAsync(string blob, Stream dataStream, CancellationToken cancellationToken = default)
@@ -285,9 +287,9 @@ public class AWSStorage : IStorage
         await _s3Client.PutObjectAsync(putRequest, cancellationToken);
     }
 
-    public async Task UploadStreamAsync(Blob blob, Stream dataStream, CancellationToken cancellationToken = default)
+    public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
     {
-        await UploadStreamAsync(blob.Name, dataStream, cancellationToken);
+        await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
     }
 
     #endregion

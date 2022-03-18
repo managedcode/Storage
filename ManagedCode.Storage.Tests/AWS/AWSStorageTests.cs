@@ -2,8 +2,8 @@
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
+using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Aws.Extensions;
-using ManagedCode.Storage.Core.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -15,17 +15,16 @@ public class AWSStorageTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        services.AddManagedCodeStorage()
-            .AddAWSStorage(opt =>
-            {
-                opt.PublicKey = "KEY";
-                opt.SecretKey = "SECRET";
-            })
-            .Add<IDocumentStorage>(opt => { opt.Bucket = "my-docs-1"; });
+        services.AddAWSStorage(opt =>
+        {
+            opt.PublicKey = "KEY";
+            opt.SecretKey = "SECRET";
+            opt.Bucket = "my-docs-1";
+        });
 
         var provider = services.BuildServiceProvider();
 
-        Storage = provider.GetService<IDocumentStorage>();
+        Storage = provider.GetService<IAWSStorage>();
     }
 
     [Fact]

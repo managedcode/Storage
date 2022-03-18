@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
-using ManagedCode.Storage.Core.Extensions;
+using ManagedCode.Storage.Gcp;
 using ManagedCode.Storage.Gcp.Extensions;
+using ManagedCode.Storage.Gcp.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -12,17 +13,19 @@ public class GoogleStorageTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        services.AddManagedCodeStorage()
-            .AddGoogleStorage(opt => { opt.FileName = "google-creds.json"; })
-            .Add<IDocumentStorage>(opt =>
+        services.AddGCPStorage(opt =>
+        {
+            opt.AuthFileName = "google-creds.json";
+            opt.BucketOptions = new BucketOptions()
             {
-                opt.ProjectId = "api-project-0000000000000";
-                opt.Bucket = "my-docs-1";
-            });
+                ProjectId = "api-project-0000000000000",
+                Bucket = "my-docs-1",
+            };
+        });
 
         var provider = services.BuildServiceProvider();
 
-        Storage = provider.GetService<IDocumentStorage>();
+        Storage = provider.GetService<IGCPStorage>();
     }
 
     [Fact]

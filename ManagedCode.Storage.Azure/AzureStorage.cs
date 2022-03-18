@@ -12,11 +12,11 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Azure;
 
-public class AzureStorage : IStorage
+public class AzureStorage : IAzureStorage
 {
     private readonly BlobContainerClient _blobContainerClient;
 
-    public AzureStorage(StorageOptions connectionOptions)
+    public AzureStorage(AzureStorageOptions connectionOptions)
     {
         _blobContainerClient = new BlobContainerClient(
             connectionOptions.ConnectionString,
@@ -38,9 +38,9 @@ public class AzureStorage : IStorage
         await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
     }
 
-    public async Task DeleteAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
+        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
         await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
     }
 
@@ -52,7 +52,7 @@ public class AzureStorage : IStorage
         }
     }
 
-    public async Task DeleteAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobs, CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobs)
         {
@@ -72,9 +72,9 @@ public class AzureStorage : IStorage
         return res.Value.Content;
     }
 
-    public async Task<Stream> DownloadAsStreamAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await DownloadAsStreamAsync(blob.Name, cancellationToken);
+        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
     public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
@@ -87,9 +87,9 @@ public class AzureStorage : IStorage
         return localFile;
     }
 
-    public async Task<LocalFile> DownloadAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await DownloadAsync(blob.Name, cancellationToken);
+        return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
 
     #endregion
@@ -103,9 +103,9 @@ public class AzureStorage : IStorage
         return await blobClient.ExistsAsync(cancellationToken);
     }
 
-    public async Task<bool> ExistsAsync(Blob blob, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
+        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
 
         return await blobClient.ExistsAsync(cancellationToken);
     }
@@ -120,7 +120,7 @@ public class AzureStorage : IStorage
         }
     }
 
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<Blob> blobs,
+    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobs)
@@ -134,25 +134,25 @@ public class AzureStorage : IStorage
 
     #region Get
 
-    public async Task<Blob> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<BlobMetadata> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
         var blobClient = _blobContainerClient.GetBlobClient(blob);
 
-        return new Blob
+        return new BlobMetadata
         {
             Name = blobClient.Name,
             Uri = blobClient.Uri
         };
     }
 
-    public IAsyncEnumerable<Blob> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Blob> GetBlobListAsync(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -183,24 +183,24 @@ public class AzureStorage : IStorage
         }
     }
 
-    public async Task UploadStreamAsync(Blob blob, Stream dataStream, CancellationToken cancellationToken = default)
+    public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
     {
-        await UploadStreamAsync(blob.Name, dataStream, cancellationToken);
+        await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
     }
 
-    public async Task UploadFileAsync(Blob blob, string pathToFile, CancellationToken cancellationToken = default)
+    public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
     {
-        await UploadFileAsync(blob.Name, pathToFile, cancellationToken);
+        await UploadFileAsync(blobMetadata.Name, pathToFile, cancellationToken);
     }
 
-    public async Task UploadAsync(Blob blob, string content, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
     {
-        await UploadAsync(blob.Name, content, cancellationToken);
+        await UploadAsync(blobMetadata.Name, content, cancellationToken);
     }
 
-    public async Task UploadAsync(Blob blob, byte[] data, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
+        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
         await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
     }
 
