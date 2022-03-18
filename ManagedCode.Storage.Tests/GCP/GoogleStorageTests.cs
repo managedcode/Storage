@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using ManagedCode.Storage.Gcp;
 using ManagedCode.Storage.Gcp.Extensions;
 using ManagedCode.Storage.Gcp.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +25,7 @@ public class GoogleStorageTests : StorageBaseTests
 
         var provider = services.BuildServiceProvider();
 
-        Storage = provider.GetService<IDocumentStorage>();
+        Storage = provider.GetService<IGCPStorage>();
     }
 
     [Fact]

@@ -2,6 +2,7 @@
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
+using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Aws.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -23,7 +24,7 @@ public class AWSStorageTests : StorageBaseTests
 
         var provider = services.BuildServiceProvider();
 
-        Storage = provider.GetService<IDocumentStorage>();
+        Storage = provider.GetService<IAWSStorage>();
     }
 
     [Fact]

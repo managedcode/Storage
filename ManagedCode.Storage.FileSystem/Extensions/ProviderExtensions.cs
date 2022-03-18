@@ -10,10 +10,10 @@ public static class ServiceCollectionExtensions
         this IServiceCollection serviceCollection,
         Action<FSStorageOptions> action)
     {
-        var awsStorageOptions = new FSStorageOptions();
-        action.Invoke(awsStorageOptions);
+        var fsStorageOptions = new FSStorageOptions();
+        action.Invoke(fsStorageOptions);
 
         return serviceCollection
-            .AddScoped<IFileSystemStorage>(_ => new FileSystemStorage(awsStorageOptions));
+            .AddScoped<IFileSystemStorage>(_ => new FileSystemStorage(fsStorageOptions));
     }
 }

@@ -13,21 +13,21 @@ public static class ServiceCollectionExtensions
         this IServiceCollection serviceCollection,
         Action<GCPStorageOptions> action)
     {
-        var awsStorageOptions = new GCPStorageOptions();
-        action.Invoke(awsStorageOptions);
+        var gcpStorageOptions = new GCPStorageOptions();
+        action.Invoke(gcpStorageOptions);
 
         var path = Path.Combine(
             Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-            awsStorageOptions.AuthFileName
+            gcpStorageOptions.AuthFileName
         );
 
         using (Stream m = new FileStream(path, FileMode.Open))
         {
-            awsStorageOptions.GoogleCredential = GoogleCredential.FromStream(m);
+            gcpStorageOptions.GoogleCredential = GoogleCredential.FromStream(m);
         }
 
 
         return serviceCollection
-            .AddScoped<IGCPStorage>(_ => new GCPStorage(awsStorageOptions));
+            .AddScoped<IGCPStorage>(_ => new GCPStorage(gcpStorageOptions));
     }
 }
