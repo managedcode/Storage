@@ -84,7 +84,7 @@ public class FileSystemStorage : IFileSystemStorage
         {
             using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
-                await fs.CopyToAsync(memoryStream, cancellationToken);
+                await fs.CopyToAsync(memoryStream, 81920, cancellationToken);
             }
 
             return memoryStream;
@@ -107,7 +107,8 @@ public class FileSystemStorage : IFileSystemStorage
 
         using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
         {
-            await fs.CopyToAsync(localFile.FileStream, cancellationToken);
+            //TODO: Temporary added bufferSize
+            await fs.CopyToAsync(localFile.FileStream, 1024, cancellationToken);
         }
 
         return localFile;
@@ -209,7 +210,7 @@ public class FileSystemStorage : IFileSystemStorage
         using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
         {
             dataStream.Seek(0, SeekOrigin.Begin);
-            await dataStream.CopyToAsync(fs, cancellationToken);
+            await dataStream.CopyToAsync(fs, 81920, cancellationToken);
         }
     }
 
@@ -225,7 +226,9 @@ public class FileSystemStorage : IFileSystemStorage
     {
         EnsureDirectoryExists();
         var filePath = Path.Combine(_path, blob);
-        await File.WriteAllTextAsync(filePath, content, cancellationToken);
+
+        //TODO: Need fix
+        await Task.Run(() => File.WriteAllText(filePath, content), cancellationToken);
     }
 
     public Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
@@ -248,7 +251,8 @@ public class FileSystemStorage : IFileSystemStorage
         EnsureDirectoryExists();
         var filePath = Path.Combine(_path, blobMetadata.Name);
 
-        await File.WriteAllBytesAsync(filePath, data, cancellationToken);
+        //TODO: Need fix
+        await Task.Run(() => File.WriteAllBytes(filePath, data), cancellationToken);
     }
 
     #endregion

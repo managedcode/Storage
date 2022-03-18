@@ -1,19 +1,19 @@
 ﻿using System;
-using ManagedCode.Storage.Core.Builders;
-using ManagedCode.Storage.FileSystem.Builders;
 using ManagedCode.Storage.FileSystem.Options;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.FileSystem.Extensions;
 
-public static class ProviderExtensions
+public static class ServiceCollectionExtensions
 {
-    public static FileSystemProviderBuilder AddFileSystemStorage(
-        this ProviderBuilder providerBuilder,
-        Action<PathOptions> action)
+    public static IServiceCollection AddFileSystemStorage(
+        this IServiceCollection serviceCollection,
+        Action<FSStorageOptions> action)
     {
-        var commonPathOptions = new PathOptions();
-        action.Invoke(commonPathOptions);
+        var awsStorageOptions = new FSStorageOptions();
+        action.Invoke(awsStorageOptions);
 
-        return new FileSystemProviderBuilder(providerBuilder.ServiceCollection, commonPathOptions.Path);
+        return serviceCollection
+            .AddScoped<IFileSystemStorage>(_ => new FileSystemStorage(awsStorageOptions));
     }
 }

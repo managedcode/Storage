@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
-using ManagedCode.Storage.Core.Extensions;
 using ManagedCode.Storage.FileSystem.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -22,9 +21,11 @@ public class FileSystemTests
 
         _testDirectory = Path.Combine(Environment.CurrentDirectory, "my_tests_files");
 
-        services.AddManagedCodeStorage()
-            .AddFileSystemStorage(opt => { opt.Path = _testDirectory; })
-            .Add<IDocumentStorage>(opt => { opt.Path = "documents"; });
+        services.AddFileSystemStorage(opt =>
+        {
+            opt.Path = _testDirectory;
+            opt.Path = "documents";
+        });
 
         var provider = services.BuildServiceProvider();
 
