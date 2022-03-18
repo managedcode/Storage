@@ -11,7 +11,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  localstack:
+  
+  build:
     runs-on: ubuntu-latest
     services:
       localstack:
@@ -30,12 +31,10 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
-
 # setup cloud emulators        
     - name: azuright
       uses: potatoqualitee/azuright@v1.1
       
-    
 # run build and test           
     - name: Restore dependencies
       run: dotnet restore
@@ -43,3 +42,8 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+      env:
+        DEFAULT_REGION: eu-west-1
+        AWS_ACCOUNT_ID: "000000000000"
+        AWS_ACCESS_KEY_ID: localkey
+        AWS_SECRET_ACCESS_KEY: localsecret

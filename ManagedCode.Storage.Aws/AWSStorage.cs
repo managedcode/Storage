@@ -25,7 +25,7 @@ public class AWSStorage : IAWSStorage
 
         var config = new AmazonS3Config
         {
-            ServiceURL = Constants.ServiceUrl,
+            //ServiceURL = Constants.ServiceUrl,
             Timeout = ClientConfig.MaxTimeout,
         };
 
