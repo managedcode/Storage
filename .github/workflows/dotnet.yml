@@ -37,8 +37,6 @@ jobs:
       uses: potatoqualitee/azuright@v1.1      
       
     - name: Start LocalStack
-        env:
-          LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
         run: |
           # install LocalStack cli and awslocal
           pip install localstack awscli-local[ver1]
