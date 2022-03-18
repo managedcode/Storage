@@ -1,4 +1,5 @@
 ﻿using System;
+using ManagedCode.Storage.Core;
 using ManagedCode.Storage.FileSystem.Options;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,5 +16,16 @@ public static class ServiceCollectionExtensions
 
         return serviceCollection
             .AddScoped<IFileSystemStorage>(_ => new FileSystemStorage(fsStorageOptions));
+    }
+
+    public static IServiceCollection AddFileSystemStorageAsDefault(
+        this IServiceCollection serviceCollection,
+        Action<FSStorageOptions> action)
+    {
+        var fsStorageOptions = new FSStorageOptions();
+        action.Invoke(fsStorageOptions);
+
+        return serviceCollection
+            .AddScoped<IStorage>(_ => new FileSystemStorage(fsStorageOptions));
     }
 }
