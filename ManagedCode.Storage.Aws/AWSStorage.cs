@@ -26,7 +26,7 @@ public class AWSStorage : IAWSStorage
 
         var config = new AmazonS3Config
         {
-            //ServiceURL = Constants.ServiceUrl,
+            ServiceURL = "http://localhost:4566", //Constants.ServiceUrl,
             Timeout = ClientConfig.MaxTimeout,
             RegionEndpoint = RegionEndpoint.EUWest1
         };

@@ -31,9 +31,16 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 6.0.x
+        
 # setup cloud emulators        
     - name: azuright
       uses: potatoqualitee/azuright@v1.1
+    - name: Configure localstack
+      run: |
+        aws configure set aws_access_key_id localstack
+        aws configure set aws_secret_access_key localsecret
+        aws configure set default.region eu-west-1
+        aws mb s3://my-bucket --endpoint-url=http://localhost:4566
       
 # run build and test           
     - name: Restore dependencies
