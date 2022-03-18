@@ -23,14 +23,7 @@ public class AWSStorage : IAWSStorage
     public AWSStorage(AWSStorageOptions options)
     {
         _bucket = options.Bucket;
-
-        var config = options.OriginalOptions ?? new AmazonS3Config
-        {
-            ServiceURL = "http://localhost:4566", //Constants.ServiceUrl,
-            Timeout = ClientConfig.MaxTimeout,
-            RegionEndpoint = RegionEndpoint.EUWest1
-        };
-
+        var config = options.OriginalOptions ?? new AmazonS3Config();
         _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
     }
 

@@ -1,6 +1,9 @@
 ﻿using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
 using FluentAssertions;
 using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Aws.Extensions;
@@ -20,6 +23,12 @@ public class AWSStorageTests : StorageBaseTests
             opt.PublicKey = "localkey";
             opt.SecretKey = "localsecret";
             opt.Bucket = "my-docs-1";
+            opt.OriginalOptions = new AmazonS3Config
+            {
+                ServiceURL = "http://localhost:4566",
+                Timeout = ClientConfig.MaxTimeout,
+                RegionEndpoint = RegionEndpoint.EUWest1
+            };
         });
 
         var provider = services.BuildServiceProvider();
