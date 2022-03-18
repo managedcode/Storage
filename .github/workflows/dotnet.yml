@@ -34,11 +34,7 @@ jobs:
         
 # setup cloud emulators        
     - name: azuright
-      uses: potatoqualitee/azuright@v1.1
-    - name: Configure localstack
-      run: aws mb s3://my-bucket --endpoint-url=http://localhost:4566
-      shell: bash  
-      
+      uses: potatoqualitee/azuright@v1.1      
       
 # run build and test           
     - name: Restore dependencies
