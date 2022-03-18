@@ -19,6 +19,7 @@
         <Title>ManagedCode.Storage.Core</Title>
         <Description>Storage</Description>
         <PackageVersion>0.0.1</PackageVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

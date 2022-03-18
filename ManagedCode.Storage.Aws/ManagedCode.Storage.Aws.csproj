@@ -19,6 +19,7 @@
         <Title>ManagedCode.Storage.Aws</Title>
         <Description>Storage for AWS</Description>
         <PackageVersion>0.0.1</PackageVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

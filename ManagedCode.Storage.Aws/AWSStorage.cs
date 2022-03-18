@@ -24,7 +24,7 @@ public class AWSStorage : IAWSStorage
     {
         _bucket = options.Bucket;
 
-        var config = new AmazonS3Config
+        var config = options.OriginalOptions ?? new AmazonS3Config
         {
             ServiceURL = "http://localhost:4566", //Constants.ServiceUrl,
             Timeout = ClientConfig.MaxTimeout,
@@ -91,8 +91,7 @@ public class AWSStorage : IAWSStorage
 
         using (var stream = await DownloadAsStreamAsync(blob, cancellationToken))
         {
-            // TODO: temporary added bufferSize
-            await stream.CopyToAsync(localFile.FileStream, 1024, cancellationToken);
+            await stream.CopyToAsync(localFile.FileStream, 81920, cancellationToken);
         }
 
         return localFile;
