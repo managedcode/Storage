@@ -25,7 +25,7 @@ public class AWSStorageTests : StorageBaseTests
             opt.Bucket = "my-docs-1";
             opt.OriginalOptions = new AmazonS3Config
             {
-                ServiceURL = "http://myapp.s3:4566",
+                ServiceURL = "http://localhost:4566",
                 RegionEndpoint = RegionEndpoint.EUWest1,
                 ForcePathStyle = true,
                 UseHttp = true,
