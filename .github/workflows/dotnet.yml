@@ -18,7 +18,8 @@ jobs:
       myapp.s3:
         image: localstack/localstack:latest
         ports:
-          - "14566:4566"
+          - 4566:4566
+          - 4571:4571
         env:
           SERVICES: s3
           DEFAULT_REGION: eu-west-1
