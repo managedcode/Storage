@@ -16,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     services:
       fake-gcs-server:
-        image: fsouza/fake-gcs-server:latest
+        image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
       s3mock:
-        image: fadobe/s3mock:latest
+        image: fadobe/s3mock
         ports:
           - 9090:9090
           - 9191:9191
