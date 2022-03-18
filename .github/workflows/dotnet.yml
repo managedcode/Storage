@@ -11,16 +11,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  
-  services:
+  localstack:
     runs-on: ubuntu-latest
-    localstack:
-      image: localstack/localstack
-      env:
-        SERVICES: s3
-        DEFAULT_REGION: ap-northeast-1
-        DATA_DIR: /tmp/localstack/data
-      ports: [ "4566:4566" ]
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          SERVICES: s3 #cloudformation,iam,sts,ssm,s3,cloudwatch,cloudwatch-logs,lambda,dynamodb,apigateway
+          DEFAULT_REGION: eu-west-1
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+        ports:
+          - 4566:4566
+          - 4571:4571
   
   build:
     runs-on: ubuntu-latest
