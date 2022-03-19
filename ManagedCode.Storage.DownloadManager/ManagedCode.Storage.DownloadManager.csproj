@@ -16,24 +16,18 @@
         <RepositoryType>Github</RepositoryType>
         <Product>Managed Storage</Product>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-        <Title>ManagedCode.Storage.Core</Title>
-        <Description>Storage</Description>
+        <Title>ManagedCode.Storage.DownloadManager</Title>
+        <Description>Download manager for Storage</Description>
         <PackageVersion>0.0.1</PackageVersion>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    </PropertyGroup>
-
     <ItemGroup>
-        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
+      <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     </ItemGroup>
 
 </Project>

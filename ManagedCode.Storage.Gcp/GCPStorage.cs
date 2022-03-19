@@ -22,19 +22,36 @@ public class GCPStorage : IGCPStorage
     public GCPStorage(GCPStorageOptions gcpStorageOptions)
     {
         _bucket = gcpStorageOptions.BucketOptions.Bucket;
-        _storageClient = StorageClient.Create(gcpStorageOptions.GoogleCredential);
-
+        
+        if (gcpStorageOptions.StorageClientBuilder != null)
+        {
+            _storageClient = gcpStorageOptions.StorageClientBuilder.Build();
+        }
+        else if (gcpStorageOptions.GoogleCredential != null)
+        {
+            _storageClient = StorageClient.Create(gcpStorageOptions.GoogleCredential);
+        }
+        
         try
         {
-            _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket, gcpStorageOptions.OriginalOptions);
+            if (gcpStorageOptions.OriginalOptions != null)
+            {
+                _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket, gcpStorageOptions.OriginalOptions);
+            }
+            else
+            {
+                _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket);
+            }
         }
         catch
         {
+            //skip
         }
     }
 
     public void Dispose()
     {
+        _storageClient.Dispose();
     }
 
     #region Delete

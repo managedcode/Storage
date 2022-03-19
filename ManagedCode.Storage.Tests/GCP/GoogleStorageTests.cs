@@ -1,4 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Amazon.Runtime.Documents;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Gcp;
 using ManagedCode.Storage.Gcp.Extensions;
 using ManagedCode.Storage.Gcp.Options;
@@ -7,7 +11,6 @@ using Xunit;
 
 namespace ManagedCode.Storage.Tests.GCP;
 
-/*
 public class GoogleStorageTests : StorageBaseTests
 {
     public GoogleStorageTests()
@@ -16,11 +19,16 @@ public class GoogleStorageTests : StorageBaseTests
 
         services.AddGCPStorage(opt =>
         {
-            opt.AuthFileName = "google-creds.json";
+            //opt.GoogleCredential = GoogleCredential.FromJson("path-to-json-file");
             opt.BucketOptions = new BucketOptions()
             {
                 ProjectId = "api-project-0000000000000",
                 Bucket = "managed-code-bucket",
+            };
+            opt.StorageClientBuilder = new StorageClientBuilder
+            {
+                UnauthenticatedAccess = true,
+                BaseUri = "http://localhost:4443/storage/v1/",
             };
         });
 
@@ -29,4 +37,3 @@ public class GoogleStorageTests : StorageBaseTests
         Storage = provider.GetService<IGCPStorage>();
     }
 }
-*/
