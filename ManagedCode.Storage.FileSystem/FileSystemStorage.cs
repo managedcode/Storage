@@ -255,9 +255,16 @@ public class FileSystemStorage : IFileSystemStorage
         await Task.Run(() => File.WriteAllBytes(filePath, data), cancellationToken);
     }
 
-    public Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(string content, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        await UploadAsync(fileName, content, cancellationToken);
+    }
+
+    public async Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    {
+        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        await UploadStreamAsync(fileName, dataStream, cancellationToken);
     }
 
     #endregion

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,9 +16,9 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task WhenSingleBlobExistsIsCalled()
     {
-        await Storage.UploadAsync("b1.txt","");
+        await PrepareFileToTest("test WhenSingleBlobExistsIsCalled");
 
-        var result = await Storage.ExistsAsync("b1.txt");
+        var result = await Storage.ExistsAsync("upload-test-file.txt");
 
         result.Should().BeTrue();
     }
@@ -25,9 +26,9 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task WhenDownloadAsyncIsCalled()
     {
-        await Storage.UploadAsync("b2.txt", "");
+        await PrepareFileToTest("test WhenDownloadAsyncIsCalled");
 
-        var DownloadAsStream = await Storage.DownloadAsStreamAsync("b2.txt");
+        var DownloadAsStream = await Storage.DownloadAsStreamAsync("upload-test-file.txt");
         using var sr = new StreamReader(DownloadAsStream, Encoding.UTF8);
 
         var content = sr.ReadToEnd();
@@ -38,41 +39,51 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task WhenDownloadAsyncToFileIsCalled()
     {
-        await Storage.UploadAsync("b3.txt", "");
+        await PrepareFileToTest("test WhenDownloadAsyncToFileIsCalled");
 
-        var tempFile = await Storage.DownloadAsync("b3.txt");
+        var tempFile = await Storage.DownloadAsync("upload-test-file.txt");
         using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
 
         var content = sr.ReadToEnd();
 
         content.Should().NotBeNull();
+        content.Should().Be("test WhenDownloadAsyncToFileIsCalled");
+
     }
 
     [Fact]
     public async Task WhenUploadAsyncIsCalled()
     {
-        var lineToUpload = "some crazy text";
+        var lineToUpload = "test WhenUploadAsyncIsCalled";
+        var fileName = "upload-test-file.txt";
 
         var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
         var stream = new MemoryStream(byteArray);
 
-        await Storage.UploadStreamAsync("b4.txt", stream);
-    }
+        if (await Storage.ExistsAsync(fileName))
+        {
+            await Storage.DeleteAsync(fileName);
+        }
 
-    [Fact]
-    public async void GetBlobAsString()
-    {
-        await Storage.UploadAsync("b5.txt", "test");
-
-        var result = await Storage.DownloadDataAsStringAsync("b5.txt");
-
-        result.Should().Be("test");
+        await Storage.UploadStreamAsync(fileName, stream);
     }
 
     [Fact]
     public async Task WhenDeleteAsyncIsCalled()
     {
-        await Storage.DeleteAsync("b5.txt");
+        await PrepareFileToTest("test WhenDeleteAsyncIsCalled");
+
+        await Storage.DeleteAsync("upload-test-file.txt");
+    }
+
+    private async Task PrepareFileToTest(string content)
+    {
+        string fileName = "upload-test-file.txt";
+
+        if (!await Storage.ExistsAsync(fileName))
+        {
+            await Storage.UploadAsync("upload-test-file.txt", content);
+        }
     }
 
     protected async Task SingleBlobExistsIsCalled(string fileName)

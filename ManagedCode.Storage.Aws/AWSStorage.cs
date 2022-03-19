@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -287,9 +288,16 @@ public class AWSStorage : IAWSStorage
         await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
     }
 
-    public Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(string content, CancellationToken cancellationToken = default)
     {
-        throw new System.NotImplementedException();
+        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        await UploadStreamAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken);
+    }
+
+    public async Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    {
+        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        await UploadStreamAsync(fileName, dataStream, cancellationToken);
     }
 
     #endregion
