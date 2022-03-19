@@ -29,57 +29,5 @@ public class AzureStorageTests : StorageBaseTests
 
         Storage = provider.GetService<IAzureStorage>();
     }
-
-    [Fact]
-    public async Task WhenSingleBlobExistsIsCalled()
-    {
-        await Storage.UploadAsync("b1.txt","");
-
-        var result = await Storage.ExistsAsync("b1.txt");
-
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncIsCalled()
-    {
-        await Storage.UploadAsync("b2.txt", "");
-
-        var DownloadAsStream = await Storage.DownloadAsStreamAsync("b2.txt");
-        using var sr = new StreamReader(DownloadAsStream, Encoding.UTF8);
-
-        var content = sr.ReadToEnd();
-
-        content.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncToFileIsCalled()
-    {
-        await Storage.UploadAsync("b3.txt", "");
-
-        var tempFile = await Storage.DownloadAsync("b3.txt");
-        using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
-
-        var content = sr.ReadToEnd();
-
-        content.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task WhenUploadAsyncIsCalled()
-    {
-        var lineToUpload = "some crazy text";
-
-        var byteArray = Encoding.ASCII.GetBytes(lineToUpload);
-        var stream = new MemoryStream(byteArray);
-
-        await Storage.UploadStreamAsync("b4.txt", stream);
-    }
-
-    [Fact]
-    public async Task WhenDeleteAsyncIsCalled()
-    {
-        await Storage.DeleteAsync("b1.txt");
-    }
+    
 }

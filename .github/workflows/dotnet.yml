@@ -28,6 +28,12 @@ jobs:
           SERVICES: s3
           DEBUG: 1
           DATA_DIR: /tmp/localstack/data
+          AWS_SECRET_KEY: 'localkey'
+          AWS_BUCKET_NAME: 'my-docs-1'
+          AWS_ACCESS_KEY_ID: localkey
+          AWS_SECRET_ACCESS_KEY: localsecret
+          DEFAULT_REGION: eu-west-1
+          
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET
@@ -47,7 +53,7 @@ jobs:
         curl http://localhost:4566/
     - name: test Azure storage
       run: |
-        curl http://127.0.0.1:10000/devstoreaccount1     
+        curl http://localhost:10000/     
       
       # run build and test           
     - name: Restore dependencies

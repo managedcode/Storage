@@ -28,46 +28,4 @@ public class GoogleStorageTests : StorageBaseTests
 
         Storage = provider.GetService<IGCPStorage>();
     }
-
-    [Fact]
-    public void WhenDIInitialized()
-    {
-        DIInitialized();
-    }
-
-    [Fact]
-    public async Task WhenSingleBlobExistsIsCalled()
-    {
-        await SingleBlobExistsIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncIsCalled()
-    {
-        await DownloadAsyncIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncToFileIsCalled()
-    {
-        await DownloadAsyncToFileIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenUploadAsyncIsCalled()
-    {
-        await UploadAsyncIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenDeleteAsyncIsCalled()
-    {
-        await DeleteAsyncIsCalled("a.txt");
-    }
-
-    [Fact]
-    protected async Task WhenGetBlobListAsyncIsCalled()
-    {
-        await GetBlobListAsyncIsCalled();
-    }
 }

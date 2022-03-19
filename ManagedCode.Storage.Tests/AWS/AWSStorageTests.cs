@@ -25,7 +25,7 @@ public class AWSStorageTests : StorageBaseTests
             opt.Bucket = "my-docs-1";
             opt.OriginalOptions = new AmazonS3Config
             {
-                ServiceURL = "0.0.0.0:4572",
+                ServiceURL = "http://localhost:4566",
                 RegionEndpoint = RegionEndpoint.EUWest1,
                 ForcePathStyle = true,
                 UseHttp = true,
@@ -35,52 +35,5 @@ public class AWSStorageTests : StorageBaseTests
         var provider = services.BuildServiceProvider();
 
         Storage = provider.GetService<IAWSStorage>();
-    }
-
-    [Fact]
-    public void WhenDIInitialized()
-    {
-        DIInitialized();
-    }
-
-    [Fact]
-    public async Task WhenSingleBlobExistsIsCalled()
-    {
-        await SingleBlobExistsIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncIsCalled()
-    {
-        var stream = await Storage.DownloadAsStreamAsync("a.txt");
-        using var sr = new StreamReader(stream, Encoding.UTF8);
-
-        var content = await sr.ReadToEndAsync();
-
-        content.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task WhenDownloadAsyncToFileIsCalled()
-    {
-        await DownloadAsyncToFileIsCalled("a.txt");
-    }
-
-    [Fact]
-    public async Task WhenUploadAsyncIsCalled()
-    {
-        await UploadAsyncIsCalled("d.txt");
-    }
-
-    [Fact]
-    public async Task WhenDeleteAsyncIsCalled()
-    {
-        await DeleteAsyncIsCalled("a.txt");
-    }
-
-    [Fact]
-    protected async Task WhenGetBlobListAsyncIsCalled()
-    {
-        await GetBlobListAsyncIsCalled();
     }
 }
