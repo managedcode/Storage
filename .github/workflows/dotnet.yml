@@ -19,7 +19,7 @@ jobs:
         image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
-        options: -v /examples/data:/data fsouza/fake-gcs-server -scheme http
+        #options: -v /examples/data:/data fsouza/fake-gcs-server -scheme http
       localstack:
         image: localstack/localstack:latest
         ports:
@@ -49,7 +49,7 @@ jobs:
       
     - name: tests storage emulators
       run: |
-        curl http://localhost:4443/
+        curl http://fake-gcs-server/
         curl http://localhost:4566/
         curl http://localhost:10000/     
       
