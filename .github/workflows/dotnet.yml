@@ -47,7 +47,7 @@ jobs:
       uses: potatoqualitee/azuright@v1.1      
       
     - name: docker runu
-      run: docker run -d --name fake-gcs-server -p 4443:4443 -scheme http
+      run: docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http
       
     - name: tests storage emulators
       run: |
