@@ -71,20 +71,6 @@ public class AzureStorage : IAzureStorage
 
     #region Download
 
-    public async Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blob);
-
-        var download = await blobClient.DownloadAsync();
-        byte[] result = new byte[download.Value.ContentLength];
-        await download.Value.Content.ReadAsync(result, 0, (int)download.Value.ContentLength);
-
-        var value = Encoding.UTF8.GetString(result);
-
-        return value;
-
-    }
-
     public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blob);
@@ -223,6 +209,22 @@ public class AzureStorage : IAzureStorage
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
         await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
+    }
+
+    public async Task UploadAsync(string content, CancellationToken cancellationToken = default)
+    {
+        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+
+        var blobClient = _blobContainerClient.GetBlobClient($"{fileName}.txt");
+        await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+    }
+
+    public async Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    {
+        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+
+        var blobClient = _blobContainerClient.GetBlobClient(fileName);
+        await blobClient.UploadAsync(dataStream, cancellationToken);
     }
 
     #endregion
