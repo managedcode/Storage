@@ -24,7 +24,7 @@ public class AWSStorage : IAWSStorage
     {
         _bucket = options.Bucket;
         var config = options.OriginalOptions ?? new AmazonS3Config();
-        _s3Client = new AmazonS3Client(options.PublicKey, options.SecretKey, config);
+        _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
     }
 
     public void Dispose()
