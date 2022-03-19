@@ -15,10 +15,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     services:
-      fake-gcs-server:
-        image: fsouza/fake-gcs-server
-        ports:
-          - 4443:4443
+      #fake-gcs-server:
+      #  image: fsouza/fake-gcs-server
+      #  ports:
+      #    - 4443:4443
       localstack:
         image: localstack/localstack:latest
         ports:
@@ -48,7 +48,7 @@ jobs:
       
     - name: docker runu
       run: |
-        docker run -d --name fake-gcs-server -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http
+        docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http
         sleep 5s
       
     - name: tests storage emulators
