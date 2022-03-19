@@ -19,12 +19,13 @@ jobs:
         image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
+          - 8080:8081
         options: fsouza/fake-gcs-server -scheme http
       localstack:
         image: localstack/localstack:latest
         ports:
-          - '4563-4599:4563-4599'
-          - '8055:8080'
+          - 4563-4599:4563-4599
+          - 8055:8080
         env:
           SERVICES: s3
           DEBUG: 1
@@ -49,6 +50,7 @@ jobs:
       
     - name: tests storage emulators
       run: |
+        curl http://localhost:8081/
         curl http://localhost:4443/
         curl http://localhost:4566/
         curl http://localhost:10000/     
