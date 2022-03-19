@@ -32,4 +32,10 @@
         <ProjectReference Include="..\ManagedCode.Storage.Gcp\ManagedCode.Storage.Gcp.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="google-creds.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
