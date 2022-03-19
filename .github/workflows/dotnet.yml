@@ -49,7 +49,7 @@ jobs:
       
     - name: tests storage emulators
       run: |
-        curl http://fake-gcs-server:4443/
+        curl http://localhost:4443/
         curl http://localhost:4566/
         curl http://localhost:10000/     
       
