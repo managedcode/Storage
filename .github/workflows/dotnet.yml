@@ -19,7 +19,7 @@ jobs:
         image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
-        options: -v $PWD/examples/data:/data fsouza/fake-gcs-server -scheme http
+        options: -v ${{PWD}}/examples/data:/data fsouza/fake-gcs-server -scheme http
       localstack:
         image: localstack/localstack:latest
         ports:
