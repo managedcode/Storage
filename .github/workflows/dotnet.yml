@@ -21,7 +21,7 @@ jobs:
           - 4443:4443
         options: "-scheme http"
         volumes:
-          - .:/tmp/fake-gcs-server
+          - ${PWD}/examples/data:/data
       localstack:
         image: localstack/localstack:latest
         ports:
