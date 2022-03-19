@@ -19,6 +19,7 @@ jobs:
         image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
+        options: -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http
       localstack:
         image: localstack/localstack:latest
         ports:
@@ -35,6 +36,7 @@ jobs:
           DEFAULT_REGION: 'eu-west-1'
           
     steps:
+      
     - uses: actions/checkout@v2
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
@@ -45,14 +47,10 @@ jobs:
     - name: azuright
       uses: potatoqualitee/azuright@v1.1      
       
-    - name: test GCP storage
+    - name: tests storage emulators
       run: |
         curl http://localhost:4443/
-    - name: test AWS storage
-      run: |
         curl http://localhost:4566/
-    - name: test Azure storage
-      run: |
         curl http://localhost:10000/     
       
       # run build and test           
@@ -66,3 +64,4 @@ jobs:
         DEFAULT_REGION: eu-west-1
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
+

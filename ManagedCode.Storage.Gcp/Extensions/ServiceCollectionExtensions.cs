@@ -16,17 +16,7 @@ public static class ServiceCollectionExtensions
     {
         var gcpStorageOptions = new GCPStorageOptions();
         action.Invoke(gcpStorageOptions);
-
-        var path = Path.Combine(
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-            gcpStorageOptions.AuthFileName
-        );
-
-        using (Stream m = new FileStream(path, FileMode.Open))
-        {
-            gcpStorageOptions.GoogleCredential = GoogleCredential.FromStream(m);
-        }
-
+        
         return serviceCollection
             .AddScoped<IGCPStorage>(_ => new GCPStorage(gcpStorageOptions));
     }
@@ -37,17 +27,7 @@ public static class ServiceCollectionExtensions
     {
         var gcpStorageOptions = new GCPStorageOptions();
         action.Invoke(gcpStorageOptions);
-
-        var path = Path.Combine(
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-            gcpStorageOptions.AuthFileName
-        );
-
-        using (Stream m = new FileStream(path, FileMode.Open))
-        {
-            gcpStorageOptions.GoogleCredential = GoogleCredential.FromStream(m);
-        }
-
+        
         return serviceCollection
             .AddScoped<IStorage>(_ => new GCPStorage(gcpStorageOptions));
     }
