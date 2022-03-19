@@ -11,12 +11,4 @@ public static class ServiceCollectionExtensions
         return serviceCollection
             .AddScoped<IDownloadManager, DownloadManager>();
     }
-
-    public static IServiceCollection AddDownloadManager(
-        this IServiceCollection serviceCollection,
-        IStorage storage)
-    {
-        return serviceCollection
-            .AddScoped<IDownloadManager>(_ => new DownloadManager(storage));
-    }
 }
