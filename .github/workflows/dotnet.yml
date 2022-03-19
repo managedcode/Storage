@@ -19,7 +19,7 @@ jobs:
         image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
-        options: "-scheme", "http"
+        options: "-scheme http"
         env:
           STORAGE_EMULATOR_HOST: http://localhost:8080
       localstack:
