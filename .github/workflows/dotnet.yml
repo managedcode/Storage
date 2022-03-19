@@ -35,12 +35,21 @@ jobs:
       with:
         dotnet-version: 6.0.x
         
-# setup cloud emulators        
+       
     - name: azuright
       uses: potatoqualitee/azuright@v1.1      
       
+    - name: test GCP storage
+      run: |
+        curl http://localhost:4443/
+    - name: test AWS storage
+      run: |
+        curl http://localhost:4566/
+    - name: test Azure storage
+      run: |
+        curl http://127.0.0.1:10000/devstoreaccount1     
       
-# run build and test           
+      # run build and test           
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -51,5 +60,6 @@ jobs:
         DEFAULT_REGION: eu-west-1
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
-
-
+  
+  
+  curl https://reqbin.com/echo
