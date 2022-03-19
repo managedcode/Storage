@@ -17,14 +17,9 @@ public class DownloadManager : IDownloadManager
         _storage = storage;
     }
 
-    public Task<Stream> DownloadAsStreamAsync(string blob)
-    {
-        return _storage.DownloadAsStreamAsync(blob);
-    }
-
     public async Task UploadStreamAsync(string fileName, Stream stream, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(stream);
+        var (fileStream, fileInfo) = await FileSaver.SaveTemporaryFile(stream);
         await _storage.UploadStreamAsync(fileName, fileStream, cancellationToken);
 
         fileInfo.Delete();
@@ -32,7 +27,7 @@ public class DownloadManager : IDownloadManager
 
     public async Task UploadIFormFileAsync(string fileName, IFormFile formFile, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(formFile);
+        var (fileStream, fileInfo) = await FileSaver.SaveTemporaryFile(formFile);
         await _storage.UploadStreamAsync(fileName, fileStream, cancellationToken);
 
         fileInfo.Delete();
@@ -40,7 +35,7 @@ public class DownloadManager : IDownloadManager
 
     public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream stream, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(stream);
+        var (fileStream, fileInfo) = await FileSaver.SaveTemporaryFile(stream);
         await _storage.UploadStreamAsync(blobMetadata, fileStream, cancellationToken);
 
         fileInfo.Delete();
@@ -48,7 +43,7 @@ public class DownloadManager : IDownloadManager
 
     public async Task UploadIFormFileAsync(BlobMetadata blobMetadata, IFormFile formFile, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(formFile);
+        var (fileStream, fileInfo) = await FileSaver.SaveTemporaryFile(formFile);
         await _storage.UploadStreamAsync(blobMetadata, fileStream, cancellationToken);
 
         fileInfo.Delete();
