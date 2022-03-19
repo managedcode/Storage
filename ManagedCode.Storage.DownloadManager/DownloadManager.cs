@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.DownloadManager.Helpers;
 using Microsoft.AspNetCore.Http;
 
 namespace ManagedCode.Storage.DownloadManager;
@@ -23,7 +24,7 @@ public class DownloadManager : IDownloadManager
 
     public async Task UploadStreamAsync(string fileName, Stream stream, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await SaveTemporaryFile(stream);
+        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(stream);
         await _storage.UploadStreamAsync(fileName, fileStream, cancellationToken);
 
         fileInfo.Delete();
@@ -31,7 +32,7 @@ public class DownloadManager : IDownloadManager
 
     public async Task UploadIFormFileAsync(string fileName, IFormFile formFile, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await SaveTemporaryFile(formFile);
+        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(formFile);
         await _storage.UploadStreamAsync(fileName, fileStream, cancellationToken);
 
         fileInfo.Delete();
@@ -39,7 +40,7 @@ public class DownloadManager : IDownloadManager
 
     public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream stream, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await SaveTemporaryFile(stream);
+        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(stream);
         await _storage.UploadStreamAsync(blobMetadata, fileStream, cancellationToken);
 
         fileInfo.Delete();
@@ -47,7 +48,7 @@ public class DownloadManager : IDownloadManager
 
     public async Task UploadIFormFileAsync(BlobMetadata blobMetadata, IFormFile formFile, CancellationToken cancellationToken = default)
     {
-        var (fileInfo, fileStream) = await SaveTemporaryFile(formFile);
+        var (fileInfo, fileStream) = await FileSaver.SaveTemporaryFile(formFile);
         await _storage.UploadStreamAsync(blobMetadata, fileStream, cancellationToken);
 
         fileInfo.Delete();
@@ -71,30 +72,5 @@ public class DownloadManager : IDownloadManager
     public Task UploadFileAsync(string fileName, string pathToFile, CancellationToken cancellationToken = default)
     {
         return _storage.UploadFileAsync(fileName, pathToFile, cancellationToken);
-    }
-
-    private static async Task<(FileInfo, Stream)> SaveTemporaryFile(Stream stream)
-    {
-        var filePath = Path.GetTempFileName();
-        FileInfo file = new(filePath);
-
-        using Stream fileStream = file.Create();
-        await stream.CopyToAsync(fileStream);
-        fileStream.Position = 0;
-        stream.Close();
-
-        return (file, fileStream);
-    }
-
-    private static async Task<(FileInfo, Stream)> SaveTemporaryFile(IFormFile formFile)
-    {
-        var filePath = Path.GetTempFileName();
-        FileInfo file = new(filePath);
-
-        using Stream fileStream = file.Create();
-        await formFile.CopyToAsync(fileStream);
-        fileStream.Position = 0;
-
-        return (file, fileStream);
     }
 }
