@@ -26,6 +26,8 @@ public interface IStorage : IDisposable
     Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default);
     Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);
 
+    Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default);
+
     Task DeleteAsync(string blob, CancellationToken cancellationToken = default);
     Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);
     Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default);

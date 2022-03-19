@@ -239,5 +239,10 @@ public class GCPStorage : IGCPStorage
         await _storageClient.UploadObjectAsync(_bucket, blobMetadata.Name, null, new MemoryStream(data), null, cancellationToken);
     }
 
+    public Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     #endregion
 }

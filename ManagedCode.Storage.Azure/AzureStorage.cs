@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
@@ -69,6 +70,20 @@ public class AzureStorage : IAzureStorage
     #endregion
 
     #region Download
+
+    public async Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        var blobClient = _blobContainerClient.GetBlobClient(blob);
+
+        var download = await blobClient.DownloadAsync();
+        byte[] result = new byte[download.Value.ContentLength];
+        await download.Value.Content.ReadAsync(result, 0, (int)download.Value.ContentLength);
+
+        var value = Encoding.UTF8.GetString(result);
+
+        return value;
+
+    }
 
     public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
     {
