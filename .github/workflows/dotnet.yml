@@ -15,11 +15,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     services:
-      fake-gcs-server:
-        image: fsouza/fake-gcs-server
-        ports:
-          - 4443:4443
-        options: -scheme http
+      #fake-gcs-server:
+      #  image: fsouza/fake-gcs-server
+      #  ports:
+      #    - 4443:4443
       localstack:
         image: localstack/localstack:latest
         ports:
@@ -46,6 +45,9 @@ jobs:
        
     - name: azuright
       uses: potatoqualitee/azuright@v1.1      
+      
+    - name: docker runu
+      run: docker run -d --name fake-gcs-server -p 4443:4443 -scheme http
       
     - name: tests storage emulators
       run: |
