@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.AWS;
-
+/*
 public class AWSStorageTests : StorageBaseTests
 {
     public AWSStorageTests()
@@ -37,3 +37,4 @@ public class AWSStorageTests : StorageBaseTests
         Storage = provider.GetService<IAWSStorage>();
     }
 }
+*/
