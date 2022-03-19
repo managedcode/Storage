@@ -8,7 +8,7 @@ using Xunit;
 
 namespace ManagedCode.Storage.Tests;
 
-public class StorageBaseTests
+public abstract class StorageBaseTests
 {
     protected IStorage Storage;
 
