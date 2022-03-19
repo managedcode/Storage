@@ -37,11 +37,6 @@ public class DownloadManager : IDownloadManager
         fileInfo.Delete();
     }
 
-    public Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
-    {
-        return _storage.UploadFileAsync(blobMetadata, pathToFile, cancellationToken);
-    }
-
     public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream stream, CancellationToken cancellationToken = default)
     {
         var (fileInfo, fileStream) = await SaveTemporaryFile(stream);
@@ -56,6 +51,21 @@ public class DownloadManager : IDownloadManager
         await _storage.UploadStreamAsync(blobMetadata, fileStream, cancellationToken);
 
         fileInfo.Delete();
+    }
+
+    public Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
+    {
+        return _storage.UploadAsync(blobMetadata, content, cancellationToken);
+    }
+
+    public Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
+    {
+        return _storage.UploadAsync(blobMetadata, data, cancellationToken);
+    }
+
+    public Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
+    {
+        return _storage.UploadFileAsync(blobMetadata, pathToFile, cancellationToken);
     }
 
     public Task UploadFileAsync(string fileName, string pathToFile, CancellationToken cancellationToken = default)

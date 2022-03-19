@@ -15,4 +15,6 @@ public interface IDownloadManager
     Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default);
     Task UploadStreamAsync(BlobMetadata blobMetadata, Stream stream, CancellationToken cancellationToken = default);
     Task UploadIFormFileAsync(BlobMetadata blobMetadata, IFormFile formFile, CancellationToken cancellationToken = default);
+    Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default);
+    Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default);
 }
