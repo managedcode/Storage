@@ -8,7 +8,8 @@
         <DebugType>embedded</DebugType>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
-
+        <Nullable>enable</Nullable>
+        
         <Authors>ManagedCode</Authors>
         <PackageLicenseUrl>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
@@ -19,7 +20,7 @@
         <Title>ManagedCode.Storage.Aws</Title>
         <Description>Storage for AWS</Description>
         <PackageVersion>0.0.1</PackageVersion>
-        <Nullable>enable</Nullable>
+
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
