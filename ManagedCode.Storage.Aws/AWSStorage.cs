@@ -287,5 +287,10 @@ public class AWSStorage : IAWSStorage
         await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
     }
 
+    public Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        throw new System.NotImplementedException();
+    }
+
     #endregion
 }

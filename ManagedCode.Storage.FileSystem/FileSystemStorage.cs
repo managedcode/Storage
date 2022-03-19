@@ -255,5 +255,10 @@ public class FileSystemStorage : IFileSystemStorage
         await Task.Run(() => File.WriteAllBytes(filePath, data), cancellationToken);
     }
 
+    public Task<string> DownloadDataAsStringAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     #endregion
 }

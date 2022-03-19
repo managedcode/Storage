@@ -60,11 +60,21 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
+    public async void GetBlobAsString()
+    {
+        await Storage.UploadAsync("b5.txt", "test");
+
+        var result = await Storage.DownloadDataAsStringAsync("b5.txt");
+
+        result.Should().Be("test");
+    }
+
+    [Fact]
     public async Task WhenDeleteAsyncIsCalled()
     {
-        await Storage.DeleteAsync("b1.txt");
+        await Storage.DeleteAsync("b5.txt");
     }
-    
+
     protected async Task SingleBlobExistsIsCalled(string fileName)
     {
         var result = await Storage.ExistsAsync(fileName);
