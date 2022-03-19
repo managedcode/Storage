@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <LangVersion>10</LangVersion>
+
+        <DebugType>embedded</DebugType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+        <Authors>ManagedCode</Authors>
+        <PackageLicenseUrl>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
+        <RepositoryType>Github</RepositoryType>
+        <Product>Managed Storage</Product>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <Title>ManagedCode.Storage.DownloadManager</Title>
+        <Description>Download manager for Storage</Description>
+        <PackageVersion>0.0.1</PackageVersion>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+    </ItemGroup>
+
+</Project>
