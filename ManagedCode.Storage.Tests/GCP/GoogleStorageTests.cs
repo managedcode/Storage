@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Amazon.Runtime.Documents;
 using FluentAssertions;
@@ -36,18 +38,5 @@ public class GoogleStorageTests : StorageBaseTests
         var provider = services.BuildServiceProvider();
 
         Storage = provider.GetService<IGCPStorage>();
-    }
-
-    [Fact]
-    public async Task GCPTest()
-    {
-        var c = new StorageClientBuilder
-        {
-            UnauthenticatedAccess = true,
-            BaseUri = "http://localhost:4443/storage/v1/",
-        }.Build();
-
-        var bucket = await c.CreateBucketAsync("api-project-0000000000000", "managed-code-bucket");
-        bucket.Should().NotBeNull();
     }
 }

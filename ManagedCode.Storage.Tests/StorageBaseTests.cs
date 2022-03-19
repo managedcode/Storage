@@ -42,9 +42,8 @@ public abstract class StorageBaseTests
         await PrepareFileToTest("test WhenDownloadAsyncToFileIsCalled");
 
         var tempFile = await Storage.DownloadAsync("upload-test-file.txt");
-        using var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
-
-        var content = sr.ReadToEnd();
+        var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
+        var content = await sr.ReadToEndAsync();
 
         content.Should().NotBeNull();
         content.Should().Be("test WhenDownloadAsyncToFileIsCalled");

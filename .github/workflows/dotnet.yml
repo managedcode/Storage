@@ -48,7 +48,7 @@ jobs:
       
     - name: docker runu
       run: |
-        docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http
+        docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http -external-url "http://localhost:4443"
         sleep 5s
       
     - name: tests storage emulators
