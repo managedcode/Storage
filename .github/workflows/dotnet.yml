@@ -60,6 +60,3 @@ jobs:
         DEFAULT_REGION: eu-west-1
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
-  
-  
-  curl https://reqbin.com/echo
