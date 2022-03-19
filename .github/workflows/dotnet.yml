@@ -29,10 +29,10 @@ jobs:
           DEBUG: 1
           DATA_DIR: /tmp/localstack/data
           AWS_SECRET_KEY: 'localkey'
-          AWS_BUCKET_NAME: 'my-docs-1'
-          AWS_ACCESS_KEY_ID: localkey
-          AWS_SECRET_ACCESS_KEY: localsecret
-          DEFAULT_REGION: eu-west-1
+          AWS_BUCKET_NAME: 'managed-code-bucket'
+          AWS_ACCESS_KEY_ID: 'localkey'
+          AWS_SECRET_ACCESS_KEY: 'localsecret'
+          DEFAULT_REGION: 'eu-west-1'
           
     steps:
     - uses: actions/checkout@v2

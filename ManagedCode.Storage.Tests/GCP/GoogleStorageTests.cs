@@ -20,7 +20,7 @@ public class GoogleStorageTests : StorageBaseTests
             opt.BucketOptions = new BucketOptions()
             {
                 ProjectId = "api-project-0000000000000",
-                Bucket = "my-docs-1",
+                Bucket = "managed-code-bucket",
             };
         });
 

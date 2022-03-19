@@ -16,12 +16,12 @@ public class FileSystemTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        var testDirectory = Path.Combine(Environment.CurrentDirectory, "my_tests_files");
+        var testDirectory = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
 
         services.AddFileSystemStorage(opt =>
         {
             opt.CommonPath = testDirectory;
-            opt.Path = "documents";
+            opt.Path = "managed-code-bucket";
         });
 
         var provider = services.BuildServiceProvider();

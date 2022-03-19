@@ -22,7 +22,7 @@ public class AWSStorageTests : StorageBaseTests
         {
             opt.PublicKey = "localkey";
             opt.SecretKey = "localsecret";
-            opt.Bucket = "my-docs-1";
+            opt.Bucket = "managed-code-bucket";
             opt.OriginalOptions = new AmazonS3Config
             {
                 ServiceURL = "http://localhost:4566",
