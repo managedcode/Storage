@@ -69,10 +69,15 @@ jobs:
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
         
+    - name : coverlet
       uses: b3b00/coverlet-action@1.1.9
       with:
         testProject: 'ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj'
         output: 'lcov.info'
         outputFormat: 'lcov'
-        threshold: 80
-
+        excludes: '[program]*,[test]test.*'
+    #- name: coveralls
+    #  uses: coverallsapp/github-action@v1.1.1
+    #  with:
+    #    github-token: ${{secrets.GITHUB_TOKEN }}
+    #    path-to-lcov: ${{steps.coverlet.outputs.coverageFile}} 
