@@ -76,6 +76,8 @@ public class FileSystemStorage : IFileSystemStorage
 
     public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         EnsureDirectoryExists();
         return new FileStream(Path.Combine(_path, blob), FileMode.Open, FileAccess.Read);
     }
@@ -87,18 +89,13 @@ public class FileSystemStorage : IFileSystemStorage
 
     public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
     {
+        await Task.Yield();
+
         EnsureDirectoryExists();
 
-        var localFile = new LocalFile();
         var filePath = Path.Combine(_path, blob);
 
-        using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-        {
-            //TODO: Temporary added bufferSize
-            await fs.CopyToAsync(localFile.FileStream, 1024, cancellationToken);
-        }
-
-        return localFile;
+        return new LocalFile(filePath, false);
     }
 
     public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)

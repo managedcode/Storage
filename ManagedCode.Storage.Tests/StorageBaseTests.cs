@@ -15,6 +15,38 @@ public abstract class StorageBaseTests
 {
     protected IStorage Storage;
 
+    #region MemoryPayload
+
+    //[Fact]
+    //public async Task WhenBigFilesUpload()
+    //{
+    //    var directory = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
+
+    //    var bigFiles = new List<LocalFile>()
+    //    {
+    //        GetLocalFile($"{directory}/{nameof(WhenBigFilesUpload)}_1.txt", 100 * 1024 * 1024),
+    //        GetLocalFile($"{directory}/{nameof(WhenBigFilesUpload)}_2.txt", 100 * 1024 * 1024),
+    //        GetLocalFile($"{directory}/{nameof(WhenBigFilesUpload)}_3.txt", 100 * 1024 * 1024)
+    //    };
+
+    //    foreach (var localFile in bigFiles)
+    //    {
+    //        await Storage.UploadStreamAsync(localFile.FileName, localFile.FileStream);  
+    //    }
+
+    //    //foreach (var localFile in bigFiles)
+    //    //{
+    //    //    await Storage.DeleteAsync(localFile.FileName);
+    //    //}
+
+    //    //foreach (var localFile in bigFiles)
+    //    //{
+    //    //    localFile.Dispose();
+    //    //}
+    //}
+
+    #endregion
+
     #region Get
 
     [Fact]
@@ -328,5 +360,17 @@ public abstract class StorageBaseTests
         {
             await Storage.DeleteAsync(fileName);
         }
+    }
+
+    private LocalFile GetLocalFile(string fileName, int byteSize)
+    {
+        var localFile = new LocalFile(fileName);
+        var fs = localFile.FileStream;
+
+        fs.Seek(byteSize, SeekOrigin.Begin);
+        fs.WriteByte(0);
+        fs.Close();
+
+        return localFile;
     }
 }
