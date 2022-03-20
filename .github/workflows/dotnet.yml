@@ -77,7 +77,7 @@ jobs:
         outputFormat: 'lcov'
         excludes: '[program]*,[test]test.*'
     - name: coveralls
-      uses: coverallsapp/github-action@v1.1.1
+      uses: coverallsapp/github-action@master
       with:
         github-token: ${{secrets.GITHUB_TOKEN }}
         path-to-lcov: ${{steps.coverlet.outputs.coverageFile}} 
