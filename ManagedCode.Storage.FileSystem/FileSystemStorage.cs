@@ -77,18 +77,7 @@ public class FileSystemStorage : IFileSystemStorage
     public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
     {
         EnsureDirectoryExists();
-        var memoryStream = new MemoryStream();
-        var filePath = Path.Combine(_path, blob);
-
-        if (File.Exists(filePath))
-        {
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            {
-                await fs.CopyToAsync(memoryStream);
-            }
-        }
-
-        return memoryStream;
+        return new FileStream(Path.Combine(_path, blob), FileMode.Open, FileAccess.Read);
     }
 
     public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)

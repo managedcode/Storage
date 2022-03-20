@@ -74,7 +74,7 @@ public class AzureStorage : IAzureStorage
     public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blob);
-        var res = await blobClient.DownloadStreamingAsync();
+        var res = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
 
         return res.Value.Content;
     }
