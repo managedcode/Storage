@@ -8,4 +8,5 @@ public class BlobMetadata
     public Uri Uri { get; set; } = null!;
     public string? Container { get; set; }
     public string? ContentType { get; set; }
+    public bool Rewrite { get; set; }
 }
