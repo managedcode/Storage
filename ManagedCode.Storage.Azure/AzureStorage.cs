@@ -154,14 +154,28 @@ public class AzureStorage : IAzureStorage
         };
     }
 
-    public IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        foreach (var blob in blobs)
+        {
+            yield return await GetBlobAsync(blob, cancellationToken);
+        }
     }
 
-    public IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var blobs = _blobContainerClient.GetBlobsAsync();
+
+        await foreach (var item in blobs.AsPages())
+        {
+            foreach (var blobItem in item.Values)
+            {
+                yield return new BlobMetadata
+                {
+                    Name = blobItem.Name,
+                };
+            }
+        }
     }
 
     #endregion

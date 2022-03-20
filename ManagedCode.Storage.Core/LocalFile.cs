@@ -8,7 +8,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
 {
     private readonly object _lockObject = new();
     private bool _disposed;
-    private FileStream _stream;
+    private FileStream? _stream;
 
     public LocalFile(bool keepAlive = false) : this(Path.GetTempFileName(), keepAlive)
     {
