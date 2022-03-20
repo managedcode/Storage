@@ -211,20 +211,24 @@ public class AzureStorage : IAzureStorage
         await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
     }
 
-    public async Task UploadAsync(string content, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
 
         var blobClient = _blobContainerClient.GetBlobClient($"{fileName}.txt");
         await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+
+        return fileName;
     }
 
-    public async Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
 
         var blobClient = _blobContainerClient.GetBlobClient(fileName);
         await blobClient.UploadAsync(dataStream, cancellationToken);
+
+        return fileName;
     }
 
     #endregion
