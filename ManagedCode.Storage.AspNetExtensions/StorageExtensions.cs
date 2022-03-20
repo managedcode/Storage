@@ -47,4 +47,11 @@ public static class StorageExtensions
 
         return new FileStreamResult(localFile.FileStream, MimeHelper.GetMimeType(localFile.FileInfo.Extension));
     }
+    
+    public static async Task<FileResult> DownloadAsFileResult(this IStorage storage, BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    {
+        var localFile = await storage.DownloadAsync(blobMetadata, cancellationToken);
+
+        return new FileStreamResult(localFile.FileStream, MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+    }
 }
