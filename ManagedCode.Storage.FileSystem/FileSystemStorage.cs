@@ -84,10 +84,8 @@ public class FileSystemStorage : IFileSystemStorage
         {
             using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
-                await fs.CopyToAsync(memoryStream, 81920, cancellationToken);
+                await fs.CopyToAsync(memoryStream);
             }
-
-            return memoryStream;
         }
 
         return memoryStream;

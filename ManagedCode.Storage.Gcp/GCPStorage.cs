@@ -43,9 +43,8 @@ public class GCPStorage : IGCPStorage
                 _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket);
             }
         }
-        catch(Exception ex)
+        catch 
         {
-            throw;
         }
     }
 

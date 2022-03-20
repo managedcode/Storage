@@ -22,7 +22,7 @@ public class GoogleStorageTests : StorageBaseTests
 
         services.AddGCPStorage(opt =>
         {
-            //opt.GoogleCredential = GoogleCredential.FromJson("path-to-json-file");
+            //opt.GoogleCredential = GoogleCredential.FromFile("google_auth.json");
             opt.BucketOptions = new BucketOptions()
             {
                 ProjectId = "api-project-0000000000000",
