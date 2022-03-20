@@ -288,16 +288,20 @@ public class AWSStorage : IAWSStorage
         await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
     }
 
-    public async Task UploadAsync(string content, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadStreamAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken);
+
+        return fileName;
     }
 
-    public async Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadStreamAsync(fileName, dataStream, cancellationToken);
+
+        return fileName;
     }
 
     #endregion

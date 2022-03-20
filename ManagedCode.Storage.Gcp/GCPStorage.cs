@@ -239,16 +239,20 @@ public class GCPStorage : IGCPStorage
         await _storageClient.UploadObjectAsync(_bucket, blobMetadata.Name, null, new MemoryStream(data), null, cancellationToken);
     }
 
-    public async Task UploadAsync(string content, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadAsync(fileName, content, cancellationToken);
+
+        return fileName;
     }
 
-    public async Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadStreamAsync(fileName, dataStream, cancellationToken);
+
+        return fileName;
     }
 
     #endregion
