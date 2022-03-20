@@ -89,16 +89,9 @@ public class FileSystemStorage : IFileSystemStorage
     {
         EnsureDirectoryExists();
 
-        var localFile = new LocalFile();
         var filePath = Path.Combine(_path, blob);
 
-        using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-        {
-            //TODO: Temporary added bufferSize
-            await fs.CopyToAsync(localFile.FileStream, 1024, cancellationToken);
-        }
-
-        return localFile;
+        return new LocalFile(filePath, false);
     }
 
     public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
