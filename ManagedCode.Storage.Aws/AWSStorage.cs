@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -242,33 +241,68 @@ public class AWSStorage : IAWSStorage
 
     public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
     {
-        await UploadStreamAsync(blobName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken);
+        await UploadStreamInternalAsync(blobName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken: cancellationToken);
     }
 
     public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
     {
-        await UploadAsync(blobMetadata.Name, content, cancellationToken);
+        await UploadStreamInternalAsync(blobMetadata.Name, new MemoryStream(Encoding.UTF8.GetBytes(content)), blobMetadata.ContentType,
+            cancellationToken);
     }
 
     public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
     {
-        await UploadStreamAsync(blobMetadata.Name, new MemoryStream(data), cancellationToken);
+        await UploadStreamInternalAsync(blobMetadata.Name, new MemoryStream(data), blobMetadata.ContentType, cancellationToken);
     }
 
     public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
     {
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            await UploadStreamAsync(blobName, fs, cancellationToken);
-        }
+        await UploadFileInternalAsync(blobName, pathToFile, cancellationToken: cancellationToken);
     }
+
 
     public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
     {
-        await UploadFileAsync(blobMetadata.Name, pathToFile, cancellationToken);
+        await UploadFileInternalAsync(blobMetadata.Name, pathToFile, blobMetadata.ContentType, cancellationToken);
     }
 
     public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
+    {
+        await UploadStreamInternalAsync(blobName, dataStream, cancellationToken: cancellationToken);
+    }
+
+    public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
+    {
+        await UploadStreamInternalAsync(blobMetadata.Name, dataStream, blobMetadata.ContentType, cancellationToken);
+    }
+
+    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
+    {
+        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        await UploadStreamInternalAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken: cancellationToken);
+
+        return fileName;
+    }
+
+    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    {
+        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        await UploadStreamInternalAsync(fileName, dataStream, cancellationToken: cancellationToken);
+
+        return fileName;
+    }
+
+    private async Task UploadFileInternalAsync(string blobName, string pathToFile, string? contentType = null,
+        CancellationToken cancellationToken = default)
+    {
+        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
+        {
+            await UploadStreamInternalAsync(blobName, fs, contentType, cancellationToken);
+        }
+    }
+
+    private async Task UploadStreamInternalAsync(string blobName, Stream dataStream,
+        string? contentType = null, CancellationToken cancellationToken = default)
     {
         var putRequest = new PutObjectRequest
         {
@@ -276,32 +310,12 @@ public class AWSStorage : IAWSStorage
             Key = blobName,
             InputStream = dataStream,
             AutoCloseStream = true,
+            ContentType = contentType ?? Constants.ContentType,
             ServerSideEncryptionMethod = null
         };
 
         await _s3Client.EnsureBucketExistsAsync(_bucket);
         await _s3Client.PutObjectAsync(putRequest, cancellationToken);
-    }
-
-    public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
-    }
-
-    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
-    {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadStreamAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken);
-
-        return fileName;
-    }
-
-    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadStreamAsync(fileName, dataStream, cancellationToken);
-
-        return fileName;
     }
 
     #endregion
