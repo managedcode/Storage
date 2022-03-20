@@ -12,12 +12,12 @@ namespace ManagedCode.Storage.AspNetExtensions;
 
 public static class StorageExtensions
 {
+    private const int MinLengthForLargeFile = 256 * 1024;
+
     public static async Task UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadToStorageOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         options ??= new UploadToStorageOptions();
-
-        var kilobytes = formFile.Length / 1024;
 
         BlobMetadata blobMetadata = new()
         {
@@ -26,9 +26,9 @@ public static class StorageExtensions
             Rewrite = options.Rewrite
         };
 
-        if (kilobytes > 512)
+        if (formFile.Length > MinLengthForLargeFile)
         {
-            var localFile = await formFile.ToLocalFileAsync();
+            var localFile = await formFile.ToLocalFileAsync(cancellationToken);
 
             await storage.UploadStreamAsync(blobMetadata, localFile.FileStream, cancellationToken);
         }
