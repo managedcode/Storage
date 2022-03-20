@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Gcp", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.FileSystem", "ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.DownloadManager", "ManagedCode.Storage.DownloadManager\ManagedCode.Storage.DownloadManager.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.AspNetExtensions", "ManagedCode.Storage.AspNetExtensions\ManagedCode.Storage.AspNetExtensions.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
