@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
 using Microsoft.AspNetCore.Http;
