@@ -22,7 +22,7 @@ public class GCPStorage : IGCPStorage
     public GCPStorage(GCPStorageOptions gcpStorageOptions)
     {
         _bucket = gcpStorageOptions.BucketOptions.Bucket;
-        
+
         if (gcpStorageOptions.StorageClientBuilder != null)
         {
             _storageClient = gcpStorageOptions.StorageClientBuilder.Build();
@@ -31,7 +31,7 @@ public class GCPStorage : IGCPStorage
         {
             _storageClient = StorageClient.Create(gcpStorageOptions.GoogleCredential);
         }
-        
+
         try
         {
             if (gcpStorageOptions.OriginalOptions != null)
@@ -43,7 +43,7 @@ public class GCPStorage : IGCPStorage
                 _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket);
             }
         }
-        catch 
+        catch
         {
         }
     }
@@ -199,12 +199,13 @@ public class GCPStorage : IGCPStorage
 
     public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
     {
-        await _storageClient.UploadObjectAsync(_bucket, blobName, null, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
+        await _storageClient.UploadObjectAsync(_bucket, blobName, Constants.ContentType, new MemoryStream(Encoding.UTF8.GetBytes(content)), null,
+            cancellationToken);
     }
 
     public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
     {
-        await _storageClient.UploadObjectAsync(_bucket, blobName, null, dataStream, null, cancellationToken);
+        await _storageClient.UploadObjectAsync(_bucket, blobName, Constants.ContentType, dataStream, null, cancellationToken);
     }
 
     public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
@@ -217,7 +218,7 @@ public class GCPStorage : IGCPStorage
 
     public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
     {
-        await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
+        await _storageClient.UploadObjectAsync(_bucket, blobMetadata.Name, blobMetadata.ContentType, dataStream, null, cancellationToken);
     }
 
     public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
@@ -230,17 +231,19 @@ public class GCPStorage : IGCPStorage
 
     public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
     {
-        await UploadAsync(blobMetadata.Name, content, cancellationToken);
+        await _storageClient.UploadObjectAsync(_bucket, blobMetadata.Name, blobMetadata.ContentType,
+            new MemoryStream(Encoding.UTF8.GetBytes(content)), null,
+            cancellationToken);
     }
 
     public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
     {
-        await _storageClient.UploadObjectAsync(_bucket, blobMetadata.Name, null, new MemoryStream(data), null, cancellationToken);
+        await _storageClient.UploadObjectAsync(_bucket, blobMetadata.Name, blobMetadata.ContentType, new MemoryStream(data), null, cancellationToken);
     }
 
     public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadAsync(fileName, content, cancellationToken);
 
         return fileName;
@@ -248,7 +251,7 @@ public class GCPStorage : IGCPStorage
 
     public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
     {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadStreamAsync(fileName, dataStream, cancellationToken);
 
         return fileName;
