@@ -9,28 +9,36 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <Nullable>enable</Nullable>
-        
+    </PropertyGroup>
+
+    <!--NuGet-->
+    <PropertyGroup>
         <Authors>ManagedCode</Authors>
-        <PackageLicenseUrl>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicenseUrl>
+        <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
+        <PackageLicense>https://github.com/managed-code-hub/Storage/blob/main/LICENSE</PackageLicense>
         <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
         <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
         <RepositoryType>Github</RepositoryType>
-        <Product>Managed Storage</Product>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        
+        <Product>Managed Storage</Product>
         <Title>ManagedCode.Storage.Aws</Title>
         <Description>Storage for AWS</Description>
+        <PackageSummary>Storage for AWS</PackageSummary>
+        <PackageId>ManagedCode.Storage.Aws</PackageId>
+        <PackageTags>managedcode, aws, storage, cloud</PackageTags>
+        <Version>0.0.1</Version>
         <PackageVersion>0.0.1</PackageVersion>
-
     </PropertyGroup>
-
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
-
     <ItemGroup>
-        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
+        <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="" />
     </ItemGroup>
-
+    
     <ItemGroup>
         <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
     </ItemGroup>
