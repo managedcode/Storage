@@ -241,7 +241,7 @@ public class AWSStorage : IAWSStorage
 
     public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
     {
-        await UploadStreamInternalAsync(blobName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken: cancellationToken);
+        await UploadStreamInternalAsync(blobName, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
     }
 
     public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
@@ -257,18 +257,24 @@ public class AWSStorage : IAWSStorage
 
     public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
     {
-        await UploadFileInternalAsync(blobName, pathToFile, cancellationToken: cancellationToken);
+        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
+        {
+            await UploadStreamInternalAsync(blobName, fs, null, cancellationToken);
+        }
     }
 
 
     public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
     {
-        await UploadFileInternalAsync(blobMetadata.Name, pathToFile, blobMetadata.ContentType, cancellationToken);
+        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
+        {
+            await UploadStreamInternalAsync(blobMetadata.Name, fs, blobMetadata.ContentType, cancellationToken);
+        }
     }
 
     public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
     {
-        await UploadStreamInternalAsync(blobName, dataStream, cancellationToken: cancellationToken);
+        await UploadStreamInternalAsync(blobName, dataStream, null, cancellationToken);
     }
 
     public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
@@ -279,7 +285,7 @@ public class AWSStorage : IAWSStorage
     public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
         var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadStreamInternalAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)), cancellationToken: cancellationToken);
+        await UploadStreamInternalAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
 
         return fileName;
     }
@@ -287,18 +293,9 @@ public class AWSStorage : IAWSStorage
     public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
     {
         var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadStreamInternalAsync(fileName, dataStream, cancellationToken: cancellationToken);
+        await UploadStreamInternalAsync(fileName, dataStream, null, cancellationToken);
 
         return fileName;
-    }
-
-    private async Task UploadFileInternalAsync(string blobName, string pathToFile, string? contentType = null,
-        CancellationToken cancellationToken = default)
-    {
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            await UploadStreamInternalAsync(blobName, fs, contentType, cancellationToken);
-        }
     }
 
     private async Task UploadStreamInternalAsync(string blobName, Stream dataStream,
