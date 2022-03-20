@@ -11,18 +11,31 @@ public abstract class StorageBaseTests
 {
     protected IStorage Storage;
 
+    #region Get
+    #endregion
+
+    #region Upload
+
     [Fact]
-    public async Task WhenSingleBlobExistsIsCalled()
+    public async Task WhenUploadAsyncIsCalled()
     {
-        const string uploadContent = $"test {nameof(WhenDownloadAsyncIsCalled)}";
-        const string fileName = $"{nameof(WhenDownloadAsyncIsCalled)}.txt";
+        const string uploadContent = $"test {nameof(WhenUploadAsyncIsCalled)}";
+        const string fileName = $"{nameof(WhenUploadAsyncIsCalled)}.txt";
 
-        await PrepareFileToTest(uploadContent, fileName);
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        var stream = new MemoryStream(byteArray);
 
-        var result = await Storage.ExistsAsync(fileName);
+        if (await Storage.ExistsAsync(fileName))
+        {
+            await Storage.DeleteAsync(fileName);
+        }
 
-        result.Should().BeTrue();
+        await Storage.UploadStreamAsync(fileName, stream);
     }
+
+    #endregion
+
+    #region Download
 
     [Fact]
     public async Task WhenDownloadAsyncIsCalled()
@@ -57,22 +70,9 @@ public abstract class StorageBaseTests
         content.Should().Be(uploadContent);
     }
 
-    [Fact]
-    public async Task WhenUploadAsyncIsCalled()
-    {
-        const string uploadContent = $"test {nameof(WhenUploadAsyncIsCalled)}";
-        const string fileName = $"{nameof(WhenUploadAsyncIsCalled)}.txt";
+    #endregion
 
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        var stream = new MemoryStream(byteArray);
-
-        if (await Storage.ExistsAsync(fileName))
-        {
-            await Storage.DeleteAsync(fileName);
-        }
-
-        await Storage.UploadStreamAsync(fileName, stream);
-    }
+    #region Delete
 
     [Fact]
     public async Task WhenDeleteAsyncIsCalled()
@@ -83,6 +83,25 @@ public abstract class StorageBaseTests
         await PrepareFileToTest(uploadContent, fileName);
         await Storage.DeleteAsync(fileName);
     }
+
+    #endregion
+
+    #region Exist
+
+    [Fact]
+    public async Task WhenSingleBlobExistsIsCalled()
+    {
+        const string uploadContent = $"test {nameof(WhenSingleBlobExistsIsCalled)}";
+        const string fileName = $"{nameof(WhenSingleBlobExistsIsCalled)}.txt";
+
+        await PrepareFileToTest(uploadContent, fileName);
+
+        var result = await Storage.ExistsAsync(fileName);
+
+        result.Should().BeTrue();
+    }
+
+    #endregion
 
     private async Task PrepareFileToTest(string content, string fileName)
     {
