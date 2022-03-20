@@ -80,4 +80,4 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{secrets.GITHUB_TOKEN }}
-        path-to-lcov: ${{steps.coverlet.outputs.coverageFile}} 
+        path-to-lcov: ManagedCode.Storage.Tests/lcov.info
