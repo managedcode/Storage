@@ -84,10 +84,8 @@ public class FileSystemStorage : IFileSystemStorage
         {
             using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
-                await fs.CopyToAsync(memoryStream, 81920, cancellationToken);
+                await fs.CopyToAsync(memoryStream);
             }
-
-            return memoryStream;
         }
 
         return memoryStream;
@@ -255,16 +253,20 @@ public class FileSystemStorage : IFileSystemStorage
         await Task.Run(() => File.WriteAllBytes(filePath, data), cancellationToken);
     }
 
-    public async Task UploadAsync(string content, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadAsync(fileName, content, cancellationToken);
+
+        return fileName;
     }
 
-    public async Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
     {
         string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         await UploadStreamAsync(fileName, dataStream, cancellationToken);
+
+        return fileName;
     }
 
     #endregion

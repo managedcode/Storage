@@ -20,8 +20,8 @@ public interface IStorage : IDisposable
     Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default);
     Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default);
     Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default);
-    Task UploadAsync(string content, CancellationToken cancellationToken = default);
-    Task UploadAsync(Stream dataStream, CancellationToken cancellationToken = default);
+    Task<string> UploadAsync(string content, CancellationToken cancellationToken = default);
+    Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default);
 
     Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default);
     Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);
