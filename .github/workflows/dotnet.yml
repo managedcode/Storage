@@ -68,4 +68,11 @@ jobs:
         DEFAULT_REGION: eu-west-1
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
+        
+      uses: b3b00/coverlet-action@1.1.9
+      with:
+        testProject: 'ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj'
+        output: 'lcov.info'
+        outputFormat: 'lcov'
+        threshold: 80
 
