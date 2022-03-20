@@ -55,9 +55,9 @@ public class GCPStorage : IGCPStorage
 
     #region Delete
 
-    public async Task DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(string blobName, CancellationToken cancellationToken = default)
     {
-        await _storageClient.DeleteObjectAsync(_bucket, blob, null, cancellationToken);
+        await _storageClient.DeleteObjectAsync(_bucket, blobName, null, cancellationToken);
     }
 
     public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
@@ -65,17 +65,17 @@ public class GCPStorage : IGCPStorage
         await DeleteAsync(blobMetadata.Name, cancellationToken);
     }
 
-    public async Task DeleteAsync(IEnumerable<string> blobs, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default)
     {
-        foreach (var blob in blobs)
+        foreach (var blob in blobNames)
         {
             await DeleteAsync(blob, cancellationToken);
         }
     }
 
-    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobs, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobNames, CancellationToken cancellationToken = default)
     {
-        foreach (var blob in blobs)
+        foreach (var blob in blobNames)
         {
             await DeleteAsync(blob, cancellationToken);
         }
@@ -85,10 +85,10 @@ public class GCPStorage : IGCPStorage
 
     #region Download
 
-    public async Task<Stream> DownloadAsStreamAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<Stream> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var stream = new MemoryStream();
-        await _storageClient.DownloadObjectAsync(_bucket, blob, stream, null, cancellationToken);
+        await _storageClient.DownloadObjectAsync(_bucket, blobName, stream, null, cancellationToken);
 
         stream.Seek(0, SeekOrigin.Begin);
 
@@ -100,11 +100,11 @@ public class GCPStorage : IGCPStorage
         return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
-    public async Task<LocalFile> DownloadAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<LocalFile> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var localFile = new LocalFile();
 
-        await _storageClient.DownloadObjectAsync(_bucket, blob,
+        await _storageClient.DownloadObjectAsync(_bucket, blobName,
             localFile.FileStream, null, cancellationToken);
 
         return localFile;
@@ -119,11 +119,11 @@ public class GCPStorage : IGCPStorage
 
     #region Exists
 
-    public async Task<bool> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsAsync(string blobName, CancellationToken cancellationToken = default)
     {
         try
         {
-            await _storageClient.GetObjectAsync(_bucket, blob, null, cancellationToken);
+            await _storageClient.GetObjectAsync(_bucket, blobName, null, cancellationToken);
 
             return true;
         }
@@ -138,10 +138,10 @@ public class GCPStorage : IGCPStorage
         return await ExistsAsync(blobMetadata.Name, cancellationToken);
     }
 
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobs,
+    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var blob in blobs)
+        foreach (var blob in blobNames)
         {
             yield return await ExistsAsync(blob, cancellationToken);
         }
@@ -160,9 +160,9 @@ public class GCPStorage : IGCPStorage
 
     #region Get
 
-    public async Task<BlobMetadata> GetBlobAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<BlobMetadata> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
     {
-        var obj = await _storageClient.GetObjectAsync(_bucket, blob, null, cancellationToken);
+        var obj = await _storageClient.GetObjectAsync(_bucket, blobName, null, cancellationToken);
 
         return new BlobMetadata
         {
@@ -184,10 +184,10 @@ public class GCPStorage : IGCPStorage
             );
     }
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobs,
+    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var blob in blobs)
+        foreach (var blob in blobNames)
         {
             yield return await GetBlobAsync(blob, cancellationToken);
         }
@@ -197,21 +197,21 @@ public class GCPStorage : IGCPStorage
 
     #region Upload
 
-    public async Task UploadAsync(string blob, string content, CancellationToken cancellationToken = default)
+    public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
     {
-        await _storageClient.UploadObjectAsync(_bucket, blob, null, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
+        await _storageClient.UploadObjectAsync(_bucket, blobName, null, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
     }
 
-    public async Task UploadStreamAsync(string blob, Stream dataStream, CancellationToken cancellationToken = default)
+    public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
     {
-        await _storageClient.UploadObjectAsync(_bucket, blob, null, dataStream, null, cancellationToken);
+        await _storageClient.UploadObjectAsync(_bucket, blobName, null, dataStream, null, cancellationToken);
     }
 
-    public async Task UploadFileAsync(string blob, string pathToFile, CancellationToken cancellationToken = default)
+    public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
     {
         using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
         {
-            await UploadStreamAsync(blob, fs, cancellationToken);
+            await UploadStreamAsync(blobName, fs, cancellationToken);
         }
     }
 
