@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -27,33 +27,34 @@ public abstract class StorageBaseTests
 
     #region MemoryPayload
 
-    //[Fact]
-    //public async Task WhenBigFilesUpload()
-    //{
-    //    var directory = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
+    [Fact]
+    public async Task UploadBigFilesAsync()
+    {
+        const int fileSize = 70 * 1024 * 1024;
 
-    //    var bigFiles = new List<LocalFile>()
-    //    {
-    //        GetLocalFile($"{directory}/{nameof(WhenBigFilesUpload)}_1.txt", 100 * 1024 * 1024),
-    //        GetLocalFile($"{directory}/{nameof(WhenBigFilesUpload)}_2.txt", 100 * 1024 * 1024),
-    //        GetLocalFile($"{directory}/{nameof(WhenBigFilesUpload)}_3.txt", 100 * 1024 * 1024)
-    //    };
+        var bigFiles = new List<LocalFile>()
+        {
+            GetLocalFile(fileSize),
+            GetLocalFile(fileSize),
+            GetLocalFile(fileSize)
+        };
 
-    //    foreach (var localFile in bigFiles)
-    //    {
-    //        await Storage.UploadStreamAsync(localFile.FileName, localFile.FileStream);  
-    //    }
+        foreach (var localFile in bigFiles)
+        {
+            await Storage.UploadStreamAsync(localFile.FileName, localFile.FileStream);
+            await localFile.DisposeAsync();
+        }
 
-    //    //foreach (var localFile in bigFiles)
-    //    //{
-    //    //    await Storage.DeleteAsync(localFile.FileName);
-    //    //}
+        Process currentProcess = Process.GetCurrentProcess();
+        long totalBytesOfMemoryUsed = currentProcess.WorkingSet64;
 
-    //    //foreach (var localFile in bigFiles)
-    //    //{
-    //    //    localFile.Dispose();
-    //    //}
-    //}
+        totalBytesOfMemoryUsed.Should().BeLessThan(3 * fileSize);
+
+        foreach (var localFile in bigFiles)
+        {
+            await Storage.DeleteAsync(localFile.FileName);
+        }
+    }
 
     #endregion
 
@@ -728,14 +729,14 @@ public abstract class StorageBaseTests
         return await sr.ReadToEndAsync();
     }
 
-    private LocalFile GetLocalFile(string fileName, int byteSize)
+    private LocalFile GetLocalFile(int byteSize)
     {
-        var localFile = new LocalFile(fileName);
+        var localFile = new LocalFile();
         var fs = localFile.FileStream;
 
         fs.Seek(byteSize, SeekOrigin.Begin);
         fs.WriteByte(0);
-        fs.Close();
+        fs.Dispose();
 
         return localFile;
     }
