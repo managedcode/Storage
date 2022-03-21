@@ -227,9 +227,9 @@ public class AzureStorage : IAzureStorage
 
     public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
+        string fileName = $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.txt";
 
-        var blobClient = _blobContainerClient.GetBlobClient($"{fileName}.txt");
+        var blobClient = _blobContainerClient.GetBlobClient(fileName);
         await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
 
         return fileName;
