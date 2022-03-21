@@ -13,9 +13,11 @@ public static class FileHelper
         var path = Path.GetTempPath();
         var localFile = new LocalFile($"{path}/{fileName}");
 
-        localFile.FileStream.Seek(byteSize, SeekOrigin.Begin);
-        localFile.FileStream.WriteByte(0);
-        localFile.FileStream.Close();
+        var fs = localFile.FileStream;
+
+        fs.Seek(byteSize, SeekOrigin.Begin);
+        fs.WriteByte(0);
+        fs.Close();
 
         return localFile;
     }
