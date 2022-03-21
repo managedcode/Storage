@@ -30,7 +30,3 @@ jobs:
         do
           dotnet nuget push "$file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
         done  
-        
-
-      
-      #     dotnet nuget push "${file##*.} --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
