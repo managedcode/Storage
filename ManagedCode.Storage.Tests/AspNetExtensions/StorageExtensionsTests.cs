@@ -122,9 +122,11 @@ public class StorageExtensionsTests
         var fileName = FileHelper.GenerateRandomFileName("txt");
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
+        BlobMetadata blobMetadata = new() {Name = fileName};
+
         // Act
-        await Storage.UploadFileAsync(new BlobMetadata() {Name = fileName}, localFile.FilePath);
-        var fileResult = await Storage.DownloadAsFileResult(fileName);
+        await Storage.UploadFileAsync(blobMetadata, localFile.FilePath);
+        var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
 
         // Assert
         fileResult.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
