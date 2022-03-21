@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using ManagedCode.Storage.AspNetExtensions.Helpers;
 using ManagedCode.Storage.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
@@ -28,7 +29,11 @@ public static class FileHelper
 
         var ms = new MemoryStream();
         localFile.FileStream.CopyTo(ms);
-        var formFile = new FormFile(ms, 0, ms.Length, fileName, fileName);
+        var formFile = new FormFile(ms, 0, ms.Length, fileName, fileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = MimeHelper.GetMimeType(localFile.FileInfo.Extension)
+        };
 
         localFile.Dispose();
 
