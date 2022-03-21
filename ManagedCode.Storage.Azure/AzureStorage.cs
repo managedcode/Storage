@@ -15,22 +15,25 @@ namespace ManagedCode.Storage.Azure;
 
 public class AzureStorage : IAzureStorage
 {
-    private readonly BlobContainerClient _blobContainerClient;
+    private BlobContainerClient _blobContainerClient;
+    private readonly AzureStorageOptions _options;
 
     public AzureStorage(AzureStorageOptions options)
     {
+        _options = options;
         _blobContainerClient = new BlobContainerClient(
             options.ConnectionString,
             options.Container,
             options.OriginalOptions
         );
 
-        if (options.ShouldCreateIfNotExists)
+
+        if (_options.ShouldCreateIfNotExists)
         {
             _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
         }
 
-        _blobContainerClient.SetAccessPolicy(options.PublicAccessType);
+        _blobContainerClient.SetAccessPolicy(_options.PublicAccessType);
     }
 
     public void Dispose()
@@ -246,4 +249,20 @@ public class AzureStorage : IAzureStorage
     }
 
     #endregion
+
+    #region CreateContainer
+
+    public async Task CreateContainerAsync()
+    {
+
+        if (_options.ShouldCreateIfNotExists)
+        {
+            await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+        }
+
+        await _blobContainerClient.SetAccessPolicyAsync(_options.PublicAccessType);
+    }
+    
+    #endregion
+
 }

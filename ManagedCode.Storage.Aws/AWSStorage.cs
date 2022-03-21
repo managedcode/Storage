@@ -316,4 +316,14 @@ public class AWSStorage : IAWSStorage
     }
 
     #endregion
+
+    #region CreateContainer
+
+    public async Task CreateContainerAsync()
+    {
+        await _s3Client.EnsureBucketExistsAsync(_bucket);
+    }
+    
+    #endregion
+
 }

@@ -18,29 +18,32 @@ public class GCPStorage : IGCPStorage
 {
     private readonly string _bucket;
     private readonly StorageClient _storageClient;
+    private readonly GCPStorageOptions _gcpStorageOptions;
 
     public GCPStorage(GCPStorageOptions gcpStorageOptions)
     {
-        _bucket = gcpStorageOptions.BucketOptions.Bucket;
+        _gcpStorageOptions = gcpStorageOptions;
 
-        if (gcpStorageOptions.StorageClientBuilder != null)
+        _bucket = _gcpStorageOptions.BucketOptions.Bucket;
+
+        if (_gcpStorageOptions.StorageClientBuilder != null)
         {
-            _storageClient = gcpStorageOptions.StorageClientBuilder.Build();
+            _storageClient = _gcpStorageOptions.StorageClientBuilder.Build();
         }
-        else if (gcpStorageOptions.GoogleCredential != null)
+        else if (_gcpStorageOptions.GoogleCredential != null)
         {
             _storageClient = StorageClient.Create(gcpStorageOptions.GoogleCredential);
         }
 
         try
         {
-            if (gcpStorageOptions.OriginalOptions != null)
+            if (_gcpStorageOptions.OriginalOptions != null)
             {
-                _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket, gcpStorageOptions.OriginalOptions);
+                _storageClient.CreateBucket(_gcpStorageOptions.BucketOptions.ProjectId, _bucket, _gcpStorageOptions.OriginalOptions);
             }
             else
             {
-                _storageClient.CreateBucket(gcpStorageOptions.BucketOptions.ProjectId, _bucket);
+                _storageClient.CreateBucket(_gcpStorageOptions.BucketOptions.ProjectId, _bucket);
             }
         }
         catch
@@ -262,5 +265,25 @@ public class GCPStorage : IGCPStorage
         await _storageClient.UploadObjectAsync(_bucket, blobName, contentType, dataStream, null, cancellationToken);
     }
 
+    #endregion
+
+    #region CreateContainer
+        public async Task CreateContainerAsync()
+    {
+        try
+        {
+            if (_gcpStorageOptions.OriginalOptions != null)
+            {
+                await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket, _gcpStorageOptions.OriginalOptions);
+            }
+            else
+            {
+                await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket);
+            }
+        }
+        catch
+        {
+        }
+    }
     #endregion
 }

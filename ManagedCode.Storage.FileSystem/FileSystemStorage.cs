@@ -256,4 +256,19 @@ public class FileSystemStorage : IFileSystemStorage
     }
 
     #endregion
+
+    #region CreateContainer
+
+    public async Task CreateContainerAsync()
+    {
+        await Task.Yield();
+
+        if (!Directory.Exists(_path))
+        {
+            Directory.CreateDirectory(_path);
+        }
+    }
+
+    #endregion
+
 }
