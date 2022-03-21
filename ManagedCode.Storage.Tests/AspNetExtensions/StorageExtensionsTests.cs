@@ -3,8 +3,10 @@ using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.AspNetExtensions;
+using ManagedCode.Storage.AspNetExtensions.Helpers;
 using ManagedCode.Storage.AspNetExtensions.Options;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -89,6 +91,44 @@ public class StorageExtensionsTests
         localFile.FileInfo.Length.Should().Be(formFile.Length);
         localFile.FileName.Should().Be(newFileName);
         localFile.FileName.Should().NotBe(formFile.FileName);
+
+        await Storage.DeleteAsync(fileName);
+    }
+
+    [Fact]
+    public async Task DownloadAsFileResult_WithFileName()
+    {
+        // Arrange
+        const int size = 200 * 1024; // 200 KB
+        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var localFile = FileHelper.GenerateLocalFile(fileName, size);
+
+        // Act
+        await Storage.UploadFileAsync(fileName, localFile.FilePath);
+        var fileResult = await Storage.DownloadAsFileResult(fileName);
+
+        // Assert
+        fileResult.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        fileResult.FileDownloadName.Should().Be(localFile.FileName);
+
+        await Storage.DeleteAsync(fileName);
+    }
+
+    [Fact]
+    public async Task DownloadAsFileResult_WithBlobMetadata()
+    {
+        // Arrange
+        const int size = 200 * 1024; // 200 KB
+        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var localFile = FileHelper.GenerateLocalFile(fileName, size);
+
+        // Act
+        await Storage.UploadFileAsync(new BlobMetadata() {Name = fileName}, localFile.FilePath);
+        var fileResult = await Storage.DownloadAsFileResult(fileName);
+
+        // Assert
+        fileResult.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        fileResult.FileDownloadName.Should().Be(localFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
