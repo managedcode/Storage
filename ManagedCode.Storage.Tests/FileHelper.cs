@@ -28,8 +28,9 @@ public static class FileHelper
 
         var ms = new MemoryStream();
         localFile.FileStream.CopyTo(ms);
-
         var formFile = new FormFile(ms, 0, ms.Length, fileName, fileName);
+
+        localFile.Dispose();
 
         return formFile;
     }

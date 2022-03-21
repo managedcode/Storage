@@ -38,20 +38,4 @@ public class FormFileExtensionsTests
         localFile.FileStream.Length.Should().Be(formFile.Length);
         localFile.FileName.Should().Be(formFile.FileName);
     }
-
-    [Fact]
-    public async Task ToLocalFileAsync_TooLargeFile()
-    {
-        // Arrange
-        const int size = 2024 * 1024 * 1024; // 2 GB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
-        var formFile = FileHelper.GenerateFormFile(fileName, size);
-
-        // Act
-        var localFile = await formFile.ToLocalFileAsync();
-
-        // Assert
-        localFile.FileStream.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(formFile.FileName);
-    }
 }
