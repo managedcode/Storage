@@ -15,10 +15,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     services:
-      #fake-gcs-server:
-      #  image: fsouza/fake-gcs-server
-      #  ports:
-      #    - 4443:4443
       localstack:
         image: localstack/localstack:latest
         ports:
@@ -45,7 +41,7 @@ jobs:
     - name: azuright
       uses: potatoqualitee/azuright@v1.1      
       
-    - name: docker runu
+    - name: docker run fake-gcs-server
       run: |
         docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http -external-url "http://localhost:4443"
         sleep 5s

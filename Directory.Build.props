@@ -1,6 +1,7 @@
 <Project>
     <!--NuGet-->
     <PropertyGroup>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <Authors>ManagedCode</Authors>
         <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
