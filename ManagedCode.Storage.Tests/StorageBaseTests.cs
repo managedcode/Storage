@@ -22,7 +22,7 @@ public abstract class StorageBaseTests
     protected StorageBaseTests()
     {
         ServiceProvider = ConfigureServices();
-        Storage = ServiceProvider.GetService<IStorage>();
+        Storage = ServiceProvider.GetService<IStorage>()!;
     }
 
     #region MemoryPayload
