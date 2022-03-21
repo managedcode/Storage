@@ -27,12 +27,13 @@ public class AzureStorage : IAzureStorage
             options.OriginalOptions
         );
 
-        _blobContainerClient.SetAccessPolicy(_options.PublicAccessType);
 
         if (_options.ShouldCreateIfNotExists)
         {
             _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
         }
+
+        _blobContainerClient.SetAccessPolicy(_options.PublicAccessType);
     }
 
     public void Dispose()
@@ -253,12 +254,13 @@ public class AzureStorage : IAzureStorage
 
     public async Task CreateContainerAsync()
     {
-        await _blobContainerClient.SetAccessPolicyAsync(_options.PublicAccessType);
 
         if (_options.ShouldCreateIfNotExists)
         {
             await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
         }
+
+        await _blobContainerClient.SetAccessPolicyAsync(_options.PublicAccessType);
     }
     
     #endregion
