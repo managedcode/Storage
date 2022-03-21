@@ -13,14 +13,14 @@ public static class FormFileExtensions
     {
         var tempPath = Path.GetTempPath();
         LocalFile localFile = new($"{tempPath}/{formFile.Name}");
-        
+
         await formFile.CopyToAsync(localFile.FileStream, cancellationToken);
 
         return localFile;
     }
 
     public static async Task<IEnumerable<LocalFile>> ToLocalFilesAsync(this IFormFileCollection formFileCollection,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         List<LocalFile> localFiles = new();
 
