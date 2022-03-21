@@ -130,12 +130,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public static async Task<LocalFile> FromStream(Stream stream)
+    public static async Task<LocalFile> FromStreamAsync(Stream stream)
     {
         var file = new LocalFile();
         await stream.CopyToAsync(file.FileStream);
-        await file.DisposeAsync();
-        file.Close();
+        file.FileStream.Dispose();
+
         return file;
     }
 }
