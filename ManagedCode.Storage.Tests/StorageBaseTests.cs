@@ -389,10 +389,79 @@ public abstract class StorageBaseTests
     #region Download
 
     [Fact]
-    public async Task DownloadAsStreamAsync()
+    public async Task DownloadFileBlobMetadataAsLocalFileAsync()
     {
-        const string uploadContent = $"test {nameof(DownloadAsStreamAsync)}";
-        const string fileName = $"{nameof(DownloadAsStreamAsync)}.txt";
+        const string uploadContent = $"test {nameof(DownloadFileBlobMetadataAsLocalFileAsync)}";
+        const string fileName = $"{nameof(DownloadFileBlobMetadataAsLocalFileAsync)}.txt";
+
+        //Upload file
+        await PrepareFileToTest(uploadContent, fileName);
+
+        //Download file as LocalFile
+        var localFile = await Storage.DownloadAsync(new BlobMetadata { Name = fileName });
+        using var sr = new StreamReader(localFile.FileStream, Encoding.UTF8);
+
+        //Get content from file as string
+        string content = await sr.ReadToEndAsync();
+
+        content.Should().NotBeNull();
+        content.Should().Be(uploadContent);
+
+        //Delete file
+        await DeleteFileAsync(fileName);
+    }
+
+    [Fact]
+    public async Task DownloadFileAsLocalFileAsync()
+    {
+        const string uploadContent = $"test {nameof(DownloadFileAsLocalFileAsync)}";
+        const string fileName = $"{nameof(DownloadFileAsLocalFileAsync)}.txt";
+
+        //Upload file
+        await PrepareFileToTest(uploadContent, fileName);
+
+        //Download file as LocalFile
+        var localFile = await Storage.DownloadAsync(fileName);
+        using var sr = new StreamReader(localFile.FileStream, Encoding.UTF8);
+
+        //Get content from file as string
+        string content = await sr.ReadToEndAsync();
+
+        content.Should().NotBeNull();
+        content.Should().Be(uploadContent);
+
+        //Delete file
+        await DeleteFileAsync(fileName);
+    }
+
+    [Fact]
+    public async Task DownloadFileBlobMetadataAsync()
+    {
+        const string uploadContent = $"test {nameof(DownloadFileAsync)}";
+        const string fileName = $"{nameof(DownloadFileAsync)}.txt";
+
+        //Upload file
+        await PrepareFileToTest(uploadContent, fileName);
+
+        //Download file as stream
+        var stream = await Storage.DownloadAsStreamAsync(new BlobMetadata { Name = fileName});
+        using var sr = new StreamReader(stream, Encoding.UTF8);
+
+        //Get content from file as string
+        string content = await sr.ReadToEndAsync();
+
+        content.Should().NotBeNull();
+        content.Should().Be(uploadContent);
+
+        //Delete file
+        await DeleteFileAsync(fileName);
+    }
+
+    [Fact]
+    public async Task DownloadFileAsync()
+    {
+        const string uploadContent = $"test {nameof(DownloadFileAsync)}";
+        const string fileName = $"{nameof(DownloadFileAsync)}.txt";
 
         //Upload file
         await PrepareFileToTest(uploadContent, fileName);
@@ -411,44 +480,108 @@ public abstract class StorageBaseTests
         await DeleteFileAsync(fileName);
     }
 
-    [Fact]
-    public async Task DownloadAsLocalFileAsync()
-    {
-        const string uploadContent = $"test {nameof(DownloadAsLocalFileAsync)}";
-        const string fileName = $"{nameof(DownloadAsLocalFileAsync)}.txt";
-
-        //Upload file
-        await PrepareFileToTest(uploadContent, fileName);
-
-        //Download file
-        var tempFile = await Storage.DownloadAsync(fileName);
-        var sr = new StreamReader(tempFile.FileStream, Encoding.UTF8);
-
-        //Get content from file as string
-        var content = await sr.ReadToEndAsync();
-
-        content.Should().NotBeNull();
-        content.Should().Be(uploadContent);
-
-        //Delete file
-        await DeleteFileAsync(fileName);
-    }
-
     #endregion
 
     #region Delete
 
     [Fact]
-    public async Task WhenDeleteAsyncIsCalled()
+    public async Task DeleteFileListAsync()
     {
-        const string uploadContent = $"test {nameof(WhenDeleteAsyncIsCalled)}";
-        const string fileName = $"{nameof(WhenDeleteAsyncIsCalled)}.txt";
+        var listFile = new List<(string FileName, string UploadedContent)>();
+        listFile.Add(($"{nameof(DeleteFileListAsync)}1.txt", $"test {nameof(DeleteFileListAsync)}1"));
+        listFile.Add(($"{nameof(DeleteFileListAsync)}2.txt", $"test {nameof(DeleteFileListAsync)}2"));
+        listFile.Add(($"{nameof(DeleteFileListAsync)}3.txt", $"test {nameof(DeleteFileListAsync)}3"));
+
+        // Upload files to server
+        foreach (var item in listFile)
+        {
+            await PrepareFileToTest(item.UploadedContent, item.FileName);
+        };
+
+        var expectedList = listFile.Select(x => x.FileName);
+
+        //Delete list files
+        await Storage.DeleteAsync(expectedList);
+
+        //Check is exist files
+        var result = Storage.ExistsAsync(expectedList);
+        var resultList = await result.ToListAsync();
+
+        foreach (var item in resultList)
+        {
+            item.Should().BeFalse();
+        }
+
+    }
+
+    [Fact]
+    public async Task DeleteFileAsBlobMetadataListAsync()
+    {
+        var listFile = new List<(string FileName, string UploadedContent)>();
+        listFile.Add(($"{nameof(DeleteFileAsBlobMetadataListAsync)}1.txt", $"test {nameof(DeleteFileAsBlobMetadataListAsync)}1"));
+        listFile.Add(($"{nameof(DeleteFileAsBlobMetadataListAsync)}2.txt", $"test {nameof(DeleteFileAsBlobMetadataListAsync)}2"));
+        listFile.Add(($"{nameof(DeleteFileAsBlobMetadataListAsync)}3.txt", $"test {nameof(DeleteFileAsBlobMetadataListAsync)}3"));
+
+        // Upload files to server
+        foreach (var item in listFile)
+        {
+            await PrepareFileToTest(item.UploadedContent, item.FileName);
+        };
+
+        var expectedList = listFile.Select(x => new BlobMetadata { Name = x.FileName });
+
+        //Delete list blobMetadata
+        await Storage.DeleteAsync(expectedList);
+
+        //Check is exist files
+        var result = Storage.ExistsAsync(expectedList);
+        var resultList = await result.ToListAsync();
+
+        foreach(var item in resultList)
+        {
+            item.Should().BeFalse();
+        }
+
+    }   
+
+    [Fact]
+    public async Task DeleteFileAsBlobMetadataAsync()
+    {
+        const string uploadContent = $"test {nameof(DeleteFileAsBlobMetadataAsync)}";
+        const string fileName = $"{nameof(DeleteFileAsBlobMetadataAsync)}.txt";
+
+        //Upload file
+        await PrepareFileToTest(uploadContent, fileName);
+
+        //Get file as BlobMetadata
+        var blobMetadata = await Storage.GetBlobAsync(fileName);
+
+        //Delete BlobMetadata
+        await Storage.DeleteAsync(blobMetadata);
+
+        //Check is exists file
+        var result = await Storage.ExistsAsync(fileName);
+
+        result.Should().BeFalse();
+
+    }
+
+    [Fact]
+    public async Task DeleteFileAsStringAsync()
+    {
+        const string uploadContent = $"test {nameof(DeleteFileAsStringAsync)}";
+        const string fileName = $"{nameof(DeleteFileAsStringAsync)}.txt";
 
         //Upload file
         await PrepareFileToTest(uploadContent, fileName);
 
         //Delete file
         await Storage.DeleteAsync(fileName);
+
+        //Check is exists file
+        var result = await Storage.ExistsAsync(fileName);
+
+        result.Should().BeFalse();
     }
 
     #endregion
