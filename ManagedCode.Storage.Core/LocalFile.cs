@@ -38,7 +38,8 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
         if (!File.Exists(FilePath))
         {
-            File.Create(FilePath);
+            var fs = File.Create(FilePath);
+            fs.Close();
         }
 
         FileName = FileInfo.Name;
