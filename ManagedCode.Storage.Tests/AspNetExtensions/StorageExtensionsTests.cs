@@ -60,7 +60,7 @@ public class StorageExtensionsTests
     public async Task UploadToStorageAsync_LargeFile()
     {
         // Arrange
-        const int size = 50 * 1024 * 1024; // 50 MB
+        const int size = 10 * 1024 * 1024; // 10 MB
         var fileName = FileHelper.GenerateRandomFileName("txt");
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
