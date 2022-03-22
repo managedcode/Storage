@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -601,6 +602,18 @@ public abstract class StorageBaseTests
     }
 
     #endregion
+
+    #region CreateContainer
+
+    [Fact]
+    public async Task CreateContainerAsync()
+    {
+        await FluentActions.Awaiting(() => Storage.CreateContainerAsync())
+               .Should().NotThrowAsync<Exception>();
+    }
+
+    #endregion
+
 
     private async Task PrepareFileToTest(string content, string fileName)
     {

@@ -257,7 +257,7 @@ public class FileSystemStorage : IFileSystemStorage
 
     #region CreateContainer
 
-    public async Task CreateContainerAsync()
+    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
@@ -268,5 +268,4 @@ public class FileSystemStorage : IFileSystemStorage
     }
 
     #endregion
-
 }

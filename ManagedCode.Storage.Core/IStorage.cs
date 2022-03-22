@@ -38,5 +38,5 @@ public interface IStorage : IDisposable
     IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default);
     IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs, CancellationToken cancellationToken = default);
 
-    Task CreateContainerAsync();
+    Task CreateContainerAsync(CancellationToken cancellationToken = default);
 }
