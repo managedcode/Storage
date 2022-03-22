@@ -311,8 +311,15 @@ public class AWSStorage : IAWSStorage
             ServerSideEncryptionMethod = null
         };
 
-        await _s3Client.EnsureBucketExistsAsync(_bucket);
-        await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+        try
+        {
+            await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+        }
+        catch
+        {
+            await CreateContainerAsync();
+            await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+        }
     }
 
     #endregion
@@ -325,5 +332,4 @@ public class AWSStorage : IAWSStorage
     }
     
     #endregion
-
 }

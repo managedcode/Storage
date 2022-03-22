@@ -26,14 +26,6 @@ public class AzureStorage : IAzureStorage
             options.Container,
             options.OriginalOptions
         );
-
-
-        if (_options.ShouldCreateIfNotExists)
-        {
-            _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
-        }
-
-        _blobContainerClient.SetAccessPolicy(_options.PublicAccessType);
     }
 
     public void Dispose()
@@ -188,13 +180,31 @@ public class AzureStorage : IAzureStorage
     public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        await blobClient.UploadAsync(dataStream, cancellationToken);
+        
+        try
+        {
+            await blobClient.UploadAsync(dataStream, cancellationToken);
+        }
+        catch
+        {
+            await CreateContainerAsync();
+            await blobClient.UploadAsync(dataStream, cancellationToken);
+        }
     }
 
     public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+
+        try
+        {
+            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+        }
+        catch
+        {
+            await CreateContainerAsync();
+            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+        }
     }
 
     public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
@@ -203,7 +213,15 @@ public class AzureStorage : IAzureStorage
 
         using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
         {
-            await blobClient.UploadAsync(fs, cancellationToken);
+            try
+            {
+                await blobClient.UploadAsync(fs, cancellationToken);
+            }
+            catch
+            {
+                await CreateContainerAsync();
+                await blobClient.UploadAsync(fs, cancellationToken);
+            }
         }
     }
 
@@ -225,7 +243,16 @@ public class AzureStorage : IAzureStorage
     public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
-        await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
+
+        try
+        {
+            await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
+        }
+        catch
+        {
+            await CreateContainerAsync();
+            await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
+        }
     }
 
     public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
@@ -233,17 +260,34 @@ public class AzureStorage : IAzureStorage
         string fileName = $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.txt";
 
         var blobClient = _blobContainerClient.GetBlobClient(fileName);
-        await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
 
+        try
+        {
+            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+        }
+        catch
+        {
+            await CreateContainerAsync();
+            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
+        }
+        
         return fileName;
     }
 
     public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
     {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-
+        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
         var blobClient = _blobContainerClient.GetBlobClient(fileName);
-        await blobClient.UploadAsync(dataStream, cancellationToken);
+
+        try
+        {
+            await blobClient.UploadAsync(dataStream, cancellationToken);
+        }
+        catch
+        {
+            await CreateContainerAsync();
+            await blobClient.UploadAsync(dataStream, cancellationToken);
+        }
 
         return fileName;
     }
@@ -254,7 +298,6 @@ public class AzureStorage : IAzureStorage
 
     public async Task CreateContainerAsync()
     {
-
         if (_options.ShouldCreateIfNotExists)
         {
             await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
@@ -264,5 +307,4 @@ public class AzureStorage : IAzureStorage
     }
     
     #endregion
-
 }
