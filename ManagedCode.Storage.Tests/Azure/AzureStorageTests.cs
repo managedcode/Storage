@@ -1,9 +1,4 @@
-﻿using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using FluentAssertions;
+﻿using FluentAssertions;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Azure.Options;
@@ -42,7 +37,7 @@ public class AzureStorageTests : StorageBaseTests
     {
         var storage = ServiceProvider.GetService<IAzureStorage>();
         var defaultStorage = ServiceProvider.GetService<IStorage>();
-        storage.GetType().FullName.Should().Be(defaultStorage.GetType().FullName);
+        storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
     
 }

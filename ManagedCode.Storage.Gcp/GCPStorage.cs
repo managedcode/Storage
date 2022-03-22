@@ -254,7 +254,7 @@ public class GCPStorage : IGCPStorage
         }
         catch
         {
-            await CreateContainerAsync();
+            await CreateContainerAsync(cancellationToken);
             await _storageClient.UploadObjectAsync(_bucket, blobName, contentType, dataStream, null, cancellationToken);
         }
     }
@@ -267,7 +267,8 @@ public class GCPStorage : IGCPStorage
     {
         if (_gcpStorageOptions.OriginalOptions != null)
         {
-            await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket, _gcpStorageOptions.OriginalOptions, cancellationToken);
+            await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket, _gcpStorageOptions.OriginalOptions,
+                cancellationToken);
         }
         else
         {

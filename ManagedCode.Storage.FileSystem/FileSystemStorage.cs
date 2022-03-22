@@ -198,7 +198,7 @@ public class FileSystemStorage : IFileSystemStorage
         }
     }
 
-    public async Task UploadFileAsync(string blobName, string pathToFile = null, CancellationToken cancellationToken = default)
+    public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
     {
         using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
         {
