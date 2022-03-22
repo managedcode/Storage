@@ -42,7 +42,7 @@ public class AzureStorageTests : StorageBaseTests
     {
         var storage = ServiceProvider.GetService<IAzureStorage>();
         var defaultStorage = ServiceProvider.GetService<IStorage>();
-        storage.GetType().FullName.Should().Be(defaultStorage.GetType().FullName);
+        storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
     
 }

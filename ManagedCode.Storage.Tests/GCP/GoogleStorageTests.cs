@@ -35,7 +35,7 @@ public class GoogleStorageTests : StorageBaseTests
                 BaseUri = "http://localhost:4443/storage/v1/",
             };
         });
-        
+
         services.AddGCPStorage(new GCPStorageOptions
         {
             BucketOptions = new BucketOptions()
@@ -46,12 +46,12 @@ public class GoogleStorageTests : StorageBaseTests
         });
         return services.BuildServiceProvider();
     }
-    
+
     [Fact]
     public void StorageAsDefaultTest()
     {
         var storage = ServiceProvider.GetService<IGCPStorage>();
         var defaultStorage = ServiceProvider.GetService<IStorage>();
-        storage.GetType().FullName.Should().Be(defaultStorage.GetType().FullName);
+        storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
 }

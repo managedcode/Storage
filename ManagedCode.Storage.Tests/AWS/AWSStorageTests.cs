@@ -26,7 +26,7 @@ public class AWSStorageTests : StorageBaseTests
         awsConfig.ForcePathStyle = true;
         awsConfig.UseHttp = true;
         awsConfig.ServiceURL = "http://localhost:4566"; //this is the default port for the aws s3 emulator, must be last in the list
-        
+
         services.AddAWSStorageAsDefault(opt =>
         {
             opt.PublicKey = "localkey";
@@ -44,12 +44,12 @@ public class AWSStorageTests : StorageBaseTests
         });
         return services.BuildServiceProvider();
     }
-    
+
     [Fact]
     public void StorageAsDefaultTest()
     {
         var storage = ServiceProvider.GetService<IAWSStorage>();
         var defaultStorage = ServiceProvider.GetService<IStorage>();
-        storage.GetType().FullName.Should().Be(defaultStorage.GetType().FullName);
+        storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
 }

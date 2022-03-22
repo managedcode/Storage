@@ -1,7 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Reflection;
-using Google.Apis.Auth.OAuth2;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Gcp.Options;
 using Microsoft.Extensions.DependencyInjection;
