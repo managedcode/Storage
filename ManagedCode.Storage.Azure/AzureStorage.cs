@@ -296,11 +296,11 @@ public class AzureStorage : IAzureStorage
 
     #region CreateContainer
 
-    public async Task CreateContainerAsync()
+    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
         if (_options.ShouldCreateIfNotExists)
         {
-            await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+            await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
         }
 
         await _blobContainerClient.SetAccessPolicyAsync(_options.PublicAccessType);

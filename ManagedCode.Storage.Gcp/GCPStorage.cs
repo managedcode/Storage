@@ -263,15 +263,15 @@ public class GCPStorage : IGCPStorage
 
     #region CreateContainer
 
-    public async Task CreateContainerAsync()
+    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
         if (_gcpStorageOptions.OriginalOptions != null)
         {
-            await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket, _gcpStorageOptions.OriginalOptions);
+            await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket, _gcpStorageOptions.OriginalOptions, cancellationToken);
         }
         else
         {
-            await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket);
+            await _storageClient.CreateBucketAsync(_gcpStorageOptions.BucketOptions.ProjectId, _bucket, cancellationToken: cancellationToken);
         }
     }
 

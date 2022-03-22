@@ -326,7 +326,7 @@ public class AWSStorage : IAWSStorage
 
     #region CreateContainer
 
-    public async Task CreateContainerAsync()
+    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
         await _s3Client.EnsureBucketExistsAsync(_bucket);
     }
