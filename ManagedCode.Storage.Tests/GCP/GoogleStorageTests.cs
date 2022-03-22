@@ -1,10 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Amazon.Runtime.Documents;
-using FluentAssertions;
-using Google.Apis.Auth.OAuth2;
+﻿using FluentAssertions;
 using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Gcp;
@@ -23,7 +17,6 @@ public class GoogleStorageTests : StorageBaseTests
 
         services.AddGCPStorageAsDefault(opt =>
         {
-            //opt.GoogleCredential = GoogleCredential.FromFile("google_auth.json");
             opt.BucketOptions = new BucketOptions()
             {
                 ProjectId = "api-project-0000000000000",
