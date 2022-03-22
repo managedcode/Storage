@@ -16,7 +16,7 @@ public abstract class StorageBaseTests
 {
     protected IStorage Storage { get; }
     protected ServiceProvider ServiceProvider { get; }
-
+    
     protected abstract ServiceProvider ConfigureServices();
 
     protected StorageBaseTests()
@@ -30,7 +30,7 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadBigFilesAsync()
     {
-        const int fileSize = 10 * 1024 * 1024; // 10 MB
+        const int fileSize = 70 * 1024 * 1024;
 
         var bigFiles = new List<LocalFile>()
         {
@@ -74,9 +74,9 @@ public abstract class StorageBaseTests
         }
 
         var result = Storage.GetBlobListAsync();
-
+        
         var listResult = await result.ToListAsync();
-        var expectedList = listFile.Select(x => new BlobMetadata {Name = x.FileName});
+        var expectedList = listFile.Select(x => new BlobMetadata { Name = x.FileName });
 
         //TOOD: Comment this line to test
         //listResult.Should().BeEquivalentTo(expectedList, x => x.Excluding(f => f.Uri));
@@ -108,7 +108,7 @@ public abstract class StorageBaseTests
         var result = Storage.GetBlobsAsync(blobList);
 
         var listResult = await result.ToListAsync();
-        var expectedList = listFile.Select(x => new BlobMetadata {Name = x.FileName});
+        var expectedList = listFile.Select(x => new BlobMetadata { Name = x.FileName });
 
         listResult.Should().NotBeEquivalentTo(expectedList);
         result.Should().NotBeNull();
@@ -268,7 +268,7 @@ public abstract class StorageBaseTests
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
         var stream = new MemoryStream(byteArray);
         var localFile = await LocalFile.FromStreamAsync(stream);
-
+        
         if (await Storage.ExistsAsync(blobMetadata))
         {
             await Storage.DeleteAsync(blobMetadata);
@@ -295,7 +295,7 @@ public abstract class StorageBaseTests
             await Storage.DeleteAsync(fileName);
         }
 
-        await Storage.UploadAsync(new BlobMetadata {Name = fileName}, byteArray);
+        await Storage.UploadAsync(new BlobMetadata { Name = fileName }, byteArray);
 
         var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
@@ -344,7 +344,7 @@ public abstract class StorageBaseTests
 
         await PrepareFileToTest(uploadContent, fileName);
 
-        var localFile = await Storage.DownloadAsync(new BlobMetadata {Name = fileName});
+        var localFile = await Storage.DownloadAsync(new BlobMetadata { Name = fileName });
         using var sr = new StreamReader(localFile.FileStream, Encoding.UTF8);
 
         string content = await sr.ReadToEndAsync();
@@ -382,7 +382,7 @@ public abstract class StorageBaseTests
 
         await PrepareFileToTest(uploadContent, fileName);
 
-        var stream = await Storage.DownloadAsStreamAsync(new BlobMetadata {Name = fileName});
+        var stream = await Storage.DownloadAsStreamAsync(new BlobMetadata { Name = fileName});
         using var sr = new StreamReader(stream, Encoding.UTF8);
 
         string content = await sr.ReadToEndAsync();
@@ -427,9 +427,7 @@ public abstract class StorageBaseTests
         foreach (var item in listFile)
         {
             await PrepareFileToTest(item.UploadedContent, item.FileName);
-        }
-
-        ;
+        };
 
         var expectedList = listFile.Select(x => x.FileName);
 
@@ -442,6 +440,7 @@ public abstract class StorageBaseTests
         {
             item.Should().BeFalse();
         }
+
     }
 
     [Fact]
@@ -455,22 +454,20 @@ public abstract class StorageBaseTests
         foreach (var item in listFile)
         {
             await PrepareFileToTest(item.UploadedContent, item.FileName);
-        }
+        };
 
-        ;
-
-        var expectedList = listFile.Select(x => new BlobMetadata {Name = x.FileName});
+        var expectedList = listFile.Select(x => new BlobMetadata { Name = x.FileName });
 
         await Storage.DeleteAsync(expectedList);
 
         var result = Storage.ExistsAsync(expectedList);
         var resultList = await result.ToListAsync();
 
-        foreach (var item in resultList)
+        foreach(var item in resultList)
         {
             item.Should().BeFalse();
         }
-    }
+    }   
 
     [Fact]
     public async Task DeleteFileAsBlobMetadataAsync()
@@ -588,7 +585,7 @@ public abstract class StorageBaseTests
             await PrepareFileToTest(item.UploadedContent, item.FileName);
         }
 
-        var result = Storage.ExistsAsync(listFile.Select(x => new BlobMetadata {Name = x.FileName}));
+        var result = Storage.ExistsAsync(listFile.Select(x => new BlobMetadata { Name = x.FileName }));
 
         var resultList = await result.ToListAsync();
 

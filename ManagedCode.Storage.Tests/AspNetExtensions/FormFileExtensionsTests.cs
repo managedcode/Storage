@@ -30,7 +30,7 @@ public class FormFileExtensionsTests
     public async Task ToLocalFileAsync_LargeFile()
     {
         // Arrange
-        const int size = 100 * 1024 * 1024; // 300 MB
+        const int size = 300 * 1024 * 1024; // 300 MB
         var fileName = FileHelper.GenerateRandomFileName("txt");
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
