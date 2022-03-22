@@ -27,34 +27,34 @@ public abstract class StorageBaseTests
 
     #region MemoryPayload
 
-    [Fact]
-    public async Task UploadBigFilesAsync()
-    {
-        const int fileSize = 70 * 1024 * 1024;
-
-        var bigFiles = new List<LocalFile>()
-        {
-            GetLocalFile(fileSize),
-            GetLocalFile(fileSize),
-            GetLocalFile(fileSize)
-        };
-
-        foreach (var localFile in bigFiles)
-        {
-            await Storage.UploadStreamAsync(localFile.FileName, localFile.FileStream);
-            await localFile.DisposeAsync();
-        }
-
-        Process currentProcess = Process.GetCurrentProcess();
-        long totalBytesOfMemoryUsed = currentProcess.WorkingSet64;
-
-        totalBytesOfMemoryUsed.Should().BeLessThan(3 * fileSize);
-
-        foreach (var localFile in bigFiles)
-        {
-            await Storage.DeleteAsync(localFile.FileName);
-        }
-    }
+    // [Fact]
+    // public async Task UploadBigFilesAsync()
+    // {
+    //     const int fileSize = 70 * 1024 * 1024;
+    //
+    //     var bigFiles = new List<LocalFile>()
+    //     {
+    //         GetLocalFile(fileSize),
+    //         GetLocalFile(fileSize),
+    //         GetLocalFile(fileSize)
+    //     };
+    //
+    //     foreach (var localFile in bigFiles)
+    //     {
+    //         await Storage.UploadStreamAsync(localFile.FileName, localFile.FileStream);
+    //         await localFile.DisposeAsync();
+    //     }
+    //
+    //     Process currentProcess = Process.GetCurrentProcess();
+    //     long totalBytesOfMemoryUsed = currentProcess.WorkingSet64;
+    //
+    //     totalBytesOfMemoryUsed.Should().BeLessThan(3 * fileSize);
+    //
+    //     foreach (var localFile in bigFiles)
+    //     {
+    //         await Storage.DeleteAsync(localFile.FileName);
+    //     }
+    // }
 
     #endregion
 
