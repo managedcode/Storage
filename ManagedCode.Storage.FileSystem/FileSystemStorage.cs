@@ -95,7 +95,7 @@ public class FileSystemStorage : IFileSystemStorage
 
         var filePath = Path.Combine(_path, blobName);
 
-        return new LocalFile(filePath, false);
+        return new LocalFile(filePath);
     }
 
     public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
@@ -211,7 +211,6 @@ public class FileSystemStorage : IFileSystemStorage
         EnsureDirectoryExists();
         var filePath = Path.Combine(_path, blobName);
 
-        //TODO: Need fix
         await Task.Run(() => File.WriteAllText(filePath, content), cancellationToken);
     }
 
@@ -235,7 +234,6 @@ public class FileSystemStorage : IFileSystemStorage
         EnsureDirectoryExists();
         var filePath = Path.Combine(_path, blobMetadata.Name);
 
-        //TODO: Need fix
         await Task.Run(() => File.WriteAllBytes(filePath, data), cancellationToken);
     }
 
