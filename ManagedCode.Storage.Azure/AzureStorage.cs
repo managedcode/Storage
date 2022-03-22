@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ManagedCode.Storage.Azure.Options;
@@ -185,7 +186,7 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
             await CreateContainerAsync();
             await blobClient.UploadAsync(dataStream, cancellationToken);
@@ -200,7 +201,7 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
             await CreateContainerAsync();
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
@@ -217,7 +218,7 @@ public class AzureStorage : IAzureStorage
             {
                 await blobClient.UploadAsync(fs, cancellationToken);
             }
-            catch
+            catch (RequestFailedException)
             {
                 await CreateContainerAsync();
                 await blobClient.UploadAsync(fs, cancellationToken);
@@ -248,7 +249,7 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
             await CreateContainerAsync();
             await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
@@ -265,7 +266,7 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
             await CreateContainerAsync();
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
@@ -283,7 +284,7 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
             await CreateContainerAsync();
             await blobClient.UploadAsync(dataStream, cancellationToken);

@@ -306,7 +306,7 @@ public class AWSStorage : IAWSStorage
             BucketName = _bucket,
             Key = blobName,
             InputStream = dataStream,
-            AutoCloseStream = true,
+            AutoCloseStream = false,
             ContentType = contentType ?? Constants.ContentType,
             ServerSideEncryptionMethod = null
         };
@@ -315,7 +315,7 @@ public class AWSStorage : IAWSStorage
         {
             await _s3Client.PutObjectAsync(putRequest, cancellationToken);
         }
-        catch
+        catch (AmazonS3Exception)
         {
             await CreateContainerAsync();
             await _s3Client.PutObjectAsync(putRequest, cancellationToken);
