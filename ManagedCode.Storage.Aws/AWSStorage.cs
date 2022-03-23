@@ -161,7 +161,7 @@ public class AWSStorage : IAWSStorage
 
         return new BlobMetadata
         {
-            Name = blobName
+            Name = blobName,
             //Container = containerName,
             //Length = objectMetaResponse.Headers.ContentLength,
             //ETag = objectMetaResponse.ETag,
