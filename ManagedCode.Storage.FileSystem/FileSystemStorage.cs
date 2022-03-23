@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
 
@@ -156,12 +157,13 @@ public class FileSystemStorage : IFileSystemStorage
             var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, blobName))
+                Uri = new Uri(Path.Combine(_path, blobName)),
+                ContentType = MimeHelper.GetMimeType(fileInfo.Extension)
             };
             return Task.FromResult(result);
         }
 
-        return null;
+        return Task.FromResult<BlobMetadata>(null);
     }
 
     public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(

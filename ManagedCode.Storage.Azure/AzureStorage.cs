@@ -145,7 +145,8 @@ public class AzureStorage : IAzureStorage
         return new BlobMetadata
         {
             Name = blobClient.Name,
-            Uri = blobClient.Uri
+            Uri = blobClient.Uri,
+            Container = blobClient.BlobContainerName,
         };
     }
 

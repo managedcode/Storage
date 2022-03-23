@@ -16,13 +16,13 @@ public class AWSStorageTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        //aws libarary overwrites property values. you should only create configurations this way. 
+        // AWS library overwrites property values. you should only create configurations this way. 
         var awsConfig = new AmazonS3Config
         {
             RegionEndpoint = RegionEndpoint.EUWest1,
             ForcePathStyle = true,
             UseHttp = true,
-            ServiceURL = "http://localhost:4566" //this is the default port for the aws s3 emulator, must be last in the list
+            ServiceURL = "http://localhost:4566" // this is the default port for the aws s3 emulator, must be last in the list
         };
 
         services.AddAWSStorageAsDefault(opt =>
