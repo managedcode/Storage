@@ -1,7 +1,7 @@
 ![img|300x200](https://github.com/managed-code-hub/Storage/raw/main/logo.png)
 # ManagedCode.Storage
 [![.NET](https://github.com/managed-code-hub/Storage/actions/workflows/dotnet.yml/badge.svg)](https://github.com/managed-code-hub/Storage/actions/workflows/dotnet.yml)
-[![Coverage Status](https://coveralls.io/repos/github/managed-code-hub/Storage/badge.svg?branch=main)](https://coveralls.io/github/managed-code-hub/Storage?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/managed-code-hub/Storage/badge.svg?branch=main&service=github)](https://coveralls.io/github/managed-code-hub/Storage?branch=main)
 [![nuget](https://github.com/managed-code-hub/Storage/actions/workflows/nuget.yml/badge.svg?branch=main)](https://github.com/managed-code-hub/Storage/actions/workflows/nuget.yml)
 [![CodeQL](https://github.com/managed-code-hub/Storage/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/managed-code-hub/Storage/actions/workflows/codeql-analysis.yml)
 
