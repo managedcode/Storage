@@ -11,6 +11,8 @@ using ManagedCode.Storage.Gcp.Options;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 #region Add FileSystemStorage
 
@@ -73,8 +75,9 @@ builder.Services.AddGCPStorage(new GCPStorageOptions
 
 var app = builder.Build();
 
+
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
-
 app.MapControllers();
-
 app.Run();
