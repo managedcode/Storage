@@ -19,8 +19,4 @@
       <ProjectReference Include="..\..\ManagedCode.Storage.Gcp\ManagedCode.Storage.Gcp.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Controllers" />
-    </ItemGroup>
-
 </Project>
