@@ -16,3 +16,283 @@
 |[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                                         | GCP             |
 |[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.AspNetExtensions.svg)](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | [ManagedCode.Storage.AspNetExtensions](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions)                                         | AspNetExtensions          |
 
+# Storage
+---
+## Storage pattern implementation for C#.
+A universal storage for working with multiple storage providers:
+- Azure 
+- Google Cloud
+- Amazon
+- FileSystem
+## General concept 
+The library incapsulates all provider specific  to make connection and managing storages as easy as possible. You have as customer just connect the library in your Startup providing necessary connection strings and inject needed interfaces in your services.
+
+## Connection modes
+You can connect storage interface in two modes provider-specific and default. In case of default you are restricted with one storage type
+
+### Azure
+
+Default mode connection:
+
+```cs
+// Startup.cs
+services.AddAzureStorageAsDefault(new AzureStorageOptions
+{
+    Container = "{YOUR_CONTAINER_NAME}",
+    ConnectionString = "{YOUR_CONNECTION_NAME}",
+});
+```
+
+Using in default mode:
+
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IStorage _storage;
+
+    public MyService(IStorage storage)
+    {
+        _storage = storage;
+    }
+}
+
+```
+
+Provider-specific mode connection:
+
+```cs
+// Startup.cs
+services.AddAzureStorage(new AzureStorageOptions
+{
+    Container = "{YOUR_CONTAINER_NAME}",
+    ConnectionString = "{YOUR_CONNECTION_NAME}",
+});
+```
+
+Using in provider-specific mode
+
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IAzureStorage _azureStorage;
+
+    public MyService(IAzureStorage azureStorage)
+    {
+        _azureStorage = azureStorage;
+    }
+}
+```
+<details>
+  <summary>Google Cloud (Click here to expand)</summary>
+
+### Google Cloud 
+Default mode connection:
+```cs
+// Startup.cs
+services.AddGCPStorageAsDefault(opt =>
+{
+    opt.GoogleCredential = GoogleCredential.FromFile("{PATH_TO_YOUR_CREDENTIALS_FILE}.json");
+
+    opt.BucketOptions = new BucketOptions()
+    {
+        ProjectId = "{YOUR_API_PROJECT_ID}",
+        Bucket = "{YOUR_BUCKET_NAME}",
+    };
+});
+```
+Using in default mode:
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IStorage _storage;
+  
+    public MyService(IStorage storage)
+    {
+        _storage = storage;
+    }
+}
+```
+Provider-specific mode connection:
+```cs
+// Startup.cs
+services.AddGCPStorage(new GCPStorageOptions
+{
+    BucketOptions = new BucketOptions()
+    {
+        ProjectId = "{YOUR_API_PROJECT_ID}",
+        Bucket = "{YOUR_BUCKET_NAME}",
+    }
+});
+```
+Using in provider-specific mode
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IGCPStorage _gcpStorage;
+    public MyService(IGCPStorage gcpStorage)
+    {
+        _gcpStorage = gcpStorage;
+    }
+}
+```
+</details>
+
+<details>
+  <summary>Amazon (Click here to expand)</summary>
+  
+### Amazon
+Default mode connection:
+```cs
+// Startup.cs
+//aws libarary overwrites property values. you should only create configurations this way. 
+var awsConfig = new AmazonS3Config();
+awsConfig.RegionEndpoint = RegionEndpoint.EUWest1;
+awsConfig.ForcePathStyle = true;
+awsConfig.UseHttp = true;
+awsConfig.ServiceURL = "http://localhost:4566"; //this is the default port for the aws s3 emulator, must be last in the list
+
+services.AddAWSStorageAsDefault(opt =>
+{
+    opt.PublicKey = "{YOUR_PUBLIC_KEY}";
+    opt.SecretKey = "{YOUR_SECRET_KEY}";
+    opt.Bucket = "{YOUR_BUCKET_NAME}";
+    opt.OriginalOptions = awsConfig;
+});
+```
+Using in default mode:
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IStorage _storage;
+  
+    public MyService(IStorage storage)
+    {
+        _storage = storage;
+    }
+}
+```
+Provider-specific mode connection:
+```cs
+// Startup.cs
+services.AddAWSStorage(new AWSStorageOptions
+{
+    PublicKey = "{YOUR_PUBLIC_KEY}",
+    SecretKey = "{YOUR_SECRET_KEY}",
+    Bucket = "{YOUR_BUCKET_NAME}",
+    OriginalOptions = awsConfig
+});
+```
+Using in provider-specific mode
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IAWSStorage _gcpStorage;
+    public MyService(IAWSStorage gcpStorage)
+    {
+        _gcpStorage = gcpStorage;
+    }
+}
+```
+</details>
+
+<details>
+  <summary>FileSystem (Click here to expand)</summary>
+  
+### FileSystem
+Default mode connection:
+```cs
+// Startup.cs
+services.AddFileSystemStorageAsDefault(opt =>
+{
+    opt.CommonPath = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}");
+    opt.Path = "{YOUR_BUCKET_NAME}";
+});
+```
+Using in default mode:
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IStorage _storage;
+  
+    public MyService(IStorage storage)
+    {
+        _storage = storage;
+    }
+}
+```
+Provider-specific mode connection:
+```cs
+// Startup.cs
+services.AddFileSystemStorage(new FileSystemStorageOptions
+{
+    CommonPath = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}"),
+    Path = "{YOUR_BUCKET_NAME}"
+});
+```
+Using in provider-specific mode
+```cs
+// MyService.cs
+public class MyService
+{
+    private readonly IFileSystemStorage _fileSystemStorage;
+    public MyService(IFileSystemStorage fileSystemStorage)
+    {
+        _fileSystemStorage = fileSystemStorage;
+    }
+}
+```
+</details>
+
+## How to use
+We assume that below code snippets are placed in your service class with injected IStorage:
+
+```cs
+public class MyService
+{
+    private readonly IStorage _storage;
+    public MyService(IStorage storage)
+    {
+        _storage = storage;
+    }
+}
+```
+
+### Exists
+```cs
+await _storage.ExistsAsync("{YOUR_FILE_NAME}");
+```
+
+### Delete
+```cs
+await _storage.DeleteAsync("{YOUR_FILE_NAME}");
+```
+
+### Download
+```cs
+var stream = await _storage.DownloadAsStreamAsync(new BlobMetadata { Name = "{YOUR_FILE_NAME}"});
+using var sr = new StreamReader(stream, Encoding.UTF8);
+
+string content = await sr.ReadToEndAsync();
+```
+
+### Get
+```cs
+await _storage.GetBlobAsync("{YOUR_FILE_NAME}");
+```
+
+### Upload
+```cs
+var byteArray = Encoding.ASCII.GetBytes("{YOUR_CONTENT}");
+var stream = new MemoryStream(byteArray);
+
+await _storage.UploadStreamAsync("{YOUR_FILE_NAME}", stream);
+```
+
+
