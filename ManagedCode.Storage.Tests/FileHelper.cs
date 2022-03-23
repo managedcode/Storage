@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using ManagedCode.Storage.AspNetExtensions.Helpers;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 

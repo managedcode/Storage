@@ -58,7 +58,7 @@ public class FormFileExtensionsTests
         }
 
         // Act
-        var localFiles = (await collection.ToLocalFilesAsync()).ToList();
+        var localFiles = await collection.ToLocalFilesAsync().ToListAsync();
 
         // Assert
         localFiles.Count.Should().Be(filesCount);

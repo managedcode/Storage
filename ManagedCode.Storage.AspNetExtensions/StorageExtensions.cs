@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.AspNetExtensions.Options;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ManagedCode.Storage.AspNetExtensions.Helpers;
 
 namespace ManagedCode.Storage.AspNetExtensions;
 
@@ -48,17 +49,14 @@ public static class StorageExtensions
         return blobMetadata;
     }
 
-    public static async Task<IEnumerable<BlobMetadata>> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
+    public static async IAsyncEnumerable<BlobMetadata> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
         UploadToStorageOptions? options = null,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var tasks = formFiles
-            .Select(formFile => storage.UploadToStorageAsync(formFile, options, cancellationToken))
-            .ToList();
-
-        var blobs = await Task.WhenAll(tasks);
-
-        return blobs.ToList();
+        foreach (var formFile in formFiles)
+        {
+            yield return await storage.UploadToStorageAsync(formFile, options, cancellationToken);
+        }
     }
 
     public static async Task<FileResult> DownloadAsFileResult(this IStorage storage, string blobName, CancellationToken cancellationToken = default)

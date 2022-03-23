@@ -156,7 +156,7 @@ public class FileSystemStorage : IFileSystemStorage
             var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, blobName))
+                Uri = new Uri(Path.Combine(_path, blobName)),
             };
             return Task.FromResult(result);
         }
