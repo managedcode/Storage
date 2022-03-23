@@ -149,28 +149,12 @@ public class AWSStorage : IAWSStorage
         };
 
         var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest);
-
-        var objectAclRequest = new GetACLRequest
-        {
-            BucketName = _bucket,
-            Key = blobName
-        };
-
-        var objectAclResponse = await _s3Client.GetACLAsync(objectAclRequest);
-        var isPublic = objectAclResponse.AccessControlList.Grants.Any(x => x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
-
+        
         return new BlobMetadata
         {
-            Name = blobName
-            //Container = containerName,
-            //Length = objectMetaResponse.Headers.ContentLength,
-            //ETag = objectMetaResponse.ETag,
-            //ContentMD5 = objectMetaResponse.ETag,
-            //ContentType = objectMetaResponse.Headers.ContentType,
-            //ContentDisposition = objectMetaResponse.Headers.ContentDisposition,
-            //LastModified = objectMetaResponse.LastModified,
-            //Security = isPublic ? BlobSecurity.Public : BlobSecurity.Private,
-            //Metadata = objectMetaResponse.Metadata.ToMetadata(),
+            Name = blobName,
+            Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{blobName}"),
+            ContentType = objectMetaResponse.Headers.ContentType
         };
     }
 
@@ -262,7 +246,6 @@ public class AWSStorage : IAWSStorage
             await UploadStreamInternalAsync(blobName, fs, null, cancellationToken);
         }
     }
-
 
     public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
     {
