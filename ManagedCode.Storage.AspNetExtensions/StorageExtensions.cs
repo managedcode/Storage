@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.AspNetExtensions.Options;
@@ -15,7 +17,7 @@ public static class StorageExtensions
 {
     private const int MinLengthForLargeFile = 256 * 1024;
 
-    public static async Task<string> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadToStorageOptions? options = null,
+    public static async Task<BlobMetadata> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadToStorageOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         options ??= new UploadToStorageOptions();
@@ -43,7 +45,20 @@ public static class StorageExtensions
             }
         }
 
-        return blobMetadata.Name;
+        return blobMetadata;
+    }
+
+    public static async Task<IEnumerable<BlobMetadata>> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
+        UploadToStorageOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var tasks = formFiles
+            .Select(formFile => storage.UploadToStorageAsync(formFile, options, cancellationToken))
+            .ToList();
+
+        var blobs = await Task.WhenAll(tasks);
+
+        return blobs.ToList();
     }
 
     public static async Task<FileResult> DownloadAsFileResult(this IStorage storage, string blobName, CancellationToken cancellationToken = default)

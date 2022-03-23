@@ -89,7 +89,7 @@ public class StorageExtensionsTests
 
         // Assert
         localFile.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(newFileName);
+        localFile.FileName.Should().Be(newFileName.Name);
         localFile.FileName.Should().NotBe(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
