@@ -16,7 +16,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
     public LocalFile(string path, bool keepAlive = false)
     {
-        string directory;
+        string? directory;
         KeepAlive = keepAlive;
 
         if (string.IsNullOrEmpty(Path.GetExtension(path)))
@@ -38,7 +38,8 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
         if (!File.Exists(FilePath))
         {
-            File.Create(FilePath);
+            var fs = File.Create(FilePath);
+            fs.Close();
         }
 
         FileName = FileInfo.Name;

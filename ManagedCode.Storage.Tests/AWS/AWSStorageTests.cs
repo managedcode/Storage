@@ -1,8 +1,4 @@
-﻿using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Amazon;
-using Amazon.Runtime;
+﻿using Amazon;
 using Amazon.S3;
 using FluentAssertions;
 using ManagedCode.Storage.Aws;
@@ -20,13 +16,15 @@ public class AWSStorageTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        //aws libarary overwrites property values. you should only create configurations this way. 
-        var awsConfig = new AmazonS3Config();
-        awsConfig.RegionEndpoint = RegionEndpoint.EUWest1;
-        awsConfig.ForcePathStyle = true;
-        awsConfig.UseHttp = true;
-        awsConfig.ServiceURL = "http://localhost:4566"; //this is the default port for the aws s3 emulator, must be last in the list
-        
+        // AWS library overwrites property values. you should only create configurations this way. 
+        var awsConfig = new AmazonS3Config
+        {
+            RegionEndpoint = RegionEndpoint.EUWest1,
+            ForcePathStyle = true,
+            UseHttp = true,
+            ServiceURL = "http://localhost:4566" // this is the default port for the aws s3 emulator, must be last in the list
+        };
+
         services.AddAWSStorageAsDefault(opt =>
         {
             opt.PublicKey = "localkey";
@@ -44,12 +42,12 @@ public class AWSStorageTests : StorageBaseTests
         });
         return services.BuildServiceProvider();
     }
-    
+
     [Fact]
     public void StorageAsDefaultTest()
     {
         var storage = ServiceProvider.GetService<IAWSStorage>();
         var defaultStorage = ServiceProvider.GetService<IStorage>();
-        storage.GetType().FullName.Should().Be(defaultStorage.GetType().FullName);
+        storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
 }

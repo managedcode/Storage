@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
 
@@ -95,7 +96,7 @@ public class FileSystemStorage : IFileSystemStorage
 
         var filePath = Path.Combine(_path, blobName);
 
-        return new LocalFile(filePath, false);
+        return new LocalFile(filePath);
     }
 
     public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
@@ -156,12 +157,13 @@ public class FileSystemStorage : IFileSystemStorage
             var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, blobName))
+                Uri = new Uri(Path.Combine(_path, blobName)),
+                ContentType = MimeHelper.GetMimeType(fileInfo.Extension)
             };
             return Task.FromResult(result);
         }
 
-        return null;
+        return Task.FromResult<BlobMetadata>(null);
     }
 
     public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(
@@ -198,7 +200,7 @@ public class FileSystemStorage : IFileSystemStorage
         }
     }
 
-    public async Task UploadFileAsync(string blobName, string pathToFile = null, CancellationToken cancellationToken = default)
+    public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
     {
         using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
         {
@@ -211,7 +213,6 @@ public class FileSystemStorage : IFileSystemStorage
         EnsureDirectoryExists();
         var filePath = Path.Combine(_path, blobName);
 
-        //TODO: Need fix
         await Task.Run(() => File.WriteAllText(filePath, content), cancellationToken);
     }
 
@@ -235,7 +236,6 @@ public class FileSystemStorage : IFileSystemStorage
         EnsureDirectoryExists();
         var filePath = Path.Combine(_path, blobMetadata.Name);
 
-        //TODO: Need fix
         await Task.Run(() => File.WriteAllBytes(filePath, data), cancellationToken);
     }
 
@@ -259,7 +259,7 @@ public class FileSystemStorage : IFileSystemStorage
 
     #region CreateContainer
 
-    public async Task CreateContainerAsync()
+    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 

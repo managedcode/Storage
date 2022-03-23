@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ManagedCode.Storage.Azure.Options;
@@ -15,7 +15,7 @@ namespace ManagedCode.Storage.Azure;
 
 public class AzureStorage : IAzureStorage
 {
-    private BlobContainerClient _blobContainerClient;
+    private readonly BlobContainerClient _blobContainerClient;
     private readonly AzureStorageOptions _options;
 
     public AzureStorage(AzureStorageOptions options)
@@ -145,11 +145,13 @@ public class AzureStorage : IAzureStorage
         return new BlobMetadata
         {
             Name = blobClient.Name,
-            Uri = blobClient.Uri
+            Uri = blobClient.Uri,
+            Container = blobClient.BlobContainerName,
         };
     }
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var blob in blobNames)
         {
@@ -157,9 +159,9 @@ public class AzureStorage : IAzureStorage
         }
     }
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var blobs = _blobContainerClient.GetBlobsAsync();
+        var blobs = _blobContainerClient.GetBlobsAsync(cancellationToken: cancellationToken);
 
         await foreach (var item in blobs.AsPages())
         {
@@ -180,14 +182,14 @@ public class AzureStorage : IAzureStorage
     public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        
+
         try
         {
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
-            await CreateContainerAsync();
+            await CreateContainerAsync(cancellationToken);
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
     }
@@ -200,9 +202,9 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
-            await CreateContainerAsync();
+            await CreateContainerAsync(cancellationToken);
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
         }
     }
@@ -217,9 +219,9 @@ public class AzureStorage : IAzureStorage
             {
                 await blobClient.UploadAsync(fs, cancellationToken);
             }
-            catch
+            catch (RequestFailedException)
             {
-                await CreateContainerAsync();
+                await CreateContainerAsync(cancellationToken);
                 await blobClient.UploadAsync(fs, cancellationToken);
             }
         }
@@ -248,9 +250,9 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
-            await CreateContainerAsync();
+            await CreateContainerAsync(cancellationToken);
             await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
         }
     }
@@ -265,12 +267,12 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
-            await CreateContainerAsync();
+            await CreateContainerAsync(cancellationToken);
             await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
         }
-        
+
         return fileName;
     }
 
@@ -283,9 +285,9 @@ public class AzureStorage : IAzureStorage
         {
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
-        catch
+        catch (RequestFailedException)
         {
-            await CreateContainerAsync();
+            await CreateContainerAsync(cancellationToken);
             await blobClient.UploadAsync(dataStream, cancellationToken);
         }
 
@@ -296,15 +298,15 @@ public class AzureStorage : IAzureStorage
 
     #region CreateContainer
 
-    public async Task CreateContainerAsync()
+    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
         if (_options.ShouldCreateIfNotExists)
         {
-            await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
+            await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
         }
 
-        await _blobContainerClient.SetAccessPolicyAsync(_options.PublicAccessType);
+        await _blobContainerClient.SetAccessPolicyAsync(_options.PublicAccessType, cancellationToken: cancellationToken);
     }
-    
+
     #endregion
 }

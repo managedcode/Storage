@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace ManagedCode.Storage.AspNetExtensions.Helpers;
+namespace ManagedCode.Storage.Core.Helpers;
 
-internal class MimeHelper
+public class MimeHelper
 {
     private static readonly IDictionary<string, string> Mappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
     {
@@ -569,7 +569,7 @@ internal class MimeHelper
         {".zip", "application/x-zip-compressed"},
     };
 
-    internal static string GetMimeType(string extension)
+    public static string GetMimeType(string extension)
     {
         if (!extension.StartsWith("."))
         {

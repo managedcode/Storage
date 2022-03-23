@@ -7,7 +7,7 @@ public class GCPStorageOptions
 {
     public string AuthFileName { get; set; } = null!;
     public BucketOptions BucketOptions { get; set; } = null!;
-    public GoogleCredential? GoogleCredential { get; set; } = null!;
+    public GoogleCredential? GoogleCredential { get; set; }
     public CreateBucketOptions? OriginalOptions { get; set; }
     public StorageClientBuilder? StorageClientBuilder { get; set; }
 }
