@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ManagedCode.Storage.AspNetExtensions.Helpers;
+namespace ManagedCode.Storage.Core.Helpers;
 
 public class MimeHelper
 {

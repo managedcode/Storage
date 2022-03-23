@@ -1,13 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.AspNetExtensions.Options;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ManagedCode.Storage.AspNetExtensions.Helpers;
 
 namespace ManagedCode.Storage.AspNetExtensions;
 
@@ -15,7 +18,7 @@ public static class StorageExtensions
 {
     private const int MinLengthForLargeFile = 256 * 1024;
 
-    public static async Task<string> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadToStorageOptions? options = null,
+    public static async Task<BlobMetadata> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadToStorageOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         options ??= new UploadToStorageOptions();
@@ -43,7 +46,17 @@ public static class StorageExtensions
             }
         }
 
-        return blobMetadata.Name;
+        return blobMetadata;
+    }
+
+    public static async IAsyncEnumerable<BlobMetadata> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
+        UploadToStorageOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        foreach (var formFile in formFiles)
+        {
+            yield return await storage.UploadToStorageAsync(formFile, options, cancellationToken);
+        }
     }
 
     public static async Task<FileResult> DownloadAsFileResult(this IStorage storage, string blobName, CancellationToken cancellationToken = default)

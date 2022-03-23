@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
@@ -12,23 +13,19 @@ public static class FormFileExtensions
     public static async Task<LocalFile> ToLocalFileAsync(this IFormFile formFile, CancellationToken cancellationToken = default)
     {
         var tempPath = Path.GetTempPath();
-        LocalFile localFile = new($"{tempPath}/{formFile.Name}");
+        LocalFile localFile = new($"{tempPath}/{formFile.FileName}");
 
         await formFile.CopyToAsync(localFile.FileStream, cancellationToken);
 
         return localFile;
     }
 
-    public static async Task<IEnumerable<LocalFile>> ToLocalFilesAsync(this IFormFileCollection formFileCollection,
-        CancellationToken cancellationToken = default)
+    public static async IAsyncEnumerable<LocalFile> ToLocalFilesAsync(this IFormFileCollection formFileCollection,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        List<LocalFile> localFiles = new();
-
         foreach (var formFile in formFileCollection)
         {
-            localFiles.Add(await formFile.ToLocalFileAsync(cancellationToken));
+            yield return await formFile.ToLocalFileAsync(cancellationToken);
         }
-
-        return localFiles;
     }
 }

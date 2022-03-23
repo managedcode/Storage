@@ -3,9 +3,9 @@ using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.AspNetExtensions;
-using ManagedCode.Storage.AspNetExtensions.Helpers;
 using ManagedCode.Storage.AspNetExtensions.Options;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -89,7 +89,7 @@ public class StorageExtensionsTests
 
         // Assert
         localFile.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(newFileName);
+        localFile.FileName.Should().Be(newFileName.Name);
         localFile.FileName.Should().NotBe(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
