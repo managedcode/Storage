@@ -5,8 +5,8 @@ namespace ManagedCode.Storage.Azure.Options;
 
 public class AzureStorageOptions
 {
-    public string ConnectionString { get; set; } = null!;
-    public string Container { get; set; } = null!;
+    public string? ConnectionString { get; set; }
+    public string? Container { get; set; }
     public bool ShouldCreateIfNotExists { get; set; } = true;
     public PublicAccessType PublicAccessType { get; set; }
     public BlobClientOptions? OriginalOptions { get; set; }

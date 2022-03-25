@@ -2,7 +2,7 @@
 
 public class BucketOptions
 {
-    public string ProjectId { get; set; } = null!;
+    public string? ProjectId { get; set; }
 
-    public string Bucket { get; set; } = null!;
+    public string? Bucket { get; set; }
 }

@@ -21,6 +21,7 @@ public class AzureStorage : IAzureStorage
     public AzureStorage(AzureStorageOptions options)
     {
         _options = options;
+
         _blobContainerClient = new BlobContainerClient(
             options.ConnectionString,
             options.Container,
