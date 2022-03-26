@@ -76,17 +76,18 @@ public class GCPStorage : IGCPStorage
 
     public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
-        var stream = new MemoryStream();
-        await _storageClient.DownloadObjectAsync(_bucket, blobName, stream, null, cancellationToken);
+        try
+        {
+            var stream = new MemoryStream();
+            await _storageClient.DownloadObjectAsync(_bucket, blobName, stream, null, cancellationToken);
+            stream.Seek(0, SeekOrigin.Begin);
 
-        if (stream.Length == 0)
+            return stream;
+        }
+        catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
-
-        stream.Seek(0, SeekOrigin.Begin);
-
-        return stream;
     }
 
     public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
@@ -96,12 +97,19 @@ public class GCPStorage : IGCPStorage
 
     public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
     {
-        var localFile = new LocalFile();
+        try
+        {
+            var localFile = new LocalFile();
 
-        await _storageClient.DownloadObjectAsync(_bucket, blobName,
-            localFile.FileStream, null, cancellationToken);
+            await _storageClient.DownloadObjectAsync(_bucket, blobName,
+                localFile.FileStream, null, cancellationToken);
 
-        return localFile;
+            return localFile;
+        }
+        catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)

@@ -70,7 +70,14 @@ public class AWSStorage : IAWSStorage
 
     public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
-        return await _s3Client.GetObjectStreamAsync(_bucket, blobName, null, cancellationToken);
+        try
+        {
+            return await _s3Client.GetObjectStreamAsync(_bucket, blobName, null, cancellationToken);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
@@ -155,7 +162,7 @@ public class AWSStorage : IAWSStorage
 
         var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
 
-        if (objectMetaResponse.HttpStatusCode == HttpStatusCode.OK)
+        if (objectMetaResponse.HttpStatusCode is HttpStatusCode.OK)
         {
             return new BlobMetadata
             {
