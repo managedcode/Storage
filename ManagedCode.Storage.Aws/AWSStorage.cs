@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -22,7 +22,7 @@ public class AWSStorage : IAWSStorage
 
     public AWSStorage(AWSStorageOptions options)
     {
-        _bucket = options.Bucket;
+        _bucket = options.Bucket!;
         var config = options.OriginalOptions ?? new AmazonS3Config();
         _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
     }
@@ -68,29 +68,34 @@ public class AWSStorage : IAWSStorage
 
     #region Download
 
-    public async Task<Stream> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
         return await _s3Client.GetObjectStreamAsync(_bucket, blobName, null, cancellationToken);
     }
 
-    public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
-    public async Task<LocalFile> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var localFile = new LocalFile();
 
         using (var stream = await DownloadAsStreamAsync(blobName, cancellationToken))
         {
+            if (stream is null)
+            {
+                return null;
+            }
+
             await stream.CopyToAsync(localFile.FileStream, 81920, cancellationToken);
         }
 
         return localFile;
     }
 
-    public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
@@ -140,7 +145,7 @@ public class AWSStorage : IAWSStorage
 
     #region Get
 
-    public async Task<BlobMetadata> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var objectMetaRequest = new GetObjectMetadataRequest
         {
@@ -148,14 +153,19 @@ public class AWSStorage : IAWSStorage
             Key = blobName
         };
 
-        var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest);
-        
-        return new BlobMetadata
+        var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
+
+        if (objectMetaResponse.HttpStatusCode == HttpStatusCode.OK)
         {
-            Name = blobName,
-            Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{blobName}"),
-            ContentType = objectMetaResponse.Headers.ContentType
-        };
+            return new BlobMetadata
+            {
+                Name = blobName,
+                Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{blobName}"),
+                ContentType = objectMetaResponse.Headers.ContentType
+            };
+        }
+
+        return null;
     }
 
     public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(
@@ -170,7 +180,7 @@ public class AWSStorage : IAWSStorage
 
         do
         {
-            var objectsResponse = await _s3Client.ListObjectsAsync(objectsRequest);
+            var objectsResponse = await _s3Client.ListObjectsAsync(objectsRequest, cancellationToken);
 
             foreach (var entry in objectsResponse.S3Objects)
             {
@@ -180,21 +190,13 @@ public class AWSStorage : IAWSStorage
                     Key = entry.Key
                 };
 
-                var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest);
-
-                var objectAclRequest = new GetACLRequest
-                {
-                    BucketName = _bucket,
-                    Key = entry.Key
-                };
-
-                var objectAclResponse = await _s3Client.GetACLAsync(objectAclRequest);
-                var isPublic = objectAclResponse.AccessControlList.Grants.Any(x =>
-                    x.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers");
+                var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
 
                 yield return new BlobMetadata
                 {
-                    Name = entry.Key
+                    Name = entry.Key,
+                    Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{entry.Key}"),
+                    ContentType = objectMetaResponse.Headers.ContentType
                 };
             }
 
@@ -215,7 +217,12 @@ public class AWSStorage : IAWSStorage
     {
         foreach (var blob in blobNames)
         {
-            yield return await GetBlobAsync(blob, cancellationToken);
+            var blobMetadata = await GetBlobAsync(blob, cancellationToken);
+
+            if (blobMetadata is not null)
+            {
+                yield return blobMetadata;
+            }
         }
     }
 
@@ -313,6 +320,6 @@ public class AWSStorage : IAWSStorage
     {
         await _s3Client.EnsureBucketExistsAsync(_bucket);
     }
-    
+
     #endregion
 }
