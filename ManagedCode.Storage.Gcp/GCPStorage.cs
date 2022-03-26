@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -73,22 +74,27 @@ public class GCPStorage : IGCPStorage
 
     #region Download
 
-    public async Task<Stream> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var stream = new MemoryStream();
         await _storageClient.DownloadObjectAsync(_bucket, blobName, stream, null, cancellationToken);
+
+        if (stream.Length == 0)
+        {
+            return null;
+        }
 
         stream.Seek(0, SeekOrigin.Begin);
 
         return stream;
     }
 
-    public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
-    public async Task<LocalFile> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var localFile = new LocalFile();
 
@@ -98,7 +104,7 @@ public class GCPStorage : IGCPStorage
         return localFile;
     }
 
-    public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
@@ -115,7 +121,7 @@ public class GCPStorage : IGCPStorage
 
             return true;
         }
-        catch (GoogleApiException)
+        catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
@@ -148,14 +154,22 @@ public class GCPStorage : IGCPStorage
 
     #region Get
 
-    public async Task<BlobMetadata> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
     {
-        var obj = await _storageClient.GetObjectAsync(_bucket, blobName, null, cancellationToken);
-        return new BlobMetadata
+        try
         {
-            Name = obj.Name,
-            Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink)
-        };
+            var obj = await _storageClient.GetObjectAsync(_bucket, blobName, null, cancellationToken);
+
+            return new BlobMetadata
+            {
+                Name = obj.Name,
+                Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink)
+            };
+        }
+        catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     public IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default)
@@ -176,7 +190,12 @@ public class GCPStorage : IGCPStorage
     {
         foreach (var blob in blobNames)
         {
-            yield return await GetBlobAsync(blob, cancellationToken);
+            var blobMetadata = await GetBlobAsync(blob, cancellationToken);
+
+            if (blobMetadata is not null)
+            {
+                yield return blobMetadata;
+            }
         }
     }
 
