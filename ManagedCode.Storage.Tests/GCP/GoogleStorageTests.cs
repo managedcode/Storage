@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using FluentAssertions;
 using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Gcp;
@@ -51,5 +53,47 @@ public class GoogleStorageTests : StorageBaseTests
         var storage = ServiceProvider.GetService<IGCPStorage>();
         var defaultStorage = ServiceProvider.GetService<IStorage>();
         storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
+    }
+
+    [Fact]
+    public override async Task GetBlobsAsync()
+    {
+        var fileList = await CreateFileList(nameof(GetBlobsAsync), 5);
+
+        var blobList = fileList.Select(f => f.FileName).ToList();
+
+        var result = await Storage.GetBlobsAsync(blobList).ToListAsync();
+
+        foreach (var blobMetadata in result)
+        {
+            blobMetadata.Name.Should().NotBeNull();
+            
+            // Uri null for GCP storage emulator
+            // result.Uri.Should().NotBeNull();
+        }
+
+        foreach (var item in fileList)
+        {
+            await DeleteFileAsync(item.FileName);
+        }
+    }
+
+    [Fact]
+    public override async Task GetBlobAsync()
+    {
+        const string uploadContent = $"test {nameof(GetBlobAsync)}";
+        const string fileName = $"{nameof(GetBlobAsync)}.txt";
+
+        await PrepareFileToTest(fileName, uploadContent);
+
+        var result = await Storage.GetBlobAsync(fileName);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be(fileName);
+
+        // Uri null for GCP storage emulator
+        // result.Uri.Should().NotBeNull();
+
+        await DeleteFileAsync(fileName);
     }
 }

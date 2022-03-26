@@ -160,10 +160,9 @@ public class AWSStorage : IAWSStorage
             Key = blobName
         };
 
-        var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
-
-        if (objectMetaResponse.HttpStatusCode is HttpStatusCode.OK)
+        try
         {
+            var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
             return new BlobMetadata
             {
                 Name = blobName,
@@ -171,8 +170,10 @@ public class AWSStorage : IAWSStorage
                 ContentType = objectMetaResponse.Headers.ContentType
             };
         }
-
-        return null;
+        catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(

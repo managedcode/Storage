@@ -83,19 +83,19 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task GetBlobsAsync()
+    public virtual async Task GetBlobsAsync()
     {
         var fileList = await CreateFileList(nameof(GetBlobsAsync), 5);
 
         var blobList = fileList.Select(f => f.FileName).ToList();
 
-        var result = Storage.GetBlobsAsync(blobList);
+        var result = await Storage.GetBlobsAsync(blobList).ToListAsync();
 
-        var listResult = await result.ToListAsync();
-        var expectedList = fileList.Select(x => new BlobMetadata {Name = x.FileName});
-
-        listResult.Should().NotBeEquivalentTo(expectedList);
-        result.Should().NotBeNull();
+        foreach (var blobMetadata in result)
+        {
+            blobMetadata.Name.Should().NotBeNull();
+            blobMetadata.Uri.Should().NotBeNull();
+        }
 
         foreach (var item in fileList)
         {
@@ -104,7 +104,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task GetBlobAsync()
+    public virtual async Task GetBlobAsync()
     {
         const string uploadContent = $"test {nameof(GetBlobAsync)}";
         const string fileName = $"{nameof(GetBlobAsync)}.txt";
@@ -115,6 +115,7 @@ public abstract class StorageBaseTests
 
         result.Should().NotBeNull();
         result!.Name.Should().Be(fileName);
+        result.Uri.Should().NotBeNull();
 
         await DeleteFileAsync(fileName);
     }
@@ -124,7 +125,7 @@ public abstract class StorageBaseTests
     {
         // Array
         const int filesCount = 5;
-        var fileList = await CreateFileList(nameof(GetBlobsAsync), filesCount);
+        var fileList = await CreateFileList(nameof(GetBlobsAsync_IfSomeFileDontExist), filesCount);
 
         var blobList = fileList.Select(f => f.FileName).ToList();
         blobList.Add(FileHelper.GenerateRandomFileName());
@@ -649,7 +650,7 @@ public abstract class StorageBaseTests
     #endregion
 
 
-    private async Task PrepareFileToTest(string fileName, string content)
+    protected async Task PrepareFileToTest(string fileName, string content)
     {
         if (await Storage.ExistsAsync(fileName))
         {
@@ -659,7 +660,7 @@ public abstract class StorageBaseTests
         await Storage.UploadAsync(fileName, content);
     }
 
-    private async Task DeleteFileAsync(string fileName)
+    protected async Task DeleteFileAsync(string fileName)
     {
         if (await Storage.ExistsAsync(fileName))
         {
@@ -667,7 +668,7 @@ public abstract class StorageBaseTests
         }
     }
 
-    private async Task<string> DownloadAsync(string fileName)
+    protected async Task<string> DownloadAsync(string fileName)
     {
         var stream = await Storage.DownloadAsStreamAsync(fileName);
         var sr = new StreamReader(stream!, Encoding.UTF8);
@@ -675,7 +676,7 @@ public abstract class StorageBaseTests
         return await sr.ReadToEndAsync();
     }
 
-    private async Task<List<(string FileName, string UploadedContent)>> CreateFileList(string fileName, int count)
+    protected async Task<List<(string FileName, string UploadedContent)>> CreateFileList(string fileName, int count)
     {
         var listFile = new List<(string FileName, string UploadedContent)>();
 

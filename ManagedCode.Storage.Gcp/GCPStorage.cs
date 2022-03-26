@@ -196,9 +196,9 @@ public class GCPStorage : IGCPStorage
     public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var blob in blobNames)
+        foreach (var blobName in blobNames)
         {
-            var blobMetadata = await GetBlobAsync(blob, cancellationToken);
+            var blobMetadata = await GetBlobAsync(blobName, cancellationToken);
 
             if (blobMetadata is not null)
             {
