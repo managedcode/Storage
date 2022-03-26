@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,9 +58,14 @@ public static class StorageExtensions
         }
     }
 
-    public static async Task<FileResult> DownloadAsFileResult(this IStorage storage, string blobName, CancellationToken cancellationToken = default)
+    public static async Task<FileResult?> DownloadAsFileResult(this IStorage storage, string blobName, CancellationToken cancellationToken = default)
     {
         var localFile = await storage.DownloadAsync(blobName, cancellationToken);
+
+        if (localFile is null)
+        {
+            return null;
+        }
 
         return new FileStreamResult(localFile.FileStream, MimeHelper.GetMimeType(localFile.FileInfo.Extension))
         {
@@ -69,10 +73,15 @@ public static class StorageExtensions
         };
     }
 
-    public static async Task<FileResult> DownloadAsFileResult(this IStorage storage, BlobMetadata blobMetadata,
+    public static async Task<FileResult?> DownloadAsFileResult(this IStorage storage, BlobMetadata blobMetadata,
         CancellationToken cancellationToken = default)
     {
         var localFile = await storage.DownloadAsync(blobMetadata, cancellationToken);
+
+        if (localFile is null)
+        {
+            return null;
+        }
 
         return new FileStreamResult(localFile.FileStream, MimeHelper.GetMimeType(localFile.FileInfo.Extension))
         {
