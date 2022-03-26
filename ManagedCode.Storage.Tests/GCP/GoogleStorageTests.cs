@@ -35,6 +35,11 @@ public class GoogleStorageTests : StorageBaseTests
             {
                 ProjectId = "api-project-0000000000000",
                 Bucket = "managed-code-bucket",
+            },
+            StorageClientBuilder = new StorageClientBuilder
+            {
+                UnauthenticatedAccess = true,
+                BaseUri = "http://localhost:4443/storage/v1/",
             }
         });
         return services.BuildServiceProvider();
