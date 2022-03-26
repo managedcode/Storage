@@ -75,31 +75,30 @@ public class FileSystemStorage : IFileSystemStorage
 
     #region Download
 
-    public async Task<Stream> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
-        EnsureDirectoryExists();
-        return new FileStream(Path.Combine(_path, blobName), FileMode.Open, FileAccess.Read);
+        var filePath = Path.Combine(_path, blobName);
+
+        return File.Exists(filePath) ? new FileStream(filePath, FileMode.Open, FileAccess.Read) : null;
     }
 
-    public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
-    public async Task<LocalFile> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
-        EnsureDirectoryExists();
-
         var filePath = Path.Combine(_path, blobName);
 
-        return new LocalFile(filePath);
+        return File.Exists(filePath) ? new LocalFile(filePath) : null;
     }
 
-    public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
@@ -146,7 +145,7 @@ public class FileSystemStorage : IFileSystemStorage
 
     #region Get
 
-    public Task<BlobMetadata> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
+    public Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
     {
         EnsureDirectoryExists();
 
@@ -160,10 +159,11 @@ public class FileSystemStorage : IFileSystemStorage
                 Uri = new Uri(Path.Combine(_path, blobName)),
                 ContentType = MimeHelper.GetMimeType(fileInfo.Extension)
             };
-            return Task.FromResult(result);
+
+            return Task.FromResult<BlobMetadata?>(result);
         }
 
-        return Task.FromResult<BlobMetadata>(null);
+        return Task.FromResult<BlobMetadata?>(null);
     }
 
     public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(
@@ -171,7 +171,12 @@ public class FileSystemStorage : IFileSystemStorage
     {
         foreach (var file in Directory.EnumerateFiles(_path))
         {
-            yield return await GetBlobAsync(file, cancellationToken);
+            var blobMetadata = await GetBlobAsync(file, cancellationToken);
+
+            if (blobMetadata is not null)
+            {
+                yield return blobMetadata;
+            }
         }
     }
 
@@ -180,7 +185,12 @@ public class FileSystemStorage : IFileSystemStorage
     {
         foreach (var file in blobNames)
         {
-            yield return await GetBlobAsync(file, cancellationToken);
+            var blobMetadata = await GetBlobAsync(file, cancellationToken);
+
+            if (blobMetadata is not null)
+            {
+                yield return blobMetadata;
+            }
         }
     }
 
