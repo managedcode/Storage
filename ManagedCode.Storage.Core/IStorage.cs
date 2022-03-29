@@ -11,7 +11,7 @@ public interface IStorage : IDisposable
 {
     IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default);
     IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default);
-    Task<BlobMetadata> GetBlobAsync(string blobName, CancellationToken cancellationToken = default);
+    Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default);
 
     Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default);
     Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default);
@@ -23,10 +23,10 @@ public interface IStorage : IDisposable
     Task<string> UploadAsync(string content, CancellationToken cancellationToken = default);
     Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default);
 
-    Task<Stream> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default);
-    Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);
-    Task<LocalFile> DownloadAsync(string blobName, CancellationToken cancellationToken = default);
-    Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);
+    Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default);
+    Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);
+    Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default);
+    Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string blobName, CancellationToken cancellationToken = default);
     Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default);

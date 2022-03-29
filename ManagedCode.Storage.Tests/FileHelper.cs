@@ -40,7 +40,7 @@ public static class FileHelper
         return formFile;
     }
 
-    public static string GenerateRandomFileName(string extension)
+    public static string GenerateRandomFileName(string extension = ".txt")
     {
         return $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.{extension}";
     }

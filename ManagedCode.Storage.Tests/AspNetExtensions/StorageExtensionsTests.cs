@@ -42,7 +42,7 @@ public class StorageExtensionsTests
     {
         // Arrange
         const int size = 200 * 1024; // 200 KB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var fileName = FileHelper.GenerateRandomFileName();
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
@@ -50,7 +50,7 @@ public class StorageExtensionsTests
         var localFile = await Storage.DownloadAsync(fileName);
 
         // Assert
-        localFile.FileInfo.Length.Should().Be(formFile.Length);
+        localFile!.FileInfo.Length.Should().Be(formFile.Length);
         localFile.FileName.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
@@ -61,7 +61,7 @@ public class StorageExtensionsTests
     {
         // Arrange
         const int size = 50 * 1024 * 1024; // 50 MB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var fileName = FileHelper.GenerateRandomFileName();
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
@@ -69,7 +69,7 @@ public class StorageExtensionsTests
         var localFile = await Storage.DownloadAsync(fileName);
 
         // Assert
-        localFile.FileInfo.Length.Should().Be(formFile.Length);
+        localFile!.FileInfo.Length.Should().Be(formFile.Length);
         localFile.FileName.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
@@ -80,7 +80,7 @@ public class StorageExtensionsTests
     {
         // Arrange
         const int size = 200 * 1024; // 200 KB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var fileName = FileHelper.GenerateRandomFileName();
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
@@ -88,7 +88,7 @@ public class StorageExtensionsTests
         var localFile = await Storage.DownloadAsync(newFileName);
 
         // Assert
-        localFile.FileInfo.Length.Should().Be(formFile.Length);
+        localFile!.FileInfo.Length.Should().Be(formFile.Length);
         localFile.FileName.Should().Be(newFileName.Name);
         localFile.FileName.Should().NotBe(formFile.FileName);
 
@@ -100,7 +100,7 @@ public class StorageExtensionsTests
     {
         // Arrange
         const int size = 200 * 1024; // 200 KB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var fileName = FileHelper.GenerateRandomFileName();
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         // Act
@@ -108,7 +108,7 @@ public class StorageExtensionsTests
         var fileResult = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        fileResult.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        fileResult!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         fileResult.FileDownloadName.Should().Be(localFile.FileName);
 
         await Storage.DeleteAsync(fileName);
@@ -119,7 +119,7 @@ public class StorageExtensionsTests
     {
         // Arrange
         const int size = 200 * 1024; // 200 KB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var fileName = FileHelper.GenerateRandomFileName();
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         BlobMetadata blobMetadata = new() {Name = fileName};
@@ -129,9 +129,37 @@ public class StorageExtensionsTests
         var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
 
         // Assert
-        fileResult.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        fileResult!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         fileResult.FileDownloadName.Should().Be(localFile.FileName);
 
         await Storage.DeleteAsync(fileName);
+    }
+
+    [Fact]
+    public async Task DownloadAsFileResult_WithFileName_IfFileDontExist()
+    {
+        // Arrange
+        var fileName = FileHelper.GenerateRandomFileName();
+
+        // Act
+        var fileResult = await Storage.DownloadAsFileResult(fileName);
+
+        // Assert
+        fileResult.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DownloadAsFileResult_WithBlobMetadata_IfFileDontExist()
+    {
+        // Arrange
+        var fileName = FileHelper.GenerateRandomFileName();
+
+        BlobMetadata blobMetadata = new() {Name = fileName};
+
+        // Act
+        var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
+
+        // Assert
+        fileResult.Should().BeNull();
     }
 }

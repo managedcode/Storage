@@ -21,6 +21,7 @@ public class AzureStorage : IAzureStorage
     public AzureStorage(AzureStorageOptions options)
     {
         _options = options;
+
         _blobContainerClient = new BlobContainerClient(
             options.ConnectionString,
             options.Container,
@@ -66,30 +67,43 @@ public class AzureStorage : IAzureStorage
 
     #region Download
 
-    public async Task<Stream> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        var res = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
 
-        return res.Value.Content;
+        try
+        {
+            var response = await blobClient.DownloadAsync(cancellationToken);
+            return response.Value.Content;
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
+        {
+            return null;
+        }
     }
 
-    public async Task<Stream> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
     }
 
-    public async Task<LocalFile> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        var localFile = new LocalFile();
+        try
+        {
+            var localFile = new LocalFile();
+            await blobClient.DownloadToAsync(localFile.FileStream, cancellationToken);
 
-        await blobClient.DownloadToAsync(localFile.FileStream, cancellationToken);
-
-        return localFile;
+            return localFile;
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
+        {
+            return null;
+        }
     }
 
-    public async Task<LocalFile> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
         return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
@@ -136,11 +150,16 @@ public class AzureStorage : IAzureStorage
 
     #region Get
 
-    public async Task<BlobMetadata> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
+    public async Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
+        
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            return null;
+        }
 
         return new BlobMetadata
         {
@@ -155,7 +174,12 @@ public class AzureStorage : IAzureStorage
     {
         foreach (var blob in blobNames)
         {
-            yield return await GetBlobAsync(blob, cancellationToken);
+            var blobMetadata = await GetBlobAsync(blob, cancellationToken);
+
+            if (blobMetadata is not null)
+            {
+                yield return blobMetadata;
+            }
         }
     }
 
