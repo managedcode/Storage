@@ -58,12 +58,25 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Test
+      run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
+      env:
+        DEFAULT_REGION: eu-west-1
+        AWS_ACCESS_KEY_ID: localkey
+        AWS_SECRET_ACCESS_KEY: localsecret    
+    - name: Collect Code Coverage
       run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Storage.Tests/lcov.info
       env:
         DEFAULT_REGION: eu-west-1
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
         
+    - name: test-reports
+      uses: dorny/test-reporter@v1.5.0
+      with:
+        name: Test Reporter
+        reporter: dotnet-trx
+        path: ManagedCode.Storage.Tests/test-results.trx
+    
     - name : coverlet
       uses: b3b00/coverlet-action@1.1.9
       with:

@@ -208,8 +208,7 @@ Default mode connection:
 // Startup.cs
 services.AddFileSystemStorageAsDefault(opt =>
 {
-    opt.CommonPath = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}");
-    opt.Path = "{YOUR_BUCKET_NAME}";
+    opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}");
 });
 ```
 Using in default mode:
@@ -230,8 +229,7 @@ Provider-specific mode connection:
 // Startup.cs
 services.AddFileSystemStorage(new FileSystemStorageOptions
 {
-    CommonPath = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}"),
-    Path = "{YOUR_BUCKET_NAME}"
+    BaseFolder = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}"),
 });
 ```
 Using in provider-specific mode
