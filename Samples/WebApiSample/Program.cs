@@ -16,14 +16,12 @@ builder.Services.AddControllers();
 
 builder.Services.AddFileSystemStorageAsDefault(new FileSystemStorageOptions
 {
-    CommonPath = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"),
-    Path = "managed-code-bucket"
+    BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"),
 });
 
 builder.Services.AddFileSystemStorage(new FileSystemStorageOptions
 {
-    CommonPath = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"),
-    Path = "managed-code-bucket"
+    BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"),
 });
 
 #endregion

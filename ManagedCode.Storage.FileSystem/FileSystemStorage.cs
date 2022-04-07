@@ -17,7 +17,7 @@ public class FileSystemStorage : IFileSystemStorage
 
     public FileSystemStorage(FileSystemStorageOptions fileSystemStorageOptions)
     {
-        _path = Path.Combine(fileSystemStorageOptions.CommonPath, fileSystemStorageOptions.Path);
+        _path = fileSystemStorageOptions?.BaseFolder ?? Environment.CurrentDirectory;
         EnsureDirectoryExists();
     }
 

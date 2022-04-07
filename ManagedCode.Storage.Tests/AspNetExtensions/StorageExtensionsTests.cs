@@ -30,8 +30,7 @@ public class StorageExtensionsTests
 
         services.AddFileSystemStorageAsDefault(opt =>
         {
-            opt.CommonPath = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
-            opt.Path = "managed-code-bucket";
+            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
         });
 
         return services.BuildServiceProvider();
