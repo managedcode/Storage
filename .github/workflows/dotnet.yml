@@ -68,6 +68,7 @@ jobs:
       uses: dorny/test-reporter@v1.5.0
         name: Test Reporter
         reporter: dotnet-trx
+        path: test-results.trx
     
     - name : coverlet
       uses: b3b00/coverlet-action@1.1.9
