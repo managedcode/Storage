@@ -65,7 +65,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: localsecret
         
     - name: Test 2
-      run: dotnet test --no-build --logger 'trx;LogFileName=ManagedCode.Storage.Tests/test-results.trx'
+      run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
       env:
         DEFAULT_REGION: eu-west-1
         AWS_ACCESS_KEY_ID: localkey
