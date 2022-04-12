@@ -69,7 +69,6 @@ jobs:
       with:
         name: Test Reporter
         reporter: dotnet-trx
-        path: /home/runner/work/Storage/Storage/ManagedCode.Storage.Tests/TestResults/net6.0/test-results.trx
     
     - name : coverlet
       uses: b3b00/coverlet-action@1.1.9
