@@ -9,7 +9,7 @@
     </PropertyGroup>
     <PropertyGroup>
         <VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
-        <VSTestResultsDirectory>$(MSBuildThisFileDirectory)/TestResults/$(TargetFramework)</VSTestResultsDirectory>
+        <VSTestResultsDirectory>$(MSBuildThisFileDirectory)TestResults/$(TargetFramework)</VSTestResultsDirectory>
     </PropertyGroup>
     <ItemGroup>
         <None Update="xunit.runner.json">
