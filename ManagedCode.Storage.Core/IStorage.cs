@@ -41,4 +41,5 @@ public interface IStorage : IDisposable
     Task CreateContainerAsync(CancellationToken cancellationToken = default);
 
     Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default);
+    Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default);
 }

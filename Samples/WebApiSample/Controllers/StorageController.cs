@@ -51,7 +51,7 @@ public class StorageController : Controller
     #region Download files using the extension for storage from Managed Code.Storage.AspNet Extensions;
 
     [HttpGet("file")]
-    public Task<FileResult> DownloadFile(string fileName)
+    public Task<FileResult?> DownloadFile(string fileName)
     {
         return _storage.DownloadAsFileResult(fileName);
     }

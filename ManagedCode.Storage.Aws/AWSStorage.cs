@@ -351,4 +351,17 @@ public class AWSStorage : IAWSStorage
 
         await _s3Client.PutObjectLegalHoldAsync(request, cancellationToken);
     }
+
+    public async Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    {
+        GetObjectLegalHoldRequest request = new()
+        {
+            BucketName = _bucket,
+            Key = blobName
+        };
+
+        var response = await _s3Client.GetObjectLegalHoldAsync(request, cancellationToken);
+
+        return response.LegalHold.Status == ObjectLockLegalHoldStatus.On;
+    }
 }

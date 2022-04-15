@@ -306,4 +306,9 @@ public class FileSystemStorage : IFileSystemStorage
             }
         }
     }
+
+    public Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_lockedFiles.ContainsKey(blobName));
+    }
 }
