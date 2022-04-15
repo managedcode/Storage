@@ -171,7 +171,10 @@ public class GCPStorage : IGCPStorage
             return new BlobMetadata
             {
                 Name = obj.Name,
-                Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink)
+                Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
+                Container = obj.Bucket,
+                ContentType = obj.ContentType,
+                Length = (long) (obj.Size ?? 0),
             };
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
@@ -188,7 +191,10 @@ public class GCPStorage : IGCPStorage
                 x => new BlobMetadata
                 {
                     Name = x.Name,
-                    Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink)
+                    Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink), 
+                    Container = x.Bucket,
+                    ContentType = x.ContentType,
+                    Length = (long) (x.Size ?? 0),
                 }
             );
     }

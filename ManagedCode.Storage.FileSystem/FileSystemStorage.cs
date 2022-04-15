@@ -157,7 +157,8 @@ public class FileSystemStorage : IFileSystemStorage
             {
                 Name = fileInfo.Name,
                 Uri = new Uri(Path.Combine(_path, blobName)),
-                ContentType = MimeHelper.GetMimeType(fileInfo.Extension)
+                ContentType = MimeHelper.GetMimeType(fileInfo.Extension),
+                Length = fileInfo.Length
             };
 
             return Task.FromResult<BlobMetadata?>(result);

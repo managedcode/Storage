@@ -167,7 +167,8 @@ public class AWSStorage : IAWSStorage
             {
                 Name = blobName,
                 Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{blobName}"),
-                ContentType = objectMetaResponse.Headers.ContentType
+                ContentType = objectMetaResponse.Headers.ContentType,
+                Length = objectMetaResponse.Headers.ContentLength
             };
         }
         catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
@@ -204,7 +205,8 @@ public class AWSStorage : IAWSStorage
                 {
                     Name = entry.Key,
                     Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{entry.Key}"),
-                    ContentType = objectMetaResponse.Headers.ContentType
+                    ContentType = objectMetaResponse.Headers.ContentType,
+                    Length = objectMetaResponse.Headers.ContentLength
                 };
             }
 

@@ -155,17 +155,20 @@ public class AzureStorage : IAzureStorage
         await Task.Yield();
 
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        
+
         if (!await blobClient.ExistsAsync(cancellationToken))
         {
             return null;
         }
+
+        var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
 
         return new BlobMetadata
         {
             Name = blobClient.Name,
             Uri = blobClient.Uri,
             Container = blobClient.BlobContainerName,
+            Length = properties.Value.ContentLength
         };
     }
 
@@ -191,10 +194,13 @@ public class AzureStorage : IAzureStorage
         {
             foreach (var blobItem in item.Values)
             {
-                yield return new BlobMetadata
+                var blobMetadata = new BlobMetadata
                 {
                     Name = blobItem.Name,
+                    Length = blobItem.Properties.ContentLength ?? 0
                 };
+
+                yield return blobMetadata;
             }
         }
     }
