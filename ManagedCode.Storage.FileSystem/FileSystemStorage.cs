@@ -291,8 +291,10 @@ public class FileSystemStorage : IFileSystemStorage
 
             if (file is null) return;
 
-            file.FileStream.Lock(0, file.FileStream.Length);
-            _lockedFiles.Add(blobName, file.FileStream);
+            var fileStream = File.OpenRead(file.FilePath); // Opening with FileAccess.Read only
+            fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
+
+            _lockedFiles.Add(blobName, fileStream);
 
             return;
         }
@@ -302,6 +304,7 @@ public class FileSystemStorage : IFileSystemStorage
             if (_lockedFiles.ContainsKey(blobName))
             {
                 _lockedFiles[blobName].Unlock(0, _lockedFiles[blobName].Length);
+                _lockedFiles[blobName].Dispose();
                 _lockedFiles.Remove(blobName);
             }
         }
