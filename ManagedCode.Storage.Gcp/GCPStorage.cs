@@ -191,7 +191,7 @@ public class GCPStorage : IGCPStorage
                 x => new BlobMetadata
                 {
                     Name = x.Name,
-                    Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink), 
+                    Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink),
                     Container = x.Bucket,
                     ContentType = x.ContentType,
                     Length = (long) (x.Size ?? 0),
@@ -310,4 +310,11 @@ public class GCPStorage : IGCPStorage
     }
 
     #endregion
+
+    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    {
+        var storageObject = await _storageClient.GetObjectAsync(_bucket, blobName, cancellationToken: cancellationToken);
+        storageObject.EventBasedHold = true;
+        await _storageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
+    }
 }

@@ -14,6 +14,7 @@ namespace ManagedCode.Storage.FileSystem;
 public class FileSystemStorage : IFileSystemStorage
 {
     private readonly string _path;
+    private readonly Dictionary<string, FileStream> _lockedFiles = new();
 
     public FileSystemStorage(FileSystemStorageOptions fileSystemStorageOptions)
     {
@@ -281,4 +282,28 @@ public class FileSystemStorage : IFileSystemStorage
     }
 
     #endregion
+
+    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    {
+        if (hasLegalHold && !_lockedFiles.ContainsKey(blobName))
+        {
+            var file = await DownloadAsync(blobName, cancellationToken);
+
+            if (file is null) return;
+
+            file.FileStream.Lock(0, file.FileStream.Length);
+            _lockedFiles.Add(blobName, file.FileStream);
+
+            return;
+        }
+
+        if (!hasLegalHold)
+        {
+            if (_lockedFiles.ContainsKey(blobName))
+            {
+                _lockedFiles[blobName].Unlock(0, _lockedFiles[blobName].Length);
+                _lockedFiles.Remove(blobName);
+            }
+        }
+    }
 }
