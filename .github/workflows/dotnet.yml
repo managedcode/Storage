@@ -70,12 +70,12 @@ jobs:
         AWS_ACCESS_KEY_ID: localkey
         AWS_SECRET_ACCESS_KEY: localsecret
         
-    - name: test-reports
-      uses: dorny/test-reporter@v1.5.0
-      with:
-        name: Test Reporter
-        reporter: dotnet-trx
-        path: ManagedCode.Storage.Tests/test-results.trx
+#    - name: test-reports
+#      uses: dorny/test-reporter@v1.5.0
+#      with:
+#        name: Test Reporter
+#        reporter: dotnet-trx
+#        path: ManagedCode.Storage.Tests/test-results.trx
     
     - name : coverlet
       uses: b3b00/coverlet-action@1.1.9

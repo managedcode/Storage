@@ -167,7 +167,8 @@ public class AWSStorage : IAWSStorage
             {
                 Name = blobName,
                 Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{blobName}"),
-                ContentType = objectMetaResponse.Headers.ContentType
+                ContentType = objectMetaResponse.Headers.ContentType,
+                Length = objectMetaResponse.Headers.ContentLength
             };
         }
         catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
@@ -204,7 +205,8 @@ public class AWSStorage : IAWSStorage
                 {
                     Name = entry.Key,
                     Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{entry.Key}"),
-                    ContentType = objectMetaResponse.Headers.ContentType
+                    ContentType = objectMetaResponse.Headers.ContentType,
+                    Length = objectMetaResponse.Headers.ContentLength
                 };
             }
 
@@ -330,4 +332,36 @@ public class AWSStorage : IAWSStorage
     }
 
     #endregion
+
+    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    {
+        var status = hasLegalHold
+            ? ObjectLockLegalHoldStatus.On
+            : ObjectLockLegalHoldStatus.Off;
+
+        PutObjectLegalHoldRequest request = new()
+        {
+            BucketName = _bucket,
+            Key = blobName,
+            LegalHold = new ObjectLockLegalHold
+            {
+                Status = status,
+            },
+        };
+
+        await _s3Client.PutObjectLegalHoldAsync(request, cancellationToken);
+    }
+
+    public async Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    {
+        GetObjectLegalHoldRequest request = new()
+        {
+            BucketName = _bucket,
+            Key = blobName
+        };
+
+        var response = await _s3Client.GetObjectLegalHoldAsync(request, cancellationToken);
+
+        return response.LegalHold.Status == ObjectLockLegalHoldStatus.On;
+    }
 }

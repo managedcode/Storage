@@ -14,6 +14,7 @@ namespace ManagedCode.Storage.FileSystem;
 public class FileSystemStorage : IFileSystemStorage
 {
     private readonly string _path;
+    private readonly Dictionary<string, FileStream> _lockedFiles = new();
 
     public FileSystemStorage(FileSystemStorageOptions fileSystemStorageOptions)
     {
@@ -157,7 +158,8 @@ public class FileSystemStorage : IFileSystemStorage
             {
                 Name = fileInfo.Name,
                 Uri = new Uri(Path.Combine(_path, blobName)),
-                ContentType = MimeHelper.GetMimeType(fileInfo.Extension)
+                ContentType = MimeHelper.GetMimeType(fileInfo.Extension),
+                Length = fileInfo.Length
             };
 
             return Task.FromResult<BlobMetadata?>(result);
@@ -280,4 +282,36 @@ public class FileSystemStorage : IFileSystemStorage
     }
 
     #endregion
+
+    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    {
+        if (hasLegalHold && !_lockedFiles.ContainsKey(blobName))
+        {
+            var file = await DownloadAsync(blobName, cancellationToken);
+
+            if (file is null) return;
+
+            var fileStream = File.OpenRead(file.FilePath); // Opening with FileAccess.Read only
+            fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
+
+            _lockedFiles.Add(blobName, fileStream);
+
+            return;
+        }
+
+        if (!hasLegalHold)
+        {
+            if (_lockedFiles.ContainsKey(blobName))
+            {
+                _lockedFiles[blobName].Unlock(0, _lockedFiles[blobName].Length);
+                _lockedFiles[blobName].Dispose();
+                _lockedFiles.Remove(blobName);
+            }
+        }
+    }
+
+    public Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_lockedFiles.ContainsKey(blobName));
+    }
 }

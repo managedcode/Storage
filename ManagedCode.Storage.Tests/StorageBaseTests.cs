@@ -63,7 +63,7 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task GetBlobListAsync()
     {
-        var fileList = await CreateFileList(nameof(GetBlobListAsync), 5);
+        var fileList = await CreateFileList();
 
         var result = Storage.GetBlobListAsync();
 
@@ -85,7 +85,7 @@ public abstract class StorageBaseTests
     [Fact]
     public virtual async Task GetBlobsAsync()
     {
-        var fileList = await CreateFileList(nameof(GetBlobsAsync), 5);
+        var fileList = await CreateFileList();
 
         var blobList = fileList.Select(f => f.FileName).ToList();
 
@@ -106,8 +106,8 @@ public abstract class StorageBaseTests
     [Fact]
     public virtual async Task GetBlobAsync()
     {
-        const string uploadContent = $"test {nameof(GetBlobAsync)}";
-        const string fileName = $"{nameof(GetBlobAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -124,8 +124,8 @@ public abstract class StorageBaseTests
     public async Task GetBlobsAsync_IfSomeFileDontExist()
     {
         // Array
-        const int filesCount = 5;
-        var fileList = await CreateFileList(nameof(GetBlobsAsync_IfSomeFileDontExist), filesCount);
+        const int filesCount = 6;
+        var fileList = await CreateFileList(filesCount);
 
         var blobList = fileList.Select(f => f.FileName).ToList();
         blobList.Add(FileHelper.GenerateRandomFileName());
@@ -164,8 +164,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileAsStreamSpecifyingFileNameAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileAsStreamSpecifyingFileNameAsync)}";
-        const string fileName = $"{nameof(UploadFileAsStreamSpecifyingFileNameAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
         var stream = new MemoryStream(byteArray);
@@ -186,10 +186,10 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileAsStreamSpecifyingBlobMetadataAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileAsStreamSpecifyingFileNameAsync)}";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
         var blobMetadata = new BlobMetadata
         {
-            Name = $"{nameof(UploadFileAsStreamSpecifyingBlobMetadataAsync)}.txt"
+            Name = FileHelper.GenerateRandomFileName()
         };
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
@@ -211,8 +211,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileAsTextSpecifyingFileNameAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileAsTextSpecifyingFileNameAsync)}";
-        const string fileName = $"{nameof(UploadFileAsTextSpecifyingFileNameAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         if (await Storage.ExistsAsync(fileName))
         {
@@ -230,10 +230,10 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileAsTextSpecifyingBlobMetadataAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileAsTextSpecifyingBlobMetadataAsync)}";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
         var blobMetadata = new BlobMetadata
         {
-            Name = $"{nameof(UploadFileAsTextSpecifyingBlobMetadataAsync)}.txt"
+            Name = FileHelper.GenerateRandomFileName()
         };
 
         if (await Storage.ExistsAsync(blobMetadata))
@@ -252,8 +252,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileFromPathSpecifyingFileNameAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileFromPathSpecifyingFileNameAsync)}";
-        const string fileName = $"{nameof(UploadFileFromPathSpecifyingFileNameAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
         var stream = new MemoryStream(byteArray);
@@ -275,10 +275,10 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileFromPathSpecifyingBlobMetadataAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileFromPathSpecifyingBlobMetadataAsync)}";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
         var blobMetadata = new BlobMetadata
         {
-            Name = $"{nameof(UploadFileFromPathSpecifyingBlobMetadataAsync)}.txt"
+            Name = FileHelper.GenerateRandomFileName()
         };
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
@@ -301,8 +301,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileAsArrayAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileAsArrayAsync)}";
-        const string fileName = $"{nameof(UploadFileAsArrayAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
 
@@ -322,7 +322,7 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileAsAsTextWithoutNameSpecifiedAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileAsAsTextWithoutNameSpecifiedAsync)}";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
 
         var fileName = await Storage.UploadAsync(uploadContent);
 
@@ -335,7 +335,7 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task UploadFileAsAsStreamWithoutNameSpecifiedAsync()
     {
-        const string uploadContent = $"test {nameof(UploadFileAsAsStreamWithoutNameSpecifiedAsync)}";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
         var stream = new MemoryStream(byteArray);
@@ -355,8 +355,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DownloadFileBlobMetadataAsLocalFileAsync()
     {
-        const string uploadContent = $"test {nameof(DownloadFileBlobMetadataAsLocalFileAsync)}";
-        const string fileName = $"{nameof(DownloadFileBlobMetadataAsLocalFileAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -374,8 +374,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DownloadFileAsLocalFileAsync()
     {
-        const string uploadContent = $"test {nameof(DownloadFileAsLocalFileAsync)}";
-        const string fileName = $"{nameof(DownloadFileAsLocalFileAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -393,8 +393,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DownloadFileBlobMetadataAsync()
     {
-        const string uploadContent = $"test {nameof(DownloadFileAsync)}";
-        const string fileName = $"{nameof(DownloadFileAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -412,8 +412,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DownloadFileAsync()
     {
-        const string uploadContent = $"test {nameof(DownloadFileAsync)}";
-        const string fileName = $"{nameof(DownloadFileAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -487,7 +487,7 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DeleteFileListAsync()
     {
-        var fileList = await CreateFileList(nameof(DeleteFileListAsync), 5);
+        var fileList = await CreateFileList();
 
         var expectedList = fileList.Select(x => x.FileName).ToList();
         await Storage.DeleteAsync(expectedList);
@@ -504,7 +504,7 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DeleteFileAsBlobMetadataListAsync()
     {
-        var fileList = await CreateFileList(nameof(DeleteFileAsBlobMetadataListAsync), 5);
+        var fileList = await CreateFileList();
 
         var expectedList = fileList.Select(x => new BlobMetadata {Name = x.FileName}).ToList();
 
@@ -522,8 +522,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DeleteFileAsBlobMetadataAsync()
     {
-        const string uploadContent = $"test {nameof(DeleteFileAsBlobMetadataAsync)}";
-        const string fileName = $"{nameof(DeleteFileAsBlobMetadataAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -539,8 +539,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task DeleteFileAsStringAsync()
     {
-        const string uploadContent = $"test {nameof(DeleteFileAsStringAsync)}";
-        const string fileName = $"{nameof(DeleteFileAsStringAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -558,8 +558,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task SingleBlobExistsAsync()
     {
-        const string uploadContent = $"test {nameof(SingleBlobExistsAsync)}";
-        const string fileName = $"{nameof(SingleBlobExistsAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -573,8 +573,8 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task ExistFileByBlobMetadataAsync()
     {
-        const string uploadContent = $"test {nameof(ExistFileByBlobMetadataAsync)}";
-        const string fileName = $"{nameof(ExistFileByBlobMetadataAsync)}.txt";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
@@ -593,13 +593,10 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task ExistFileByListStringAsync()
     {
-        var fileList = await CreateFileList(nameof(ExistFileByListStringAsync), 5);
+        var fileList = await CreateFileList();
 
-        var blobList = new List<string>
-        {
-            $"{nameof(ExistFileByListStringAsync)}1.txt",
-            $"{nameof(ExistFileByListStringAsync)}2.txt"
-        };
+
+        var blobList = fileList.Select(x => x.FileName).ToList();
 
         var result = Storage.ExistsAsync(blobList);
 
@@ -619,7 +616,7 @@ public abstract class StorageBaseTests
     [Fact]
     public async Task ExistFileByListBlobMetadataAsync()
     {
-        var fileList = await CreateFileList(nameof(ExistFileByListBlobMetadataAsync), 5);
+        var fileList = await CreateFileList();
 
         var result = Storage.ExistsAsync(fileList.Select(x => new BlobMetadata {Name = x.FileName}));
 
@@ -649,7 +646,6 @@ public abstract class StorageBaseTests
 
     #endregion
 
-
     protected async Task PrepareFileToTest(string fileName, string content)
     {
         if (await Storage.ExistsAsync(fileName))
@@ -676,13 +672,13 @@ public abstract class StorageBaseTests
         return await sr.ReadToEndAsync();
     }
 
-    protected async Task<List<(string FileName, string UploadedContent)>> CreateFileList(string fileName, int count)
+    protected async Task<List<(string FileName, string UploadedContent)>> CreateFileList(int count = 5)
     {
         var listFile = new List<(string FileName, string UploadedContent)>();
 
         for (var i = 0; i < count; i++)
         {
-            var file = ($"{fileName}{i}.txt", $"test {fileName}{i}");
+            var file = (FileHelper.GenerateRandomFileName(), FileHelper.GenerateRandomFileName());
             await PrepareFileToTest(file.Item1, file.Item2);
             listFile.Add(file);
         }

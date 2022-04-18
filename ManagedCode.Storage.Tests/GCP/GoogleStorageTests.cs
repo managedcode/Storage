@@ -120,7 +120,7 @@ public class GoogleStorageTests : StorageBaseTests
     [Fact]
     public override async Task GetBlobsAsync()
     {
-        var fileList = await CreateFileList(nameof(GetBlobsAsync), 5);
+        var fileList = await CreateFileList(5);
 
         var blobList = fileList.Select(f => f.FileName).ToList();
 
