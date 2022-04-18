@@ -646,24 +646,6 @@ public abstract class StorageBaseTests
 
     #endregion
 
-    #region LegalHold
-
-    [Fact]
-    public async Task SetLegalHold_ShouldBeTrue()
-    {
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        await Storage.SetLegalHold(fileName, true);
-        var hasLegalHold = await Storage.HasLegalHold(fileName);
-
-        hasLegalHold.Should().BeTrue();
-    }
-
-    #endregion
-
     protected async Task PrepareFileToTest(string fileName, string content)
     {
         if (await Storage.ExistsAsync(fileName))
