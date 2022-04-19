@@ -32,124 +32,17 @@ public class AWSStorage : IAWSStorage
         _s3Client.Dispose();
     }
 
-    #region Delete
+    #region Async
 
-    public async Task DeleteAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        await _s3Client.DeleteObjectAsync(new DeleteObjectRequest
-        {
-            BucketName = _bucket,
-            Key = blobName
-        }, cancellationToken);
-    }
+      #region CreateContainer
 
-    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
-        await DeleteAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async Task DeleteAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            await DeleteAsync(blob, cancellationToken);
-        }
-    }
-
-    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            await DeleteAsync(blob, cancellationToken);
-        }
+        await _s3Client.EnsureBucketExistsAsync(_bucket);
     }
 
     #endregion
-
-    #region Download
-
-    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await _s3Client.GetObjectStreamAsync(_bucket, blobName, null, cancellationToken);
-        }
-        catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
-        {
-            return null;
-        }
-    }
-
-    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var localFile = new LocalFile();
-
-        using (var stream = await DownloadAsStreamAsync(blobName, cancellationToken))
-        {
-            if (stream is null)
-            {
-                return null;
-            }
-
-            await stream.CopyToAsync(localFile.FileStream, 81920, cancellationToken);
-        }
-
-        return localFile;
-    }
-
-    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await DownloadAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    #endregion
-
-    #region Exists
-
-    public async Task<bool> ExistsAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await _s3Client.GetObjectAsync(_bucket, blobName, cancellationToken);
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await ExistsAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            yield return await ExistsAsync(blob, cancellationToken);
-        }
-    }
-
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobs)
-        {
-            yield return await ExistsAsync(blob, cancellationToken);
-        }
-    }
-
-    #endregion
-
+    
     #region Get
 
     public async Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
@@ -324,14 +217,125 @@ public class AWSStorage : IAWSStorage
 
     #endregion
 
-    #region CreateContainer
+    #region Download
 
-    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
+    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
     {
-        await _s3Client.EnsureBucketExistsAsync(_bucket);
+        try
+        {
+            return await _s3Client.GetObjectStreamAsync(_bucket, blobName, null, cancellationToken);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    {
+        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
+    }
+
+    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
+    {
+        var localFile = new LocalFile();
+
+        using (var stream = await DownloadAsStreamAsync(blobName, cancellationToken))
+        {
+            if (stream is null)
+            {
+                return null;
+            }
+
+            await stream.CopyToAsync(localFile.FileStream, 81920, cancellationToken);
+        }
+
+        return localFile;
+    }
+
+    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    {
+        return await DownloadAsync(blobMetadata.Name, cancellationToken);
     }
 
     #endregion
+
+    #region Delete
+
+    public async Task DeleteAsync(string blobName, CancellationToken cancellationToken = default)
+    {
+        await _s3Client.DeleteObjectAsync(new DeleteObjectRequest
+        {
+            BucketName = _bucket,
+            Key = blobName
+        }, cancellationToken);
+    }
+
+    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    {
+        await DeleteAsync(blobMetadata.Name, cancellationToken);
+    }
+
+    public async Task DeleteAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default)
+    {
+        foreach (var blob in blobNames)
+        {
+            await DeleteAsync(blob, cancellationToken);
+        }
+    }
+
+    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobNames, CancellationToken cancellationToken = default)
+    {
+        foreach (var blob in blobNames)
+        {
+            await DeleteAsync(blob, cancellationToken);
+        }
+    }
+
+    #endregion
+
+    #region Exists
+
+    public async Task<bool> ExistsAsync(string blobName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _s3Client.GetObjectAsync(_bucket, blobName, cancellationToken);
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    {
+        return await ExistsAsync(blobMetadata.Name, cancellationToken);
+    }
+
+    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        foreach (var blob in blobNames)
+        {
+            yield return await ExistsAsync(blob, cancellationToken);
+        }
+    }
+
+    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        foreach (var blob in blobs)
+        {
+            yield return await ExistsAsync(blob, cancellationToken);
+        }
+    }
+
+    #endregion
+
+    #region LegalHold
 
     public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
@@ -364,4 +368,9 @@ public class AWSStorage : IAWSStorage
 
         return response.LegalHold.Status == ObjectLockLegalHoldStatus.On;
     }
+
+    #endregion
+
+    #endregion
+    
 }
