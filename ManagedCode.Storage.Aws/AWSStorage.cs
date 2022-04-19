@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -34,7 +35,7 @@ public class AWSStorage : IAWSStorage
 
     #region Async
 
-      #region CreateContainer
+    #region CreateContainer
 
     public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
     {
@@ -42,7 +43,7 @@ public class AWSStorage : IAWSStorage
     }
 
     #endregion
-    
+
     #region Get
 
     public async Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
@@ -372,5 +373,173 @@ public class AWSStorage : IAWSStorage
     #endregion
 
     #endregion
-    
+
+
+    #region Sync
+
+    #region CreateContainer
+
+    public void CreateContainer()
+    {
+        AsyncHelper.RunSync(() => CreateContainerAsync());
+    }
+
+    #endregion
+
+    #region Get
+
+    public IEnumerable<BlobMetadata> GetBlobList()
+    {
+        return GetBlobListAsync().ToEnumerable();
+    }
+
+    public IEnumerable<BlobMetadata> GetBlobs(IEnumerable<string> blobNames)
+    {
+        return GetBlobsAsync(blobNames).ToEnumerable();
+    }
+
+    public BlobMetadata? GetBlob(string blobName)
+    {
+        return AsyncHelper.RunSync(() => GetBlobAsync(blobName));
+    }
+
+    #endregion
+
+    #region Upload
+
+    public void UploadStream(string blobName, Stream dataStream)
+    {
+        AsyncHelper.RunSync(() => UploadStreamAsync(blobName, dataStream));
+    }
+
+    public void UploadFile(string blobName, string pathToFile)
+    {
+        AsyncHelper.RunSync(() => UploadFileAsync(blobName, pathToFile));
+    }
+
+    public void Upload(string blobName, string content)
+    {
+        AsyncHelper.RunSync(() => UploadAsync(blobName, content));
+    }
+
+    public void UploadStream(BlobMetadata blobMetadata, Stream dataStream)
+    {
+        AsyncHelper.RunSync(() => UploadStreamAsync(blobMetadata, dataStream));
+    }
+
+    public void UploadFile(BlobMetadata blobMetadata, string pathToFile)
+    {
+        AsyncHelper.RunSync(() => UploadFileAsync(blobMetadata, pathToFile));
+    }
+
+    public void Upload(BlobMetadata blobMetadata, string content)
+    {
+        AsyncHelper.RunSync(() => UploadAsync(blobMetadata, content));
+    }
+
+    public void Upload(BlobMetadata blobMetadata, byte[] data)
+    {
+        AsyncHelper.RunSync(() => UploadAsync(blobMetadata, data));
+    }
+
+    public string Upload(string content)
+    {
+        return AsyncHelper.RunSync(() => UploadAsync(content));
+    }
+
+    public string Upload(Stream dataStream)
+    {
+        return AsyncHelper.RunSync(() => UploadAsync(dataStream));
+    }
+
+    #endregion
+
+    #region Download
+
+    public Stream? DownloadAsStream(string blobName)
+    {
+        return AsyncHelper.RunSync(() => DownloadAsStreamAsync(blobName));
+    }
+
+    public Stream? DownloadAsStream(BlobMetadata blobMetadata)
+    {
+        return AsyncHelper.RunSync(() => DownloadAsStreamAsync(blobMetadata));
+    }
+
+    public LocalFile? Download(string blobName)
+    {
+        return AsyncHelper.RunSync(() => DownloadAsync(blobName));
+    }
+
+    public LocalFile? Download(BlobMetadata blobMetadata)
+    {
+        return AsyncHelper.RunSync(() => DownloadAsync(blobMetadata));
+    }
+
+    #endregion
+
+
+    #region Delete
+
+    public void Delete(string blobName)
+    {
+        AsyncHelper.RunSync(() => DeleteAsync(blobName));
+    }
+
+    public void Delete(BlobMetadata blobMetadata)
+    {
+        AsyncHelper.RunSync(() => DeleteAsync(blobMetadata));
+    }
+
+    public void Delete(IEnumerable<string> blobNames)
+    {
+        AsyncHelper.RunSync(() => DeleteAsync(blobNames));
+    }
+
+    public void Delete(IEnumerable<BlobMetadata> blobMetadatas)
+    {
+        AsyncHelper.RunSync(() => DeleteAsync(blobMetadatas));
+    }
+
+    #endregion
+
+    #region Exist
+
+    public bool Exists(string blobName)
+    {
+        return AsyncHelper.RunSync(() => ExistsAsync(blobName));
+    }
+
+    public bool Exists(BlobMetadata blobMetadata)
+    {
+        return AsyncHelper.RunSync(() => ExistsAsync(blobMetadata));
+    }
+
+    public IEnumerable<bool> Exists(IEnumerable<string> blobNames)
+    {
+        return ExistsAsync(blobNames).ToEnumerable();
+    }
+
+    public IEnumerable<bool> Exists(IEnumerable<BlobMetadata> blobs)
+    {
+        return ExistsAsync(blobs).ToEnumerable();
+    }
+
+    #endregion
+
+    #region LegaHold
+
+    public void SetLegalHold(string blobName, bool hasLegalHold)
+    {
+        AsyncHelper.RunSync(() => SetLegalHoldAsync(blobName, hasLegalHold));
+    }
+
+    public bool HasLegalHold(string blobName)
+    {
+        return AsyncHelper.RunSync(() => HasLegalHoldAsync(blobName));
+    }
+
+    #endregion
+
+    #endregion
 }
