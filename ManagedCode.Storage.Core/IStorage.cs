@@ -47,13 +47,13 @@ public interface IStorage : IDisposable
 
     void CreateContainer();
 
-    IEnumerable GetBlobList();
+    IEnumerable<BlobMetadata> GetBlobList();
     IEnumerable<BlobMetadata> GetBlobs(IEnumerable<string> blobNames);
     BlobMetadata? GetBlob(string blobName);
 
     void UploadStream(string blobName, Stream dataStream);
-    void UploadFileAsync(string blobName, string pathToFile);
-    void UploadAsync(string blobName, string content);
+    void UploadFile(string blobName, string pathToFile);
+    void Upload(string blobName, string content);
     void UploadStream(BlobMetadata blobMetadata, Stream dataStream);
     void UploadFile(BlobMetadata blobMetadata, string pathToFile);
     void Upload(BlobMetadata blobMetadata, string content);
@@ -69,7 +69,7 @@ public interface IStorage : IDisposable
     void Delete(string blobName);
     void Delete(BlobMetadata blobMetadata);
     void Delete(IEnumerable<string> blobNames);
-    void Delete(IEnumerable<BlobMetadata> blobNames);
+    void Delete(IEnumerable<BlobMetadata> blobMetadatas);
 
     bool Exists(string blobName);
     bool Exists(BlobMetadata blobMetadata);
