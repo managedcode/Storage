@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -9,6 +10,8 @@ namespace ManagedCode.Storage.Core;
 
 public interface IStorage : IDisposable
 {
+    Task CreateContainerAsync(CancellationToken cancellationToken = default);
+
     IAsyncEnumerable<BlobMetadata> GetBlobListAsync(CancellationToken cancellationToken = default);
     IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default);
     Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default);
@@ -38,8 +41,41 @@ public interface IStorage : IDisposable
     IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default);
     IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs, CancellationToken cancellationToken = default);
 
-    Task CreateContainerAsync(CancellationToken cancellationToken = default);
-
     Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default);
     Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default);
+
+
+    void CreateContainer();
+
+    IEnumerable GetBlobList();
+    IEnumerable<BlobMetadata> GetBlobs(IEnumerable<string> blobNames);
+    BlobMetadata? GetBlob(string blobName);
+
+    void UploadStream(string blobName, Stream dataStream);
+    void UploadFileAsync(string blobName, string pathToFile);
+    void UploadAsync(string blobName, string content);
+    void UploadStream(BlobMetadata blobMetadata, Stream dataStream);
+    void UploadFile(BlobMetadata blobMetadata, string pathToFile);
+    void Upload(BlobMetadata blobMetadata, string content);
+    void Upload(BlobMetadata blobMetadata, byte[] data);
+    string Upload(string content);
+    string Upload(Stream dataStream);
+
+    Stream? DownloadAsStream(string blobName);
+    Stream? DownloadAsStream(BlobMetadata blobMetadata);
+    LocalFile? Download(string blobName);
+    LocalFile? Download(BlobMetadata blobMetadata);
+
+    void Delete(string blobName);
+    void Delete(BlobMetadata blobMetadata);
+    void Delete(IEnumerable<string> blobNames);
+    void Delete(IEnumerable<BlobMetadata> blobNames);
+
+    bool Exists(string blobName);
+    bool Exists(BlobMetadata blobMetadata);
+    IEnumerable<bool> Exists(IEnumerable<string> blobNames);
+    IEnumerable<bool> Exists(IEnumerable<BlobMetadata> blobs);
+
+    void SetLegalHold(string blobName, bool hasLegalHold);
+    bool HasLegalHold(string blobName);
 }
