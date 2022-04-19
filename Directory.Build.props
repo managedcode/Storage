@@ -13,14 +13,14 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Product>Managed Code - Storage</Product>
-        <Version>1.1.2</Version>
-        <PackageVersion>1.1.2</PackageVersion>
+        <Version>1.2.0</Version>
+        <PackageVersion>1.2.0</PackageVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
     <ItemGroup>
-        <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="\" />
-        <None Include="$(SolutionDir)\README.md" Pack="true" Visible="false" PackagePath="\" />
+        <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="\"/>
+        <None Include="$(SolutionDir)\README.md" Pack="true" Visible="false" PackagePath="\"/>
     </ItemGroup>
 </Project>
