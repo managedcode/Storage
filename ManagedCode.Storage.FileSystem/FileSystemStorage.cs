@@ -283,7 +283,7 @@ public class FileSystemStorage : IFileSystemStorage
 
     #endregion
 
-    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
         if (hasLegalHold && !_lockedFiles.ContainsKey(blobName))
         {
@@ -310,7 +310,7 @@ public class FileSystemStorage : IFileSystemStorage
         }
     }
 
-    public Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    public Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(_lockedFiles.ContainsKey(blobName));
     }

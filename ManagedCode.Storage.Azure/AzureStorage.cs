@@ -340,14 +340,14 @@ public class AzureStorage : IAzureStorage
 
     #endregion
 
-    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
 
         await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
     }
 
-    public async Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    public async Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var blobClient = _blobContainerClient.GetBlobClient(blobName);
         var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);

@@ -311,7 +311,7 @@ public class GCPStorage : IGCPStorage
 
     #endregion
 
-    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
         var storageObject = await _storageClient.GetObjectAsync(_bucket, blobName, cancellationToken: cancellationToken);
         storageObject.TemporaryHold = hasLegalHold;
@@ -319,7 +319,7 @@ public class GCPStorage : IGCPStorage
         await _storageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
     }
 
-    public async Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    public async Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default)
     {
         var storageObject = await _storageClient.GetObjectAsync(_bucket, blobName, cancellationToken: cancellationToken);
 

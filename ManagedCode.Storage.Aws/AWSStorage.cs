@@ -333,7 +333,7 @@ public class AWSStorage : IAWSStorage
 
     #endregion
 
-    public async Task SetLegalHold(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
+    public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
         var status = hasLegalHold
             ? ObjectLockLegalHoldStatus.On
@@ -352,7 +352,7 @@ public class AWSStorage : IAWSStorage
         await _s3Client.PutObjectLegalHoldAsync(request, cancellationToken);
     }
 
-    public async Task<bool> HasLegalHold(string blobName, CancellationToken cancellationToken = default)
+    public async Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default)
     {
         GetObjectLegalHoldRequest request = new()
         {
