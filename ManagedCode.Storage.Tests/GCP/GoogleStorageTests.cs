@@ -12,6 +12,8 @@ using ManagedCode.Storage.Gcp.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
+// ReSharper disable MethodHasAsyncOverload
+
 namespace ManagedCode.Storage.Tests.GCP;
 
 public class GoogleStorageTests : StorageBaseTests
@@ -120,18 +122,20 @@ public class GoogleStorageTests : StorageBaseTests
     [Fact]
     public override async Task GetBlobsAsync()
     {
-        var fileList = await CreateFileList(5);
-
+        // Arrange
+        var fileList = await CreateFileList();
         var blobList = fileList.Select(f => f.FileName).ToList();
 
+        // Act
         var result = await Storage.GetBlobsAsync(blobList).ToListAsync();
 
+        // Assert
         foreach (var blobMetadata in result)
         {
             blobMetadata.Name.Should().NotBeNull();
 
             // Uri null for GCP storage emulator
-            // result.Uri.Should().NotBeNull();
+            // blobMetadata.Uri.Should().NotBeNull();
         }
 
         foreach (var item in fileList)
@@ -143,13 +147,63 @@ public class GoogleStorageTests : StorageBaseTests
     [Fact]
     public override async Task GetBlobAsync()
     {
-        const string uploadContent = $"test {nameof(GetBlobAsync)}";
-        const string fileName = $"{nameof(GetBlobAsync)}.txt";
+        // Arrange
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
+        // Act
         var result = await Storage.GetBlobAsync(fileName);
 
+        // Assert
+        result.Should().NotBeNull();
+        result!.Name.Should().Be(fileName);
+
+        // Uri null for GCP storage emulator
+        // result.Uri.Should().NotBeNull();
+
+        await DeleteFileAsync(fileName);
+    }
+
+    [Fact]
+    public override async Task GetBlobs()
+    {
+        // Arrange
+        var fileList = await CreateFileList();
+        var blobList = fileList.Select(f => f.FileName).ToList();
+
+        // Act
+        var result = Storage.GetBlobs(blobList);
+
+        // Assert
+        foreach (var blobMetadata in result)
+        {
+            blobMetadata.Name.Should().NotBeNull();
+
+            // Uri null for GCP storage emulator
+            // blobMetadata.Uri.Should().NotBeNull();
+        }
+
+        foreach (var item in fileList)
+        {
+            await DeleteFileAsync(item.FileName);
+        }
+    }
+
+    [Fact]
+    public override async Task GetBlob()
+    {
+        // Arrange
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
+
+        await PrepareFileToTest(fileName, uploadContent);
+
+        // Act
+        var result = Storage.GetBlob(fileName);
+
+        // Assert
         result.Should().NotBeNull();
         result!.Name.Should().Be(fileName);
 
