@@ -27,6 +27,8 @@ public class AzureStorage : IAzureStorage
             options.Container,
             options.OriginalOptions
         );
+
+        CreateContainer();
     }
 
     public void Dispose()
@@ -506,7 +508,7 @@ public class AzureStorage : IAzureStorage
 
         try
         {
-            blobClient.UploadAsync(BinaryData.FromBytes(data));
+            blobClient.Upload(BinaryData.FromBytes(data));
         }
         catch (RequestFailedException)
         {

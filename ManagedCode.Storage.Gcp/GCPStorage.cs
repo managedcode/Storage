@@ -489,7 +489,7 @@ public class GCPStorage : IGCPStorage
         try
         {
             var stream = new MemoryStream();
-            _storageClient.DownloadObjectAsync(_bucket, blobName, stream);
+            _storageClient.DownloadObject(_bucket, blobName, stream);
             stream.Seek(0, SeekOrigin.Begin);
 
             return stream;

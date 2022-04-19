@@ -43,12 +43,12 @@ public static class FileHelper
         return formFile;
     }
 
-    public static string GenerateRandomFileName(string extension = ".txt")
+    public static string GenerateRandomFileName(string extension = "txt")
     {
         return $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.{extension}";
     }
 
-    public static string GenerateRandomFileContent(string extension = ".txt")
+    public static string GenerateRandomFileContent()
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
