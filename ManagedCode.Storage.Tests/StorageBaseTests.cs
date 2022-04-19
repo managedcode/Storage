@@ -321,12 +321,12 @@ public abstract class StorageBaseTests
     {
         // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = await Storage.UploadAsync(uploadContent);
 
         // Act
-        var downloadedContent = await DownloadAsync(fileName);
+        var fileName = await Storage.UploadAsync(uploadContent);
 
         // Assert
+        var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
 
         await DeleteFileAsync(fileName);
@@ -398,7 +398,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task DownloadAsync_ByBlobMetadata_AsStream()
+    public async Task DownloadAsStreamAsyncc_ByBlobMetadata_AsStream()
     {
         // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
@@ -420,7 +420,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task DownloadAsync_ByFileName_AsStream()
+    public async Task DownloadAsStreamAsync_ByFileName_AsStream()
     {
         // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
@@ -480,7 +480,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task DownloadAsync_ByFileName_IfFileDontExist()
+    public async Task DownloadAsStreamAsync_ByFileName_IfFileDontExist()
     {
         // Arrange
         var fileName = FileHelper.GenerateRandomFileName();
@@ -619,7 +619,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task ExistAsync_ByListWithFileNames()
+    public async Task ExistsAsync_ByListWithFileNames()
     {
         // Arrange
         var fileList = await CreateFileList();
@@ -642,7 +642,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task ExistAsync_ByListWithBlobMetadata()
+    public async Task ExistsAsync_ByListWithBlobMetadata()
     {
         // Arrange
         var fileList = await CreateFileList();
@@ -678,21 +678,22 @@ public abstract class StorageBaseTests
 
     #endregion
 
-    #region Sync
 
-    #region Async
+    #region Sync
 
     #region Get
 
     [Fact]
     public async Task GetBlobList()
     {
+        // Arrange
         var fileList = await CreateFileList();
 
-        var result = Storage.GetBlobList();
-
+        // Act
+        var result = Storage.GetBlobList().ToList();
         var expectedList = fileList.Select(x => new BlobMetadata {Name = x.FileName});
 
+        // Assert
         foreach (var item in expectedList)
         {
             var file = result.FirstOrDefault(f => f.Name == item.Name);
@@ -708,12 +709,14 @@ public abstract class StorageBaseTests
     [Fact]
     public virtual async Task GetBlobs()
     {
+        // Arrange
         var fileList = await CreateFileList();
-
         var blobList = fileList.Select(f => f.FileName).ToList();
 
+        // Act
         var result = Storage.GetBlobs(blobList);
 
+        // Assert
         foreach (var blobMetadata in result)
         {
             blobMetadata.Name.Should().NotBeNull();
@@ -729,14 +732,16 @@ public abstract class StorageBaseTests
     [Fact]
     public virtual async Task GetBlob()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
-        // ReSharper disable once MethodHasAsyncOverload
+        // Act
         var result = Storage.GetBlob(fileName);
 
+        // Assert
         result.Should().NotBeNull();
         result!.Name.Should().Be(fileName);
         result.Uri.Should().NotBeNull();
@@ -768,7 +773,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public Task GetBlob_IfFileDontExist()
+    public void GetBlob_IfFileDontExist()
     {
         // Arrange
         var fileName = FileHelper.GenerateRandomFileName();
@@ -778,8 +783,6 @@ public abstract class StorageBaseTests
 
         // Assert
         blobMetadata.Should().BeNull();
-
-        return Task.CompletedTask;
     }
 
     #endregion
@@ -787,17 +790,19 @@ public abstract class StorageBaseTests
     #region Upload
 
     [Fact]
-    public async Task UploadFileAsStream_SpecifyingFileName()
+    public async Task UploadStream_SpecifyingFileName()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
         var stream = new MemoryStream(byteArray);
 
-        // ReSharper disable once MethodHasAsyncOverload
+        // Act
         Storage.UploadStream(fileName, stream);
 
+        // Assert
         var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
 
@@ -805,8 +810,9 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileAsStream_SpecifyingBlobMetadata()
+    public async Task UploadStream_SpecifyingBlobMetadata()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var blobMetadata = new BlobMetadata
         {
@@ -816,8 +822,10 @@ public abstract class StorageBaseTests
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
         var stream = new MemoryStream(byteArray);
 
+        // Act
         Storage.UploadStream(blobMetadata, stream);
 
+        // Assert
         var downloadedContent = await DownloadAsync(blobMetadata.Name);
         downloadedContent.Should().Be(uploadContent);
 
@@ -825,13 +833,16 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileAsText_SpecifyingFileName()
+    public async Task Upload_AsText_SpecifyingFileName()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
+        // Act
         Storage.Upload(fileName, uploadContent);
 
+        // Assert
         var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
 
@@ -839,16 +850,19 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileAsText_SpecifyingBlobMetadata()
+    public async Task Upload_AsText_SpecifyingBlobMetadata()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var blobMetadata = new BlobMetadata
         {
             Name = FileHelper.GenerateRandomFileName()
         };
 
+        // Act
         Storage.Upload(blobMetadata, uploadContent);
 
+        // Assert
         var downloadedContent = await DownloadAsync(blobMetadata.Name);
         downloadedContent.Should().Be(uploadContent);
 
@@ -856,8 +870,9 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileFromPath_SpecifyingFileName()
+    public async Task Upload_FromPath_SpecifyingFileName()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
@@ -865,8 +880,10 @@ public abstract class StorageBaseTests
         var stream = new MemoryStream(byteArray);
         var localFile = await LocalFile.FromStreamAsync(stream);
 
+        // Act
         Storage.UploadFile(fileName, localFile.FilePath);
 
+        // Assert
         var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
 
@@ -874,8 +891,9 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileFromPath_SpecifyingBlobMetadata()
+    public async Task Upload_FromPath_SpecifyingBlobMetadata()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var blobMetadata = new BlobMetadata
         {
@@ -886,8 +904,10 @@ public abstract class StorageBaseTests
         var stream = new MemoryStream(byteArray);
         var localFile = await LocalFile.FromStreamAsync(stream);
 
+        // Act
         Storage.UploadFile(blobMetadata, localFile.FilePath);
 
+        // Assert
         var downloadedContent = await DownloadAsync(blobMetadata.Name);
         downloadedContent.Should().Be(uploadContent);
 
@@ -895,15 +915,18 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileAsArray()
+    public async Task Upload_AsArray_SpecifyingBlobMetadata()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
 
+        // Act
         Storage.Upload(new BlobMetadata {Name = fileName}, byteArray);
 
+        // Assert
         var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
 
@@ -911,12 +934,16 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileAsAsText_WithoutNameSpecified()
+    public async Task Upload_AsText_WithoutNameSpecified()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
 
+        // Act
         var fileName = Storage.Upload(uploadContent);
 
+
+        // Assert
         var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
 
@@ -924,15 +951,17 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task UploadFileAsAsStream_WithoutNameSpecified()
+    public async Task Upload_AsStream_WithoutNameSpecified()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
-
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
         var stream = new MemoryStream(byteArray);
 
+        // Act
         var fileName = Storage.Upload(stream);
 
+        // Assert
         var downloadedContent = await DownloadAsync(fileName);
         downloadedContent.Should().Be(uploadContent);
 
@@ -944,18 +973,20 @@ public abstract class StorageBaseTests
     #region Download
 
     [Fact]
-    public async Task DownloadFileBlobMetadata_AsLocalFile()
+    public async Task Download_ByBlobMetadata_AsLocalFile()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
+        // Act
         var localFile = Storage.Download(new BlobMetadata {Name = fileName});
         using var sr = new StreamReader(localFile!.FileStream, Encoding.UTF8);
-
         var content = await sr.ReadToEndAsync();
 
+        // Assert
         content.Should().NotBeNull();
         content.Should().Be(uploadContent);
 
@@ -963,18 +994,21 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task DownloadFile_AsLocalFile()
+    public async Task Download_ByFileName_AsLocalFile()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
+        // Act
         var localFile = Storage.Download(fileName);
         using var sr = new StreamReader(localFile!.FileStream, Encoding.UTF8);
 
         var content = await sr.ReadToEndAsync();
 
+        // Assert
         content.Should().NotBeNull();
         content.Should().Be(uploadContent);
 
@@ -982,18 +1016,21 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task DownloadFileBlobMetadata()
+    public async Task DownloadAsStream_ByBlobMetadata_AsStream()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
+        // Act
         var stream = Storage.DownloadAsStream(new BlobMetadata {Name = fileName});
         using var sr = new StreamReader(stream!, Encoding.UTF8);
 
         var content = await sr.ReadToEndAsync();
 
+        // Assert
         content.Should().NotBeNull();
         content.Should().Be(uploadContent);
 
@@ -1001,18 +1038,20 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task DownloadFile()
+    public async Task DownloadAsStream_ByFileName_AsStream()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
+        // Act
         var stream = Storage.DownloadAsStream(fileName);
         using var sr = new StreamReader(stream!, Encoding.UTF8);
-
         var content = await sr.ReadToEndAsync();
 
+        // Assert
         content.Should().NotBeNull();
         content.Should().Be(uploadContent);
 
@@ -1020,7 +1059,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public void DownloadBlobMetadata_AsLocalFile_IfFileDontExist()
+    public void Download_ByBlobMetadata_AsStream_IfFileDontExist()
     {
         // Arrange
         var fileName = FileHelper.GenerateRandomFileName();
@@ -1033,7 +1072,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public void DownloadFileName_AsLocalFile_IfFileDontExist()
+    public void Download_ByFileName_AsStream_IfFileDontExist()
     {
         // Arrange
         var fileName = FileHelper.GenerateRandomFileName();
@@ -1046,7 +1085,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public void Download_AsStreamBlobMetadata_IfFileDontExist()
+    public void DownloadAsStream_ByBlobMetadata_IfFileDontExist()
     {
         // Arrange
         var fileName = FileHelper.GenerateRandomFileName();
@@ -1059,7 +1098,7 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public void DownloadFileName_IfFileDontExist()
+    public void DownloadAsStream_ByFileName_IfFileDontExist()
     {
         // Arrange
         var fileName = FileHelper.GenerateRandomFileName();
@@ -1076,65 +1115,77 @@ public abstract class StorageBaseTests
     #region Delete
 
     [Fact]
-    public async Task DeleteFileList()
+    public async Task Delete_ByListWithFileNames()
     {
+        // Arrange
         var fileList = await CreateFileList();
-
         var expectedList = fileList.Select(x => x.FileName).ToList();
-        await Storage.DeleteAsync(expectedList);
 
-        var result = Storage.Exists(expectedList);
+        // Act
+        Storage.Delete(expectedList);
 
-        foreach (var item in result)
+        // Assert
+        var result = Storage.ExistsAsync(expectedList);
+        var resultList = await result.ToListAsync();
+
+        foreach (var item in resultList)
         {
             item.Should().BeFalse();
         }
     }
 
     [Fact]
-    public async Task DeleteFile_AsBlobMetadataList()
+    public async Task Delete_ByListWithBlobMetadata()
     {
+        // Arrange
         var fileList = await CreateFileList();
-
         var expectedList = fileList.Select(x => new BlobMetadata {Name = x.FileName}).ToList();
 
-        await Storage.DeleteAsync(expectedList);
+        // Act
+        Storage.Delete(expectedList);
 
-        var result = Storage.Exists(expectedList);
+        // Assert
+        var result = Storage.ExistsAsync(expectedList);
+        var resultList = await result.ToListAsync();
 
-        foreach (var item in result)
+        foreach (var item in resultList)
         {
             item.Should().BeFalse();
         }
     }
 
     [Fact]
-    public async Task DeleteFile_AsBlobMetadata()
+    public async Task Delete_ByBlobMetadata()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
-
         var blobMetadata = await Storage.GetBlobAsync(fileName);
 
+        // Act
         Storage.Delete(blobMetadata!);
 
+        // Assert
         var result = await Storage.ExistsAsync(fileName);
 
         result.Should().BeFalse();
     }
 
     [Fact]
-    public async Task DeleteFile_AsFileName()
+    public async Task Delete_ByFileName()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
+        // Act
         Storage.Delete(fileName);
 
+        // Assert
         var result = await Storage.ExistsAsync(fileName);
 
         result.Should().BeFalse();
@@ -1145,23 +1196,27 @@ public abstract class StorageBaseTests
     #region Exist
 
     [Fact]
-    public async Task SingleBlobExists()
+    public async Task Exists_ByFileName()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
         await PrepareFileToTest(fileName, uploadContent);
 
+        // Act
         var result = Storage.Exists(fileName);
 
+        // Assert
         result.Should().BeTrue();
 
         await Storage.DeleteAsync(fileName);
     }
 
     [Fact]
-    public async Task ExistFile_ByBlobMetadata()
+    public async Task Exists_ByBlobMetadata()
     {
+        // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent();
         var fileName = FileHelper.GenerateRandomFileName();
 
@@ -1172,23 +1227,26 @@ public abstract class StorageBaseTests
             Name = fileName
         };
 
+        // Act
         var result = Storage.Exists(file);
 
+        // Assert
         result.Should().BeTrue();
 
         await Storage.DeleteAsync(fileName);
     }
 
     [Fact]
-    public async Task ExistFile_ByListString()
+    public async Task Exists_ByListWithFileNames()
     {
+        // Arrange
         var fileList = await CreateFileList();
-
-
         var blobList = fileList.Select(x => x.FileName).ToList();
 
+        // Act
         var result = Storage.Exists(blobList);
 
+        // Assert
         foreach (var item in result)
         {
             item.Should().BeTrue();
@@ -1201,12 +1259,15 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task ExistFile_ByListBlobMetadata()
+    public async Task Exists_ByListWithBlobMetadata()
     {
+        // Arrange
         var fileList = await CreateFileList();
 
+        // Act
         var result = Storage.Exists(fileList.Select(x => new BlobMetadata {Name = x.FileName}));
 
+        // Assert
         foreach (var item in result)
         {
             item.Should().BeTrue();
@@ -1228,8 +1289,6 @@ public abstract class StorageBaseTests
         FluentActions.Invoking(() => Storage.CreateContainer())
             .Should().NotThrow<Exception>();
     }
-
-    #endregion
 
     #endregion
 
