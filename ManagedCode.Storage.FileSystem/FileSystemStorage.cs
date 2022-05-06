@@ -4,8 +4,8 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
-using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
 
@@ -57,14 +57,13 @@ public class FileSystemStorage : IFileSystemStorage
         EnsureDirectoryExists();
 
         var fileInfo = new FileInfo(Path.Combine(_path, blobName));
-
         if (fileInfo.Exists)
         {
             var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
                 Uri = new Uri(Path.Combine(_path, blobName)),
-                ContentType = MimeHelper.GetMimeType(fileInfo.Extension),
+                ContentType = MimeHelper.GetMimeType(fileInfo.Extension), 
                 Length = fileInfo.Length
             };
 
