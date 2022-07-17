@@ -7,99 +7,211 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using Amazon.Runtime;
+using Amazon.Runtime.Internal;
 using Amazon.S3;
 using Amazon.S3.Model;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Aws;
 
-public class AWSStorage : IAWSStorage
+public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 {
-    private readonly string _bucket;
-    private readonly IAmazonS3 _s3Client;
+    private readonly ILogger<AWSStorage> _logger;
+    
+    public IAmazonS3 StorageClient { get; }
 
-    public AWSStorage(AWSStorageOptions options)
+    public AWSStorage(ILogger<AWSStorage> logger, AWSStorageOptions options) : base(options)
     {
-        _bucket = options.Bucket!;
+        _logger = logger;
         var config = options.OriginalOptions ?? new AmazonS3Config();
-        _s3Client = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
+        StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
     }
-
-    public void Dispose()
+    
+    
+    protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
-        _s3Client.Dispose();
-    }
-
-    #region Async
-
-    #region CreateContainer
-
-    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
-    {
-        await _s3Client.EnsureBucketExistsAsync(_bucket);
-    }
-
-    #endregion
-
-    #region Get
-
-    public async Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var objectMetaRequest = new GetObjectMetadataRequest
+        try
         {
-            BucketName = _bucket,
-            Key = blobName
+            await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
+            return Result.Succeeded();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message,e);
+            return Result.Failed(e);
+        }
+    }
+
+    public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await StorageClient.DeleteBucketAsync(StorageOptions.Bucket, cancellationToken);
+            return Result.Succeeded();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message,e);
+            return Result.Failed(e);
+        }
+    }
+
+    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    {
+        var putRequest = new PutObjectRequest
+        {
+            BucketName = StorageOptions.Bucket,
+            Key = options.FileName,
+            InputStream = stream,
+            AutoCloseStream = false,
+            ContentType = options.MimeType,
+            ServerSideEncryptionMethod = null
         };
 
         try
         {
-            var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
-            return new BlobMetadata
-            {
-                Name = blobName,
-                Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{blobName}"),
-                ContentType = objectMetaResponse.Headers.ContentType,
-                Length = objectMetaResponse.Headers.ContentLength
-            };
+            await EnsureContainerExist();
+            await StorageClient.PutObjectAsync(putRequest, cancellationToken);
+            var result = await StorageClient.PutObjectAsync(putRequest, cancellationToken);
         }
-        catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+        catch (AmazonS3Exception)
         {
-            return null;
+            await CreateContainerAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return Result<string>.Failed(ex);
+        }
+        
+        //new Uri($"https://s3.amazonaws.com/{_bucket}/{entry.Key}")
+        //return Result<string>.Succeeded($"https://{StorageOptions.Bucket}.s3.{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
+        return Result<string>.Succeeded($"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
+    }
+
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await EnsureContainerExist();
+            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
+            localFile.BlobMetadata = new BlobMetadata
+            {
+                //Metadata = response.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                //MimeType = response.mi,
+                //Length = response.Value.ContentLength,
+                Name = blob,
+                //Uri = blobClient.Uri,
+                Container = StorageOptions.Bucket,
+                //FullName = $"{blobClient.Uri}/{StorageOptions.Container}/{blob}"
+            };
+            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, blob, null, cancellationToken));
+            
+            
+            return Result<LocalFile>.Succeeded(localFile);
+        }
+        catch (Exception ex)
+        {
+            return Result<LocalFile>.Failed(ex);
         }
     }
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await EnsureContainerExist();
+            var response = await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
+            {
+                BucketName = StorageOptions.Bucket,
+                Key = blob
+            }, cancellationToken);
+            return Result<bool>.Succeeded(true);
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Failed(ex);
+        }
+    }
+
+    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await EnsureContainerExist();
+            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
+            return Result<bool>.Succeeded(true);
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Failed(ex);
+        }
+    }
+
+    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        var objectMetaRequest = new GetObjectMetadataRequest
+        {
+            BucketName = StorageOptions.Bucket,
+            Key = blob
+        };
+
+        try
+        {
+            await EnsureContainerExist();
+            var objectMetaResponse = await StorageClient.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
+
+            var metadata = new BlobMetadata
+            {
+                Name = blob,
+                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{blob}"),
+                MimeType = objectMetaResponse.Headers.ContentType,
+                Length = objectMetaResponse.Headers.ContentLength
+            };
+            
+            return Result<BlobMetadata>.Succeeded(metadata);
+        }
+        catch (Exception ex)
+        {
+            return Result<BlobMetadata>.Failed(ex);
+        }
+    }
+
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
     {
         var objectsRequest = new ListObjectsRequest
         {
-            BucketName = _bucket,
+            BucketName = StorageOptions.Bucket,
             Prefix = string.Empty,
-            MaxKeys = 100000
+            MaxKeys = 1_000_000
         };
 
+        await EnsureContainerExist();
+        
         do
         {
-            var objectsResponse = await _s3Client.ListObjectsAsync(objectsRequest, cancellationToken);
+            var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
 
             foreach (var entry in objectsResponse.S3Objects)
             {
                 var objectMetaRequest = new GetObjectMetadataRequest
                 {
-                    BucketName = _bucket,
+                    BucketName =  StorageOptions.Bucket,
                     Key = entry.Key
                 };
 
-                var objectMetaResponse = await _s3Client.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
+                var objectMetaResponse = await StorageClient.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
 
                 yield return new BlobMetadata
                 {
                     Name = entry.Key,
-                    Uri = new Uri($"https://s3.amazonaws.com/{_bucket}/{entry.Key}"),
-                    ContentType = objectMetaResponse.Headers.ContentType,
+                    Uri = new Uri($"https://s3.amazonaws.com/{ StorageOptions.Bucket}/{entry.Key}"),
+                    MimeType = objectMetaResponse.Headers.ContentType,
                     Length = objectMetaResponse.Headers.ContentLength
                 };
             }
@@ -115,431 +227,60 @@ public class AWSStorage : IAWSStorage
             }
         } while (objectsRequest != null);
     }
+    
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            var blobMetadata = await GetBlobAsync(blob, cancellationToken);
 
-            if (blobMetadata is not null)
-            {
-                yield return blobMetadata;
-            }
-        }
-    }
 
-    #endregion
 
-    #region Upload
-
-    public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
-    {
-        await UploadStreamInternalAsync(blobName, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
-    }
-
-    public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
-    {
-        await UploadStreamInternalAsync(blobMetadata.Name, new MemoryStream(Encoding.UTF8.GetBytes(content)), blobMetadata.ContentType,
-            cancellationToken);
-    }
-
-    public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
-    {
-        await UploadStreamInternalAsync(blobMetadata.Name, new MemoryStream(data), blobMetadata.ContentType, cancellationToken);
-    }
-
-    public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
-    {
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            await UploadStreamInternalAsync(blobName, fs, null, cancellationToken);
-        }
-    }
-
-    public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
-    {
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            await UploadStreamInternalAsync(blobMetadata.Name, fs, blobMetadata.ContentType, cancellationToken);
-        }
-    }
-
-    public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        await UploadStreamInternalAsync(blobName, dataStream, null, cancellationToken);
-    }
-
-    public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        await UploadStreamInternalAsync(blobMetadata.Name, dataStream, blobMetadata.ContentType, cancellationToken);
-    }
-
-    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
-    {
-        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadStreamInternalAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)), null, cancellationToken);
-
-        return fileName;
-    }
-
-    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadStreamInternalAsync(fileName, dataStream, null, cancellationToken);
-
-        return fileName;
-    }
-
-    private async Task UploadStreamInternalAsync(string blobName, Stream dataStream,
-        string? contentType = null, CancellationToken cancellationToken = default)
-    {
-        var putRequest = new PutObjectRequest
-        {
-            BucketName = _bucket,
-            Key = blobName,
-            InputStream = dataStream,
-            AutoCloseStream = false,
-            ContentType = contentType ?? Constants.ContentType,
-            ServerSideEncryptionMethod = null
-        };
-
-        try
-        {
-            await _s3Client.PutObjectAsync(putRequest, cancellationToken);
-        }
-        catch (AmazonS3Exception)
-        {
-            await CreateContainerAsync();
-            await _s3Client.PutObjectAsync(putRequest, cancellationToken);
-        }
-    }
-
-    #endregion
-
-    #region Download
-
-    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
+    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
         try
         {
-            return await _s3Client.GetObjectStreamAsync(_bucket, blobName, null, cancellationToken);
-        }
-        catch (AmazonS3Exception ex) when (ex.StatusCode is HttpStatusCode.NotFound)
-        {
-            return null;
-        }
-    }
+            await EnsureContainerExist();
+            
+            var status = hasLegalHold
+                ? ObjectLockLegalHoldStatus.On
+                : ObjectLockLegalHoldStatus.Off;
 
-    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var localFile = new LocalFile();
-
-        using (var stream = await DownloadAsStreamAsync(blobName, cancellationToken))
-        {
-            if (stream is null)
+            PutObjectLegalHoldRequest request = new()
             {
-                return null;
-            }
+                BucketName = StorageOptions.Bucket,
+                Key = blob,
+                LegalHold = new ObjectLockLegalHold
+                {
+                    Status = status,
+                },
+            };
 
-            await stream.CopyToAsync(localFile.FileStream, 81920, cancellationToken);
+            await StorageClient.PutObjectLegalHoldAsync(request, cancellationToken);
+            return Result.Succeeded();
         }
-
-        return localFile;
-    }
-
-    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await DownloadAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    #endregion
-
-    #region Delete
-
-    public async Task DeleteAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        await _s3Client.DeleteObjectAsync(new DeleteObjectRequest
+        catch (Exception ex)
         {
-            BucketName = _bucket,
-            Key = blobName
-        }, cancellationToken);
-    }
-
-    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        await DeleteAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async Task DeleteAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            await DeleteAsync(blob, cancellationToken);
+            return Result.Failed(ex);
         }
     }
 
-    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            await DeleteAsync(blob, cancellationToken);
-        }
-    }
-
-    #endregion
-
-    #region Exists
-
-    public async Task<bool> ExistsAsync(string blobName, CancellationToken cancellationToken = default)
+    
+    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
     {
         try
         {
-            await _s3Client.GetObjectAsync(_bucket, blobName, cancellationToken);
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await ExistsAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            yield return await ExistsAsync(blob, cancellationToken);
-        }
-    }
-
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobs)
-        {
-            yield return await ExistsAsync(blob, cancellationToken);
-        }
-    }
-
-    #endregion
-
-    #region LegalHold
-
-    public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
-    {
-        var status = hasLegalHold
-            ? ObjectLockLegalHoldStatus.On
-            : ObjectLockLegalHoldStatus.Off;
-
-        PutObjectLegalHoldRequest request = new()
-        {
-            BucketName = _bucket,
-            Key = blobName,
-            LegalHold = new ObjectLockLegalHold
+            await EnsureContainerExist();
+            GetObjectLegalHoldRequest request = new()
             {
-                Status = status,
-            },
-        };
+                BucketName = StorageOptions.Bucket,
+                Key = blob
+            };
 
-        await _s3Client.PutObjectLegalHoldAsync(request, cancellationToken);
-    }
+            var response = await StorageClient.GetObjectLegalHoldAsync(request, cancellationToken);
 
-    public async Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        GetObjectLegalHoldRequest request = new()
+            return Result<bool>.Succeeded(response.LegalHold.Status == ObjectLockLegalHoldStatus.On);
+        }
+        catch (Exception ex)
         {
-            BucketName = _bucket,
-            Key = blobName
-        };
-
-        var response = await _s3Client.GetObjectLegalHoldAsync(request, cancellationToken);
-
-        return response.LegalHold.Status == ObjectLockLegalHoldStatus.On;
+            return Result<bool>.Failed(ex);
+        }
+        
     }
-
-    #endregion
-
-    #endregion
-
-
-    #region Sync
-
-    #region CreateContainer
-
-    public void CreateContainer()
-    {
-        AsyncHelper.RunSync(() => CreateContainerAsync());
-    }
-
-    #endregion
-
-    #region Get
-
-    public IEnumerable<BlobMetadata> GetBlobList()
-    {
-        return GetBlobListAsync().ToEnumerable();
-    }
-
-    public IEnumerable<BlobMetadata> GetBlobs(IEnumerable<string> blobNames)
-    {
-        return GetBlobsAsync(blobNames).ToEnumerable();
-    }
-
-    public BlobMetadata? GetBlob(string blobName)
-    {
-        return AsyncHelper.RunSync(() => GetBlobAsync(blobName));
-    }
-
-    #endregion
-
-    #region Upload
-
-    public void UploadStream(string blobName, Stream dataStream)
-    {
-        AsyncHelper.RunSync(() => UploadStreamAsync(blobName, dataStream));
-    }
-
-    public void UploadFile(string blobName, string pathToFile)
-    {
-        AsyncHelper.RunSync(() => UploadFileAsync(blobName, pathToFile));
-    }
-
-    public void Upload(string blobName, string content)
-    {
-        AsyncHelper.RunSync(() => UploadAsync(blobName, content));
-    }
-
-    public void UploadStream(BlobMetadata blobMetadata, Stream dataStream)
-    {
-        AsyncHelper.RunSync(() => UploadStreamAsync(blobMetadata, dataStream));
-    }
-
-    public void UploadFile(BlobMetadata blobMetadata, string pathToFile)
-    {
-        AsyncHelper.RunSync(() => UploadFileAsync(blobMetadata, pathToFile));
-    }
-
-    public void Upload(BlobMetadata blobMetadata, string content)
-    {
-        AsyncHelper.RunSync(() => UploadAsync(blobMetadata, content));
-    }
-
-    public void Upload(BlobMetadata blobMetadata, byte[] data)
-    {
-        AsyncHelper.RunSync(() => UploadAsync(blobMetadata, data));
-    }
-
-    public string Upload(string content)
-    {
-        return AsyncHelper.RunSync(() => UploadAsync(content));
-    }
-
-    public string Upload(Stream dataStream)
-    {
-        return AsyncHelper.RunSync(() => UploadAsync(dataStream));
-    }
-
-    #endregion
-
-    #region Download
-
-    public Stream? DownloadAsStream(string blobName)
-    {
-        return AsyncHelper.RunSync(() => DownloadAsStreamAsync(blobName));
-    }
-
-    public Stream? DownloadAsStream(BlobMetadata blobMetadata)
-    {
-        return AsyncHelper.RunSync(() => DownloadAsStreamAsync(blobMetadata));
-    }
-
-    public LocalFile? Download(string blobName)
-    {
-        return AsyncHelper.RunSync(() => DownloadAsync(blobName));
-    }
-
-    public LocalFile? Download(BlobMetadata blobMetadata)
-    {
-        return AsyncHelper.RunSync(() => DownloadAsync(blobMetadata));
-    }
-
-    #endregion
-
-
-    #region Delete
-
-    public void Delete(string blobName)
-    {
-        AsyncHelper.RunSync(() => DeleteAsync(blobName));
-    }
-
-    public void Delete(BlobMetadata blobMetadata)
-    {
-        AsyncHelper.RunSync(() => DeleteAsync(blobMetadata));
-    }
-
-    public void Delete(IEnumerable<string> blobNames)
-    {
-        AsyncHelper.RunSync(() => DeleteAsync(blobNames));
-    }
-
-    public void Delete(IEnumerable<BlobMetadata> blobMetadatas)
-    {
-        AsyncHelper.RunSync(() => DeleteAsync(blobMetadatas));
-    }
-
-    #endregion
-
-    #region Exist
-
-    public bool Exists(string blobName)
-    {
-        return AsyncHelper.RunSync(() => ExistsAsync(blobName));
-    }
-
-    public bool Exists(BlobMetadata blobMetadata)
-    {
-        return AsyncHelper.RunSync(() => ExistsAsync(blobMetadata));
-    }
-
-    public IEnumerable<bool> Exists(IEnumerable<string> blobNames)
-    {
-        return ExistsAsync(blobNames).ToEnumerable();
-    }
-
-    public IEnumerable<bool> Exists(IEnumerable<BlobMetadata> blobs)
-    {
-        return ExistsAsync(blobs).ToEnumerable();
-    }
-
-    #endregion
-
-    #region LegaHold
-
-    public void SetLegalHold(string blobName, bool hasLegalHold)
-    {
-        AsyncHelper.RunSync(() => SetLegalHoldAsync(blobName, hasLegalHold));
-    }
-
-    public bool HasLegalHold(string blobName)
-    {
-        return AsyncHelper.RunSync(() => HasLegalHoldAsync(blobName));
-    }
-
-    #endregion
-
-    #endregion
 }

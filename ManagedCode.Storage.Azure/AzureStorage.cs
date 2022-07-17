@@ -1,433 +1,197 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Azure;
 
-public class AzureStorage : IAzureStorage
+public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 {
-    private readonly BlobContainerClient _blobContainerClient;
-    private readonly AzureStorageOptions _options;
+    private readonly ILogger<AzureStorage> _logger;
 
-    public AzureStorage(AzureStorageOptions options)
+    public AzureStorage(ILogger<AzureStorage> logger, AzureStorageOptions options) : base(options)
     {
-        _options = options;
-
-        _blobContainerClient = new BlobContainerClient(
+        _logger = logger;
+        StorageClient = new BlobContainerClient(
             options.ConnectionString,
             options.Container,
             options.OriginalOptions
         );
-
-        CreateContainer();
     }
-
-    public void Dispose()
+    
+    public BlobContainerClient StorageClient { get; }
+    
+    protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
-    }
-
-    #region Async
-
-    #region CreateContainer
-
-    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
-    {
-        if (_options.ShouldCreateIfNotExists)
+        try
         {
-            await _blobContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
+            var info = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
+            await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
+            IsContainerCreated = true;
+            return Result.Succeeded();
         }
-
-        await _blobContainerClient.SetAccessPolicyAsync(_options.PublicAccessType, cancellationToken: cancellationToken);
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message,e);
+            return Result.Failed(e);
+        }
     }
 
-    #endregion
-
-    #region Get
-
-    public async Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
+    public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
-        await Task.Yield();
-
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        if (!await blobClient.ExistsAsync(cancellationToken))
+        try
         {
-            return null;
+            var info = await StorageClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
+            IsContainerCreated = false;
+            return Result.Succeeded();
         }
-
-        var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
-
-        return new BlobMetadata
+        catch (Exception e)
         {
-            Name = blobClient.Name,
-            Uri = blobClient.Uri,
-            Container = blobClient.BlobContainerName,
-            Length = properties.Value.ContentLength
+            _logger.LogError(e.Message,e);
+            return Result.Failed(e);
+        }
+    }
+
+    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    {
+        var blobClient = StorageClient.GetBlobClient(options.FileName);
+
+        var uploadOptions = new BlobUploadOptions
+        {
+            Metadata = options.Metadata,
         };
-    }
-
-    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            var blobMetadata = await GetBlobAsync(blob, cancellationToken);
-
-            if (blobMetadata is not null)
-            {
-                yield return blobMetadata;
-            }
-        }
-    }
-
-    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var blobs = _blobContainerClient.GetBlobsAsync(cancellationToken: cancellationToken);
-
-        await foreach (var item in blobs.AsPages())
-        {
-            foreach (var blobItem in item.Values)
-            {
-                var blobMetadata = new BlobMetadata
-                {
-                    Name = blobItem.Name,
-                    Length = blobItem.Properties.ContentLength ?? 0
-                };
-
-                yield return blobMetadata;
-            }
-        }
-    }
-
-    #endregion
-
-    #region Upload
-
-    public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
+        
         try
         {
-            await blobClient.UploadAsync(dataStream, cancellationToken);
+            await EnsureContainerExist();
+            var info = await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
         }
         catch (RequestFailedException)
         {
             await CreateContainerAsync(cancellationToken);
-            await blobClient.UploadAsync(dataStream, cancellationToken);
+            await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
         }
+        catch (Exception ex)
+        {
+            return Result<string>.Failed(ex);
+        }
+
+        return Result<string>.Succeeded($"{blobClient.Uri}/{StorageOptions.Container}/{options.FileName}");
     }
 
-    public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
+        var blobClient = StorageClient.GetBlobClient(blob);
 
         try
         {
-            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
-        }
-        catch (RequestFailedException)
-        {
-            await CreateContainerAsync(cancellationToken);
-            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
-        }
-    }
-
-    public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            try
-            {
-                await blobClient.UploadAsync(fs, cancellationToken);
-            }
-            catch (RequestFailedException)
-            {
-                await CreateContainerAsync(cancellationToken);
-                await blobClient.UploadAsync(fs, cancellationToken);
-            }
-        }
-    }
-
-    public async Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        await UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
-    }
-
-    public async Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
-    {
-        await UploadFileAsync(blobMetadata.Name, pathToFile, cancellationToken);
-    }
-
-    public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
-    {
-        await UploadAsync(blobMetadata.Name, content, cancellationToken);
-    }
-
-    public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
-
-        try
-        {
-            await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
-        }
-        catch (RequestFailedException)
-        {
-            await CreateContainerAsync(cancellationToken);
-            await blobClient.UploadAsync(BinaryData.FromBytes(data), cancellationToken);
-        }
-    }
-
-    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
-    {
-        string fileName = $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.txt";
-
-        var blobClient = _blobContainerClient.GetBlobClient(fileName);
-
-        try
-        {
-            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
-        }
-        catch (RequestFailedException)
-        {
-            await CreateContainerAsync(cancellationToken);
-            await blobClient.UploadAsync(BinaryData.FromString(content), cancellationToken);
-        }
-
-        return fileName;
-    }
-
-    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        var blobClient = _blobContainerClient.GetBlobClient(fileName);
-
-        try
-        {
-            await blobClient.UploadAsync(dataStream, cancellationToken);
-        }
-        catch (RequestFailedException)
-        {
-            await CreateContainerAsync(cancellationToken);
-            await blobClient.UploadAsync(dataStream, cancellationToken);
-        }
-
-        return fileName;
-    }
-
-    #endregion
-
-    #region Download
-
-    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        try
-        {
+            await EnsureContainerExist();
             var response = await blobClient.DownloadAsync(cancellationToken);
-            return response.Value.Content;
+            await localFile.CopyFromStreamAsync(response.Value.Content);
+            localFile.BlobMetadata = new BlobMetadata
+            {
+                Metadata = response.Value.Details?.Metadata?.ToDictionary(k => k.Key, v => v.Value),
+                MimeType = response.Value.ContentType,
+                Length = response.Value.ContentLength,
+                Name = blobClient.Name,
+                Uri = blobClient.Uri,
+                Container = blobClient.BlobContainerName,
+                //FullName = $"{blobClient.Uri}/{StorageOptions.Container}/{blob}"
+            };
+            
+            return Result<LocalFile>.Succeeded(localFile);
         }
-        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
+        catch (Exception ex)
         {
-            return null;
+            return Result<LocalFile>.Failed(ex);
         }
     }
 
-    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
+    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
     {
-        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
         try
         {
-            var localFile = new LocalFile();
-            await blobClient.DownloadToAsync(localFile.FileStream, cancellationToken);
-
-            return localFile;
+            await EnsureContainerExist();
+            var blobClient = StorageClient.GetBlobClient(blob);
+            var response = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+            return Result<bool>.Succeeded(!response.IsError);
         }
-        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
+        catch (Exception ex)
         {
-            return null;
-        }
-    }
-
-    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await DownloadAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    #endregion
-
-    #region Exists
-
-    public async Task<bool> ExistsAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        return await blobClient.ExistsAsync(cancellationToken);
-    }
-
-    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
-
-        return await blobClient.ExistsAsync(cancellationToken);
-    }
-
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
-            yield return await blobClient.ExistsAsync(cancellationToken);
+            return Result<bool>.Failed(ex);
         }
     }
 
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
     {
-        foreach (var blob in blobs)
+        try
         {
-            var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
-            yield return await blobClient.ExistsAsync(cancellationToken);
+            await EnsureContainerExist();
+            var blobClient = StorageClient.GetBlobClient(blob);
+            var response = await blobClient.ExistsAsync(cancellationToken);
+            return Result<bool>.Succeeded(response.Value);
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Failed(ex);
         }
     }
 
-    #endregion
-
-    #region Delete
-
-    public async Task DeleteAsync(string blobName, CancellationToken cancellationToken = default)
+    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
-    }
-
-    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
-        await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
-    }
-
-    public async Task DeleteAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blobName in blobNames)
+        try
         {
-            await DeleteAsync(blobName, cancellationToken);
-        }
-    }
+            await EnsureContainerExist();
+            var blobClient = StorageClient.GetBlobClient(blob);
+            var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
 
-    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            await DeleteAsync(blob, cancellationToken);
-        }
-    }
-
-    #endregion
-
-    #region LegalHold
-
-    public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
-    }
-
-    public async Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
-
-        return properties.Value?.HasLegalHold ?? false;
-    }
-
-    #endregion
-
-    #endregion
-
-    #region Sync
-
-    #region CreateContainer
-
-    public void CreateContainer()
-    {
-        if (_options.ShouldCreateIfNotExists)
-        {
-            _blobContainerClient.CreateIfNotExists(PublicAccessType.BlobContainer);
-        }
-
-        _blobContainerClient.SetAccessPolicy(_options.PublicAccessType);
-    }
-
-    #endregion
-
-    #region Get
-
-    public BlobMetadata? GetBlob(string blobName)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        if (!blobClient.Exists())
-        {
-            return null;
-        }
-
-        var properties = blobClient.GetProperties();
-
-        return new BlobMetadata
-        {
-            Name = blobClient.Name,
-            Uri = blobClient.Uri,
-            Container = blobClient.BlobContainerName,
-            Length = properties.Value.ContentLength
-        };
-    }
-
-    public IEnumerable<BlobMetadata> GetBlobs(IEnumerable<string> blobNames)
-    {
-        foreach (var blob in blobNames)
-        {
-            var blobMetadata = GetBlob(blob);
-
-            if (blobMetadata is not null)
+            if (properties != null)
             {
-                yield return blobMetadata;
+                return Result<BlobMetadata>.Succeeded(new BlobMetadata
+                {
+                    Name = blobClient.Name,
+                    Uri = blobClient.Uri,
+                    Container = blobClient.BlobContainerName,
+                    Length = properties.Value.ContentLength,
+                    Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                    MimeType = properties.Value.ContentType
+                });
             }
+
+            return Result<BlobMetadata>.Failed();
+        }
+        catch (Exception ex)
+        {
+            return Result<BlobMetadata>.Failed(ex);
         }
     }
 
-    public IEnumerable<BlobMetadata> GetBlobList()
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
     {
-        var blobs = _blobContainerClient.GetBlobs();
-
-        foreach (var item in blobs.AsPages())
+        await EnsureContainerExist();
+        await foreach (var item in StorageClient.GetBlobsAsync().AsPages().WithCancellation(cancellationToken))
         {
             foreach (var blobItem in item.Values)
             {
                 var blobMetadata = new BlobMetadata
                 {
                     Name = blobItem.Name,
-                    Length = blobItem.Properties.ContentLength ?? 0
+                    //HasLegalHold = blobItem.Properties.HasLegalHold,
+                    Container = StorageOptions.Container,
+                    Length = blobItem.Properties.ContentLength.Value,
+                    Metadata = blobItem.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                    MimeType = blobItem.Properties.ContentType
                 };
 
                 yield return blobMetadata;
@@ -435,257 +199,64 @@ public class AzureStorage : IAzureStorage
         }
     }
 
-    #endregion
-
-    #region Upload
-
-    public void UploadStream(string blobName, Stream dataStream)
+    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
         try
         {
-            blobClient.Upload(dataStream);
+            await EnsureContainerExist();
+            var blobClient = StorageClient.GetBlobClient(blob);
+            var response = await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
+            return response.Value.HasLegalHold ? Result.Succeeded() : Result.Failed();
         }
-        catch (RequestFailedException)
+        catch (Exception ex)
         {
-            CreateContainer();
-            blobClient.UploadAsync(dataStream);
+            return Result.Failed(ex);
         }
     }
 
-    public void Upload(string blobName, string content)
+    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
+        
         try
         {
-            blobClient.Upload(BinaryData.FromString(content));
+            await EnsureContainerExist();
+            var blobClient = StorageClient.GetBlobClient(blob);
+            var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+            return Result<bool>.Succeeded(properties.Value?.HasLegalHold ?? false);
         }
-        catch (RequestFailedException)
+        catch (Exception ex)
         {
-            CreateContainer();
-            blobClient.Upload(BinaryData.FromString(content));
+            return Result<bool>.Failed(ex);
         }
     }
 
-    public void UploadFile(string blobName, string pathToFile)
+    public async Task<Result<Stream>> OpenReadStreamAsync(string blob, CancellationToken cancellationToken = default)
     {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            try
-            {
-                blobClient.Upload(fs);
-            }
-            catch (RequestFailedException)
-            {
-                CreateContainer();
-                blobClient.Upload(fs);
-            }
-        }
-    }
-
-    public void UploadStream(BlobMetadata blobMetadata, Stream dataStream)
-    {
-        UploadStream(blobMetadata.Name, dataStream);
-    }
-
-    public void UploadFile(BlobMetadata blobMetadata, string pathToFile)
-    {
-        UploadFile(blobMetadata.Name, pathToFile);
-    }
-
-    public void Upload(BlobMetadata blobMetadata, string content)
-    {
-        Upload(blobMetadata.Name, content);
-    }
-
-    public void Upload(BlobMetadata blobMetadata, byte[] data)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
-
         try
         {
-            blobClient.Upload(BinaryData.FromBytes(data));
+            await EnsureContainerExist();
+            var blobClient = StorageClient.GetBlobClient(blob);
+            var stream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken );
+            return Result<Stream>.Succeeded(stream);
         }
-        catch (RequestFailedException)
+        catch (Exception ex)
         {
-            CreateContainer();
-            blobClient.Upload(BinaryData.FromBytes(data));
+            return Result<Stream>.Failed(ex);
         }
     }
 
-    public string Upload(string content)
+    public async Task<Result<Stream>> OpenWriteStreamAsync(string blob, CancellationToken cancellationToken = default)
     {
-        string fileName = $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.txt";
-
-        var blobClient = _blobContainerClient.GetBlobClient(fileName);
-
         try
         {
-            blobClient.Upload(BinaryData.FromString(content));
+            await EnsureContainerExist();
+            var blobClient = StorageClient.GetBlobClient(blob);
+            var stream = await blobClient.OpenWriteAsync(true, cancellationToken: cancellationToken);
+            return Result<Stream>.Succeeded(stream);
         }
-        catch (RequestFailedException)
+        catch (Exception ex)
         {
-            CreateContainer();
-            blobClient.Upload(BinaryData.FromString(content));
-        }
-
-        return fileName;
-    }
-
-    public string Upload(Stream dataStream)
-    {
-        var fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        var blobClient = _blobContainerClient.GetBlobClient(fileName);
-
-        try
-        {
-            blobClient.Upload(dataStream);
-        }
-        catch (RequestFailedException)
-        {
-            CreateContainer();
-            blobClient.Upload(dataStream);
-        }
-
-        return fileName;
-    }
-
-    #endregion
-
-    #region Download
-
-    public Stream? DownloadAsStream(string blobName)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        try
-        {
-            var response = blobClient.Download();
-            return response.Value.Content;
-        }
-        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
-        {
-            return null;
+            return Result<Stream>.Failed(ex);
         }
     }
-
-    public Stream? DownloadAsStream(BlobMetadata blobMetadata)
-    {
-        return DownloadAsStream(blobMetadata.Name);
-    }
-
-    public LocalFile? Download(string blobName)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        try
-        {
-            var localFile = new LocalFile();
-            blobClient.DownloadTo(localFile.FileStream);
-
-            return localFile;
-        }
-        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
-        {
-            return null;
-        }
-    }
-
-    public LocalFile? Download(BlobMetadata blobMetadata)
-    {
-        return Download(blobMetadata.Name);
-    }
-
-    #endregion
-
-    #region Exists
-
-    public bool Exists(string blobName)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        return blobClient.Exists();
-    }
-
-    public bool Exists(BlobMetadata blobMetadata)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobMetadata.Name);
-
-        return blobClient.Exists();
-    }
-
-    public IEnumerable<bool> Exists(IEnumerable<string> blobNames)
-    {
-        foreach (var blob in blobNames)
-        {
-            var blobClient = _blobContainerClient.GetBlobClient(blob);
-            yield return blobClient.Exists();
-        }
-    }
-
-    public IEnumerable<bool> Exists(IEnumerable<BlobMetadata> blobs)
-    {
-        foreach (var blob in blobs)
-        {
-            var blobClient = _blobContainerClient.GetBlobClient(blob.Name);
-            yield return blobClient.Exists();
-        }
-    }
-
-    #endregion
-
-    #region Delete
-
-    public void Delete(string blobName)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        blobClient.Delete();
-    }
-
-    public void Delete(BlobMetadata blobMetadata)
-    {
-        Delete(blobMetadata.Name);
-    }
-
-    public void Delete(IEnumerable<string> blobNames)
-    {
-        foreach (var blobName in blobNames)
-        {
-            Delete(blobName);
-        }
-    }
-
-    public void Delete(IEnumerable<BlobMetadata> blobsMetadata)
-    {
-        foreach (var blobMetadata in blobsMetadata)
-        {
-            Delete(blobMetadata.Name);
-        }
-    }
-
-    #endregion
-
-    #region LegalHold
-
-    public void SetLegalHold(string blobName, bool hasLegalHold)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-
-        blobClient.SetLegalHold(hasLegalHold);
-    }
-
-    public bool HasLegalHold(string blobName)
-    {
-        var blobClient = _blobContainerClient.GetBlobClient(blobName);
-        var properties = blobClient.GetProperties();
-
-        return properties.Value?.HasLegalHold ?? false;
-    }
-
-    #endregion
-
-    #endregion
 }

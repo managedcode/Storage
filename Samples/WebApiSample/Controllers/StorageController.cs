@@ -41,7 +41,11 @@ public class StorageController : Controller
 
         // Here you can do manipulations with file
 
-        await _storage.UploadStreamAsync(localFile.FileName, localFile.FileStream);
+        await _storage.UploadAsync(localFile.FileStream, options =>
+        {
+            options.FileName = formFile.Name;
+            options.MimeType = options.MimeType;
+        });
 
         return Ok();
     }

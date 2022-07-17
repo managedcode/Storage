@@ -31,13 +31,15 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAzureStorage(this IServiceCollection serviceCollection, AzureStorageOptions options)
     {
         CheckConfiguration(options);
-        return serviceCollection.AddScoped<IAzureStorage>(_ => new AzureStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
     }
 
     public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection, AzureStorageOptions options)
     {
         CheckConfiguration(options);
-        return serviceCollection.AddScoped<IStorage>(_ => new AzureStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IStorage,AzureStorage>();
     }
 
     private static void CheckConfiguration(AzureStorageOptions options)

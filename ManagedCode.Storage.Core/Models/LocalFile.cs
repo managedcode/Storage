@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core;
 
@@ -50,6 +51,8 @@ public class LocalFile : IDisposable, IAsyncDisposable
     public string FileName { get; }
 
     public bool KeepAlive { get; set; }
+    
+    public BlobMetadata BlobMetadata { get; set; }
 
     public FileInfo FileInfo => new(FilePath);
 
@@ -129,6 +132,13 @@ public class LocalFile : IDisposable, IAsyncDisposable
         {
             CloseFileStream();
         }
+    }
+    
+    public async Task<LocalFile> CopyFromStreamAsync(Stream stream)
+    {
+        await stream.CopyToAsync(FileStream);
+        FileStream.Dispose();
+        return this;
     }
 
     public static async Task<LocalFile> FromStreamAsync(Stream stream)

@@ -4,41 +4,26 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using ManagedCode.Communication;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
+using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.FileSystem;
 
-public class FileSystemStorage : IFileSystemStorage
+public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSystemStorage
 {
     private readonly string _path;
     private readonly Dictionary<string, FileStream> _lockedFiles = new();
 
-    public FileSystemStorage(FileSystemStorageOptions fileSystemStorageOptions)
+    public FileSystemStorage(ILogger<FileSystemStorage> logger, FileSystemStorageOptions options) : base(options)
     {
-        _path = fileSystemStorageOptions.BaseFolder ?? Environment.CurrentDirectory;
-        EnsureDirectoryExists();
+        _path = StorageOptions.BaseFolder ?? Environment.CurrentDirectory;
     }
-
-    public void Dispose()
-    {
-    }
-
-    private void EnsureDirectoryExists()
-    {
-        if (!Directory.Exists(_path))
-        {
-            Directory.CreateDirectory(_path);
-        }
-    }
-
-    #region Async
-
-    #region CreateContainer
-
-    public async Task CreateContainerAsync(CancellationToken cancellationToken = default)
+    
+    protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
@@ -46,555 +31,140 @@ public class FileSystemStorage : IFileSystemStorage
         {
             Directory.CreateDirectory(_path);
         }
+        
+        return Result.Succeeded();
     }
 
-    #endregion
-
-    #region Get
-
-    public Task<BlobMetadata?> GetBlobAsync(string blobName, CancellationToken cancellationToken = default)
+    public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
-        EnsureDirectoryExists();
+        await Task.Yield();
 
-        var fileInfo = new FileInfo(Path.Combine(_path, blobName));
+        if (Directory.Exists(_path))
+        {
+            Directory.Delete(_path);
+        }
+        
+        return Result.Succeeded();
+    }
+
+    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+        var filePath = Path.Combine(_path, options.FileName);
+
+        using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
+        {
+            stream.Seek(0, SeekOrigin.Begin);
+            await stream.CopyToAsync(fs, 81920, cancellationToken);
+        }
+
+        return Result<string>.Succeeded(filePath);
+    }
+
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+
+        var filePath = Path.Combine(_path, blob);
+
+        if (File.Exists(filePath))
+        {
+            return  Result<LocalFile>.Succeeded(new LocalFile(filePath));
+        }
+
+        return Result<LocalFile>.Failed();
+    }
+
+    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+
+        var filePath = Path.Combine(_path, blob);
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+            return Result<bool>.Succeeded(true);
+        }
+        
+        return Result<bool>.Succeeded(false);
+    }
+
+    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+        var filePath = Path.Combine(_path, blob);
+        return Result<bool>.Succeeded(File.Exists(filePath));
+    }
+
+    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+        var fileInfo = new FileInfo(Path.Combine(_path, blob));
         if (fileInfo.Exists)
         {
             var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, blobName)),
-                ContentType = MimeHelper.GetMimeType(fileInfo.Extension), 
+                Uri = new Uri(Path.Combine(_path, blob)),
+                MimeType = MimeHelper.GetMimeType(fileInfo.Extension), 
                 Length = fileInfo.Length
             };
 
-            return Task.FromResult<BlobMetadata?>(result);
+            return Result<BlobMetadata?>.Succeeded(result);
         }
 
-        return Task.FromResult<BlobMetadata?>(null);
+        return Result<BlobMetadata?>.Failed();
     }
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobListAsync(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
     {
+        await EnsureContainerExist();
         foreach (var file in Directory.EnumerateFiles(_path))
         {
-            var blobMetadata = await GetBlobAsync(file, cancellationToken);
+            var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
 
             if (blobMetadata is not null)
             {
-                yield return blobMetadata;
+                yield return blobMetadata.Value;
             }
         }
     }
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobsAsync(IEnumerable<string> blobNames,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
-        foreach (var file in blobNames)
+        await EnsureContainerExist();
+        if (hasLegalHold && !_lockedFiles.ContainsKey(blob))
         {
-            var blobMetadata = await GetBlobAsync(file, cancellationToken);
+            var file = await DownloadAsync(blob, cancellationToken);
 
-            if (blobMetadata is not null)
-            {
-                yield return blobMetadata;
-            }
-        }
-    }
+            if (file is null) 
+                return Result.Failed();
 
-    #endregion
-
-    #region Upload
-
-    public async Task UploadStreamAsync(string blobName, Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        EnsureDirectoryExists();
-        var filePath = Path.Combine(_path, blobName);
-
-        using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
-        {
-            dataStream.Seek(0, SeekOrigin.Begin);
-            await dataStream.CopyToAsync(fs, 81920, cancellationToken);
-        }
-    }
-
-    public async Task UploadFileAsync(string blobName, string pathToFile, CancellationToken cancellationToken = default)
-    {
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            await UploadStreamAsync(blobName, fs, cancellationToken);
-        }
-    }
-
-    public async Task UploadAsync(string blobName, string content, CancellationToken cancellationToken = default)
-    {
-        EnsureDirectoryExists();
-        var filePath = Path.Combine(_path, blobName);
-
-        await Task.Run(() => File.WriteAllText(filePath, content), cancellationToken);
-    }
-
-    public Task UploadStreamAsync(BlobMetadata blobMetadata, Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        return UploadStreamAsync(blobMetadata.Name, dataStream, cancellationToken);
-    }
-
-    public Task UploadFileAsync(BlobMetadata blobMetadata, string pathToFile, CancellationToken cancellationToken = default)
-    {
-        return UploadFileAsync(blobMetadata.Name, pathToFile, cancellationToken);
-    }
-
-    public async Task UploadAsync(BlobMetadata blobMetadata, string content, CancellationToken cancellationToken = default)
-    {
-        await UploadAsync(blobMetadata.Name, content, cancellationToken);
-    }
-
-    public async Task UploadAsync(BlobMetadata blobMetadata, byte[] data, CancellationToken cancellationToken = default)
-    {
-        EnsureDirectoryExists();
-        var filePath = Path.Combine(_path, blobMetadata.Name);
-
-        await Task.Run(() => File.WriteAllBytes(filePath, data), cancellationToken);
-    }
-
-    public async Task<string> UploadAsync(string content, CancellationToken cancellationToken = default)
-    {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadAsync(fileName, content, cancellationToken);
-
-        return fileName;
-    }
-
-    public async Task<string> UploadAsync(Stream dataStream, CancellationToken cancellationToken = default)
-    {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        await UploadStreamAsync(fileName, dataStream, cancellationToken);
-
-        return fileName;
-    }
-
-    #endregion
-
-    #region Download
-
-    public async Task<Stream?> DownloadAsStreamAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        await Task.Yield();
-
-        var filePath = Path.Combine(_path, blobName);
-
-        return File.Exists(filePath) ? new FileStream(filePath, FileMode.Open, FileAccess.Read) : null;
-    }
-
-    public async Task<Stream?> DownloadAsStreamAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await DownloadAsStreamAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async Task<LocalFile?> DownloadAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        await Task.Yield();
-
-        var filePath = Path.Combine(_path, blobName);
-
-        return File.Exists(filePath) ? new LocalFile(filePath) : null;
-    }
-
-    public async Task<LocalFile?> DownloadAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await DownloadAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    #endregion
-
-    #region Delete
-
-    public async Task DeleteAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        EnsureDirectoryExists();
-
-        await Task.Yield();
-
-        var filePath = Path.Combine(_path, blobName);
-
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
-    }
-
-    public async Task DeleteAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        EnsureDirectoryExists();
-        await DeleteAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async Task DeleteAsync(IEnumerable<string> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            await DeleteAsync(blob, cancellationToken);
-        }
-    }
-
-    public async Task DeleteAsync(IEnumerable<BlobMetadata> blobNames, CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            await DeleteAsync(blob, cancellationToken);
-        }
-    }
-
-    #endregion
-
-    #region Exists
-
-    public async Task<bool> ExistsAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        EnsureDirectoryExists();
-
-        await Task.Yield();
-
-        var filePath = Path.Combine(_path, blobName);
-
-        return File.Exists(filePath);
-    }
-
-    public async Task<bool> ExistsAsync(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
-    {
-        return await ExistsAsync(blobMetadata.Name, cancellationToken);
-    }
-
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<string> blobNames,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobNames)
-        {
-            yield return await ExistsAsync(blob, cancellationToken);
-        }
-    }
-
-    public async IAsyncEnumerable<bool> ExistsAsync(IEnumerable<BlobMetadata> blobs,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var blob in blobs)
-        {
-            yield return await ExistsAsync(blob, cancellationToken);
-        }
-    }
-
-    #endregion
-
-    #region LegalHold
-
-    public async Task SetLegalHoldAsync(string blobName, bool hasLegalHold, CancellationToken cancellationToken = default)
-    {
-        if (hasLegalHold && !_lockedFiles.ContainsKey(blobName))
-        {
-            var file = await DownloadAsync(blobName, cancellationToken);
-
-            if (file is null) return;
-
-            var fileStream = File.OpenRead(file.FilePath); // Opening with FileAccess.Read only
+            var fileStream = File.OpenRead(file.Value.FilePath); // Opening with FileAccess.Read only
             fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
 
-            _lockedFiles.Add(blobName, fileStream);
+            _lockedFiles.Add(blob, fileStream);
 
-            return;
+            return Result.Succeeded();
         }
 
         if (!hasLegalHold)
         {
-            if (_lockedFiles.ContainsKey(blobName))
+            if (_lockedFiles.ContainsKey(blob))
             {
-                _lockedFiles[blobName].Unlock(0, _lockedFiles[blobName].Length);
-                _lockedFiles[blobName].Dispose();
-                _lockedFiles.Remove(blobName);
+                _lockedFiles[blob].Unlock(0, _lockedFiles[blob].Length);
+                _lockedFiles[blob].Dispose();
+                _lockedFiles.Remove(blob);
             }
         }
+        
+        return Result.Succeeded();
     }
 
-    public Task<bool> HasLegalHoldAsync(string blobName, CancellationToken cancellationToken = default)
+    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(_lockedFiles.ContainsKey(blobName));
+        await EnsureContainerExist();
+        return Result<bool>.Succeeded(_lockedFiles.ContainsKey(blob));
     }
-
-    #endregion
-
-    #endregion
-
-    #region Sync
-
-    #region CreateContainer
-
-    public void CreateContainer()
-    {
-        if (!Directory.Exists(_path))
-        {
-            Directory.CreateDirectory(_path);
-        }
-    }
-
-    #endregion
-
-    #region Get
-
-    public BlobMetadata? GetBlob(string blobName)
-    {
-        EnsureDirectoryExists();
-
-        var fileInfo = new FileInfo(Path.Combine(_path, blobName));
-
-        if (fileInfo.Exists)
-        {
-            var result = new BlobMetadata
-            {
-                Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, blobName)),
-                ContentType = MimeHelper.GetMimeType(fileInfo.Extension),
-                Length = fileInfo.Length
-            };
-
-            return result;
-        }
-
-        return null;
-    }
-
-    public IEnumerable<BlobMetadata> GetBlobList()
-    {
-        foreach (var file in Directory.EnumerateFiles(_path))
-        {
-            var blobMetadata = GetBlob(file);
-
-            if (blobMetadata is not null)
-            {
-                yield return blobMetadata;
-            }
-        }
-    }
-
-    public IEnumerable<BlobMetadata> GetBlobs(IEnumerable<string> blobNames)
-    {
-        foreach (var file in blobNames)
-        {
-            var blobMetadata = GetBlob(file);
-
-            if (blobMetadata is not null)
-            {
-                yield return blobMetadata;
-            }
-        }
-    }
-
-    #endregion
-
-    #region Upload
-
-    public void UploadStream(string blobName, Stream dataStream)
-    {
-        EnsureDirectoryExists();
-        var filePath = Path.Combine(_path, blobName);
-
-        using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
-        {
-            dataStream.Seek(0, SeekOrigin.Begin);
-            dataStream.CopyTo(fs, 81920);
-        }
-    }
-
-    public void UploadFile(string blobName, string pathToFile)
-    {
-        using (var fs = new FileStream(pathToFile, FileMode.Open, FileAccess.Read))
-        {
-            UploadStream(blobName, fs);
-        }
-    }
-
-    public void Upload(string blobName, string content)
-    {
-        EnsureDirectoryExists();
-        var filePath = Path.Combine(_path, blobName);
-
-        File.WriteAllText(filePath, content);
-    }
-
-
-    public void UploadStream(BlobMetadata blobMetadata, Stream dataStream)
-    {
-        UploadStream(blobMetadata.Name, dataStream);
-    }
-
-    public void UploadFile(BlobMetadata blobMetadata, string pathToFile)
-    {
-        UploadFile(blobMetadata.Name, pathToFile);
-    }
-
-    public void Upload(BlobMetadata blobMetadata, string content)
-    {
-        Upload(blobMetadata.Name, content);
-    }
-
-    public void Upload(BlobMetadata blobMetadata, byte[] data)
-    {
-        EnsureDirectoryExists();
-        var filePath = Path.Combine(_path, blobMetadata.Name);
-
-        File.WriteAllBytes(filePath, data);
-    }
-
-    public string Upload(string content)
-    {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        Upload(fileName, content);
-
-        return fileName;
-    }
-
-    public string Upload(Stream dataStream)
-    {
-        string fileName = Guid.NewGuid().ToString("N").ToLowerInvariant();
-        UploadStream(fileName, dataStream);
-
-        return fileName;
-    }
-
-    #endregion
-
-    #region Download
-
-    public Stream? DownloadAsStream(string blobName)
-    {
-        var filePath = Path.Combine(_path, blobName);
-
-        return File.Exists(filePath) ? new FileStream(filePath, FileMode.Open, FileAccess.Read) : null;
-    }
-
-    public Stream? DownloadAsStream(BlobMetadata blobMetadata)
-    {
-        return DownloadAsStream(blobMetadata.Name);
-    }
-
-    public LocalFile? Download(string blobName)
-    {
-        var filePath = Path.Combine(_path, blobName);
-
-        return File.Exists(filePath) ? new LocalFile(filePath) : null;
-    }
-
-    public LocalFile? Download(BlobMetadata blobMetadata)
-    {
-        return Download(blobMetadata.Name);
-    }
-
-    #endregion
-
-    #region Delete
-
-    public void Delete(string blobName)
-    {
-        EnsureDirectoryExists();
-
-        var filePath = Path.Combine(_path, blobName);
-
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
-    }
-
-    public void Delete(BlobMetadata blobMetadata)
-    {
-        EnsureDirectoryExists();
-        Delete(blobMetadata.Name);
-    }
-
-    public void Delete(IEnumerable<string> blobNames)
-    {
-        foreach (var blob in blobNames)
-        {
-            Delete(blob);
-        }
-    }
-
-    public void Delete(IEnumerable<BlobMetadata> blobNames)
-    {
-        foreach (var blob in blobNames)
-        {
-            Delete(blob);
-        }
-    }
-
-    #endregion
-
-    #region Exists
-
-    public bool Exists(string blobName)
-    {
-        EnsureDirectoryExists();
-
-        var filePath = Path.Combine(_path, blobName);
-
-        return File.Exists(filePath);
-    }
-
-    public bool Exists(BlobMetadata blobMetadata)
-    {
-        return Exists(blobMetadata.Name);
-    }
-
-    public IEnumerable<bool> Exists(IEnumerable<string> blobNames)
-    {
-        foreach (var blob in blobNames)
-        {
-            yield return Exists(blob);
-        }
-    }
-
-    public IEnumerable<bool> Exists(IEnumerable<BlobMetadata> blobs)
-    {
-        foreach (var blob in blobs)
-        {
-            yield return Exists(blob);
-        }
-    }
-
-    #endregion
-
-    #region LegalHold
-
-    public void SetLegalHold(string blobName, bool hasLegalHold)
-    {
-        if (hasLegalHold && !_lockedFiles.ContainsKey(blobName))
-        {
-            var file = Download(blobName);
-
-            if (file is null) return;
-
-            var fileStream = File.OpenRead(file.FilePath); // Opening with FileAccess.Read only
-            fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
-
-            _lockedFiles.Add(blobName, fileStream);
-
-            return;
-        }
-
-        if (!hasLegalHold)
-        {
-            if (_lockedFiles.ContainsKey(blobName))
-            {
-                _lockedFiles[blobName].Unlock(0, _lockedFiles[blobName].Length);
-                _lockedFiles[blobName].Dispose();
-                _lockedFiles.Remove(blobName);
-            }
-        }
-    }
-
-    public bool HasLegalHold(string blobName)
-    {
-        return _lockedFiles.ContainsKey(blobName);
-    }
-
-    #endregion
-
-    #endregion
 }

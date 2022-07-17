@@ -18,16 +18,19 @@ public static class ServiceCollectionExtensions
     {
         var fsStorageOptions = new FileSystemStorageOptions();
         action.Invoke(fsStorageOptions);
+
         return serviceCollection.AddFileSystemStorageAsDefault(fsStorageOptions);
     }
     
     public static IServiceCollection AddFileSystemStorage(this IServiceCollection serviceCollection, FileSystemStorageOptions options)
     {
-        return serviceCollection.AddScoped<IFileSystemStorage>(_ => new FileSystemStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IFileSystemStorage,FileSystemStorage>();
     }
 
     public static IServiceCollection AddFileSystemStorageAsDefault(this IServiceCollection serviceCollection, FileSystemStorageOptions options)
     {
-        return serviceCollection.AddScoped<IStorage>(_ => new FileSystemStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IStorage,FileSystemStorage>();
     }
 }

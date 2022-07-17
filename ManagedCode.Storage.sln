@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{C812
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiSample", "Samples\WebApiSample\WebApiSample.csproj", "{39E5D805-04B4-442B-9B64-116A96041A93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.AzureDataLake", "ManagedCode.Storage.AzureDataLake\ManagedCode.Storage.AzureDataLake.csproj", "{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{39E5D805-04B4-442B-9B64-116A96041A93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39E5D805-04B4-442B-9B64-116A96041A93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39E5D805-04B4-442B-9B64-116A96041A93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

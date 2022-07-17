@@ -31,15 +31,16 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddGCPStorage(this IServiceCollection serviceCollection, GCPStorageOptions options)
     {
         CheckConfiguration(options);
-
-        return serviceCollection.AddScoped<IGCPStorage>(_ => new GCPStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IGCPStorage,GCPStorage>();
     }
 
     public static IServiceCollection AddGCPStorageAsDefault(this IServiceCollection serviceCollection, GCPStorageOptions options)
     {
         CheckConfiguration(options);
 
-        return serviceCollection.AddScoped<IStorage>(_ => new GCPStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IStorage, GCPStorage>();
     }
 
     private static void CheckConfiguration(GCPStorageOptions options)

@@ -26,6 +26,115 @@ public abstract class StorageBaseTests
         ServiceProvider = ConfigureServices();
         Storage = ServiceProvider.GetService<IStorage>()!;
     }
+    /*
+
+    [Fact]
+    public async Task CreateContainerTest()
+    {
+        var container = await Storage.ContainerManager.CreateAsync("test");
+        container.IsSucceeded.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task CreateAndRemoveContainerTest()
+    {
+        var create = await Storage.CreateAsync("test-for-delete");
+        create.IsSucceeded.Should().BeTrue();
+        
+        var remove = await Storage.ContainerManager.RemoveAsync("test-for-delete");
+        remove.IsSucceeded.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task StreamUploadAsyncTest()
+    {
+        var file = await GetTestFile();
+        var uploadResult = await Storage.UploadAsync(file.OpenRead());
+        uploadResult.IsSucceeded.Should().BeTrue();
+
+        await Storage.UploadAsync("sdfdsf");
+       
+        await Storage.UploadAsync("sdfdsf", options =>
+        {
+            options.Container = "super";
+        });
+
+        await Storage.UploadAsync("sdfsdf", new UploadOptions(container: "stuper"));
+    }
+    
+    [Fact]
+    public async Task ArrayUploadAsyncTest()
+    {
+        var file = await GetTestFile();
+        var bytes = await File.ReadAllBytesAsync(file.FullName);
+        var uploadResult = await Storage.UploadAsync(bytes);
+        uploadResult.IsSucceeded.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task StringUploadAsyncTest()
+    {
+        var file = await GetTestFile();
+        var text = await File.ReadAllTextAsync(file.FullName);
+        var uploadResult = await Storage.UploadAsync(text);
+        uploadResult.IsSucceeded.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task FileInfoUploadAsyncTest()
+    {
+        var file = await GetTestFile();
+        var uploadResult = await Storage.UploadAsync(file);
+        uploadResult.IsSucceeded.Should().BeTrue();
+        
+        var downloadResult = await Storage.DownloadAsync(uploadResult.Value);
+        downloadResult.IsSucceeded.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task UploadAndDownloadTest()
+    {
+        var file = await GetTestFile();
+        var uploadResult = await Storage.UploadAsync(file);
+        uploadResult.IsSucceeded.Should().BeTrue();
+        
+        var downloadResult = await Storage.DownloadAsync(uploadResult.Value);
+        downloadResult.IsSucceeded.Should().BeTrue();
+        
+        File.ReadAllText(file.FullName).Should().Be(File.ReadAllText(downloadResult.Value.Path));
+    }
+    
+    [Fact]
+    public async Task UploadAndGetStreamTest()
+    {
+        var file = await GetTestFile();
+        var uploadResult = await Storage.UploadAsync(file);
+        uploadResult.IsSucceeded.Should().BeTrue();
+        
+        var downloadStream = await Storage.OpenReadStreamAsync(uploadResult.Value);
+        downloadStream.IsSucceeded.Should().BeTrue();
+        var sw = new StreamReader(downloadStream.Value);
+
+        var content = await sw.ReadToEndAsync();
+        sw.Dispose();
+        
+        File.ReadAllText(file.FullName).Should().Be(content);
+    } */
+    
+    
+    
+    [Fact]
+    public async Task GetFileListAsyncTest()
+    {
+    //    await StreamUploadAsyncTest();
+     //   await ArrayUploadAsyncTest();
+    //    await StringUploadAsyncTest();
+//
+        //var files = await Storage.GetBlobsAsync();
+        //files.IsSucceeded.Should().BeTrue();
+        //files.Value.Length.Should().BeGreaterOrEqualTo(5);
+    }
+    
 
     #region MemoryPayload
 
@@ -59,7 +168,7 @@ public abstract class StorageBaseTests
     // }
 
     #endregion
-
+/*
     #region Async
 
     #region Get
@@ -665,6 +774,8 @@ public abstract class StorageBaseTests
 
     #endregion
 
+    
+    */
     #region CreateContainer
 
     [Fact]
@@ -675,662 +786,25 @@ public abstract class StorageBaseTests
     }
 
     #endregion
+    
 
-    #endregion
-
-
-    #region Sync
-
-    #region Get
-
-    [Fact]
-    public async Task GetBlobList()
+    protected async Task<FileInfo> GetTestFile()
     {
-        // Arrange
-        var fileList = await CreateFileList();
+        var fileName = Path.GetTempFileName();
+        var fs = File.OpenWrite(fileName);
+        var sw = new StreamWriter(fs);
 
-        // Act
-        var result = Storage.GetBlobList().ToList();
-        var expectedList = fileList.Select(x => new BlobMetadata {Name = x.FileName});
-
-        // Assert
-        foreach (var item in expectedList)
+        for (int i = 0; i < 10_000; i++)
         {
-            var file = result.FirstOrDefault(f => f.Name == item.Name);
-            file.Should().NotBeNull();
+            await sw.WriteLineAsync(Guid.NewGuid().ToString());
         }
 
-        foreach (var item in fileList)
-        {
-            await DeleteFileAsync(item.FileName);
-        }
+        await sw.DisposeAsync();
+        await fs.DisposeAsync();
+        
+        return new FileInfo(fileName);
     }
-
-    [Fact]
-    public virtual async Task GetBlobs()
-    {
-        // Arrange
-        var fileList = await CreateFileList();
-        var blobList = fileList.Select(f => f.FileName).ToList();
-
-        // Act
-        var result = Storage.GetBlobs(blobList);
-
-        // Assert
-        foreach (var blobMetadata in result)
-        {
-            blobMetadata.Name.Should().NotBeNull();
-            blobMetadata.Uri.Should().NotBeNull();
-        }
-
-        foreach (var item in fileList)
-        {
-            await DeleteFileAsync(item.FileName);
-        }
-    }
-
-    [Fact]
-    public virtual async Task GetBlob()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var result = Storage.GetBlob(fileName);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be(fileName);
-        result.Uri.Should().NotBeNull();
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task GetBlobs_IfSomeFileDontExist()
-    {
-        // Array
-        const int filesCount = 6;
-        var fileList = await CreateFileList(filesCount);
-
-        var blobList = fileList.Select(f => f.FileName).ToList();
-        blobList.Add(FileHelper.GenerateRandomFileName());
-        blobList.Add(FileHelper.GenerateRandomFileName());
-
-        // Act
-        var result = Storage.GetBlobs(blobList).ToList();
-
-        // Assert
-        result.Count.Should().Be(filesCount);
-
-        foreach (var item in fileList)
-        {
-            await DeleteFileAsync(item.FileName);
-        }
-    }
-
-    [Fact]
-    public void GetBlob_IfFileDontExist()
-    {
-        // Arrange
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        // Act
-        var blobMetadata = Storage.GetBlob(fileName);
-
-        // Assert
-        blobMetadata.Should().BeNull();
-    }
-
-    #endregion
-
-    #region Upload
-
-    [Fact]
-    public async Task UploadStream_SpecifyingFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        var stream = new MemoryStream(byteArray);
-
-        // Act
-        Storage.UploadStream(fileName, stream);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(fileName);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task UploadStream_SpecifyingBlobMetadata()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var blobMetadata = new BlobMetadata
-        {
-            Name = FileHelper.GenerateRandomFileName()
-        };
-
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        var stream = new MemoryStream(byteArray);
-
-        // Act
-        Storage.UploadStream(blobMetadata, stream);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(blobMetadata.Name);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(blobMetadata.Name);
-    }
-
-    [Fact]
-    public async Task Upload_AsText_SpecifyingFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        // Act
-        Storage.Upload(fileName, uploadContent);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(fileName);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task Upload_AsText_SpecifyingBlobMetadata()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var blobMetadata = new BlobMetadata
-        {
-            Name = FileHelper.GenerateRandomFileName()
-        };
-
-        // Act
-        Storage.Upload(blobMetadata, uploadContent);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(blobMetadata.Name);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(blobMetadata.Name);
-    }
-
-    [Fact]
-    public async Task Upload_FromPath_SpecifyingFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        var stream = new MemoryStream(byteArray);
-        var localFile = await LocalFile.FromStreamAsync(stream);
-
-        // Act
-        Storage.UploadFile(fileName, localFile.FilePath);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(fileName);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task Upload_FromPath_SpecifyingBlobMetadata()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var blobMetadata = new BlobMetadata
-        {
-            Name = FileHelper.GenerateRandomFileName()
-        };
-
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        var stream = new MemoryStream(byteArray);
-        var localFile = await LocalFile.FromStreamAsync(stream);
-
-        // Act
-        Storage.UploadFile(blobMetadata, localFile.FilePath);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(blobMetadata.Name);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(blobMetadata.Name);
-    }
-
-    [Fact]
-    public async Task Upload_AsArray_SpecifyingBlobMetadata()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-
-        // Act
-        Storage.Upload(new BlobMetadata {Name = fileName}, byteArray);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(fileName);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task Upload_AsText_WithoutNameSpecified()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-
-        // Act
-        var fileName = Storage.Upload(uploadContent);
-
-
-        // Assert
-        var downloadedContent = await DownloadAsync(fileName);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task Upload_AsStream_WithoutNameSpecified()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        var stream = new MemoryStream(byteArray);
-
-        // Act
-        var fileName = Storage.Upload(stream);
-
-        // Assert
-        var downloadedContent = await DownloadAsync(fileName);
-        downloadedContent.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    #endregion
-
-    #region Download
-
-    [Fact]
-    public async Task Download_ByBlobMetadata_AsLocalFile()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var localFile = Storage.Download(new BlobMetadata {Name = fileName});
-        using var sr = new StreamReader(localFile!.FileStream, Encoding.UTF8);
-        var content = await sr.ReadToEndAsync();
-
-        // Assert
-        content.Should().NotBeNull();
-        content.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task Download_ByFileName_AsLocalFile()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var localFile = Storage.Download(fileName);
-        using var sr = new StreamReader(localFile!.FileStream, Encoding.UTF8);
-
-        var content = await sr.ReadToEndAsync();
-
-        // Assert
-        content.Should().NotBeNull();
-        content.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task DownloadAsStream_ByBlobMetadata_AsStream()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var stream = Storage.DownloadAsStream(new BlobMetadata {Name = fileName});
-        using var sr = new StreamReader(stream!, Encoding.UTF8);
-
-        var content = await sr.ReadToEndAsync();
-
-        // Assert
-        content.Should().NotBeNull();
-        content.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public async Task DownloadAsStream_ByFileName_AsStream()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var stream = Storage.DownloadAsStream(fileName);
-        using var sr = new StreamReader(stream!, Encoding.UTF8);
-        var content = await sr.ReadToEndAsync();
-
-        // Assert
-        content.Should().NotBeNull();
-        content.Should().Be(uploadContent);
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public void Download_ByBlobMetadata_AsStream_IfFileDontExist()
-    {
-        // Arrange
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        // Act
-        var localFile = Storage.Download(new BlobMetadata {Name = fileName});
-
-        // Assert
-        localFile.Should().BeNull();
-    }
-
-    [Fact]
-    public void Download_ByFileName_AsStream_IfFileDontExist()
-    {
-        // Arrange
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        // Act
-        var localFile = Storage.Download(fileName);
-
-        // Assert
-        localFile.Should().BeNull();
-    }
-
-    [Fact]
-    public void DownloadAsStream_ByBlobMetadata_IfFileDontExist()
-    {
-        // Arrange
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        // Act
-        var stream = Storage.DownloadAsStream(new BlobMetadata {Name = fileName});
-
-        // Assert
-        stream.Should().BeNull();
-    }
-
-    [Fact]
-    public void DownloadAsStream_ByFileName_IfFileDontExist()
-    {
-        // Arrange
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        // Act
-        var stream = Storage.DownloadAsStream(fileName);
-
-        // Assert
-        stream.Should().BeNull();
-    }
-
-    #endregion
-
-    #region Delete
-
-    [Fact]
-    public async Task Delete_ByListWithFileNames()
-    {
-        // Arrange
-        var fileList = await CreateFileList();
-        var expectedList = fileList.Select(x => x.FileName).ToList();
-
-        // Act
-        Storage.Delete(expectedList);
-
-        // Assert
-        var result = Storage.ExistsAsync(expectedList);
-        var resultList = await result.ToListAsync();
-
-        foreach (var item in resultList)
-        {
-            item.Should().BeFalse();
-        }
-    }
-
-    [Fact]
-    public async Task Delete_ByListWithBlobMetadata()
-    {
-        // Arrange
-        var fileList = await CreateFileList();
-        var expectedList = fileList.Select(x => new BlobMetadata {Name = x.FileName}).ToList();
-
-        // Act
-        Storage.Delete(expectedList);
-
-        // Assert
-        var result = Storage.ExistsAsync(expectedList);
-        var resultList = await result.ToListAsync();
-
-        foreach (var item in resultList)
-        {
-            item.Should().BeFalse();
-        }
-    }
-
-    [Fact]
-    public async Task Delete_ByBlobMetadata()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-        var blobMetadata = await Storage.GetBlobAsync(fileName);
-
-        // Act
-        Storage.Delete(blobMetadata!);
-
-        // Assert
-        var result = await Storage.ExistsAsync(fileName);
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task Delete_ByFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        Storage.Delete(fileName);
-
-        // Assert
-        var result = await Storage.ExistsAsync(fileName);
-
-        result.Should().BeFalse();
-    }
-
-    #endregion
-
-    #region Exist
-
-    [Fact]
-    public async Task Exists_ByFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var result = Storage.Exists(fileName);
-
-        // Assert
-        result.Should().BeTrue();
-
-        await Storage.DeleteAsync(fileName);
-    }
-
-    [Fact]
-    public async Task Exists_ByBlobMetadata()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        var file = new BlobMetadata
-        {
-            Name = fileName
-        };
-
-        // Act
-        var result = Storage.Exists(file);
-
-        // Assert
-        result.Should().BeTrue();
-
-        await Storage.DeleteAsync(fileName);
-    }
-
-    [Fact]
-    public async Task Exists_ByListWithFileNames()
-    {
-        // Arrange
-        var fileList = await CreateFileList();
-        var blobList = fileList.Select(x => x.FileName).ToList();
-
-        // Act
-        var result = Storage.Exists(blobList);
-
-        // Assert
-        foreach (var item in result)
-        {
-            item.Should().BeTrue();
-        }
-
-        foreach (var item in fileList)
-        {
-            await DeleteFileAsync(item.FileName);
-        }
-    }
-
-    [Fact]
-    public async Task Exists_ByListWithBlobMetadata()
-    {
-        // Arrange
-        var fileList = await CreateFileList();
-
-        // Act
-        var result = Storage.Exists(fileList.Select(x => new BlobMetadata {Name = x.FileName}));
-
-        // Assert
-        foreach (var item in result)
-        {
-            item.Should().BeTrue();
-        }
-
-        foreach (var item in fileList)
-        {
-            await DeleteFileAsync(item.FileName);
-        }
-    }
-
-    #endregion
-
-    #region CreateContainer
-
-    [Fact]
-    public void CreateContainer()
-    {
-        FluentActions.Invoking(() => Storage.CreateContainer())
-            .Should().NotThrow<Exception>();
-    }
-
-    #endregion
-
-    #endregion
-
-    protected async Task PrepareFileToTest(string fileName, string content)
-    {
-        if (await Storage.ExistsAsync(fileName))
-        {
-            await Storage.DeleteAsync(fileName);
-        }
-
-        await Storage.UploadAsync(fileName, content);
-    }
-
-    protected async Task DeleteFileAsync(string fileName)
-    {
-        if (await Storage.ExistsAsync(fileName))
-        {
-            await Storage.DeleteAsync(fileName);
-        }
-    }
-
-    protected async Task<string> DownloadAsync(string fileName)
-    {
-        var stream = await Storage.DownloadAsStreamAsync(fileName);
-        var sr = new StreamReader(stream!, Encoding.UTF8);
-
-        return await sr.ReadToEndAsync();
-    }
-
-    protected async Task<List<(string FileName, string UploadedContent)>> CreateFileList(int count = 5)
-    {
-        var listFile = new List<(string FileName, string UploadedContent)>();
-
-        for (var i = 0; i < count; i++)
-        {
-            var file = (FileHelper.GenerateRandomFileName(), FileHelper.GenerateRandomFileName());
-            await PrepareFileToTest(file.Item1, file.Item2);
-            listFile.Add(file);
-        }
-
-        return listFile;
-    }
+    
+    
+  
 }

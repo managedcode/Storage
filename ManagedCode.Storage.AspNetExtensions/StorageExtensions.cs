@@ -26,22 +26,25 @@ public static class StorageExtensions
 
         BlobMetadata blobMetadata = new()
         {
-            Name = options.UseRandomName ? $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}{extension}" : formFile.FileName,
-            ContentType = formFile.ContentType,
-            Rewrite = options.Rewrite
+            Name = options.UseRandomName ? "" : formFile.FileName,
+            MimeType = formFile.ContentType,
         };
 
         if (formFile.Length > MinLengthForLargeFile)
         {
             var localFile = await formFile.ToLocalFileAsync(cancellationToken);
-
-            await storage.UploadStreamAsync(blobMetadata, localFile.FileStream, cancellationToken);
+            await storage.UploadAsync(localFile.FileInfo, cancellationToken);
         }
         else
         {
             using (var stream = formFile.OpenReadStream())
             {
-                await storage.UploadStreamAsync(blobMetadata, stream, cancellationToken);
+                await storage.UploadAsync(stream, uploadOptions =>
+                {
+                    uploadOptions.FileName = options.UseRandomName ? "" : formFile.FileName;
+                    uploadOptions.MimeType = formFile.ContentType;
+
+                } , cancellationToken);
             }
         }
 
@@ -67,25 +70,25 @@ public static class StorageExtensions
             return null;
         }
 
-        return new FileStreamResult(localFile.FileStream, MimeHelper.GetMimeType(localFile.FileInfo.Extension))
+        return new FileStreamResult(localFile.Value.FileStream, MimeHelper.GetMimeType(localFile.Value.FileInfo.Extension))
         {
-            FileDownloadName = localFile.FileName
+            FileDownloadName = localFile.Value.FileName
         };
     }
 
     public static async Task<FileResult?> DownloadAsFileResult(this IStorage storage, BlobMetadata blobMetadata,
         CancellationToken cancellationToken = default)
     {
-        var localFile = await storage.DownloadAsync(blobMetadata, cancellationToken);
+        var localFile = await storage.DownloadAsync(blobMetadata.Name, cancellationToken);
 
         if (localFile is null)
         {
             return null;
         }
 
-        return new FileStreamResult(localFile.FileStream, MimeHelper.GetMimeType(localFile.FileInfo.Extension))
+        return new FileStreamResult(localFile.Value.FileStream, MimeHelper.GetMimeType(localFile.Value.FileInfo.Extension))
         {
-            FileDownloadName = localFile.FileName
+            FileDownloadName = localFile.Value.FileName
         };
     }
 }

@@ -31,15 +31,15 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAWSStorage(this IServiceCollection serviceCollection, AWSStorageOptions options)
     {
         CheckConfiguration(options);
-
-        return serviceCollection.AddScoped<IAWSStorage>(_ => new AWSStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IAWSStorage,AWSStorage>();
     }
 
     public static IServiceCollection AddAWSStorageAsDefault(this IServiceCollection serviceCollection, AWSStorageOptions options)
     {
         CheckConfiguration(options);
-
-        return serviceCollection.AddScoped<IStorage>(_ => new AWSStorage(options));
+        serviceCollection.AddSingleton(options);
+        return serviceCollection.AddScoped<IStorage,AWSStorage>();
     }
 
     private static void CheckConfiguration(AWSStorageOptions options)

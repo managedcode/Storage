@@ -49,8 +49,8 @@ public class StorageExtensionsTests
         var localFile = await Storage.DownloadAsync(fileName);
 
         // Assert
-        localFile!.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(formFile.FileName);
+        localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
+        localFile.Value.FileName.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -68,8 +68,8 @@ public class StorageExtensionsTests
         var localFile = await Storage.DownloadAsync(fileName);
 
         // Assert
-        localFile!.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(formFile.FileName);
+        localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
+        localFile.Value.FileName.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -87,9 +87,9 @@ public class StorageExtensionsTests
         var localFile = await Storage.DownloadAsync(newFileName);
 
         // Assert
-        localFile!.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(newFileName.Name);
-        localFile.FileName.Should().NotBe(formFile.FileName);
+        localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
+        localFile.Value.FileName.Should().Be(newFileName.Name);
+        localFile.Value.FileName.Should().NotBe(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -103,7 +103,7 @@ public class StorageExtensionsTests
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         // Act
-        await Storage.UploadFileAsync(fileName, localFile.FilePath);
+        await Storage.UploadAsync(new FileInfo(fileName));
         var fileResult = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
@@ -124,7 +124,10 @@ public class StorageExtensionsTests
         BlobMetadata blobMetadata = new() {Name = fileName};
 
         // Act
-        await Storage.UploadFileAsync(blobMetadata, localFile.FilePath);
+        await Storage.UploadAsync(localFile.FileInfo, options =>
+        {
+            options.FileName = fileName;
+        });
         var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
 
         // Assert

@@ -1,6 +1,8 @@
-﻿namespace ManagedCode.Storage.FileSystem.Options;
+﻿using ManagedCode.Storage.Core;
 
-public class FileSystemStorageOptions
+namespace ManagedCode.Storage.FileSystem.Options;
+
+public class FileSystemStorageOptions : StorageOptions
 {
     public string? BaseFolder { get; set; }
 }

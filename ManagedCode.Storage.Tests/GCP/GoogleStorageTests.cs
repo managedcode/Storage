@@ -119,6 +119,7 @@ public class GoogleStorageTests : StorageBaseTests
         storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
 
+    /*
     [Fact]
     public override async Task GetBlobsAsync()
     {
@@ -212,4 +213,5 @@ public class GoogleStorageTests : StorageBaseTests
 
         await DeleteFileAsync(fileName);
     }
+    */
 }
