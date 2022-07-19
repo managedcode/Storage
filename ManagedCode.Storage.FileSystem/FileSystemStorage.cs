@@ -51,7 +51,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        var filePath = Path.Combine(_path, options.FileName);
+
+        var filePath = GetPathFromOptions(options);
 
         using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
         {
@@ -62,12 +63,30 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result<string>.Succeed(filePath);
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
+    private string GetPathFromOptions(BaseOptions options)
+    {
+        string filePath;
+
+        if (options.Directory is not null)
+        {
+            EnsureDirectoryExist(options.Directory);
+            filePath = Path.Combine(_path, options.Directory, options.Blob);
+        }
+        else
+        {
+            filePath = Path.Combine(_path, options.Blob);
+        }
+
+        return filePath;
+    }
+
+
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
         CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
 
-        var filePath = Path.Combine(_path, blob);
+        var filePath = GetPathFromOptions(options);
 
         if (File.Exists(filePath))
         {
@@ -77,11 +96,11 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result<LocalFile>.Fail();
     }
 
-    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
 
-        var filePath = Path.Combine(_path, blob);
+        var filePath = GetPathFromOptions(options);
 
         if (File.Exists(filePath))
         {
@@ -92,23 +111,27 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result<bool>.Succeed(false);
     }
 
-    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        var filePath = Path.Combine(_path, blob);
+        var filePath = GetPathFromOptions(options);
         return Result<bool>.Succeed(File.Exists(filePath));
     }
 
-    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
+        CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        var fileInfo = new FileInfo(Path.Combine(_path, blob));
+        var filePath = GetPathFromOptions(options);
+        var fileInfo = new FileInfo(filePath);
+
         if (fileInfo.Exists)
         {
             var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, blob)),
+                Uri = new Uri(Path.Combine(_path, filePath)),
                 MimeType = MimeHelper.GetMimeType(fileInfo.Extension),
                 Length = fileInfo.Length
             };
@@ -169,5 +192,15 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
     {
         await EnsureContainerExist();
         return Result<bool>.Succeed(_lockedFiles.ContainsKey(blob));
+    }
+
+    private void EnsureDirectoryExist(string directory)
+    {
+        var path = Path.Combine(_path, directory);
+
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
     }
 }
