@@ -28,10 +28,7 @@ public class StorageExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddFileSystemStorageAsDefault(opt =>
-        {
-            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
-        });
+        services.AddFileSystemStorageAsDefault(opt => { opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"); });
 
         return services.BuildServiceProvider();
     }
@@ -104,11 +101,12 @@ public class StorageExtensionsTests
 
         // Act
         await Storage.UploadAsync(new FileInfo(fileName));
-        var fileResult = await Storage.DownloadAsFileResult(fileName);
+        var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        fileResult!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
-        fileResult.FileDownloadName.Should().Be(localFile.FileName);
+        result.IsSucceeded.Should().Be(true);
+        result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        result.Value.FileDownloadName.Should().Be(localFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -124,15 +122,13 @@ public class StorageExtensionsTests
         BlobMetadata blobMetadata = new() {Name = fileName};
 
         // Act
-        await Storage.UploadAsync(localFile.FileInfo, options =>
-        {
-            options.FileName = fileName;
-        });
-        var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
+        await Storage.UploadAsync(localFile.FileInfo, options => { options.FileName = fileName; });
+        var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        fileResult!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
-        fileResult.FileDownloadName.Should().Be(localFile.FileName);
+        result.IsSucceeded.Should().Be(true);
+        result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        result.Value.FileDownloadName.Should().Be(localFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
