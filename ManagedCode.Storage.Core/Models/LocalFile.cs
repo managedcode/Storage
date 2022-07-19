@@ -1,9 +1,8 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using ManagedCode.Storage.Core.Models;
 
-namespace ManagedCode.Storage.Core;
+namespace ManagedCode.Storage.Core.Models;
 
 public class LocalFile : IDisposable, IAsyncDisposable
 {
@@ -23,7 +22,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
         if (string.IsNullOrEmpty(Path.GetExtension(path)))
         {
             directory = path;
-            var tempName = Guid.NewGuid().ToString("N");
+            var tempName = $"{Guid.NewGuid():N}";
             FilePath = Path.Combine(path, $"{tempName}.tmp");
         }
         else
@@ -51,8 +50,8 @@ public class LocalFile : IDisposable, IAsyncDisposable
     public string FileName { get; }
 
     public bool KeepAlive { get; set; }
-    
-    public BlobMetadata BlobMetadata { get; set; }
+
+    public BlobMetadata? BlobMetadata { get; set; }
 
     public FileInfo FileInfo => new(FilePath);
 
@@ -133,7 +132,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
             CloseFileStream();
         }
     }
-    
+
     public async Task<LocalFile> CopyFromStreamAsync(Stream stream)
     {
         await stream.CopyToAsync(FileStream);

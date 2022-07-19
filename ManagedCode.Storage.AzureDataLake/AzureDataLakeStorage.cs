@@ -121,8 +121,8 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            DataLakeDirectoryClient directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
-            DataLakeFileClient fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
+            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
+            var fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
             var result = await fileClient.ExistsAsync(cancellationToken: cancellationToken);
             return Result.Succeeded(result.Value);
         }
@@ -160,7 +160,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     public async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string directory,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        IAsyncEnumerator<PathItem> enumerator = StorageClient.GetPathsAsync(directory).GetAsyncEnumerator(cancellationToken);
+        IAsyncEnumerator<PathItem> enumerator = StorageClient.GetPathsAsync(directory, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
         await enumerator.MoveNextAsync();
         var item = enumerator.Current;
 
@@ -196,6 +196,16 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         // TODO: Implement
         return Result<bool>.Failed().AsTask();
+    }
+
+    public Task<Result<Stream>> OpenReadStreamAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<Stream>> OpenWriteStreamAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)
