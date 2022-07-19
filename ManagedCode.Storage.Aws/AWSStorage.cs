@@ -35,12 +35,12 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         try
         {
             await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message, e);
-            return Result.Failed(e);
+            return Result.Fail(e);
         }
     }
 
@@ -49,12 +49,12 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         try
         {
             await StorageClient.DeleteBucketAsync(StorageOptions.Bucket, cancellationToken);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message, e);
-            return Result.Failed(e);
+            return Result.Fail(e);
         }
     }
 
@@ -83,10 +83,10 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            return Result<string>.Failed(ex);
+            return Result<string>.Fail(ex);
         }
 
-        return Result<string>.Succeeded(
+        return Result<string>.Succeed(
             $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
     }
 
@@ -109,11 +109,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, blob, null, cancellationToken));
 
-            return Result<LocalFile>.Succeeded(localFile);
+            return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
         {
-            return Result<LocalFile>.Failed(ex);
+            return Result<LocalFile>.Fail(ex);
         }
     }
 
@@ -128,11 +128,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                 Key = blob
             }, cancellationToken);
 
-            return Result<bool>.Succeeded(true);
+            return Result<bool>.Succeed(true);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -142,18 +142,18 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         {
             await EnsureContainerExist();
             _ = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
-            return Result<bool>.Succeeded(true);
+            return Result<bool>.Succeed(true);
         }
         catch (AmazonS3Exception ex)
         {
             if (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-                return Result<bool>.Succeeded(false);
+                return Result<bool>.Succeed(false);
 
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -178,11 +178,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                 Length = objectMetaResponse.Headers.ContentLength
             };
 
-            return Result<BlobMetadata>.Succeeded(metadata);
+            return Result<BlobMetadata>.Succeed(metadata);
         }
         catch (Exception ex)
         {
-            return Result<BlobMetadata>.Failed(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
     }
 
@@ -255,11 +255,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             };
 
             await StorageClient.PutObjectLegalHoldAsync(request, cancellationToken);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception ex)
         {
-            return Result.Failed(ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -277,11 +277,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             var response = await StorageClient.GetObjectLegalHoldAsync(request, cancellationToken);
 
-            return Result<bool>.Succeeded(response.LegalHold.Status == ObjectLockLegalHoldStatus.On);
+            return Result<bool>.Succeed(response.LegalHold.Status == ObjectLockLegalHoldStatus.On);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 }

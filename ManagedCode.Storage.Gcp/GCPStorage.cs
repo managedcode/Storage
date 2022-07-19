@@ -46,13 +46,13 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                 cancellationToken: cancellationToken);
         }
 
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
         await StorageClient.DeleteBucketAsync(StorageOptions.BucketOptions.Bucket, null, cancellationToken);
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
@@ -62,11 +62,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         {
             await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FileName, options.MimeType, stream, null,
                 cancellationToken);
-            return Result<string>.Succeeded(string.Empty);
+            return Result<string>.Succeed(string.Empty);
         }
         catch (Exception ex)
         {
-            return Result<string>.Failed(ex);
+            return Result<string>.Fail(ex);
         }
     }
 
@@ -76,11 +76,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         try
         {
             await StorageClient.DownloadObjectAsync(StorageOptions.BucketOptions.Bucket, blob, localFile.FileStream, null, cancellationToken);
-            return Result<LocalFile>.Succeeded(localFile);
+            return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
         {
-            return Result<LocalFile>.Failed(ex);
+            return Result<LocalFile>.Fail(ex);
         }
     }
 
@@ -89,11 +89,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         try
         {
             await StorageClient.DeleteObjectAsync(StorageOptions.BucketOptions.Bucket, blob, null, cancellationToken);
-            return Result<bool>.Succeeded(true);
+            return Result<bool>.Succeed(true);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -102,15 +102,15 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         try
         {
             await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, null, cancellationToken);
-            return Result<bool>.Succeeded(true);
+            return Result<bool>.Succeed(true);
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
         {
-            return Result<bool>.Succeeded(false);
+            return Result<bool>.Succeed(false);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -120,7 +120,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         {
             var obj = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, null, cancellationToken);
 
-            return Result<BlobMetadata>.Succeeded(new BlobMetadata
+            return Result<BlobMetadata>.Succeed(new BlobMetadata
             {
                 Name = obj.Name,
                 Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
@@ -131,7 +131,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            return Result<BlobMetadata>.Failed(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
     }
 
@@ -158,13 +158,13 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 
         await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
 
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
     {
         var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, cancellationToken: cancellationToken);
 
-        return Result<bool>.Succeeded(storageObject.TemporaryHold ?? false);
+        return Result<bool>.Succeed(storageObject.TemporaryHold ?? false);
     }
 }

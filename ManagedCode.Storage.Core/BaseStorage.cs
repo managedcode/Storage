@@ -28,7 +28,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
     protected Task<Result> EnsureContainerExist()
     {
         if (IsContainerCreated)
-            return Result.Succeeded().AsTask();
+            return Result.Succeed().AsTask();
 
         return CreateContainerAsync();
     }
@@ -51,7 +51,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
     {
         var result = await CreateContainerInternalAsync(cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
-        IsContainerCreated = result.IsSucceeded;
+        IsContainerCreated = result.IsSuccess;
         return result;
     }
 

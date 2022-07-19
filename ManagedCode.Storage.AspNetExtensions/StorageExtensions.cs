@@ -68,7 +68,7 @@ public static class StorageExtensions
 
         if (result.IsError)
         {
-            return Result<FileResult>.Failed(result.Error);
+            return Result<FileResult>.Fail(result.Error);
         }
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
@@ -76,7 +76,7 @@ public static class StorageExtensions
             FileDownloadName = result.Value.FileName
         };
 
-        return Result<FileResult>.Succeeded(fileStream);
+        return Result<FileResult>.Succeed(fileStream);
     }
 
     public static async Task<Result<FileResult>> DownloadAsFileResult(this IStorage storage, BlobMetadata blobMetadata,
@@ -86,7 +86,7 @@ public static class StorageExtensions
 
         if (result.IsError)
         {
-            return Result<FileResult>.Failed(result.Error);
+            return Result.Fail<FileResult>(result.Error);
         }
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
@@ -94,6 +94,6 @@ public static class StorageExtensions
             FileDownloadName = result.Value.FileName
         };
 
-        return Result<FileResult>.Succeeded(fileStream);
+        return Result<FileResult>.Succeed(fileStream);
     }
 }

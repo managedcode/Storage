@@ -104,7 +104,7 @@ public class StorageExtensionsTests
         var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        result.IsSucceeded.Should().Be(true);
+        result.IsSuccess.Should().Be(true);
         result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         result.Value.FileDownloadName.Should().Be(localFile.FileName);
 
@@ -126,7 +126,7 @@ public class StorageExtensionsTests
         var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        result.IsSucceeded.Should().Be(true);
+        result.IsSuccess.Should().Be(true);
         result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         result.Value.FileDownloadName.Should().Be(localFile.FileName);
 

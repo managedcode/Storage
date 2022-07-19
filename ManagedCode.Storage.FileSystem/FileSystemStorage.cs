@@ -32,7 +32,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             Directory.CreateDirectory(_path);
         }
 
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
@@ -44,7 +44,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             Directory.Delete(_path);
         }
 
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
@@ -59,7 +59,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             await stream.CopyToAsync(fs, 81920, cancellationToken);
         }
 
-        return Result<string>.Succeeded(filePath);
+        return Result<string>.Succeed(filePath);
     }
 
     protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
@@ -71,10 +71,10 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
         if (File.Exists(filePath))
         {
-            return Result<LocalFile>.Succeeded(new LocalFile(filePath));
+            return Result<LocalFile>.Succeed(new LocalFile(filePath));
         }
 
-        return Result<LocalFile>.Failed();
+        return Result<LocalFile>.Fail();
     }
 
     public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
@@ -86,17 +86,17 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         if (File.Exists(filePath))
         {
             File.Delete(filePath);
-            return Result<bool>.Succeeded(true);
+            return Result<bool>.Succeed(true);
         }
 
-        return Result<bool>.Succeeded(false);
+        return Result<bool>.Succeed(false);
     }
 
     public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
         var filePath = Path.Combine(_path, blob);
-        return Result<bool>.Succeeded(File.Exists(filePath));
+        return Result<bool>.Succeed(File.Exists(filePath));
     }
 
     public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
@@ -113,10 +113,11 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
                 Length = fileInfo.Length
             };
 
-            return Result<BlobMetadata>.Succeeded(result);
+            return Result<BlobMetadata>.Succeed(result);
         }
 
-        return Result<BlobMetadata>.Failed();
+        return Result<BlobMetadata>.Fail
+            ();
     }
 
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
@@ -127,7 +128,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         {
             var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
 
-            if (blobMetadata.IsSucceeded)
+            if (blobMetadata.IsSuccess)
             {
                 yield return blobMetadata.Value!;
             }
@@ -142,14 +143,14 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             var file = await DownloadAsync(blob, cancellationToken);
 
             if (file.IsError)
-                return Result.Failed();
+                return Result.Fail();
 
             var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
             fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
 
             _lockedFiles.Add(blob, fileStream);
 
-            return Result.Succeeded();
+            return Result.Succeed();
         }
 
         if (!hasLegalHold)
@@ -162,12 +163,12 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             }
         }
 
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        return Result<bool>.Succeeded(_lockedFiles.ContainsKey(blob));
+        return Result<bool>.Succeed(_lockedFiles.ContainsKey(blob));
     }
 }

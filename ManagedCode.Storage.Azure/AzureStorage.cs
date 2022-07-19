@@ -39,12 +39,12 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             _ = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
             await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
             IsContainerCreated = true;
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message,e);
-            return Result.Failed(e);
+            return Result.Fail(e);
         }
     }
 
@@ -54,12 +54,12 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         {
             _ = await StorageClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
             IsContainerCreated = false;
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message,e);
-            return Result.Failed(e);
+            return Result.Fail(e);
         }
     }
 
@@ -84,10 +84,10 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
-            return Result<string>.Failed(ex);
+            return Result<string>.Fail(ex);
         }
 
-        return Result<string>.Succeeded($"{blobClient.Uri}/{StorageOptions.Container}/{options.FileName}");
+        return Result<string>.Succeed($"{blobClient.Uri}/{StorageOptions.Container}/{options.FileName}");
     }
 
     protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
@@ -110,11 +110,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
                 //FullName = $"{blobClient.Uri}/{StorageOptions.Container}/{blob}"
             };
             
-            return Result<LocalFile>.Succeeded(localFile);
+            return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
         {
-            return Result<LocalFile>.Failed(ex);
+            return Result<LocalFile>.Fail(ex);
         }
     }
 
@@ -125,11 +125,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(blob);
             var response = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
-            return Result<bool>.Succeeded(!response.IsError);
+            return Result<bool>.Succeed(!response.IsError);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -140,11 +140,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(blob);
             var response = await blobClient.ExistsAsync(cancellationToken);
-            return Result<bool>.Succeeded(response.Value);
+            return Result<bool>.Succeed(response.Value);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -158,7 +158,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 
             if (properties != null)
             {
-                return Result<BlobMetadata>.Succeeded(new BlobMetadata
+                return Result<BlobMetadata>.Succeed(new BlobMetadata
                 {
                     Name = blobClient.Name,
                     Uri = blobClient.Uri,
@@ -169,11 +169,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
                 });
             }
 
-            return Result<BlobMetadata>.Failed();
+            return Result<BlobMetadata>.Fail();
         }
         catch (Exception ex)
         {
-            return Result<BlobMetadata>.Failed(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
     }
 
@@ -206,11 +206,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(blob);
             var response = await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
-            return response.Value.HasLegalHold ? Result.Succeeded() : Result.Failed();
+            return response.Value.HasLegalHold ? Result.Succeed() : Result.Fail();
         }
         catch (Exception ex)
         {
-            return Result.Failed(ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -222,11 +222,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(blob);
             var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
-            return Result<bool>.Succeeded(properties.Value?.HasLegalHold ?? false);
+            return Result<bool>.Succeed(properties.Value?.HasLegalHold ?? false);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -237,11 +237,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(blob);
             var stream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken );
-            return Result<Stream>.Succeeded(stream);
+            return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
         {
-            return Result<Stream>.Failed(ex);
+            return Result<Stream>.Fail(ex);
         }
     }
 
@@ -252,11 +252,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(blob);
             var stream = await blobClient.OpenWriteAsync(true, cancellationToken: cancellationToken);
-            return Result<Stream>.Succeeded(stream);
+            return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
         {
-            return Result<Stream>.Failed(ex);
+            return Result<Stream>.Fail(ex);
         }
     }
 }

@@ -34,12 +34,12 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         {
             _ = await _dataLakeServiceClient.CreateFileSystemAsync(StorageOptions.FileSystem, StorageOptions.PublicAccessType,
                 cancellationToken: cancellationToken);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message, e);
-            return Result.Failed(e);
+            return Result.Fail(e);
         }
     }
 
@@ -48,12 +48,12 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         try
         {
             _ = await _dataLakeServiceClient.DeleteFileSystemAsync(StorageOptions.FileSystem, cancellationToken: cancellationToken);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message, e);
-            return Result.Failed(e);
+            return Result.Fail(e);
         }
     }
 
@@ -65,11 +65,11 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
             var directoryClient = StorageClient.GetDirectoryClient(options.Directory);
             var fileClient = directoryClient.GetFileClient(options.FileName);
             _ = await fileClient.UploadAsync(stream);
-            return Result.Succeeded(string.Empty);
+            return Result.Succeed(string.Empty);
         }
         catch (Exception ex)
         {
-            return Result<string>.Failed(ex);
+            return Result<string>.Fail(ex);
         }
     }
 
@@ -94,11 +94,11 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
 
             await fileStream.FlushAsync(cancellationToken);
             fileStream.Close();
-            return Result<LocalFile>.Succeeded(localFile);
+            return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
         {
-            return Result<LocalFile>.Failed(ex);
+            return Result<LocalFile>.Fail(ex);
         }
     }
 
@@ -109,11 +109,11 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
             DataLakeDirectoryClient directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
             DataLakeFileClient fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
             await fileClient.DeleteAsync(cancellationToken: cancellationToken);
-            return Result.Succeeded(true);
+            return Result.Succeed(true);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -124,11 +124,11 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
             var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
             var fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
             var result = await fileClient.ExistsAsync(cancellationToken: cancellationToken);
-            return Result.Succeeded(result.Value);
+            return Result.Succeed(result.Value);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
@@ -141,19 +141,19 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
                 var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
                 var fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
                 _ = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
-                return Result.Succeeded(new BlobMetadata()
+                return Result.Succeed(new BlobMetadata()
                 {
                     Name = blob
                 });
             }
             catch (Exception ex)
             {
-                return Result<BlobMetadata>.Failed(ex);
+                return Result<BlobMetadata>.Fail(ex);
             }
         }
         catch (Exception ex)
         {
-            return Result<BlobMetadata>.Failed(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
     }
 
@@ -201,19 +201,19 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     public async Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
         _ = await StorageClient.CreateDirectoryAsync(directory, cancellationToken: cancellationToken);
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     public async Task<Result> RenameDirectory(string directory, string newDirectory, CancellationToken cancellationToken = default)
     {
         var directoryClient = StorageClient.GetDirectoryClient(directory);
         _ = await directoryClient.RenameAsync(newDirectory, cancellationToken: cancellationToken);
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 
     public async Task<Result> DeleteDirectory(string directory, CancellationToken cancellationToken = default)
     {
         _ = await StorageClient.DeleteDirectoryAsync(directory, cancellationToken: cancellationToken);
-        return Result.Succeeded();
+        return Result.Succeed();
     }
 }

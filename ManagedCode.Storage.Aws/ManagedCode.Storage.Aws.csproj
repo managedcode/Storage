@@ -21,9 +21,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="0.0.3" />
+        <PackageReference Include="ManagedCode.Communication" Version="0.0.6" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-        <PackageReference Include="AWSSDK.S3" Version="3.7.9.23" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.9.26" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
