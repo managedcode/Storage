@@ -162,16 +162,6 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return DownloadInternalAsync(file, blob, cancellationToken);
     }
 
-    public Task<Result<LocalFile>> DownloadAsync(BlobMetadata blob, CancellationToken cancellationToken = default)
-    {
-        return DownloadAsync(blob.Name, cancellationToken);
-    }
-
-    public Task<Result<LocalFile>> DownloadToAsync(BlobMetadata blob, string localPath, CancellationToken cancellationToken = default)
-    {
-        return DownloadToAsync(blob.Name, localPath, cancellationToken);
-    }
-
     public abstract Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default);
 
     public abstract Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default);

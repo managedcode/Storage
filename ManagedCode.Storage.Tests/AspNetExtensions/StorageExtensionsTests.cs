@@ -80,12 +80,12 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        var newFileName = await Storage.UploadToStorageAsync(formFile, new UploadToStorageOptions {UseRandomName = true});
-        var localFile = await Storage.DownloadAsync(newFileName);
+        var blobMetadata = await Storage.UploadToStorageAsync(formFile, new UploadToStorageOptions {UseRandomName = true});
+        var localFile = await Storage.DownloadAsync(blobMetadata.Name);
 
         // Assert
         localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.Value.FileName.Should().Be(newFileName.Name);
+        localFile.Value.FileName.Should().Be(blobMetadata.Name);
         localFile.Value.FileName.Should().NotBe(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);

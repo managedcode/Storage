@@ -39,8 +39,6 @@ public interface IStorage
 
     Task<Result<LocalFile>> DownloadAsync(string blob, CancellationToken cancellationToken = default);
     Task<Result<LocalFile>> DownloadToAsync(string blob, string localPath, CancellationToken cancellationToken = default);
-    Task<Result<LocalFile>> DownloadAsync(BlobMetadata blob, CancellationToken cancellationToken = default);
-    Task<Result<LocalFile>> DownloadToAsync(BlobMetadata blob, string localPath, CancellationToken cancellationToken = default);
 
     Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default);
 
