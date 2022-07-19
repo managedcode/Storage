@@ -79,32 +79,32 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return UploadAsync(file, new UploadOptions(), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(Stream stream, Action<UploadOptions> options, CancellationToken cancellationToken = default)
+    public Task<Result<string>> UploadAsync(Stream stream, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
-        var optionsInstance = new UploadOptions();
-        options.Invoke(optionsInstance);
-        return UploadAsync(stream, optionsInstance, cancellationToken);
+        var options = new UploadOptions();
+        action.Invoke(options);
+        return UploadAsync(stream, options, cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(byte[] data, Action<UploadOptions> options, CancellationToken cancellationToken = default)
+    public Task<Result<string>> UploadAsync(byte[] data, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
-        var optionsInstance = new UploadOptions();
-        options.Invoke(optionsInstance);
-        return UploadAsync(data, optionsInstance, cancellationToken);
+        var options = new UploadOptions();
+        action.Invoke(options);
+        return UploadAsync(data, options, cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(string content, Action<UploadOptions> options, CancellationToken cancellationToken = default)
+    public Task<Result<string>> UploadAsync(string content, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
-        var optionsInstance = new UploadOptions();
-        options.Invoke(optionsInstance);
-        return UploadAsync(content, optionsInstance, cancellationToken);
+        var options = new UploadOptions();
+        action.Invoke(options);
+        return UploadAsync(content, options, cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(FileInfo file, Action<UploadOptions> options, CancellationToken cancellationToken = default)
+    public Task<Result<string>> UploadAsync(FileInfo file, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
-        var optionsInstance = new UploadOptions();
-        options.Invoke(optionsInstance);
-        return UploadAsync(file, optionsInstance, cancellationToken);
+        var options = new UploadOptions();
+        action.Invoke(options);
+        return UploadAsync(file, options, cancellationToken);
     }
 
     public Task<Result<string>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
@@ -147,26 +147,92 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return UploadInternalAsync(file.OpenRead(), SetUploadOptions(options), cancellationToken);
     }
 
-    protected abstract Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default);
+    protected abstract Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, DownloadOptions? options = null,
+        CancellationToken cancellationToken = default);
 
 
     public Task<Result<LocalFile>> DownloadAsync(string blob, CancellationToken cancellationToken = default)
     {
         var file = new LocalFile();
-        return DownloadInternalAsync(file, blob, cancellationToken);
+        return DownloadInternalAsync(file, blob, null, cancellationToken);
     }
 
-    public Task<Result<LocalFile>> DownloadToAsync(string blob, string localPath, CancellationToken cancellationToken = default)
+    public Task<Result<LocalFile>> DownloadAsync(string blob, DownloadOptions options, CancellationToken cancellationToken = default)
     {
-        var file = new LocalFile(localPath);
-        return DownloadInternalAsync(file, blob, cancellationToken);
+        var file = new LocalFile();
+        return DownloadInternalAsync(file, blob, options, cancellationToken);
     }
 
-    public abstract Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default);
+    public Task<Result<LocalFile>> DownloadAsync(string blob, Action<DownloadOptions> action, CancellationToken cancellationToken = default)
+    {
+        LocalFile file = new();
+        DownloadOptions options = new();
 
-    public abstract Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default);
+        action.Invoke(options);
+        return DownloadInternalAsync(file, blob, options, cancellationToken);
+    }
 
-    public abstract Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result<bool>> DeleteInternalAsync(string blob, DeleteOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    public Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        return DeleteInternalAsync(blob, null, cancellationToken);
+    }
+
+    public Task<Result<bool>> DeleteAsync(string blob, DeleteOptions options, CancellationToken cancellationToken = default)
+    {
+        return DeleteInternalAsync(blob, options, cancellationToken);
+    }
+
+    public Task<Result<bool>> DeleteAsync(string blob, Action<DeleteOptions> action, CancellationToken cancellationToken = default)
+    {
+        DeleteOptions options = new();
+        action.Invoke(options);
+        return DeleteInternalAsync(blob, options, cancellationToken);
+    }
+
+    protected abstract Task<Result<bool>> ExistsInternalAsync(string blob, ExistOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    public Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        return ExistsInternalAsync(blob, null, cancellationToken);
+    }
+
+    public Task<Result<bool>> ExistsAsync(string blob, ExistOptions options, CancellationToken cancellationToken = default)
+    {
+        return ExistsInternalAsync(blob, options, cancellationToken);
+    }
+
+    public Task<Result<bool>> ExistsAsync(string blob, Action<ExistOptions> action, CancellationToken cancellationToken = default)
+    {
+        ExistOptions options = new();
+        action.Invoke(options);
+        return ExistsInternalAsync(blob, options, cancellationToken);
+    }
+
+    protected abstract Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(string blob, MetadataOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    public Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        return GetBlobMetadataInternalAsync(blob, null, cancellationToken);
+    }
+
+    public Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, MetadataOptions options, CancellationToken cancellationToken = default)
+    {
+        return GetBlobMetadataInternalAsync(blob, options, cancellationToken);
+    }
+
+    public Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, Action<MetadataOptions> action,
+        CancellationToken cancellationToken = default)
+    {
+        MetadataOptions options = new();
+        action.Invoke(options);
+        return GetBlobMetadataInternalAsync(blob, options, cancellationToken);
+    }
 
     public abstract IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default);
 

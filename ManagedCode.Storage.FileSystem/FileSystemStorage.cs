@@ -116,8 +116,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             return Result<BlobMetadata>.Succeed(result);
         }
 
-        return Result<BlobMetadata>.Fail
-            ();
+        return Result<BlobMetadata>.Fail();
     }
 
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
