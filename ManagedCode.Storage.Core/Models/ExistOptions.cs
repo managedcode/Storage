@@ -1,6 +1,5 @@
 namespace ManagedCode.Storage.Core.Models;
 
-public class ExistOptions
+public class ExistOptions : BaseOptions
 {
-    public string? Directory { get; set; }
 }

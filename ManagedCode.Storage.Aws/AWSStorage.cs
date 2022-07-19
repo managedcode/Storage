@@ -117,6 +117,18 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
+    protected override Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, DownloadOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    protected override Task<Result<bool>> DeleteInternalAsync(string blob, DeleteOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
     {
         try
@@ -136,10 +148,13 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
-    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> ExistsInternalAsync(string blob, ExistOptions? options = null,
+        CancellationToken cancellationToken = default)
     {
         try
         {
+            var key = options?.Directory ?? blob;
+
             await EnsureContainerExist();
             _ = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
             return Result<bool>.Succeed(true);
@@ -155,6 +170,12 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         {
             return Result<bool>.Fail(ex);
         }
+    }
+
+    protected override Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(string blob, MetadataOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)

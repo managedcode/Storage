@@ -1,6 +1,5 @@
 namespace ManagedCode.Storage.Core.Models;
 
-public class DeleteOptions
+public class DeleteOptions : BaseOptions
 {
-    public string? Directory { get; set; }
 }

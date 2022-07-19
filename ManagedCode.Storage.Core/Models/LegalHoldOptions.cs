@@ -1,6 +1,6 @@
 namespace ManagedCode.Storage.Core.Models;
 
-public class LegalHoldOptions
+public class LegalHoldOptions : BaseOptions
 {
     
 }

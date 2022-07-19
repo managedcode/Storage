@@ -36,23 +36,23 @@ public interface IStorage
 
 
     Task<Result<LocalFile>> DownloadAsync(string blob, CancellationToken cancellationToken = default);
-    Task<Result<LocalFile>> DownloadAsync(string blob, DownloadOptions options, CancellationToken cancellationToken = default);
-    Task<Result<LocalFile>> DownloadAsync(string blob, Action<DownloadOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default);
+    Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default);
 
 
     Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default);
-    Task<Result<bool>> DeleteAsync(string blob, DeleteOptions options, CancellationToken cancellationToken = default);
-    Task<Result<bool>> DeleteAsync(string blob, Action<DeleteOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<bool>> DeleteAsync(DeleteOptions options, CancellationToken cancellationToken = default);
+    Task<Result<bool>> DeleteAsync(Action<DeleteOptions> action, CancellationToken cancellationToken = default);
 
 
     Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default);
-    Task<Result<bool>> ExistsAsync(string blob, ExistOptions options, CancellationToken cancellationToken = default);
-    Task<Result<bool>> ExistsAsync(string blob, Action<ExistOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<bool>> ExistsAsync(ExistOptions options, CancellationToken cancellationToken = default);
+    Task<Result<bool>> ExistsAsync(Action<ExistOptions> action, CancellationToken cancellationToken = default);
 
 
     Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default);
-    Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, MetadataOptions options, CancellationToken cancellationToken = default);
-    Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, Action<MetadataOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> GetBlobMetadataAsync(MetadataOptions options, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> GetBlobMetadataAsync(Action<MetadataOptions> action, CancellationToken cancellationToken = default);
 
     // TODO: Check and add overloads with options
     IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default); //???????

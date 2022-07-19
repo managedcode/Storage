@@ -1,7 +1,6 @@
 namespace ManagedCode.Storage.Core.Models;
 
-public class DownloadOptions
+public class DownloadOptions : BaseOptions
 {
-    public string? Directory { get; set; }
     public string? LocalPath { get; set; }
 }
