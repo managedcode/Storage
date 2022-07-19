@@ -122,7 +122,7 @@ public class StorageExtensionsTests
         BlobMetadata blobMetadata = new() {Name = fileName};
 
         // Act
-        await Storage.UploadAsync(localFile.FileInfo, options => { options.FileName = fileName; });
+        await Storage.UploadAsync(localFile.FileInfo, options => { options.Blob = fileName; });
         var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
