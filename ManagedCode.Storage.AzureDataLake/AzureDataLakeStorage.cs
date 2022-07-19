@@ -63,7 +63,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         try
         {
             var directoryClient = StorageClient.GetDirectoryClient(options.Directory);
-            var fileClient = directoryClient.GetFileClient(options.FileName);
+            var fileClient = directoryClient.GetFileClient(options.Blob);
             _ = await fileClient.UploadAsync(stream);
             return Result.Succeed(string.Empty);
         }
@@ -73,19 +73,20 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
+
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            DataLakeDirectoryClient directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
-            DataLakeFileClient fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
+            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
+            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.Blob));
             var downloadResponse = await fileClient.ReadAsync(cancellationToken);
-            BinaryReader reader = new BinaryReader(downloadResponse.Value.Content);
-            FileStream fileStream = localFile.FileStream;
+            var reader = new BinaryReader(downloadResponse.Value.Content);
+            var fileStream = localFile.FileStream;
 
-            int bufferSize = 4096;
-            byte[] buffer = new byte[bufferSize];
+            var bufferSize = 4096;
+            var buffer = new byte[bufferSize];
             int count;
             while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
             {
@@ -102,12 +103,12 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
-            DataLakeDirectoryClient directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
-            DataLakeFileClient fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
+            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
+            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.Blob));
             await fileClient.DeleteAsync(cancellationToken: cancellationToken);
             return Result.Succeed(true);
         }
@@ -117,12 +118,13 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
-            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
-            var fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
+            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
+            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.Blob));
             var result = await fileClient.ExistsAsync(cancellationToken: cancellationToken);
             return Result.Succeed(result.Value);
         }
@@ -132,30 +134,27 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            try
+            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
+            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.Blob));
+            _ = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+            
+            // TODO: Check it
+            return Result.Succeed(new BlobMetadata()
             {
-                var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
-                var fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
-                _ = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
-                return Result.Succeed(new BlobMetadata()
-                {
-                    Name = blob
-                });
-            }
-            catch (Exception ex)
-            {
-                return Result<BlobMetadata>.Fail(ex);
-            }
+                Name = options.Blob
+            });
         }
         catch (Exception ex)
         {
             return Result<BlobMetadata>.Fail(ex);
         }
     }
+
 
     public async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string directory,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
