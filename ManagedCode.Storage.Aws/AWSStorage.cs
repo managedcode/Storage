@@ -64,7 +64,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         var putRequest = new PutObjectRequest
         {
             BucketName = StorageOptions.Bucket,
-            Key = options.FileName,
+            Key = options.Blob,
             InputStream = stream,
             AutoCloseStream = false,
             ContentType = options.MimeType,
@@ -86,28 +86,30 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             return Result<string>.Fail(ex);
         }
 
+        // TODO: check it
         return Result<string>.Succeed(
-            $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
+            $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.Blob)}");
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
         CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
+            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
 
             localFile.BlobMetadata = new BlobMetadata
             {
-                Name = blob,
-                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{blob}"),
+                Name = options.FullPath,
+                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
                 MimeType = response.Headers.ContentType,
                 Length = response.Headers.ContentLength,
                 Container = StorageOptions.Bucket,
             };
 
-            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, blob, null, cancellationToken));
+            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, options.FullPath, null,
+                cancellationToken));
 
             return Result<LocalFile>.Succeed(localFile);
         }
@@ -117,19 +119,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
-    protected override Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, DownloadOptions? options = null,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    protected override Task<Result<bool>> DeleteInternalAsync(string blob, DeleteOptions? options = null,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -137,7 +128,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             _ = await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
             {
                 BucketName = StorageOptions.Bucket,
-                Key = blob
+                Key = options.FullPath
             }, cancellationToken);
 
             return Result<bool>.Succeed(true);
@@ -148,15 +139,13 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
-    protected override async Task<Result<bool>> ExistsInternalAsync(string blob, ExistOptions? options = null,
-        CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
-            var key = options?.Directory ?? blob;
-
             await EnsureContainerExist();
-            _ = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
+            _ = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
             return Result<bool>.Succeed(true);
         }
         catch (AmazonS3Exception ex)
@@ -172,18 +161,14 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
-    protected override Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(string blob, MetadataOptions? options = null,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
+        CancellationToken cancellationToken = default)
     {
         var objectMetaRequest = new GetObjectMetadataRequest
         {
             BucketName = StorageOptions.Bucket,
-            Key = blob
+            Key = options.FullPath
         };
 
         try
@@ -193,8 +178,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             var metadata = new BlobMetadata
             {
-                Name = blob,
-                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{blob}"),
+                Name = options.FullPath,
+                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
                 MimeType = objectMetaResponse.Headers.ContentType,
                 Length = objectMetaResponse.Headers.ContentLength
             };

@@ -42,7 +42,7 @@ public static class StorageExtensions
             {
                 await storage.UploadAsync(stream, uploadOptions =>
                 {
-                    uploadOptions.FileName = options.UseRandomName ? $"{Guid.NewGuid():N}" : formFile.FileName;
+                    uploadOptions.Blob = options.UseRandomName ? $"{Guid.NewGuid():N}" : formFile.FileName;
                     uploadOptions.MimeType = formFile.ContentType;
                 }, cancellationToken);
             }
