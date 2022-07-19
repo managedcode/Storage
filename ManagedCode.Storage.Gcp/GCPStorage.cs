@@ -31,7 +31,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
             StorageClient = StorageClient.Create(options.GoogleCredential);
         }
     }
-    
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         if (StorageOptions.OriginalOptions != null)
@@ -60,7 +60,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
-            await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FileName, options.MimeType, stream, null,
+            await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, options.MimeType, stream, null,
                 cancellationToken);
             return Result<string>.Succeed(string.Empty);
         }
@@ -70,12 +70,15 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
+
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            await StorageClient.DownloadObjectAsync(StorageOptions.BucketOptions.Bucket, blob, localFile.FileStream, null, cancellationToken);
+            await StorageClient.DownloadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, localFile.FileStream, null,
+                cancellationToken);
+
             return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
@@ -84,11 +87,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
-            await StorageClient.DeleteObjectAsync(StorageOptions.BucketOptions.Bucket, blob, null, cancellationToken);
+            await StorageClient.DeleteObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
             return Result<bool>.Succeed(true);
         }
         catch (Exception ex)
@@ -97,11 +100,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
-            await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, null, cancellationToken);
+            await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
             return Result<bool>.Succeed(true);
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
@@ -114,11 +117,12 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            var obj = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, null, cancellationToken);
+            var obj = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
 
             return Result<BlobMetadata>.Succeed(new BlobMetadata
             {

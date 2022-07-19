@@ -43,7 +43,7 @@ public class StorageController : Controller
 
         await _storage.UploadAsync(localFile.FileStream, options =>
         {
-            options.FileName = formFile.Name;
+            options.Blob = formFile.Name;
             options.MimeType = options.MimeType;
         });
 
