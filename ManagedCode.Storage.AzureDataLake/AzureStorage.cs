@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Files.DataLake;
 using Azure.Storage.Files.DataLake.Models;
 using ManagedCode.Communication;
@@ -15,7 +10,6 @@ using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.Extensions.Logging;
-using PublicAccessType = Azure.Storage.Files.DataLake.Models.PublicAccessType;
 
 namespace ManagedCode.Storage.Azure;
 

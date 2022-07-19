@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -19,7 +17,7 @@ public interface IDataLakeStorage<T> : IStorage<T>
 }
 
 
-public interface IStorage<T> : IStorage
+public interface IStorage<out T> : IStorage
 {
     T StorageClient { get; }
 }
@@ -32,7 +30,7 @@ public class StorageOptions
 public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 {
     protected bool IsContainerCreated;
-    protected T StorageOptions;
+    protected readonly T StorageOptions;
 
     protected BaseStorage(T storageOptions)
     {

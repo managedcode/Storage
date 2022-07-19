@@ -2,7 +2,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
-using Azure.Storage.Files.DataLake;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 

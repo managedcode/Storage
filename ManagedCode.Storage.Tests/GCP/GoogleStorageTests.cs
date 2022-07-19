@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Google.Cloud.Storage.V1;
-using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
 using ManagedCode.Storage.Gcp;

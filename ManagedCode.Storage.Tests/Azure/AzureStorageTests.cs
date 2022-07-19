@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Threading.Tasks;
-using Azure.Storage;
-using Azure.Storage.Files.DataLake;
 using FluentAssertions;
-using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Azure.Options;
