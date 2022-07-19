@@ -6,7 +6,7 @@ using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 
-namespace ManagedCode.Storage.Azure;
+namespace ManagedCode.Storage.AzureDataLake;
 
 public interface IAzureDataLakeStorage : IStorage<DataLakeFileSystemClient>
 {

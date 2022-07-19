@@ -1,41 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Storage.Files.DataLake;
 using Azure.Storage.Files.DataLake.Models;
 using ManagedCode.Communication;
-using ManagedCode.Storage.Azure.Options;
+using ManagedCode.Storage.AzureDataLake.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace ManagedCode.Storage.Azure;
+namespace ManagedCode.Storage.AzureDataLake;
 
-public class AzureDataLake : BaseStorage<AzureDataLakeStorageOptions>, IAzureDataLakeStorage
+public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IAzureDataLakeStorage
 {
-    private readonly ILogger<AzureDataLake> _logger;
+    private readonly ILogger<AzureDataLakeStorage> _logger;
     private readonly DataLakeServiceClient _dataLakeServiceClient;
-    public AzureDataLake(ILogger<AzureDataLake> logger, AzureDataLakeStorageOptions options) : base(options)
+
+    public AzureDataLakeStorage(ILogger<AzureDataLakeStorage> logger, AzureDataLakeStorageOptions options) : base(options)
     {
         _logger = logger;
         _dataLakeServiceClient = new DataLakeServiceClient(options.ConnectionString);
         StorageClient = _dataLakeServiceClient.GetFileSystemClient(options.FileSystem);
     }
-    
+
     public DataLakeFileSystemClient StorageClient { get; }
-    
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await _dataLakeServiceClient.CreateFileSystemAsync(StorageOptions.FileSystem, StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
+            _ = await _dataLakeServiceClient.CreateFileSystemAsync(StorageOptions.FileSystem, StorageOptions.PublicAccessType,
+                cancellationToken: cancellationToken);
             return Result.Succeeded();
         }
         catch (Exception e)
         {
-            _logger.LogError(e.Message,e);
+            _logger.LogError(e.Message, e);
             return Result.Failed(e);
         }
     }
@@ -44,23 +47,24 @@ public class AzureDataLake : BaseStorage<AzureDataLakeStorageOptions>, IAzureDat
     {
         try
         {
-            var result = await _dataLakeServiceClient.DeleteFileSystemAsync(StorageOptions.FileSystem, cancellationToken: cancellationToken);
+            _ = await _dataLakeServiceClient.DeleteFileSystemAsync(StorageOptions.FileSystem, cancellationToken: cancellationToken);
             return Result.Succeeded();
         }
         catch (Exception e)
         {
-            _logger.LogError(e.Message,e);
+            _logger.LogError(e.Message, e);
             return Result.Failed(e);
         }
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            DataLakeDirectoryClient directoryClient = StorageClient.GetDirectoryClient(options.Directory);
-            DataLakeFileClient fileClient = directoryClient.GetFileClient(options.FileName);
-            var response = await fileClient.UploadAsync(stream);
+            var directoryClient = StorageClient.GetDirectoryClient(options.Directory);
+            var fileClient = directoryClient.GetFileClient(options.FileName);
+            _ = await fileClient.UploadAsync(stream);
             return Result.Succeeded(string.Empty);
         }
         catch (Exception ex)
@@ -69,7 +73,8 @@ public class AzureDataLake : BaseStorage<AzureDataLakeStorageOptions>, IAzureDat
         }
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -86,6 +91,7 @@ public class AzureDataLake : BaseStorage<AzureDataLakeStorageOptions>, IAzureDat
             {
                 await fileStream.WriteAsync(buffer, 0, count, cancellationToken);
             }
+
             await fileStream.FlushAsync(cancellationToken);
             fileStream.Close();
             return Result<LocalFile>.Succeeded(localFile);
@@ -94,7 +100,6 @@ public class AzureDataLake : BaseStorage<AzureDataLakeStorageOptions>, IAzureDat
         {
             return Result<LocalFile>.Failed(ex);
         }
-        
     }
 
     public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
@@ -133,9 +138,9 @@ public class AzureDataLake : BaseStorage<AzureDataLakeStorageOptions>, IAzureDat
         {
             try
             {
-                DataLakeDirectoryClient directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
-                DataLakeFileClient fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
-                var result = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+                var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(blob));
+                var fileClient = directoryClient.GetFileClient(Path.GetFileName(blob));
+                _ = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
                 return Result.Succeeded(new BlobMetadata()
                 {
                     Name = blob
@@ -152,57 +157,63 @@ public class AzureDataLake : BaseStorage<AzureDataLakeStorageOptions>, IAzureDat
         }
     }
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string directory, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string directory,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         IAsyncEnumerator<PathItem> enumerator = StorageClient.GetPathsAsync(directory).GetAsyncEnumerator(cancellationToken);
         await enumerator.MoveNextAsync();
-        PathItem item = enumerator.Current;
-        while (item != null)
+        var item = enumerator.Current;
+
+        while (item is not null)
         {
             yield return new BlobMetadata
             {
-                Name =  item.Name
+                Name = item.Name
             };
-            
+
             if (!await enumerator.MoveNextAsync())
             {
                 break;
             }
+
             item = enumerator.Current;
         }
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        // TODO: Implement
         yield return new BlobMetadata();
     }
 
     public override Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
+        // TODO: Implement
         return Result.Failed().AsTask();
     }
 
     public override Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
     {
+        // TODO: Implement
         return Result<bool>.Failed().AsTask();
     }
-    
+
     public async Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
-        var result = await StorageClient.CreateDirectoryAsync(directory, cancellationToken: cancellationToken);
+        _ = await StorageClient.CreateDirectoryAsync(directory, cancellationToken: cancellationToken);
         return Result.Succeeded();
     }
 
     public async Task<Result> RenameDirectory(string directory, string newDirectory, CancellationToken cancellationToken = default)
     {
-        DataLakeDirectoryClient directoryClient = StorageClient.GetDirectoryClient(directory);
-        var result =  await directoryClient.RenameAsync(newDirectory, cancellationToken: cancellationToken);
+        var directoryClient = StorageClient.GetDirectoryClient(directory);
+        _ = await directoryClient.RenameAsync(newDirectory, cancellationToken: cancellationToken);
         return Result.Succeeded();
     }
 
     public async Task<Result> DeleteDirectory(string directory, CancellationToken cancellationToken = default)
     {
-        var result = await StorageClient.DeleteDirectoryAsync(directory, cancellationToken: cancellationToken);
+        _ = await StorageClient.DeleteDirectoryAsync(directory, cancellationToken: cancellationToken);
         return Result.Succeeded();
     }
 }

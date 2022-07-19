@@ -99,6 +99,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         {
             await EnsureContainerExist();
             var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
+
+            // TODO: Check if this is the correct way to do this.
             localFile.BlobMetadata = new BlobMetadata
             {
                 //Metadata = response.Metadata.ToDictionary(k => k.Key, v => v.Value),
@@ -148,6 +150,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
+            // TODO: check exception
             return Result<bool>.Failed(ex);
         }
     }
@@ -181,7 +184,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var objectsRequest = new ListObjectsRequest
         {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.FileSystem;
 
-public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSystemStorage
+public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSystemStorage
 {
     private readonly string _path;
     private readonly Dictionary<string, FileStream> _lockedFiles = new();
@@ -21,7 +22,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
     {
         _path = StorageOptions.BaseFolder ?? Environment.CurrentDirectory;
     }
-    
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         await Task.Yield();
@@ -30,7 +31,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
         {
             Directory.CreateDirectory(_path);
         }
-        
+
         return Result.Succeeded();
     }
 
@@ -42,11 +43,12 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
         {
             Directory.Delete(_path);
         }
-        
+
         return Result.Succeeded();
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
+        CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
         var filePath = Path.Combine(_path, options.FileName);
@@ -60,7 +62,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
         return Result<string>.Succeeded(filePath);
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
+        CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
 
@@ -68,7 +71,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
 
         if (File.Exists(filePath))
         {
-            return  Result<LocalFile>.Succeeded(new LocalFile(filePath));
+            return Result<LocalFile>.Succeeded(new LocalFile(filePath));
         }
 
         return Result<LocalFile>.Failed();
@@ -85,7 +88,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
             File.Delete(filePath);
             return Result<bool>.Succeeded(true);
         }
-        
+
         return Result<bool>.Succeeded(false);
     }
 
@@ -106,26 +109,27 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
             {
                 Name = fileInfo.Name,
                 Uri = new Uri(Path.Combine(_path, blob)),
-                MimeType = MimeHelper.GetMimeType(fileInfo.Extension), 
+                MimeType = MimeHelper.GetMimeType(fileInfo.Extension),
                 Length = fileInfo.Length
             };
 
-            return Result<BlobMetadata?>.Succeeded(result);
+            return Result<BlobMetadata>.Succeeded(result);
         }
 
-        return Result<BlobMetadata?>.Failed();
+        return Result<BlobMetadata>.Failed();
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
         foreach (var file in Directory.EnumerateFiles(_path))
         {
             var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
 
-            if (blobMetadata is not null)
+            if (blobMetadata.IsSucceeded)
             {
-                yield return blobMetadata.Value;
+                yield return blobMetadata.Value!;
             }
         }
     }
@@ -137,10 +141,10 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
         {
             var file = await DownloadAsync(blob, cancellationToken);
 
-            if (file is null) 
+            if (file.IsError)
                 return Result.Failed();
 
-            var fileStream = File.OpenRead(file.Value.FilePath); // Opening with FileAccess.Read only
+            var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
             fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
 
             _lockedFiles.Add(blob, fileStream);
@@ -157,7 +161,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
                 _lockedFiles.Remove(blob);
             }
         }
-        
+
         return Result.Succeeded();
     }
 

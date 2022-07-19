@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -35,7 +36,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
     {
         try
         {
-            var info = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
+            _ = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
             await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
             IsContainerCreated = true;
             return Result.Succeeded();
@@ -51,7 +52,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
     {
         try
         {
-            var info = await StorageClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
+            _ = await StorageClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
             IsContainerCreated = false;
             return Result.Succeeded();
         }
@@ -74,7 +75,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         try
         {
             await EnsureContainerExist();
-            var info = await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
+            _ = await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
         }
         catch (RequestFailedException)
         {
@@ -176,7 +177,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
         await foreach (var item in StorageClient.GetBlobsAsync().AsPages().WithCancellation(cancellationToken))
