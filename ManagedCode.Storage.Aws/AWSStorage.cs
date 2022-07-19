@@ -75,7 +75,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         {
             await EnsureContainerExist();
             await StorageClient.PutObjectAsync(putRequest, cancellationToken);
-            var result = await StorageClient.PutObjectAsync(putRequest, cancellationToken);
+            _ = await StorageClient.PutObjectAsync(putRequest, cancellationToken);
         }
         catch (AmazonS3Exception)
         {
@@ -86,8 +86,6 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             return Result<string>.Failed(ex);
         }
 
-        //new Uri($"https://s3.amazonaws.com/{_bucket}/{entry.Key}")
-        //return Result<string>.Succeeded($"https://{StorageOptions.Bucket}.s3.{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
         return Result<string>.Succeeded(
             $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
     }
@@ -100,19 +98,16 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             await EnsureContainerExist();
             var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
 
-            // TODO: Check if this is the correct way to do this.
             localFile.BlobMetadata = new BlobMetadata
             {
-                //Metadata = response.Metadata.ToDictionary(k => k.Key, v => v.Value),
-                //MimeType = response.mi,
-                //Length = response.Value.ContentLength,
                 Name = blob,
-                //Uri = blobClient.Uri,
+                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{blob}"),
+                MimeType = response.Headers.ContentType,
+                Length = response.Headers.ContentLength,
                 Container = StorageOptions.Bucket,
-                //FullName = $"{blobClient.Uri}/{StorageOptions.Container}/{blob}"
             };
-            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, blob, null, cancellationToken));
 
+            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, blob, null, cancellationToken));
 
             return Result<LocalFile>.Succeeded(localFile);
         }
@@ -127,11 +122,12 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         try
         {
             await EnsureContainerExist();
-            var response = await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
+            _ = await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
             {
                 BucketName = StorageOptions.Bucket,
                 Key = blob
             }, cancellationToken);
+
             return Result<bool>.Succeeded(true);
         }
         catch (Exception ex)
@@ -145,12 +141,18 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         try
         {
             await EnsureContainerExist();
-            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
+            _ = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
             return Result<bool>.Succeeded(true);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            if (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return Result<bool>.Succeeded(false);
+
+            return Result<bool>.Failed(ex);
         }
         catch (Exception ex)
         {
-            // TODO: check exception
             return Result<bool>.Failed(ex);
         }
     }
@@ -228,7 +230,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             {
                 objectsRequest = null;
             }
-        } while (objectsRequest != null);
+        } while (objectsRequest is not null);
     }
 
 
