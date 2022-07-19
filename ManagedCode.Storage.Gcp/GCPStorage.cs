@@ -16,7 +16,8 @@ namespace ManagedCode.Storage.Gcp;
 
 public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 {
-    
+    public StorageClient StorageClient { get; }
+
     public GCPStorage(GCPStorageOptions options) : base(options)
     {
         System.Diagnostics.Contracts.Contract.Assert(!string.IsNullOrWhiteSpace(StorageOptions.BucketOptions?.Bucket));
@@ -30,19 +31,19 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
             StorageClient = StorageClient.Create(options.GoogleCredential);
         }
     }
-
-    public StorageClient StorageClient { get; }
     
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         if (StorageOptions.OriginalOptions != null)
         {
-            await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket, StorageOptions.OriginalOptions,
+            await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                StorageOptions.OriginalOptions,
                 cancellationToken);
         }
         else
         {
-            await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket, cancellationToken: cancellationToken);
+            await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                cancellationToken: cancellationToken);
         }
 
         return Result.Succeeded();
@@ -54,11 +55,13 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         return Result.Succeeded();
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FileName, options.MimeType, stream, null, cancellationToken);
+            await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FileName, options.MimeType, stream, null,
+                cancellationToken);
             return Result<string>.Succeeded(string.Empty);
         }
         catch (Exception ex)
@@ -67,7 +70,8 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -149,7 +153,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 
     public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
-        var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket,blob, cancellationToken: cancellationToken);
+        var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, cancellationToken: cancellationToken);
         storageObject.TemporaryHold = hasLegalHold;
 
         await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
@@ -161,6 +165,6 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, cancellationToken: cancellationToken);
 
-        return Result<bool>.Succeeded( storageObject.TemporaryHold ?? false);
+        return Result<bool>.Succeeded(storageObject.TemporaryHold ?? false);
     }
 }

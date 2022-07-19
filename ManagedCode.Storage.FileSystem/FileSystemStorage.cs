@@ -18,7 +18,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
     private readonly string _path;
     private readonly Dictionary<string, FileStream> _lockedFiles = new();
 
-    public FileSystemStorage(ILogger<FileSystemStorage> logger, FileSystemStorageOptions options) : base(options)
+    public FileSystemStorage(FileSystemStorageOptions options) : base(options)
     {
         _path = StorageOptions.BaseFolder ?? Environment.CurrentDirectory;
     }

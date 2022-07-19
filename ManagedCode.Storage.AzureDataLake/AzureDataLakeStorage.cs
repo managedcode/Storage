@@ -160,7 +160,8 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     public async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string directory,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        IAsyncEnumerator<PathItem> enumerator = StorageClient.GetPathsAsync(directory, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
+        IAsyncEnumerator<PathItem> enumerator =
+            StorageClient.GetPathsAsync(directory, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
         await enumerator.MoveNextAsync();
         var item = enumerator.Current;
 
@@ -180,7 +181,8 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         // TODO: Implement
         yield return new BlobMetadata();
@@ -188,24 +190,12 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
 
     public override Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
     {
-        // TODO: Implement
-        return Result.Failed().AsTask();
+        throw new NotSupportedException("Legal hold is not supported by Data Lake Storage");
     }
 
     public override Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
     {
-        // TODO: Implement
-        return Result<bool>.Failed().AsTask();
-    }
-
-    public Task<Result<Stream>> OpenReadStreamAsync(string blob, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<Stream>> OpenWriteStreamAsync(string blob, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Legal hold is not supported by Data Lake Storage");
     }
 
     public async Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)

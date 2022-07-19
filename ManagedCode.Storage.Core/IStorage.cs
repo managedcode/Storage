@@ -8,6 +8,11 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core;
 
+public interface IStorage<out T> : IStorage
+{
+    T StorageClient { get; }
+}
+
 public interface IStorage
 {
     Task<Result> CreateContainerAsync(CancellationToken cancellationToken = default);

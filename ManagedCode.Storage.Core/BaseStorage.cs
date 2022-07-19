@@ -9,11 +9,6 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core;
 
-public interface IStorage<out T> : IStorage
-{
-    T StorageClient { get; }
-}
-
 public class StorageOptions
 {
     public bool CreateContainerIfNotExists { get; set; } = true;
@@ -27,7 +22,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
     protected BaseStorage(T storageOptions)
     {
         System.Diagnostics.Contracts.Contract.Assert(storageOptions is not null);
-        StorageOptions = storageOptions;
+        StorageOptions = storageOptions!;
     }
 
     protected Task<Result> EnsureContainerExist()
