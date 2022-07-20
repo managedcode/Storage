@@ -240,7 +240,8 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return GetBlobMetadataInternalAsync(options, cancellationToken);
     }
 
-    public abstract IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default);
+    public abstract IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null, CancellationToken cancellationToken = default);
+
 
     protected abstract Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
         CancellationToken cancellationToken = default);

@@ -12,6 +12,4 @@ public interface IAzureDataLakeStorage : IStorage<DataLakeFileSystemClient>
 {
     Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default);
     Task<Result> RenameDirectory(string directory, string newDirectory, CancellationToken cancellationToken = default);
-
-    public abstract IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string directory, CancellationToken cancellationToken = default);
 }

@@ -202,18 +202,18 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        await foreach (var item in StorageClient.GetBlobsAsync(cancellationToken: cancellationToken).AsPages().WithCancellation(cancellationToken))
+        await foreach (var item in StorageClient.GetBlobsAsync(prefix: directory, cancellationToken: cancellationToken).AsPages()
+                           .WithCancellation(cancellationToken))
         {
             foreach (var blobItem in item.Values)
             {
                 var blobMetadata = new BlobMetadata
                 {
                     Name = blobItem.Name,
-                    //HasLegalHold = blobItem.Properties.HasLegalHold,
                     Container = StorageOptions.Container,
                     Length = blobItem.Properties.ContentLength.Value,
                     Metadata = blobItem.Metadata.ToDictionary(k => k.Key, v => v.Value),

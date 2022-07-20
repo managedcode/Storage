@@ -156,7 +156,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     }
 
 
-    public async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string directory,
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         IAsyncEnumerator<PathItem> enumerator =
@@ -178,13 +178,6 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
 
             item = enumerator.Current;
         }
-    }
-
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        // TODO: Implement
-        yield return new BlobMetadata();
     }
 
     protected override Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,

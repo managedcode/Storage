@@ -219,13 +219,13 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var objectsRequest = new ListObjectsRequest
         {
             BucketName = StorageOptions.Bucket,
-            Prefix = string.Empty,
+            Prefix = directory,
             MaxKeys = 1_000_000
         };
 

@@ -186,9 +186,9 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    public override IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
+    public override IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null, CancellationToken cancellationToken = default)
     {
-        return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, string.Empty,
+        return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
                 new ListObjectsOptions {Projection = Projection.Full})
             .Select(
                 x => new BlobMetadata

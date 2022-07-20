@@ -57,9 +57,7 @@ public interface IStorage
     Task<Result<BlobMetadata>> GetBlobMetadataAsync(MetadataOptions options, CancellationToken cancellationToken = default);
     Task<Result<BlobMetadata>> GetBlobMetadataAsync(Action<MetadataOptions> action, CancellationToken cancellationToken = default);
 
-    // TODO: Check and add overloads with options
-    IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default); //???????
-
+    IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null, CancellationToken cancellationToken = default);
 
     Task<Result> SetLegalHoldAsync(bool hasLegalHold, string blob, CancellationToken cancellationToken = default);
     Task<Result> SetLegalHoldAsync(bool hasLegalHold, LegalHoldOptions options, CancellationToken cancellationToken = default);

@@ -152,11 +152,13 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result<BlobMetadata>.Fail();
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        foreach (var file in Directory.EnumerateFiles(_path))
+
+        var path = directory is null ? _path : Path.Combine(_path, directory);
+        foreach (var file in Directory.EnumerateFiles(path))
         {
             var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
 
