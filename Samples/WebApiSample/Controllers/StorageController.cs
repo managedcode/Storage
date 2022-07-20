@@ -19,19 +19,21 @@ public class StorageController : Controller
     #region Upload files using the extension for storage from Managed Code.Storage.AspNet Extensions;
 
     [HttpPost("file")]
-    public async Task<ActionResult<BlobMetadata>> UploadFile(IFormFile formFile)
+    public async Task<ActionResult<string>> UploadFile(IFormFile formFile)
     {
-        var metadata = await _storage.UploadToStorageAsync(formFile);
+        var result = await _storage.UploadToStorageAsync(formFile);
 
-        return metadata;
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : BadRequest(result.Error?.Message);
     }
 
     [HttpPost("files")]
-    public async Task<ActionResult<IEnumerable<BlobMetadata>>> UploadFiles(IFormFileCollection formFileCollection)
+    public async Task<ActionResult<IEnumerable<string>>> UploadFiles(IFormFileCollection formFileCollection)
     {
-        var metadata = await _storage.UploadToStorageAsync(formFileCollection).ToListAsync();
+        var results = await _storage.UploadToStorageAsync(formFileCollection).ToListAsync();
 
-        return metadata;
+        return Ok(results.Where(r => r.IsSuccess).Select(r => r.Value));
     }
 
     [HttpPost("localFile")]

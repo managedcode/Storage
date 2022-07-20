@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.AspNetExtensions;
-using ManagedCode.Storage.AspNetExtensions.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Extensions;
@@ -65,7 +64,7 @@ public class StorageExtensionsTests
         var localFile = await Storage.DownloadAsync(fileName);
 
         // Assert
-        localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
+        localFile.Value.FileInfo.Length.Should().Be(formFile.Length);
         localFile.Value.FileName.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
@@ -80,12 +79,13 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        var blobMetadata = await Storage.UploadToStorageAsync(formFile, new UploadToStorageOptions {UseRandomName = true});
-        var localFile = await Storage.DownloadAsync(blobMetadata.Name);
+        var result = await Storage.UploadToStorageAsync(formFile);
+        var localFile = await Storage.DownloadAsync(result.Value);
 
         // Assert
-        localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.Value.FileName.Should().Be(blobMetadata.Name);
+        result.IsSuccess.Should().BeTrue();
+        localFile.Value.FileInfo.Length.Should().Be(formFile.Length);
+        localFile.Value.FileName.Should().Be(fileName);
         localFile.Value.FileName.Should().NotBe(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);

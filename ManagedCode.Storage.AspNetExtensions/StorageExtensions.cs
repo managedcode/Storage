@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.MimeTypes;
-using ManagedCode.Storage.AspNetExtensions.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
@@ -18,41 +15,25 @@ public static class StorageExtensions
 {
     private const int MinLengthForLargeFile = 256 * 1024;
 
-    public static async Task<BlobMetadata> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadToStorageOptions? options = null,
+    public static async Task<Result<string>> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        options ??= new UploadToStorageOptions();
-
-        var extension = Path.GetExtension(formFile.FileName);
-
-        BlobMetadata blobMetadata = new()
-        {
-            Name = options.UseRandomName ? $"{Guid.NewGuid():N}.{extension}" : formFile.FileName,
-            MimeType = formFile.ContentType,
-        };
+        options ??= new UploadOptions(mimeType: formFile.ContentType);
 
         if (formFile.Length > MinLengthForLargeFile)
         {
             var localFile = await formFile.ToLocalFileAsync(cancellationToken);
-            await storage.UploadAsync(localFile.FileInfo, cancellationToken);
-        }
-        else
-        {
-            using (var stream = formFile.OpenReadStream())
-            {
-                await storage.UploadAsync(stream, uploadOptions =>
-                {
-                    uploadOptions.Blob = options.UseRandomName ? $"{Guid.NewGuid():N}" : formFile.FileName;
-                    uploadOptions.MimeType = formFile.ContentType;
-                }, cancellationToken);
-            }
+            return await storage.UploadAsync(localFile.FileInfo, cancellationToken);
         }
 
-        return blobMetadata;
+        using (var stream = formFile.OpenReadStream())
+        {
+            return await storage.UploadAsync(stream, options, cancellationToken);
+        }
     }
 
-    public static async IAsyncEnumerable<BlobMetadata> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
-        UploadToStorageOptions? options = null,
+    public static async IAsyncEnumerable<Result<string>> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
+        UploadOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         foreach (var formFile in formFiles)
