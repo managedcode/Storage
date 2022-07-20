@@ -211,7 +211,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         return Result.Succeed();
     }
 
-    public async Task<Result> DeleteDirectory(string directory, CancellationToken cancellationToken = default)
+    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
     {
         _ = await StorageClient.DeleteDirectoryAsync(directory, cancellationToken: cancellationToken);
         return Result.Succeed();

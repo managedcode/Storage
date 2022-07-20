@@ -19,6 +19,9 @@ public interface IStorage
     Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default);
 
 
+    Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default);
+
+
     Task<Result<string>> UploadAsync(Stream stream, CancellationToken cancellationToken = default);
     Task<Result<string>> UploadAsync(byte[] data, CancellationToken cancellationToken = default);
     Task<Result<string>> UploadAsync(string content, CancellationToken cancellationToken = default);

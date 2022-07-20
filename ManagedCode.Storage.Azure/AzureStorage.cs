@@ -63,6 +63,19 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
+    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        var blobs = StorageClient.GetBlobs(prefix: directory, cancellationToken: cancellationToken);
+
+        foreach (var blob in blobs)
+        {
+            var blobClient = StorageClient.GetBlobClient(blob.Name);
+            _ = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+        }
+
+        return Result.Succeed();
+    }
+
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {
@@ -185,7 +198,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        await foreach (var item in StorageClient.GetBlobsAsync().AsPages().WithCancellation(cancellationToken))
+        await foreach (var item in StorageClient.GetBlobsAsync(cancellationToken: cancellationToken).AsPages().WithCancellation(cancellationToken))
         {
             foreach (var blobItem in item.Values)
             {

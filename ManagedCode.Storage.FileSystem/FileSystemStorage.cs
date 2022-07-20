@@ -46,6 +46,17 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result.Succeed();
     }
 
+    protected override Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        var path = Path.Combine(_path, directory);
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, true);
+        }
+
+        return Result.Succeed().AsTask();
+    }
+
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {

@@ -58,6 +58,25 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
     }
 
+    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        var objectsRequest = new ListObjectsRequest
+        {
+            BucketName = StorageOptions.Bucket,
+            Prefix = directory,
+            MaxKeys = 1_000_000
+        };
+
+        var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
+
+        foreach (var entry in objectsResponse.S3Objects)
+        {
+            await StorageClient.DeleteAsync(StorageOptions.Bucket, entry.Key, null, cancellationToken: cancellationToken);
+        }
+
+        return Result.Succeed();
+    }
+
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {

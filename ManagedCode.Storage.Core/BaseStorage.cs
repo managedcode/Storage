@@ -58,6 +58,16 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     protected abstract Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default);
     public abstract Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default);
+
+    public async Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        _ = await DeleteDirectoryInternalAsync(directory, cancellationToken);
+
+        return Result.Succeed();
+    }
+
     protected abstract Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default);
 
     public Task<Result<string>> UploadAsync(Stream content, CancellationToken cancellationToken = default)
