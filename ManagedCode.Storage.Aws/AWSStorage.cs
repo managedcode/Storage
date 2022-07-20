@@ -62,18 +62,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            var objectsRequest = new ListObjectsRequest
-            {
-                BucketName = StorageOptions.Bucket,
-                Prefix = directory,
-                MaxKeys = 1_000_000
-            };
+            var items = GetBlobMetadataListAsync(directory, cancellationToken);
 
-            var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
-
-            foreach (var entry in objectsResponse.S3Objects)
+            await foreach (var item in items.WithCancellation(cancellationToken))
             {
-                await StorageClient.DeleteAsync(StorageOptions.Bucket, entry.Key, null, cancellationToken: cancellationToken);
+                await StorageClient.DeleteAsync(StorageOptions.Bucket, item.FullName, null, cancellationToken: cancellationToken);
             }
 
             return Result.Succeed();

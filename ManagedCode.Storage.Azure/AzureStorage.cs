@@ -72,7 +72,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             foreach (var blob in blobs)
             {
                 var blobClient = StorageClient.GetBlobClient(blob.Name);
-                _ = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+                await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
             }
 
             return Result.Succeed();
