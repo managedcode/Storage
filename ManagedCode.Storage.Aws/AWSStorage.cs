@@ -91,7 +91,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         var putRequest = new PutObjectRequest
         {
             BucketName = StorageOptions.Bucket,
-            Key = options.Blob,
+            Key = options.FullPath,
             InputStream = stream,
             AutoCloseStream = false,
             ContentType = options.MimeType,

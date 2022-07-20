@@ -41,10 +41,6 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         if (!string.IsNullOrWhiteSpace(options.FileNamePrefix))
             options.Blob = options.FileNamePrefix + options.Blob;
 
-        // TODO: check it
-        if (!string.IsNullOrWhiteSpace(options.Directory))
-            options.Blob = new Uri(Path.Combine(options.Directory, options.Blob)).ToString();
-
         return options;
     }
 
@@ -63,10 +59,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public async Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
-        // TODO: check it
-        _ = await DeleteDirectoryInternalAsync(directory, cancellationToken);
-
-        return Result.Succeed();
+        return await DeleteDirectoryInternalAsync(directory, cancellationToken);
     }
 
     protected abstract Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default);
