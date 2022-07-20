@@ -11,16 +11,20 @@ using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Gcp.Options;
+using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Gcp;
 
 public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 {
+    private readonly ILogger<GCPStorage> _logger;
     public StorageClient StorageClient { get; }
 
-    public GCPStorage(GCPStorageOptions options) : base(options)
+    public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage> logger) : base(options)
     {
-        System.Diagnostics.Contracts.Contract.Assert(!string.IsNullOrWhiteSpace(StorageOptions.BucketOptions?.Bucket));
+        _logger = logger;
+
+        System.Diagnostics.Contracts.Contract.Assert(!string.IsNullOrWhiteSpace(StorageOptions.BucketOptions.Bucket));
 
         if (options.StorageClientBuilder != null)
         {
@@ -34,25 +38,41 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
-        if (StorageOptions.OriginalOptions != null)
+        try
         {
-            await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
-                StorageOptions.OriginalOptions,
-                cancellationToken);
-        }
-        else
-        {
-            await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
-                cancellationToken: cancellationToken);
-        }
+            if (StorageOptions.OriginalOptions != null)
+            {
+                await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                    StorageOptions.OriginalOptions,
+                    cancellationToken);
+            }
+            else
+            {
+                await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                    cancellationToken: cancellationToken);
+            }
 
-        return Result.Succeed();
+            return Result.Succeed();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return Result<string>.Fail(ex);
+        }
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
-        await StorageClient.DeleteBucketAsync(StorageOptions.BucketOptions.Bucket, null, cancellationToken);
-        return Result.Succeed();
+        try
+        {
+            await StorageClient.DeleteBucketAsync(StorageOptions.BucketOptions.Bucket, null, cancellationToken);
+            return Result.Succeed();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return Result<string>.Fail(ex);
+        }
     }
 
     protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
@@ -71,6 +91,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex.Message, ex);
             return Result<string>.Fail(ex);
         }
     }
@@ -86,6 +107,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex.Message, ex);
             return Result<string>.Fail(ex);
         }
     }
@@ -103,6 +125,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex.Message, ex);
             return Result<LocalFile>.Fail(ex);
         }
     }
@@ -116,6 +139,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -129,10 +153,12 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
         {
+            _logger.LogError(ex.Message, ex);
             return Result<bool>.Succeed(false);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -155,6 +181,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -178,20 +205,36 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
         CancellationToken cancellationToken = default)
     {
-        var storageObject =
-            await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
-        storageObject.TemporaryHold = hasLegalHold;
+        try
+        {
+            var storageObject =
+                await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
+            storageObject.TemporaryHold = hasLegalHold;
 
-        await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
+            await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
 
-        return Result.Succeed();
+            return Result.Succeed();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return Result<string>.Fail(ex);
+        }
     }
 
     protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
-        var storageObject =
-            await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
+        try
+        {
+            var storageObject =
+                await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
 
-        return Result<bool>.Succeed(storageObject.TemporaryHold ?? false);
+            return Result<bool>.Succeed(storageObject.TemporaryHold ?? false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return Result<bool>.Fail(ex);
+        }
     }
 }
