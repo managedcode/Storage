@@ -40,7 +40,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
         if (Directory.Exists(_path))
         {
-            Directory.Delete(_path);
+            Directory.Delete(_path, true);
         }
 
         return Result.Succeed();
