@@ -60,21 +60,29 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
     protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
     {
-        var objectsRequest = new ListObjectsRequest
+        try
         {
-            BucketName = StorageOptions.Bucket,
-            Prefix = directory,
-            MaxKeys = 1_000_000
-        };
+            var objectsRequest = new ListObjectsRequest
+            {
+                BucketName = StorageOptions.Bucket,
+                Prefix = directory,
+                MaxKeys = 1_000_000
+            };
 
-        var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
+            var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
 
-        foreach (var entry in objectsResponse.S3Objects)
-        {
-            await StorageClient.DeleteAsync(StorageOptions.Bucket, entry.Key, null, cancellationToken: cancellationToken);
+            foreach (var entry in objectsResponse.S3Objects)
+            {
+                await StorageClient.DeleteAsync(StorageOptions.Bucket, entry.Key, null, cancellationToken: cancellationToken);
+            }
+
+            return Result.Succeed();
         }
-
-        return Result.Succeed();
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message, e);
+            return Result.Fail(e);
+        }
     }
 
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,

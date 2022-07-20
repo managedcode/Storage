@@ -63,6 +63,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public async Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
+        // TODO: check it
         _ = await DeleteDirectoryInternalAsync(directory, cancellationToken);
 
         return Result.Succeed();

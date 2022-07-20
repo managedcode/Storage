@@ -65,15 +65,23 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 
     protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
     {
-        var blobs = StorageClient.GetBlobs(prefix: directory, cancellationToken: cancellationToken);
-
-        foreach (var blob in blobs)
+        try
         {
-            var blobClient = StorageClient.GetBlobClient(blob.Name);
-            _ = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
-        }
+            var blobs = StorageClient.GetBlobs(prefix: directory, cancellationToken: cancellationToken);
 
-        return Result.Succeed();
+            foreach (var blob in blobs)
+            {
+                var blobClient = StorageClient.GetBlobClient(blob.Name);
+                _ = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+            }
+
+            return Result.Succeed();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message, e);
+            return Result.Fail(e);
+        }
     }
 
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,

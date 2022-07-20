@@ -55,6 +55,26 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         return Result.Succeed();
     }
 
+    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var blobs = StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, string.Empty,
+                new ListObjectsOptions {Projection = Projection.Full}).Select(x => x);
+
+            await foreach (var blob in blobs.WithCancellation(cancellationToken))
+            {
+                await StorageClient.DeleteObjectAsync(blob, cancellationToken: cancellationToken);
+            }
+
+            return Result.Succeed();
+        }
+        catch (Exception ex)
+        {
+            return Result<string>.Fail(ex);
+        }
+    }
+
     protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {
