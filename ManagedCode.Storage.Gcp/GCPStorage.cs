@@ -155,9 +155,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
             );
     }
 
-    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
-        var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, cancellationToken: cancellationToken);
+        var storageObject =
+            await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
         storageObject.TemporaryHold = hasLegalHold;
 
         await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
@@ -165,9 +167,10 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         return Result.Succeed();
     }
 
-    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
-        var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, blob, cancellationToken: cancellationToken);
+        var storageObject =
+            await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
 
         return Result<bool>.Succeed(storageObject.TemporaryHold ?? false);
     }

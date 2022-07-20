@@ -239,8 +239,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         } while (objectsRequest is not null);
     }
 
-
-    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -253,7 +253,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             PutObjectLegalHoldRequest request = new()
             {
                 BucketName = StorageOptions.Bucket,
-                Key = blob,
+                Key = options.FullPath,
                 LegalHold = new ObjectLockLegalHold
                 {
                     Status = status,
@@ -270,7 +270,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
     }
 
 
-    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -278,7 +278,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             GetObjectLegalHoldRequest request = new()
             {
                 BucketName = StorageOptions.Bucket,
-                Key = blob
+                Key = options.FullPath
             };
 
             var response = await StorageClient.GetObjectLegalHoldAsync(request, cancellationToken);

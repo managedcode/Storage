@@ -142,7 +142,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
             var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
             var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.Blob));
             _ = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
-            
+
             // TODO: Check it
             return Result.Succeed(new BlobMetadata()
             {
@@ -187,12 +187,13 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         yield return new BlobMetadata();
     }
 
-    public override Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
+    protected override Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException("Legal hold is not supported by Data Lake Storage");
     }
 
-    public override Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+    protected override Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException("Legal hold is not supported by Data Lake Storage");
     }

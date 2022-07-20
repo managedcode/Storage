@@ -9,7 +9,6 @@ using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
-using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.FileSystem;
 
@@ -157,12 +156,15 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         }
     }
 
-    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
+        var filePath = GetPathFromOptions(options);
+
         await EnsureContainerExist();
-        if (hasLegalHold && !_lockedFiles.ContainsKey(blob))
+        if (hasLegalHold && !_lockedFiles.ContainsKey(filePath))
         {
-            var file = await DownloadAsync(blob, cancellationToken);
+            var file = await DownloadAsync(filePath, cancellationToken);
 
             if (file.IsError)
                 return Result.Fail();
@@ -170,28 +172,30 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
             fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
 
-            _lockedFiles.Add(blob, fileStream);
+            _lockedFiles.Add(filePath, fileStream);
 
             return Result.Succeed();
         }
 
         if (!hasLegalHold)
         {
-            if (_lockedFiles.ContainsKey(blob))
+            if (_lockedFiles.ContainsKey(filePath))
             {
-                _lockedFiles[blob].Unlock(0, _lockedFiles[blob].Length);
-                _lockedFiles[blob].Dispose();
-                _lockedFiles.Remove(blob);
+                _lockedFiles[filePath].Unlock(0, _lockedFiles[filePath].Length);
+                _lockedFiles[filePath].Dispose();
+                _lockedFiles.Remove(filePath);
             }
         }
 
         return Result.Succeed();
     }
 
-    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
+        var filePath = GetPathFromOptions(options);
         await EnsureContainerExist();
-        return Result<bool>.Succeed(_lockedFiles.ContainsKey(blob));
+        return Result<bool>.Succeed(_lockedFiles.ContainsKey(filePath));
     }
 
     private void EnsureDirectoryExist(string directory)

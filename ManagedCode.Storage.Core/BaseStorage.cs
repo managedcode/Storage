@@ -238,7 +238,44 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public abstract IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default);
 
-    public abstract Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default);
+    protected abstract Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default);
 
-    public abstract Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default);
+    public Task<Result> SetLegalHoldAsync(bool hasLegalHold, string blob, CancellationToken cancellationToken = default)
+    {
+        LegalHoldOptions options = new() {Blob = blob};
+        return SetLegalHoldInternalAsync(hasLegalHold, options, cancellationToken);
+    }
+
+    public Task<Result> SetLegalHoldAsync(bool hasLegalHold, LegalHoldOptions options, CancellationToken cancellationToken = default)
+    {
+        return SetLegalHoldInternalAsync(hasLegalHold, options, cancellationToken);
+    }
+
+    public Task<Result> SetLegalHoldAsync(bool hasLegalHold, Action<LegalHoldOptions> action, CancellationToken cancellationToken = default)
+    {
+        LegalHoldOptions options = new();
+        action.Invoke(options);
+        return SetLegalHoldInternalAsync(hasLegalHold, options, cancellationToken);
+    }
+
+    protected abstract Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default);
+
+    public Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+    {
+        LegalHoldOptions options = new() {Blob = blob};
+        return HasLegalHoldInternalAsync(options, cancellationToken);
+    }
+
+    public Task<Result<bool>> HasLegalHoldAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
+    {
+        return HasLegalHoldInternalAsync(options, cancellationToken);
+    }
+
+    public Task<Result<bool>> HasLegalHoldAsync(Action<LegalHoldOptions> action, CancellationToken cancellationToken = default)
+    {
+        LegalHoldOptions options = new();
+        action.Invoke(options);
+        return HasLegalHoldInternalAsync(options, cancellationToken);
+    }
 }

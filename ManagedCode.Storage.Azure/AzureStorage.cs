@@ -204,12 +204,13 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
-    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var blobClient = StorageClient.GetBlobClient(blob);
+            var blobClient = StorageClient.GetBlobClient(options.FullPath);
             var response = await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
             return response.Value.HasLegalHold ? Result.Succeed() : Result.Fail();
         }
@@ -219,12 +220,12 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
-    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var blobClient = StorageClient.GetBlobClient(blob);
+            var blobClient = StorageClient.GetBlobClient(options.FullPath);
             var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
             return Result<bool>.Succeed(properties.Value?.HasLegalHold ?? false);
         }
