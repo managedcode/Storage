@@ -112,13 +112,12 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
         var filePath = GetPathFromOptions(options);
 
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-            return Result<bool>.Succeed(true);
-        }
+        if (!File.Exists(filePath)) 
+            return Result<bool>.Fail();
+        
+        File.Delete(filePath);
+        return Result<bool>.Succeed(true);
 
-        return Result<bool>.Succeed(false);
     }
 
 
