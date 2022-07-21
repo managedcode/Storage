@@ -25,8 +25,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
     public AWSStorage(ILogger<AWSStorage> logger, AWSStorageOptions options) : base(options)
     {
         _logger = logger;
-        var config = options.OriginalOptions ?? new AmazonS3Config();
-        StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
+        StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), options.OriginalOptions);
     }
 
 
@@ -106,9 +105,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             return Result<string>.Fail(ex);
         }
 
-        // TODO: check it
         return Result<string>.Succeed(
-            $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
+            $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions!.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
     }
 
     protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
