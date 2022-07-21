@@ -182,6 +182,23 @@ public abstract class StorageBaseTests
 
     #endregion
 
+    [Fact]
+    public async Task DeleteDirectory_ShouldBeSuccess()
+    {
+        // Arrange
+        var directory = "test-directory";
+        await UploadTestFileListAsync(directory);
+
+        // Act
+        var result = await Storage.DeleteDirectoryAsync(directory);
+        var blobs = await Storage.GetBlobMetadataListAsync(directory).ToListAsync();
+
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        blobs.Count.Should().Be(0);
+    }
+
     #region Upload
 
     [Fact]
@@ -311,7 +328,7 @@ public abstract class StorageBaseTests
     #region Exist
 
     [Fact]
-    public async Task ExistsAsync_WithoutOptions()
+    public async Task ExistsAsync_WithoutOptions_ShouldBeTrue()
     {
         // Arrange
         var fileInfo = await UploadTestFileAsync();
@@ -326,8 +343,120 @@ public abstract class StorageBaseTests
         await Storage.DeleteAsync(fileInfo.Name);
     }
 
+
+    [Fact]
+    public async Task ExistsAsync_WithOptions_InDirectory_ShouldBeTrue()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var fileInfo = await UploadTestFileAsync(directory);
+        ExistOptions options = new() {Blob = fileInfo.Name, Directory = directory};
+
+        // Act
+        var result = await Storage.ExistsAsync(options);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+
+        await Storage.DeleteAsync(fileInfo.Name);
+    }
+
+    [Fact]
+    public async Task ExistsAsync_IfFileDontExist_WithoutOptions_ShouldBeFalse()
+    {
+        // Act
+        var result = await Storage.ExistsAsync(Guid.NewGuid().ToString());
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeFalse();
+    }
+
+
+    [Fact]
+    public async Task ExistsAsync_IfFileFileExistInAnotherDirectory_WithOptions_ShouldBeFalse()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var fileInfo = await UploadTestFileAsync(directory);
+        ExistOptions options = new() {Blob = fileInfo.Name, Directory = "another-directory"};
+
+        // Act
+        var result = await Storage.ExistsAsync(options);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeFalse();
+
+        await Storage.DeleteAsync(fileInfo.Name);
+    }
+
     #endregion
 
+    #region Delete
+
+    [Fact]
+    public async Task DeleteAsync_WithoutOptions_ShouldTrue()
+    {
+        // Arrange
+        var file = await UploadTestFileAsync();
+
+        // Act
+        var result = await Storage.DeleteAsync(file.Name);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+    }
+
+
+    [Fact]
+    public async Task DeleteAsync_WithoutOptions_IfFileDontExist_ShouldFalse()
+    {
+        // Arrange
+        var blob = Guid.NewGuid().ToString();
+
+        // Act
+        var result = await Storage.DeleteAsync(blob);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(false);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithOptions_FromDirectory_ShouldTrue()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var file = await UploadTestFileAsync(directory);
+        DeleteOptions options = new() {Blob = file.Name, Directory = directory};
+
+        // Act
+        var result = await Storage.DeleteAsync(options);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithOptions_IfFileDontExist_FromDirectory_ShouldFalse()
+    {
+        // Arrange
+        var directory = "test-directory";
+        DeleteOptions options = new() {Blob = Guid.NewGuid().ToString(), Directory = directory};
+
+        // Act
+        var result = await Storage.DeleteAsync(options);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeFalse();
+    }
+
+    #endregion
 
     #region CreateContainer
 
@@ -340,25 +469,24 @@ public abstract class StorageBaseTests
 
     #endregion
 
-
-    private async Task<FileInfo> UploadTestFileAsync()
+    private async Task<FileInfo> UploadTestFileAsync(string? directory = null)
     {
         var file = await GetTestFileAsync();
 
-        UploadOptions options = new() {Blob = file.Name};
+        UploadOptions options = new() {Blob = file.Name, Directory = directory};
         var result = await Storage.UploadAsync(file.OpenRead(), options);
         result.IsSuccess.Should().BeTrue();
 
         return file;
     }
 
-    private async Task<List<FileInfo>> UploadTestFileListAsync(int count = 10)
+    private async Task<List<FileInfo>> UploadTestFileListAsync(string? directory = null, int? count = 10)
     {
         List<FileInfo> fileList = new();
 
         for (var i = 0; i < count; i++)
         {
-            var file = await UploadTestFileAsync();
+            var file = await UploadTestFileAsync(directory);
             fileList.Add(file);
         }
 

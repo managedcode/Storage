@@ -180,8 +180,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         LocalFile file = new(options.LocalPath, keepAlive);
         return DownloadInternalAsync(file, options, cancellationToken);
     }
-
-
+    
     protected abstract Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default);
 
     public Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)

@@ -159,8 +159,12 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         await EnsureContainerExist();
 
         var path = directory is null ? _path : Path.Combine(_path, directory);
-        
-        var dsf = Directory.EnumerateFiles(path).ToList();
+
+        if (!Directory.Exists(path))
+        {
+            yield break;
+        }
+
         foreach (var file in Directory.EnumerateFiles(path))
         {
             var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
