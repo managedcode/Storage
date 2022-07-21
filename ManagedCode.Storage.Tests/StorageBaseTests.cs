@@ -247,8 +247,8 @@ public abstract class StorageBaseTests
         var stream = new MemoryStream(byteArray);
 
         // Act
-        var result = await Storage.UploadAsync(stream, new UploadOptions() {Blob = fileName, Directory = directory});
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {Blob = fileName, Directory = directory});
+        var result = await Storage.UploadAsync(stream, new UploadOptions() {FileName = fileName, Directory = directory});
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {FileName = fileName, Directory = directory});
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -269,8 +269,8 @@ public abstract class StorageBaseTests
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
 
         // Act
-        var result = await Storage.UploadAsync(byteArray, new UploadOptions() {Blob = fileName, Directory = directory});
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {Blob = fileName, Directory = directory});
+        var result = await Storage.UploadAsync(byteArray, new UploadOptions() {FileName = fileName, Directory = directory});
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {FileName = fileName, Directory = directory});
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -289,8 +289,8 @@ public abstract class StorageBaseTests
         var fileName = FileHelper.GenerateRandomFileName();
 
         // Act
-        var result = await Storage.UploadAsync(uploadContent, new UploadOptions() {Blob = fileName, Directory = directory});
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {Blob = fileName, Directory = directory});
+        var result = await Storage.UploadAsync(uploadContent, new UploadOptions() {FileName = fileName, Directory = directory});
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {FileName = fileName, Directory = directory});
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -350,7 +350,7 @@ public abstract class StorageBaseTests
         // Arrange
         var directory = "test-directory";
         var fileInfo = await UploadTestFileAsync(directory);
-        ExistOptions options = new() {Blob = fileInfo.Name, Directory = directory};
+        ExistOptions options = new() {FileName = fileInfo.Name, Directory = directory};
 
         // Act
         var result = await Storage.ExistsAsync(options);
@@ -380,7 +380,7 @@ public abstract class StorageBaseTests
         // Arrange
         var directory = "test-directory";
         var fileInfo = await UploadTestFileAsync(directory);
-        ExistOptions options = new() {Blob = fileInfo.Name, Directory = "another-directory"};
+        ExistOptions options = new() {FileName = fileInfo.Name, Directory = "another-directory"};
 
         // Act
         var result = await Storage.ExistsAsync(options);
@@ -431,7 +431,7 @@ public abstract class StorageBaseTests
         // Arrange
         var directory = "test-directory";
         var file = await UploadTestFileAsync(directory);
-        DeleteOptions options = new() {Blob = file.Name, Directory = directory};
+        DeleteOptions options = new() {FileName = file.Name, Directory = directory};
 
         // Act
         var result = await Storage.DeleteAsync(options);
@@ -446,7 +446,7 @@ public abstract class StorageBaseTests
     {
         // Arrange
         var directory = "test-directory";
-        DeleteOptions options = new() {Blob = Guid.NewGuid().ToString(), Directory = directory};
+        DeleteOptions options = new() {FileName = Guid.NewGuid().ToString(), Directory = directory};
 
         // Act
         var result = await Storage.DeleteAsync(options);
@@ -473,7 +473,7 @@ public abstract class StorageBaseTests
     {
         var file = await GetTestFileAsync();
 
-        UploadOptions options = new() {Blob = file.Name, Directory = directory};
+        UploadOptions options = new() {FileName = file.Name, Directory = directory};
         var result = await Storage.UploadAsync(file.OpenRead(), options);
         result.IsSuccess.Should().BeTrue();
 

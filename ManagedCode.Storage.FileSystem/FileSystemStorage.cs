@@ -81,11 +81,11 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         if (options.Directory is not null)
         {
             EnsureDirectoryExist(options.Directory);
-            filePath = Path.Combine(_path, options.Directory, options.Blob);
+            filePath = Path.Combine(_path, options.Directory, options.FileName);
         }
         else
         {
-            filePath = Path.Combine(_path, options.Blob);
+            filePath = Path.Combine(_path, options.FileName);
         }
 
         return filePath;

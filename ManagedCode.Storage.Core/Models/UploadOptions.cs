@@ -8,10 +8,10 @@ public class UploadOptions : BaseOptions
     {
     }
 
-    public UploadOptions(string? blob = null, string? directory = null, string? mimeType = null, Dictionary<string, string>? metadata = null,
+    public UploadOptions(string? fileName = null, string? directory = null, string? mimeType = null, Dictionary<string, string>? metadata = null,
         string? fileNamePrefix = null)
     {
-        Blob = blob ?? Blob;
+        FileName = fileName ?? FileName;
         MimeType = mimeType;
         Directory = directory;
         Metadata = metadata;

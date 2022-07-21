@@ -108,7 +108,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
         // TODO: check it
         return Result<string>.Succeed(
-            $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.Blob)}");
+            $"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
     }
 
     protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
