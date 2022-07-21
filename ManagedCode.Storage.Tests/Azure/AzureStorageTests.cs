@@ -15,6 +15,7 @@ public class AzureStorageTests : StorageBaseTests
     protected override ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
+        services.AddLogging();
 
         services.AddAzureStorageAsDefault(opt =>
         {

@@ -1,6 +1,5 @@
 using ManagedCode.Storage.AspNetExtensions;
 using ManagedCode.Storage.Core;
-using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApiSample.Controllers;
