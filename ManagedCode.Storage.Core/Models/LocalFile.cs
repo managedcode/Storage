@@ -21,9 +21,9 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
         if (string.IsNullOrEmpty(Path.GetExtension(path)))
         {
-            directory = path;
-            var tempName = $"{Guid.NewGuid():N}";
-            FilePath = Path.Combine(path, $"{tempName}.tmp");
+            directory = Path.GetDirectoryName(path);
+            var name = Path.GetFileName(path);
+            FilePath = Path.Combine(directory, $"{name}.tmp");
         }
         else
         {
