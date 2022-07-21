@@ -15,7 +15,7 @@ public static class StorageExtensions
 {
     private const int MinLengthForLargeFile = 256 * 1024;
 
-    public static async Task<Result<string>> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadOptions? options = null,
+    public static async Task<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         options ??= new UploadOptions(mimeType: formFile.ContentType);
@@ -32,7 +32,7 @@ public static class StorageExtensions
         }
     }
 
-    public static async IAsyncEnumerable<Result<string>> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
+    public static async IAsyncEnumerable<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
         UploadOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {

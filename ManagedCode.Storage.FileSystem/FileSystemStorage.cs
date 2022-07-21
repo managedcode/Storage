@@ -57,7 +57,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result.Succeed().AsTask();
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
@@ -70,7 +70,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             await stream.CopyToAsync(fs, 81920, cancellationToken);
         }
 
-        return Result<string>.Succeed(filePath);
+        return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
     }
 
     private string GetPathFromOptions(BaseOptions options)

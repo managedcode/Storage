@@ -39,6 +39,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             _ = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
             await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
             IsContainerCreated = true;
+
             return Result.Succeed();
         }
         catch (Exception e)
@@ -84,7 +85,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {
         var blobClient = StorageClient.GetBlobClient(options.FullPath);
@@ -98,18 +99,13 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         {
             await EnsureContainerExist();
             _ = await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
-        }
-        catch (RequestFailedException)
-        {
-            await CreateContainerAsync(cancellationToken);
-            await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
+
+            return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
         }
         catch (Exception ex)
         {
-            return Result<string>.Fail(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
-
-        return Result<string>.Succeed($"{blobClient.Uri}/{StorageOptions.Container}/{options.FullPath}");
     }
 
     protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,

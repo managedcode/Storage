@@ -88,7 +88,7 @@ public abstract class StorageBaseTests
         var uploadResult = await Storage.UploadAsync(file);
         uploadResult.IsSuccess.Should().BeTrue();
 
-        var downloadResult = await Storage.DownloadAsync(uploadResult.Value!);
+        var downloadResult = await Storage.DownloadAsync(uploadResult.Value!.Name);
         downloadResult.IsSuccess.Should().BeTrue();
     }
 
@@ -209,7 +209,7 @@ public abstract class StorageBaseTests
 
         // Act
         var result = await Storage.UploadAsync(uploadContent);
-        var downloadedResult = await Storage.DownloadAsync(result.Value!);
+        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -226,7 +226,7 @@ public abstract class StorageBaseTests
 
         // Act
         var result = await Storage.UploadAsync(stream);
-        var downloadedResult = await Storage.DownloadAsync(result.Value!);
+        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
 
         // Assert
         result.IsSuccess.Should().BeTrue();

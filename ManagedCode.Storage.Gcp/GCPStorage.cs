@@ -96,19 +96,20 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {
         try
         {
             await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, options.MimeType, stream, null,
                 cancellationToken);
-            return Result<string>.Succeed(string.Empty);
+
+            return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex.Message, ex);
-            return Result<string>.Fail(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
     }
 

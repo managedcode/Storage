@@ -22,20 +22,20 @@ public interface IStorage
     Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default);
 
 
-    Task<Result<string>> UploadAsync(Stream stream, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(byte[] data, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(string content, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(FileInfo fileInfo, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(Stream stream, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(byte[] data, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(string content, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, CancellationToken cancellationToken = default);
 
-    Task<Result<string>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default);
 
-    Task<Result<string>> UploadAsync(Stream stream, Action<UploadOptions> action, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(byte[] data, Action<UploadOptions> action, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(string content, Action<UploadOptions> action, CancellationToken cancellationToken = default);
-    Task<Result<string>> UploadAsync(FileInfo fileInfo, Action<UploadOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(Stream stream, Action<UploadOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(byte[] data, Action<UploadOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(string content, Action<UploadOptions> action, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, Action<UploadOptions> action, CancellationToken cancellationToken = default);
 
 
     Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default);

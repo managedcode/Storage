@@ -57,22 +57,22 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options,
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default)
     {
         try
         {
             var directoryClient = StorageClient.GetDirectoryClient(options.Directory);
             var fileClient = directoryClient.GetFileClient(options.FileName);
-            _ = await fileClient.UploadAsync(stream);
-            return Result.Succeed(string.Empty);
+            await fileClient.UploadAsync(stream);
+
+            return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
         }
         catch (Exception ex)
         {
-            return Result<string>.Fail(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
     }
-
 
     protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
         CancellationToken cancellationToken = default)

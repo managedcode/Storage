@@ -80,7 +80,7 @@ public class StorageExtensionsTests
 
         // Act
         var result = await Storage.UploadToStorageAsync(formFile);
-        var localFile = await Storage.DownloadAsync(result.Value);
+        var localFile = await Storage.DownloadAsync(result.Value.Name);
 
         // Assert
         result.IsSuccess.Should().BeTrue();

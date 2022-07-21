@@ -62,57 +62,58 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return await DeleteDirectoryInternalAsync(directory, cancellationToken);
     }
 
-    protected abstract Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default);
+    protected abstract Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
+        CancellationToken cancellationToken = default);
 
-    public Task<Result<string>> UploadAsync(Stream content, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(Stream content, CancellationToken cancellationToken = default)
     {
         return UploadAsync(content, new UploadOptions(), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(byte[] data, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, CancellationToken cancellationToken = default)
     {
         return UploadAsync(data, new UploadOptions(), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(string content, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(string content, CancellationToken cancellationToken = default)
     {
         return UploadAsync(content, new UploadOptions(), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(FileInfo fileInfo, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, CancellationToken cancellationToken = default)
     {
         return UploadAsync(fileInfo, new UploadOptions(), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(Stream stream, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
         var options = new UploadOptions();
         action.Invoke(options);
         return UploadAsync(stream, options, cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(byte[] data, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
         var options = new UploadOptions();
         action.Invoke(options);
         return UploadAsync(data, options, cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(string content, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(string content, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
         var options = new UploadOptions();
         action.Invoke(options);
         return UploadAsync(content, options, cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(FileInfo fileInfo, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, Action<UploadOptions> action, CancellationToken cancellationToken = default)
     {
         var options = new UploadOptions();
         action.Invoke(options);
         return UploadAsync(fileInfo, options, cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
         {
@@ -122,7 +123,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
         {
@@ -132,7 +133,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return UploadInternalAsync(new MemoryStream(data), SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
         {
@@ -142,7 +143,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return UploadInternalAsync(new StringStream(content), SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<string>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)
+    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
         {
