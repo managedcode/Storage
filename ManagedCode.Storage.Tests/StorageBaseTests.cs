@@ -28,10 +28,21 @@ public abstract class StorageBaseTests
     }
 
     [Fact]
-    public async Task CreateContainerTest()
+    public async Task CreateContainer_ShouldBeSuccess()
     {
         var container = await Storage.CreateContainerAsync();
         container.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RemoveContainer_ShouldBeSuccess()
+    {
+        var createResult = await Storage.CreateContainerAsync();
+        createResult.IsSuccess.Should().BeTrue();
+
+        var result = await Storage.RemoveContainerAsync();
+
+        result.IsSuccess.Should().BeTrue();
     }
 
     [Fact]
@@ -174,71 +185,6 @@ public abstract class StorageBaseTests
     #region Upload
 
     [Fact]
-    public async Task UploadStreamAsync_WithOptions_SpecifyingFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        var stream = new MemoryStream(byteArray);
-        UploadOptions options = new() {Blob = fileName};
-
-        // Act
-        await Storage.UploadAsync(stream, options);
-
-        // Assert
-        var downloadedResult = await Storage.DownloadAsync(fileName);
-        downloadedResult.IsSuccess.Should().BeTrue();
-        downloadedResult.Value!.FileName.Should().Be(fileName);
-
-        await Storage.DeleteAsync(fileName);
-    }
-
-    [Fact]
-    public async Task UploadAsync_AsText_WithOptions_SpecifyingFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-        UploadOptions options = new() {Blob = fileName};
-
-        // Act
-        var result = await Storage.UploadAsync(uploadContent, options);
-        var downloadedResult = await Storage.DownloadAsync(fileName);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        downloadedResult.IsSuccess.Should().BeTrue();
-        downloadedResult.Value!.FileName.Should().Be(fileName);
-
-        await Storage.DeleteAsync(fileName);
-    }
-
-
-    [Fact]
-    public async Task UploadAsync_AsArray_WithOptions_SpecifyingFileName()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-        UploadOptions options = new() {Blob = fileName};
-
-        // Act
-        var result = await Storage.UploadAsync(byteArray, options);
-        var downloadedResult = await Storage.DownloadAsync(fileName);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        downloadedResult.IsSuccess.Should().BeTrue();
-        downloadedResult.Value!.FileName.Should().Be(fileName);
-
-        await Storage.DeleteAsync(fileName);
-    }
-
-    [Fact]
     public async Task UploadAsync_AsText_WithoutOptions()
     {
         // Arrange
@@ -269,6 +215,75 @@ public abstract class StorageBaseTests
         result.IsSuccess.Should().BeTrue();
         downloadedResult.IsSuccess.Should().BeTrue();
     }
+
+    #region Directory
+
+    [Fact]
+    public async Task UploadAsync_AsStream_WithOptions_ToDirectory_SpecifyingFileName()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
+
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        var stream = new MemoryStream(byteArray);
+
+        // Act
+        var result = await Storage.UploadAsync(stream, new UploadOptions() {Blob = fileName, Directory = directory});
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {Blob = fileName, Directory = directory});
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        downloadedResult.IsSuccess.Should().BeTrue();
+        downloadedResult.Value!.FileName.Should().Be(fileName);
+
+        await Storage.DeleteAsync(fileName);
+    }
+
+    [Fact]
+    public async Task UploadAsync_AsArray_WithOptions_ToDirectory_SpecifyingFileName()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
+
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+
+        // Act
+        var result = await Storage.UploadAsync(byteArray, new UploadOptions() {Blob = fileName, Directory = directory});
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {Blob = fileName, Directory = directory});
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        downloadedResult.IsSuccess.Should().BeTrue();
+        downloadedResult.Value!.FileName.Should().Be(fileName);
+
+        await Storage.DeleteAsync(fileName);
+    }
+
+    [Fact]
+    public async Task UploadAsync_AsText_WithOptions_ToDirectory_SpecifyingFileName()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var fileName = FileHelper.GenerateRandomFileName();
+
+        // Act
+        var result = await Storage.UploadAsync(uploadContent, new UploadOptions() {Blob = fileName, Directory = directory});
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {Blob = fileName, Directory = directory});
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        downloadedResult.IsSuccess.Should().BeTrue();
+        downloadedResult.Value!.FileName.Should().Be(fileName);
+
+        await Storage.DeleteAsync(fileName);
+    }
+
+    #endregion
 
     #endregion
 
