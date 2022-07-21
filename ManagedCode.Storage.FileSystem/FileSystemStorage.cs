@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -158,6 +159,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         await EnsureContainerExist();
 
         var path = directory is null ? _path : Path.Combine(_path, directory);
+        
+        var dsf = Directory.EnumerateFiles(path).ToList();
         foreach (var file in Directory.EnumerateFiles(path))
         {
             var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
