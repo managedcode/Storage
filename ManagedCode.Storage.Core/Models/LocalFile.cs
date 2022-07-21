@@ -10,12 +10,10 @@ public class LocalFile : IDisposable, IAsyncDisposable
     private bool _disposed;
     private FileStream? _stream;
 
-    public LocalFile(bool keepAlive = false) : this(Path.GetTempFileName(), keepAlive)
+    public LocalFile(string? path = null, bool keepAlive = false)
     {
-    }
+        path ??= Path.GetTempFileName();
 
-    public LocalFile(string path, bool keepAlive = false)
-    {
         string? directory;
         KeepAlive = keepAlive;
 

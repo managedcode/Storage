@@ -165,16 +165,19 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default)
     {
-        var file = new LocalFile();
+        var keepAlive = options.LocalPath is not null;
+        LocalFile file = new(options.LocalPath, keepAlive);
+        
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
     public Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default)
     {
-        LocalFile file = new();
         DownloadOptions options = new();
-
         action.Invoke(options);
+
+        var keepAlive = options.LocalPath is not null;
+        LocalFile file = new(options.LocalPath, keepAlive);
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
