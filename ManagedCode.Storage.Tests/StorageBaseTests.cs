@@ -39,12 +39,12 @@ public abstract class StorageBaseTests
     {
         var createResult = await Storage.CreateContainerAsync();
         createResult.IsSuccess.Should().BeTrue();
-    
+
         var result = await Storage.RemoveContainerAsync();
-    
+
         result.IsSuccess.Should().BeTrue();
     }
-    
+
 
     [Fact]
     public async Task StreamUploadAsyncTest()
@@ -182,7 +182,6 @@ public abstract class StorageBaseTests
         // Act
         var result = await Storage.DeleteDirectoryAsync(directory);
         var blobs = await Storage.GetBlobMetadataListAsync(directory).ToListAsync();
-
 
         // Assert
         result.IsSuccess.Should().BeTrue();

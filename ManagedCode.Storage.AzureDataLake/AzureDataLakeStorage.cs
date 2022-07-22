@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,8 +33,9 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            _ = await _dataLakeServiceClient.CreateFileSystemAsync(StorageOptions.FileSystem, StorageOptions.PublicAccessType,
+            await _dataLakeServiceClient.CreateFileSystemAsync(StorageOptions.FileSystem, StorageOptions.PublicAccessType,
                 cancellationToken: cancellationToken);
+
             return Result.Succeed();
         }
         catch (Exception e)
@@ -47,7 +49,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            _ = await _dataLakeServiceClient.DeleteFileSystemAsync(StorageOptions.FileSystem, cancellationToken: cancellationToken);
+            await _dataLakeServiceClient.DeleteFileSystemAsync(StorageOptions.FileSystem, cancellationToken: cancellationToken);
             return Result.Succeed();
         }
         catch (Exception e)
@@ -62,8 +64,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            var directoryClient = StorageClient.GetDirectoryClient(options.Directory);
-            var fileClient = directoryClient.GetFileClient(options.FileName);
+            var fileClient = GetFileClient(options);
             await fileClient.UploadAsync(stream);
 
             return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
@@ -79,8 +80,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
-            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.FileName));
+            var fileClient = GetFileClient(options);
             var downloadResponse = await fileClient.ReadAsync(cancellationToken);
             var reader = new BinaryReader(downloadResponse.Value.Content);
             var fileStream = localFile.FileStream;
@@ -88,6 +88,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
             var bufferSize = 4096;
             var buffer = new byte[bufferSize];
             int count;
+
             while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
             {
                 await fileStream.WriteAsync(buffer, 0, count, cancellationToken);
@@ -107,8 +108,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
-            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.FileName));
+            var fileClient = GetFileClient(options);
             await fileClient.DeleteAsync(cancellationToken: cancellationToken);
             return Result.Succeed(true);
         }
@@ -123,8 +123,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
-            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.FileName));
+            var fileClient = GetFileClient(options);
             var result = await fileClient.ExistsAsync(cancellationToken: cancellationToken);
             return Result.Succeed(result.Value);
         }
@@ -139,14 +138,19 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
-            var directoryClient = StorageClient.GetDirectoryClient(Path.GetDirectoryName(options.Directory));
-            var fileClient = directoryClient.GetFileClient(Path.GetFileName(options.FileName));
-            _ = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+            var fileClient = GetFileClient(options);
+            var properties = await fileClient.GetPropertiesAsync(cancellationToken: cancellationToken);
 
             // TODO: Check it
-            return Result.Succeed(new BlobMetadata()
+
+            return Result<BlobMetadata>.Succeed(new BlobMetadata
             {
-                Name = options.FileName
+                Name = fileClient.Name,
+                Uri = fileClient.Uri,
+                Container = fileClient.FileSystemName,
+                Length = properties.Value.ContentLength,
+                Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                MimeType = properties.Value.ContentType
             });
         }
         catch (Exception ex)
@@ -155,12 +159,12 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         IAsyncEnumerator<PathItem> enumerator =
             StorageClient.GetPathsAsync(directory, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
+
         await enumerator.MoveNextAsync();
         var item = enumerator.Current;
 
@@ -180,6 +184,27 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
+
+    public async Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        await StorageClient.CreateDirectoryAsync(directory, cancellationToken: cancellationToken);
+        return Result.Succeed();
+    }
+
+    public async Task<Result> RenameDirectory(string directory, string newDirectory, CancellationToken cancellationToken = default)
+    {
+        var directoryClient = StorageClient.GetDirectoryClient(directory);
+
+        await directoryClient.RenameAsync(newDirectory, cancellationToken: cancellationToken);
+        return Result.Succeed();
+    }
+
+    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        await StorageClient.DeleteDirectoryAsync(directory, cancellationToken: cancellationToken);
+        return Result.Succeed();
+    }
+
     protected override Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
         CancellationToken cancellationToken = default)
     {
@@ -191,22 +216,12 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         throw new NotSupportedException("Legal hold is not supported by Data Lake Storage");
     }
 
-    public async Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)
+    private DataLakeFileClient GetFileClient(BaseOptions options)
     {
-        _ = await StorageClient.CreateDirectoryAsync(directory, cancellationToken: cancellationToken);
-        return Result.Succeed();
-    }
-
-    public async Task<Result> RenameDirectory(string directory, string newDirectory, CancellationToken cancellationToken = default)
-    {
-        var directoryClient = StorageClient.GetDirectoryClient(directory);
-        _ = await directoryClient.RenameAsync(newDirectory, cancellationToken: cancellationToken);
-        return Result.Succeed();
-    }
-
-    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
-    {
-        _ = await StorageClient.DeleteDirectoryAsync(directory, cancellationToken: cancellationToken);
-        return Result.Succeed();
+        return options.Directory switch
+        {
+            null => StorageClient.GetFileClient(options.FileName),
+            _ => StorageClient.GetDirectoryClient(options.Directory).GetFileClient(options.FileName)
+        };
     }
 }

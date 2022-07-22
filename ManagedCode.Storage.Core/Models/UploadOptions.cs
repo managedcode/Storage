@@ -8,7 +8,7 @@ public class UploadOptions : BaseOptions
     {
     }
 
-    public UploadOptions(string? fileName = null, string? directory = null, string? mimeType = null, Dictionary<string, string>? metadata = null,
+    public UploadOptions(string? fileName = null, string? directory = "/", string? mimeType = null, Dictionary<string, string>? metadata = null,
         string? fileNamePrefix = null)
     {
         FileName = fileName ?? FileName;
