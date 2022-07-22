@@ -60,12 +60,11 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        await Storage.UploadToStorageAsync(formFile);
-        var localFile = await Storage.DownloadAsync(fileName);
+        var res = await Storage.UploadToStorageAsync(formFile);
+        var result = await Storage.DownloadAsync(fileName);
 
         // Assert
-        localFile.Value.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.Value.FileName.Should().Be(formFile.FileName);
+        result.Value.FileName.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -86,7 +85,6 @@ public class StorageExtensionsTests
         result.IsSuccess.Should().BeTrue();
         localFile.Value.FileInfo.Length.Should().Be(formFile.Length);
         localFile.Value.FileName.Should().Be(fileName);
-        localFile.Value.FileName.Should().NotBe(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -100,11 +98,11 @@ public class StorageExtensionsTests
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         // Act
-        await Storage.UploadAsync(new FileInfo(fileName));
+        await Storage.UploadAsync(localFile.FileInfo);
         var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        result.IsSuccess.Should().Be(true);
+        result.IsSuccess.Should().BeTrue();
         result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         result.Value.FileDownloadName.Should().Be(localFile.FileName);
 
@@ -143,7 +141,7 @@ public class StorageExtensionsTests
         var fileResult = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        fileResult.Should().BeNull();
+        fileResult.IsSuccess.Should().BeFalse();
     }
 
     [Fact]
@@ -158,6 +156,6 @@ public class StorageExtensionsTests
         var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
 
         // Assert
-        fileResult.Should().BeNull();
+        fileResult.IsSuccess.Should().BeFalse();
     }
 }

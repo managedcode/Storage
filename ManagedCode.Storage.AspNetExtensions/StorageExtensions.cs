@@ -18,12 +18,12 @@ public static class StorageExtensions
     public static async Task<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        options ??= new UploadOptions(mimeType: formFile.ContentType);
+        options ??= new UploadOptions(fileName: formFile.FileName, mimeType: formFile.ContentType);
 
         if (formFile.Length > MinLengthForLargeFile)
         {
             var localFile = await formFile.ToLocalFileAsync(cancellationToken);
-            return await storage.UploadAsync(localFile.FileInfo, cancellationToken);
+            return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         }
 
         using (var stream = formFile.OpenReadStream())

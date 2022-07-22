@@ -150,6 +150,8 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
             options.MimeType = MimeHelper.GetMimeType(fileInfo.Extension);
         }
 
+        options.FileName = fileInfo.Name;
+
         return UploadInternalAsync(fileInfo.OpenRead(), SetUploadOptions(options), cancellationToken);
     }
 
@@ -168,7 +170,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
     {
         var keepAlive = options.LocalPath is not null;
         LocalFile file = new(options.LocalPath, keepAlive);
-        
+
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
@@ -181,7 +183,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         LocalFile file = new(options.LocalPath, keepAlive);
         return DownloadInternalAsync(file, options, cancellationToken);
     }
-    
+
     protected abstract Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default);
 
     public Task<Result<bool>> DeleteAsync(string fileName, CancellationToken cancellationToken = default)
