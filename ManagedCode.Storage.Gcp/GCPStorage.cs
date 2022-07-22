@@ -79,6 +79,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
             var blobs = StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, string.Empty,
                 new ListObjectsOptions {Projection = Projection.Full}).Select(x => x);
 
@@ -101,6 +102,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
             await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, options.MimeType, stream, null,
                 cancellationToken);
 
@@ -119,6 +121,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
             await StorageClient.DownloadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, localFile.FileStream, null,
                 cancellationToken);
 
@@ -135,6 +138,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
             await StorageClient.DeleteObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
             return Result<bool>.Succeed(true);
         }
@@ -154,6 +158,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
             await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
             return Result<bool>.Succeed(true);
         }
@@ -174,6 +179,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
             var obj = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
 
             return Result<BlobMetadata>.Succeed(new BlobMetadata
@@ -192,7 +198,9 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    public override IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null, CancellationToken cancellationToken = default)
+    public override IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
+        CancellationToken cancellationToken = default)
+
     {
         return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
                 new ListObjectsOptions {Projection = Projection.Full})
@@ -213,6 +221,8 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
+
             var storageObject =
                 await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
             storageObject.TemporaryHold = hasLegalHold;
@@ -232,6 +242,8 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            await EnsureContainerExist();
+
             var storageObject =
                 await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
 
