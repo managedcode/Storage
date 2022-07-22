@@ -260,35 +260,26 @@ public class MyService
 }
 ```
 
-### Exists
+### Upload
 ```cs
-await _storage.ExistsAsync("{YOUR_FILE_NAME}");
+await _storage.UploadAsync(new Stream());
+await _storage.UploadAsync("some string content");
+await _storage.UploadAsync(new FileInfo("D:\\my_report.txt"));
 ```
 
 ### Delete
 ```cs
-await _storage.DeleteAsync("{YOUR_FILE_NAME}");
+await _storage.DeleteAsync("my_report.txt");
 ```
 
 ### Download
 ```cs
-var stream = await _storage.DownloadAsStreamAsync(new BlobMetadata { Name = "{YOUR_FILE_NAME}"});
-using var sr = new StreamReader(stream, Encoding.UTF8);
-
-string content = await sr.ReadToEndAsync();
+var localFile = await _storage.DownloadAsync("my_report.txt");
 ```
 
-### Get
+### Get metadata
 ```cs
-await _storage.GetBlobAsync("{YOUR_FILE_NAME}");
-```
-
-### Upload
-```cs
-var byteArray = Encoding.ASCII.GetBytes("{YOUR_CONTENT}");
-var stream = new MemoryStream(byteArray);
-
-await _storage.UploadStreamAsync("{YOUR_FILE_NAME}", stream);
+await _storage.GetBlobMetadataAsync("my_report.txt");
 ```
 
 
