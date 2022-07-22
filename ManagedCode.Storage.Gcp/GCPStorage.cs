@@ -40,6 +40,9 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
     {
         try
         {
+            if (IsContainerCreated)
+                return Result.Succeed();
+
             if (StorageOptions.OriginalOptions != null)
             {
                 await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
@@ -52,6 +55,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                     cancellationToken: cancellationToken);
             }
 
+            return Result.Succeed();
+        }
+        catch (GoogleApiException exception)
+            when (exception.HttpStatusCode is HttpStatusCode.Conflict)
+        {
             return Result.Succeed();
         }
         catch (Exception ex)
