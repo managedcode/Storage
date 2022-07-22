@@ -264,12 +264,12 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
-    public async Task<Result<Stream>> OpenReadStreamAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<Result<Stream>> OpenReadStreamAsync(string fileName, CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var blobClient = StorageClient.GetBlobClient(blob);
+            var blobClient = StorageClient.GetBlobClient(fileName);
             var stream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
             return Result<Stream>.Succeed(stream);
         }
@@ -280,12 +280,12 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
     }
 
-    public async Task<Result<Stream>> OpenWriteStreamAsync(string blob, CancellationToken cancellationToken = default)
+    public async Task<Result<Stream>> OpenWriteStreamAsync(string fileName, CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var blobClient = StorageClient.GetBlobClient(blob);
+            var blobClient = StorageClient.GetBlobClient(fileName);
             var stream = await blobClient.OpenWriteAsync(true, cancellationToken: cancellationToken);
             return Result<Stream>.Succeed(stream);
         }

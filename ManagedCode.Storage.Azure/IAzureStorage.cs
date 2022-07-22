@@ -9,6 +9,6 @@ namespace ManagedCode.Storage.Azure;
 
 public interface IAzureStorage : IStorage<BlobContainerClient>
 {
-    Task<Result<Stream>> OpenReadStreamAsync(string blob, CancellationToken cancellationToken = default);
-    Task<Result<Stream>> OpenWriteStreamAsync(string blob, CancellationToken cancellationToken = default);
+    Task<Result<Stream>> OpenReadStreamAsync(string fileName, CancellationToken cancellationToken = default);
+    Task<Result<Stream>> OpenWriteStreamAsync(string fileName, CancellationToken cancellationToken = default);
 }
