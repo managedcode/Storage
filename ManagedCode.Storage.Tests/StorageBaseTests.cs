@@ -177,7 +177,7 @@ public abstract class StorageBaseTests
     {
         // Arrange
         var directory = "test-directory";
-        await UploadTestFileListAsync(directory);
+        await UploadTestFileListAsync(directory, 3);
 
         // Act
         var result = await Storage.DeleteDirectoryAsync(directory);
@@ -404,7 +404,8 @@ public abstract class StorageBaseTests
         var result = await Storage.DeleteAsync(blob);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeFalse();
     }
 
     [Fact]
@@ -434,7 +435,8 @@ public abstract class StorageBaseTests
         var result = await Storage.DeleteAsync(options);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeFalse();
     }
 
     #endregion

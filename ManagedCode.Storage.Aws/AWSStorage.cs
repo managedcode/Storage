@@ -136,7 +136,15 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         try
         {
             await EnsureContainerExist();
-            _ = await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
+
+            var isExist = await ExistsAsync(ExistOptions.FromBaseOptions(options), cancellationToken);
+
+            if (!isExist.Value)
+            {
+                return Result<bool>.Succeed(false);
+            }
+
+            await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
             {
                 BucketName = StorageOptions.Bucket,
                 Key = options.FullPath
@@ -231,7 +239,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
                 yield return new BlobMetadata
                 {
-                    Name = entry.Key,
+                    FullName = entry.Key,
+                    Name = Path.GetFileName(entry.Key),
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
                     MimeType = objectMetaResponse.Headers.ContentType,
                     Length = objectMetaResponse.Headers.ContentLength
