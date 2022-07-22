@@ -17,14 +17,15 @@
         </None>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Azure.Search.Documents" Version="11.3.0-beta.8" />
+        <PackageReference Include="Azure.Search.Documents" Version="11.3.0" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
         <PackageReference Include="Azure.Storage.Files.DataLake" Version="12.11.0" />
-        <PackageReference Include="CsvHelper" Version="28.0.0" />
+        <PackageReference Include="CsvHelper" Version="28.0.1" />
         <PackageReference Include="FluentAssertions" Version="6.7.0" />
-        <PackageReference Include="ManagedCode.Communication" Version="0.0.3" />
+        <PackageReference Include="ManagedCode.Communication" Version="0.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
         <PackageReference Include="xunit" Version="2.4.1" />
@@ -45,6 +46,7 @@
     <ItemGroup>
         <ProjectReference Include="..\ManagedCode.Storage.AspNetExtensions\ManagedCode.Storage.AspNetExtensions.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj" />
+        <ProjectReference Include="..\ManagedCode.Storage.AzureDataLake\ManagedCode.Storage.AzureDataLake.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj" />

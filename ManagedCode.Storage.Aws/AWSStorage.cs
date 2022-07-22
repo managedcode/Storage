@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using Amazon.Runtime;
-using Amazon.Runtime.Internal;
 using Amazon.S3;
 using Amazon.S3.Model;
 using ManagedCode.Communication;
@@ -22,29 +17,28 @@ namespace ManagedCode.Storage.Aws;
 
 public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 {
-    private readonly ILogger<AWSStorage> _logger;
-    
+    private readonly ILogger<AWSStorage>? _logger;
+
     public IAmazonS3 StorageClient { get; }
 
-    public AWSStorage(ILogger<AWSStorage> logger, AWSStorageOptions options) : base(options)
+    public AWSStorage(AWSStorageOptions options, ILogger<AWSStorage>? logger = null) : base(options)
     {
         _logger = logger;
-        var config = options.OriginalOptions ?? new AmazonS3Config();
-        StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), config);
+        StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), options.OriginalOptions);
     }
-    
-    
+
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message,e);
-            return Result.Failed(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -53,21 +47,42 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         try
         {
             await StorageClient.DeleteBucketAsync(StorageOptions.Bucket, cancellationToken);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message,e);
-            return Result.Failed(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var items = GetBlobMetadataListAsync(directory, cancellationToken);
+
+            await foreach (var item in items.WithCancellation(cancellationToken))
+            {
+                await StorageClient.DeleteAsync(StorageOptions.Bucket, item.FullName, null, cancellationToken: cancellationToken);
+            }
+
+            return Result.Succeed();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
+        }
+    }
+
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
+        CancellationToken cancellationToken = default)
     {
         var putRequest = new PutObjectRequest
         {
             BucketName = StorageOptions.Bucket,
-            Key = options.FileName,
+            Key = options.FullPath,
             InputStream = stream,
             AutoCloseStream = false,
             ContentType = options.MimeType,
@@ -78,87 +93,104 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         {
             await EnsureContainerExist();
             await StorageClient.PutObjectAsync(putRequest, cancellationToken);
-            var result = await StorageClient.PutObjectAsync(putRequest, cancellationToken);
-        }
-        catch (AmazonS3Exception)
-        {
-            await CreateContainerAsync(cancellationToken);
+
+            return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
         }
         catch (Exception ex)
         {
-            return Result<string>.Failed(ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
-        
-        //new Uri($"https://s3.amazonaws.com/{_bucket}/{entry.Key}")
-        //return Result<string>.Succeeded($"https://{StorageOptions.Bucket}.s3.{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
-        return Result<string>.Succeeded($"https://{StorageOptions.Bucket}.s3-{StorageOptions.OriginalOptions.RegionEndpoint.SystemName}.amazonaws.com/{HttpUtility.UrlEncode(options.FileName)}");
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
+            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
+
             localFile.BlobMetadata = new BlobMetadata
             {
-                //Metadata = response.Metadata.ToDictionary(k => k.Key, v => v.Value),
-                //MimeType = response.mi,
-                //Length = response.Value.ContentLength,
-                Name = blob,
-                //Uri = blobClient.Uri,
+                Name = options.FullPath,
+                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
+                MimeType = response.Headers.ContentType,
+                Length = response.Headers.ContentLength,
                 Container = StorageOptions.Bucket,
-                //FullName = $"{blobClient.Uri}/{StorageOptions.Container}/{blob}"
             };
-            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, blob, null, cancellationToken));
-            
-            
-            return Result<LocalFile>.Succeeded(localFile);
+
+            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, options.FullPath, null,
+                cancellationToken));
+
+            return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
         {
-            return Result<LocalFile>.Failed(ex);
+            _logger?.LogError(ex.Message, ex);
+            return Result<LocalFile>.Fail(ex);
         }
     }
 
-    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var response = await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
+
+            var isExist = await ExistsAsync(ExistOptions.FromBaseOptions(options), cancellationToken);
+
+            if (!isExist.Value)
+            {
+                return Result<bool>.Succeed(false);
+            }
+
+            await StorageClient.DeleteObjectAsync(new DeleteObjectRequest
             {
                 BucketName = StorageOptions.Bucket,
-                Key = blob
+                Key = options.FullPath
             }, cancellationToken);
-            return Result<bool>.Succeeded(true);
+
+            return Result<bool>.Succeed(true);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            _logger?.LogError(ex.Message, ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
-    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, blob, null, cancellationToken);
-            return Result<bool>.Succeeded(true);
+            _ = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
+            return Result<bool>.Succeed(true);
+        }
+        catch (AmazonS3Exception ex)
+        {
+            if (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return Result<bool>.Succeed(false);
+
+            return Result<bool>.Fail(ex);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            _logger?.LogError(ex.Message, ex);
+            return Result<bool>.Fail(ex);
         }
     }
 
-    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
+        CancellationToken cancellationToken = default)
     {
         var objectMetaRequest = new GetObjectMetadataRequest
         {
             BucketName = StorageOptions.Bucket,
-            Key = blob
+            Key = options.FullPath
         };
 
         try
@@ -168,31 +200,33 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             var metadata = new BlobMetadata
             {
-                Name = blob,
-                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{blob}"),
+                Name = options.FullPath,
+                Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
                 MimeType = objectMetaResponse.Headers.ContentType,
                 Length = objectMetaResponse.Headers.ContentLength
             };
-            
-            return Result<BlobMetadata>.Succeeded(metadata);
+
+            return Result<BlobMetadata>.Succeed(metadata);
         }
         catch (Exception ex)
         {
-            return Result<BlobMetadata>.Failed(ex);
+            _logger?.LogError(ex.Message, ex);
+            return Result<BlobMetadata>.Fail(ex);
         }
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var objectsRequest = new ListObjectsRequest
         {
             BucketName = StorageOptions.Bucket,
-            Prefix = string.Empty,
+            Prefix = directory,
             MaxKeys = 1_000_000
         };
 
         await EnsureContainerExist();
-        
+
         do
         {
             var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
@@ -201,7 +235,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             {
                 var objectMetaRequest = new GetObjectMetadataRequest
                 {
-                    BucketName =  StorageOptions.Bucket,
+                    BucketName = StorageOptions.Bucket,
                     Key = entry.Key
                 };
 
@@ -209,8 +243,9 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
                 yield return new BlobMetadata
                 {
-                    Name = entry.Key,
-                    Uri = new Uri($"https://s3.amazonaws.com/{ StorageOptions.Bucket}/{entry.Key}"),
+                    FullName = entry.Key,
+                    Name = Path.GetFileName(entry.Key),
+                    Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
                     MimeType = objectMetaResponse.Headers.ContentType,
                     Length = objectMetaResponse.Headers.ContentLength
                 };
@@ -225,19 +260,16 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             {
                 objectsRequest = null;
             }
-        } while (objectsRequest != null);
+        } while (objectsRequest is not null);
     }
-    
 
-
-
-
-    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
-            
+
             var status = hasLegalHold
                 ? ObjectLockLegalHoldStatus.On
                 : ObjectLockLegalHoldStatus.Off;
@@ -245,7 +277,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             PutObjectLegalHoldRequest request = new()
             {
                 BucketName = StorageOptions.Bucket,
-                Key = blob,
+                Key = options.FullPath,
                 LegalHold = new ObjectLockLegalHold
                 {
                     Status = status,
@@ -253,16 +285,17 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             };
 
             await StorageClient.PutObjectLegalHoldAsync(request, cancellationToken);
-            return Result.Succeeded();
+            return Result.Succeed();
         }
         catch (Exception ex)
         {
-            return Result.Failed(ex);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
-    
-    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -270,17 +303,17 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             GetObjectLegalHoldRequest request = new()
             {
                 BucketName = StorageOptions.Bucket,
-                Key = blob
+                Key = options.FullPath
             };
 
             var response = await StorageClient.GetObjectLegalHoldAsync(request, cancellationToken);
 
-            return Result<bool>.Succeeded(response.LegalHold.Status == ObjectLockLegalHoldStatus.On);
+            return Result<bool>.Succeed(response.LegalHold.Status == ObjectLockLegalHoldStatus.On);
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failed(ex);
+            _logger?.LogError(ex.Message, ex);
+            return Result<bool>.Fail(ex);
         }
-        
     }
 }

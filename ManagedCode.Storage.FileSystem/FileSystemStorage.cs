@@ -13,16 +13,16 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.FileSystem;
 
-public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSystemStorage
+public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSystemStorage
 {
     private readonly string _path;
     private readonly Dictionary<string, FileStream> _lockedFiles = new();
 
-    public FileSystemStorage(ILogger<FileSystemStorage> logger, FileSystemStorageOptions options) : base(options)
+    public FileSystemStorage(FileSystemStorageOptions options) : base(options)
     {
         _path = StorageOptions.BaseFolder ?? Environment.CurrentDirectory;
     }
-    
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         await Task.Yield();
@@ -31,8 +31,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
         {
             Directory.CreateDirectory(_path);
         }
-        
-        return Result.Succeeded();
+
+        return Result.Succeed();
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
@@ -41,16 +41,29 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
 
         if (Directory.Exists(_path))
         {
-            Directory.Delete(_path);
+            Directory.Delete(_path, true);
         }
-        
-        return Result.Succeeded();
+
+        return Result.Succeed();
     }
 
-    protected override async Task<Result<string>> UploadInternalAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    protected override Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    {
+        var path = Path.Combine(_path, directory);
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, true);
+        }
+
+        return Result.Succeed().AsTask();
+    }
+
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
+        CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        var filePath = Path.Combine(_path, options.FileName);
+
+        var filePath = GetPathFromOptions(options);
 
         using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
         {
@@ -58,113 +71,158 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>,  IFileSy
             await stream.CopyToAsync(fs, 81920, cancellationToken);
         }
 
-        return Result<string>.Succeeded(filePath);
+        return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
     }
 
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, string blob, CancellationToken cancellationToken = default)
+    private string GetPathFromOptions(BaseOptions options)
+    {
+        string filePath;
+
+        if (options.Directory is not null)
+        {
+            EnsureDirectoryExist(options.Directory);
+            filePath = Path.Combine(_path, options.Directory, options.FileName);
+        }
+        else
+        {
+            filePath = Path.Combine(_path, options.FileName);
+        }
+
+        return filePath;
+    }
+
+
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
+        CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
 
-        var filePath = Path.Combine(_path, blob);
+        var filePath = GetPathFromOptions(options);
 
         if (File.Exists(filePath))
         {
-            return  Result<LocalFile>.Succeeded(new LocalFile(filePath));
+            return Result<LocalFile>.Succeed(new LocalFile(filePath));
         }
 
-        return Result<LocalFile>.Failed();
+        return Result<LocalFile>.Fail();
     }
 
-    public override async Task<Result<bool>> DeleteAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
 
-        var filePath = Path.Combine(_path, blob);
+        var filePath = GetPathFromOptions(options);
 
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-            return Result<bool>.Succeeded(true);
-        }
-        
-        return Result<bool>.Succeeded(false);
+        if (!File.Exists(filePath))
+            return Result<bool>.Succeed(false);
+
+        File.Delete(filePath);
+        return Result<bool>.Succeed(true);
     }
 
-    public override async Task<Result<bool>> ExistsAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        var filePath = Path.Combine(_path, blob);
-        return Result<bool>.Succeeded(File.Exists(filePath));
+        var filePath = GetPathFromOptions(options);
+        return Result<bool>.Succeed(File.Exists(filePath));
     }
 
-    public override async Task<Result<BlobMetadata>> GetBlobMetadataAsync(string blob, CancellationToken cancellationToken = default)
+    protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
+        CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        var fileInfo = new FileInfo(Path.Combine(_path, blob));
+        var filePath = GetPathFromOptions(options);
+        var fileInfo = new FileInfo(filePath);
+
         if (fileInfo.Exists)
         {
             var result = new BlobMetadata
             {
                 Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, blob)),
-                MimeType = MimeHelper.GetMimeType(fileInfo.Extension), 
+                Uri = new Uri(Path.Combine(_path, filePath)),
+                MimeType = MimeHelper.GetMimeType(fileInfo.Extension),
                 Length = fileInfo.Length
             };
 
-            return Result<BlobMetadata?>.Succeeded(result);
+            return Result<BlobMetadata>.Succeed(result);
         }
 
-        return Result<BlobMetadata?>.Failed();
+        return Result<BlobMetadata>.Fail();
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
-        foreach (var file in Directory.EnumerateFiles(_path))
+
+        var path = directory is null ? _path : Path.Combine(_path, directory);
+
+        if (!Directory.Exists(path))
+        {
+            yield break;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(path))
         {
             var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
 
-            if (blobMetadata is not null)
+            if (blobMetadata.IsSuccess)
             {
-                yield return blobMetadata.Value;
+                yield return blobMetadata.Value!;
             }
         }
     }
 
-    public override async Task<Result> SetLegalHoldAsync(string blob, bool hasLegalHold, CancellationToken cancellationToken = default)
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
+        var filePath = GetPathFromOptions(options);
+
         await EnsureContainerExist();
-        if (hasLegalHold && !_lockedFiles.ContainsKey(blob))
+        if (hasLegalHold && !_lockedFiles.ContainsKey(filePath))
         {
-            var file = await DownloadAsync(blob, cancellationToken);
+            var file = await DownloadAsync(filePath, cancellationToken);
 
-            if (file is null) 
-                return Result.Failed();
+            if (file.IsError)
+                return Result.Fail();
 
-            var fileStream = File.OpenRead(file.Value.FilePath); // Opening with FileAccess.Read only
+            var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
             fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
 
-            _lockedFiles.Add(blob, fileStream);
+            _lockedFiles.Add(filePath, fileStream);
 
-            return Result.Succeeded();
+            return Result.Succeed();
         }
 
         if (!hasLegalHold)
         {
-            if (_lockedFiles.ContainsKey(blob))
+            if (_lockedFiles.ContainsKey(filePath))
             {
-                _lockedFiles[blob].Unlock(0, _lockedFiles[blob].Length);
-                _lockedFiles[blob].Dispose();
-                _lockedFiles.Remove(blob);
+                _lockedFiles[filePath].Unlock(0, _lockedFiles[filePath].Length);
+                _lockedFiles[filePath].Dispose();
+                _lockedFiles.Remove(filePath);
             }
         }
-        
-        return Result.Succeeded();
+
+        return Result.Succeed();
     }
 
-    public override async Task<Result<bool>> HasLegalHoldAsync(string blob, CancellationToken cancellationToken = default)
+
+    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
+        var filePath = GetPathFromOptions(options);
         await EnsureContainerExist();
-        return Result<bool>.Succeeded(_lockedFiles.ContainsKey(blob));
+        return Result<bool>.Succeed(_lockedFiles.ContainsKey(filePath));
+    }
+
+    private void EnsureDirectoryExist(string directory)
+    {
+        var path = Path.Combine(_path, directory);
+
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
     }
 }

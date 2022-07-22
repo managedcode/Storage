@@ -1,9 +1,8 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using ManagedCode.Storage.Core.Models;
 
-namespace ManagedCode.Storage.Core;
+namespace ManagedCode.Storage.Core.Models;
 
 public class LocalFile : IDisposable, IAsyncDisposable
 {
@@ -11,20 +10,18 @@ public class LocalFile : IDisposable, IAsyncDisposable
     private bool _disposed;
     private FileStream? _stream;
 
-    public LocalFile(bool keepAlive = false) : this(Path.GetTempFileName(), keepAlive)
+    public LocalFile(string? path = null, bool keepAlive = false)
     {
-    }
+        path ??= Path.GetTempFileName();
 
-    public LocalFile(string path, bool keepAlive = false)
-    {
         string? directory;
         KeepAlive = keepAlive;
 
         if (string.IsNullOrEmpty(Path.GetExtension(path)))
         {
-            directory = path;
-            var tempName = Guid.NewGuid().ToString("N");
-            FilePath = Path.Combine(path, $"{tempName}.tmp");
+            directory = Path.GetDirectoryName(path);
+            var name = Path.GetFileName(path);
+            FilePath = Path.Combine(directory, $"{name}.tmp");
         }
         else
         {
@@ -51,8 +48,8 @@ public class LocalFile : IDisposable, IAsyncDisposable
     public string FileName { get; }
 
     public bool KeepAlive { get; set; }
-    
-    public BlobMetadata BlobMetadata { get; set; }
+
+    public BlobMetadata? BlobMetadata { get; set; }
 
     public FileInfo FileInfo => new(FilePath);
 
@@ -133,7 +130,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
             CloseFileStream();
         }
     }
-    
+
     public async Task<LocalFile> CopyFromStreamAsync(Stream stream)
     {
         await stream.CopyToAsync(FileStream);

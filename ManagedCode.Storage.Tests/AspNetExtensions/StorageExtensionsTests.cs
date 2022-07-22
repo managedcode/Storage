@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.AspNetExtensions;
-using ManagedCode.Storage.AspNetExtensions.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Extensions;
@@ -28,10 +27,7 @@ public class StorageExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddFileSystemStorageAsDefault(opt =>
-        {
-            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
-        });
+        services.AddFileSystemStorageAsDefault(opt => { opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"); });
 
         return services.BuildServiceProvider();
     }
@@ -64,12 +60,11 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        await Storage.UploadToStorageAsync(formFile);
-        var localFile = await Storage.DownloadAsync(fileName);
+        var res = await Storage.UploadToStorageAsync(formFile);
+        var result = await Storage.DownloadAsync(fileName);
 
         // Assert
-        localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.Value.FileName.Should().Be(formFile.FileName);
+        result.Value.FileName.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -83,13 +78,13 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        var newFileName = await Storage.UploadToStorageAsync(formFile, new UploadToStorageOptions {UseRandomName = true});
-        var localFile = await Storage.DownloadAsync(newFileName);
+        var result = await Storage.UploadToStorageAsync(formFile);
+        var localFile = await Storage.DownloadAsync(result.Value.Name);
 
         // Assert
-        localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.Value.FileName.Should().Be(newFileName.Name);
-        localFile.Value.FileName.Should().NotBe(formFile.FileName);
+        result.IsSuccess.Should().BeTrue();
+        localFile.Value.FileInfo.Length.Should().Be(formFile.Length);
+        localFile.Value.FileName.Should().Be(fileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -103,12 +98,13 @@ public class StorageExtensionsTests
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         // Act
-        await Storage.UploadAsync(new FileInfo(fileName));
-        var fileResult = await Storage.DownloadAsFileResult(fileName);
+        await Storage.UploadAsync(localFile.FileInfo);
+        var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        fileResult!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
-        fileResult.FileDownloadName.Should().Be(localFile.FileName);
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        result.Value.FileDownloadName.Should().Be(localFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -124,15 +120,13 @@ public class StorageExtensionsTests
         BlobMetadata blobMetadata = new() {Name = fileName};
 
         // Act
-        await Storage.UploadAsync(localFile.FileInfo, options =>
-        {
-            options.FileName = fileName;
-        });
-        var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
+        await Storage.UploadAsync(localFile.FileInfo, options => { options.FileName = fileName; });
+        var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        fileResult!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
-        fileResult.FileDownloadName.Should().Be(localFile.FileName);
+        result.IsSuccess.Should().Be(true);
+        result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
+        result.Value.FileDownloadName.Should().Be(localFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -147,7 +141,7 @@ public class StorageExtensionsTests
         var fileResult = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
-        fileResult.Should().BeNull();
+        fileResult.IsSuccess.Should().BeFalse();
     }
 
     [Fact]
@@ -162,6 +156,6 @@ public class StorageExtensionsTests
         var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
 
         // Assert
-        fileResult.Should().BeNull();
+        fileResult.IsSuccess.Should().BeFalse();
     }
 }

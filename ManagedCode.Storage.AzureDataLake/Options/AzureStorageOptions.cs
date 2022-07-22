@@ -1,7 +1,7 @@
 ﻿using Azure.Storage.Files.DataLake.Models;
 using ManagedCode.Storage.Core;
 
-namespace ManagedCode.Storage.Azure.Options;
+namespace ManagedCode.Storage.AzureDataLake.Options;
 
 public class AzureDataLakeStorageOptions : StorageOptions
 {
