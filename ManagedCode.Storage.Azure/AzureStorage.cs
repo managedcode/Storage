@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ManagedCode.Communication;
@@ -144,6 +145,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
             var response = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
             return Result<bool>.Succeed(!response.IsError);
+        }
+        catch (RequestFailedException ex)
+            when (ex.Status is 404)
+        {
+            return Result<bool>.Succeed(false);
         }
         catch (Exception ex)
         {
