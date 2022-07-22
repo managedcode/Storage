@@ -15,7 +15,6 @@ public class FileSystemTests : StorageBaseTests
     protected override ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
-        services.AddLogging();
         
         services.AddFileSystemStorageAsDefault(opt =>
         {

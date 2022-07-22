@@ -9,6 +9,7 @@ using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
+using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.FileSystem;
 

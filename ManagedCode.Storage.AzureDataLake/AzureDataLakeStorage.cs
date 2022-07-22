@@ -17,10 +17,10 @@ namespace ManagedCode.Storage.AzureDataLake;
 
 public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IAzureDataLakeStorage
 {
-    private readonly ILogger<AzureDataLakeStorage> _logger;
+    private readonly ILogger<AzureDataLakeStorage>? _logger;
     private readonly DataLakeServiceClient _dataLakeServiceClient;
 
-    public AzureDataLakeStorage(ILogger<AzureDataLakeStorage> logger, AzureDataLakeStorageOptions options) : base(options)
+    public AzureDataLakeStorage(AzureDataLakeStorageOptions options, ILogger<AzureDataLakeStorage>? logger = null) : base(options)
     {
         _logger = logger;
         _dataLakeServiceClient = new DataLakeServiceClient(options.ConnectionString);
@@ -38,10 +38,10 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
 
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -52,10 +52,10 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
             await _dataLakeServiceClient.DeleteFileSystemAsync(StorageOptions.FileSystem, cancellationToken: cancellationToken);
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -71,6 +71,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -100,6 +101,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<LocalFile>.Fail(ex);
         }
     }
@@ -114,6 +116,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -129,6 +132,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -155,6 +159,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }

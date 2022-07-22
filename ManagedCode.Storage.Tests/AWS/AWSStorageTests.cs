@@ -18,8 +18,6 @@ public class AWSStorageTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        services.AddLogging();
-
         // AWS library overwrites property values. you should only create configurations this way. 
         var awsConfig = new AmazonS3Config
         {

@@ -18,9 +18,9 @@ namespace ManagedCode.Storage.Azure;
 
 public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 {
-    private readonly ILogger<AzureStorage> _logger;
+    private readonly ILogger<AzureStorage>? _logger;
 
-    public AzureStorage(ILogger<AzureStorage> logger, AzureStorageOptions options) : base(options)
+    public AzureStorage(AzureStorageOptions options, ILogger<AzureStorage>? logger = null) : base(options)
     {
         _logger = logger;
         StorageClient = new BlobContainerClient(
@@ -42,10 +42,10 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -57,10 +57,10 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             IsContainerCreated = false;
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -78,10 +78,10 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -104,6 +104,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -133,6 +134,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<LocalFile>.Fail(ex);
         }
     }
@@ -153,6 +155,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -169,6 +172,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -199,6 +203,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -238,6 +243,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result.Fail(ex);
         }
     }
@@ -253,6 +259,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -268,6 +275,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<Stream>.Fail(ex);
         }
     }
@@ -283,6 +291,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<Stream>.Fail(ex);
         }
     }

@@ -18,7 +18,6 @@ public class GoogleStorageTests : StorageBaseTests
     protected override ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
-        services.AddLogging();
 
         services.AddGCPStorageAsDefault(opt =>
         {
@@ -116,100 +115,4 @@ public class GoogleStorageTests : StorageBaseTests
         var defaultStorage = ServiceProvider.GetService<IStorage>();
         storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
-
-    /*
-    [Fact]
-    public override async Task GetBlobsAsync()
-    {
-        // Arrange
-        var fileList = await CreateFileList();
-        var blobList = fileList.Select(f => f.FileName).ToList();
-
-        // Act
-        var result = await Storage.GetBlobsAsync(blobList).ToListAsync();
-
-        // Assert
-        foreach (var blobMetadata in result)
-        {
-            blobMetadata.Name.Should().NotBeNull();
-
-            // Uri null for GCP storage emulator
-            // blobMetadata.Uri.Should().NotBeNull();
-        }
-
-        foreach (var item in fileList)
-        {
-            await DeleteFileAsync(item.FileName);
-        }
-    }
-
-    [Fact]
-    public override async Task GetBlobAsync()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var result = await Storage.GetBlobAsync(fileName);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be(fileName);
-
-        // Uri null for GCP storage emulator
-        // result.Uri.Should().NotBeNull();
-
-        await DeleteFileAsync(fileName);
-    }
-
-    [Fact]
-    public override async Task GetBlobs()
-    {
-        // Arrange
-        var fileList = await CreateFileList();
-        var blobList = fileList.Select(f => f.FileName).ToList();
-
-        // Act
-        var result = Storage.GetBlobs(blobList);
-
-        // Assert
-        foreach (var blobMetadata in result)
-        {
-            blobMetadata.Name.Should().NotBeNull();
-
-            // Uri null for GCP storage emulator
-            // blobMetadata.Uri.Should().NotBeNull();
-        }
-
-        foreach (var item in fileList)
-        {
-            await DeleteFileAsync(item.FileName);
-        }
-    }
-
-    [Fact]
-    public override async Task GetBlob()
-    {
-        // Arrange
-        var uploadContent = FileHelper.GenerateRandomFileContent();
-        var fileName = FileHelper.GenerateRandomFileName();
-
-        await PrepareFileToTest(fileName, uploadContent);
-
-        // Act
-        var result = Storage.GetBlob(fileName);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be(fileName);
-
-        // Uri null for GCP storage emulator
-        // result.Uri.Should().NotBeNull();
-
-        await DeleteFileAsync(fileName);
-    }
-    */
 }

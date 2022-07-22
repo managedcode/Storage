@@ -17,11 +17,11 @@ namespace ManagedCode.Storage.Aws;
 
 public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 {
-    private readonly ILogger<AWSStorage> _logger;
+    private readonly ILogger<AWSStorage>? _logger;
 
     public IAmazonS3 StorageClient { get; }
 
-    public AWSStorage(ILogger<AWSStorage> logger, AWSStorageOptions options) : base(options)
+    public AWSStorage(AWSStorageOptions options, ILogger<AWSStorage>? logger = null) : base(options)
     {
         _logger = logger;
         StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), options.OriginalOptions);
@@ -35,10 +35,10 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -49,10 +49,10 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             await StorageClient.DeleteBucketAsync(StorageOptions.Bucket, cancellationToken);
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -69,10 +69,10 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             return Result.Succeed();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message, e);
-            return Result.Fail(e);
+            _logger?.LogError(ex.Message, ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -126,6 +126,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<LocalFile>.Fail(ex);
         }
     }
@@ -154,6 +155,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -176,6 +178,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -207,6 +210,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -285,6 +289,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result.Fail(ex);
         }
     }
@@ -307,6 +312,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }

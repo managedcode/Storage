@@ -17,10 +17,10 @@ namespace ManagedCode.Storage.Gcp;
 
 public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 {
-    private readonly ILogger<GCPStorage> _logger;
+    private readonly ILogger<GCPStorage>? _logger;
     public StorageClient StorageClient { get; }
 
-    public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage> logger) : base(options)
+    public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage>? logger = null) : base(options)
     {
         _logger = logger;
 
@@ -64,7 +64,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<string>.Fail(ex);
         }
     }
@@ -78,7 +78,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<string>.Fail(ex);
         }
     }
@@ -100,7 +100,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<string>.Fail(ex);
         }
     }
@@ -118,7 +118,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -137,7 +137,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<LocalFile>.Fail(ex);
         }
     }
@@ -157,7 +157,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -172,12 +172,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
         {
-            _logger.LogError(ex.Message, ex);
             return Result<bool>.Succeed(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -201,7 +200,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -241,7 +240,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<string>.Fail(ex);
         }
     }
@@ -259,7 +258,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message, ex);
+            _logger?.LogError(ex.Message, ex);
             return Result<bool>.Fail(ex);
         }
     }
