@@ -138,6 +138,11 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
             await StorageClient.DeleteObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
             return Result<bool>.Succeed(true);
         }
+        catch (GoogleApiException ex)
+            when (ex.HttpStatusCode is HttpStatusCode.NotFound)
+        {
+            return Result<bool>.Succeed(false);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex.Message, ex);
