@@ -137,6 +137,20 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
+    public async Task<Stream> OpenReadStreamAsync(OpenReadStreamOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        var fileClient = GetFileClient(options);
+        return await fileClient.OpenReadAsync(options.Position, options.BufferSize, cancellationToken: cancellationToken);
+    }
+
+    public async Task<Stream> OpenWriteStreamAsync(OpenWriteStreamOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        var fileClient = GetFileClient(options);
+        return await fileClient.OpenWriteAsync(options.Overwrite, cancellationToken: cancellationToken);
+    }
+
     protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
         CancellationToken cancellationToken = default)
     {
