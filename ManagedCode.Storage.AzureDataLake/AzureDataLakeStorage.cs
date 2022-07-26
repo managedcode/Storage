@@ -137,18 +137,36 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         }
     }
 
-    public async Task<Stream> OpenReadStreamAsync(OpenReadStreamOptions options,
+    public async Task<Result<Stream>> OpenReadStreamAsync(OpenReadStreamOptions options,
         CancellationToken cancellationToken = default)
     {
-        var fileClient = GetFileClient(options);
-        return await fileClient.OpenReadAsync(options.Position, options.BufferSize, cancellationToken: cancellationToken);
+        try
+        {
+            var fileClient = GetFileClient(options);
+            var stream = await fileClient.OpenReadAsync(options.Position, options.BufferSize, cancellationToken: cancellationToken);
+            return Result.Succeed(stream);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex.Message, ex);
+            return Result<Stream>.Fail(ex);
+        }
     }
 
-    public async Task<Stream> OpenWriteStreamAsync(OpenWriteStreamOptions options,
+    public async Task<Result<Stream>> OpenWriteStreamAsync(OpenWriteStreamOptions options,
         CancellationToken cancellationToken = default)
     {
-        var fileClient = GetFileClient(options);
-        return await fileClient.OpenWriteAsync(options.Overwrite, cancellationToken: cancellationToken);
+        try
+        {
+            var fileClient = GetFileClient(options);
+            var stream = await fileClient.OpenWriteAsync(options.Overwrite, cancellationToken: cancellationToken);
+            return Result.Succeed(stream);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex.Message, ex);
+            return Result<Stream>.Fail(ex);
+        }
     }
 
     protected override async Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
