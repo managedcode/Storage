@@ -99,12 +99,9 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
         var filePath = GetPathFromOptions(options);
 
-        if (File.Exists(filePath))
-        {
-            return Result<LocalFile>.Succeed(new LocalFile(filePath));
-        }
-
-        return Result<LocalFile>.Fail();
+        return File.Exists(filePath)
+            ? Result<LocalFile>.Succeed(new LocalFile(filePath))
+            : Result<LocalFile>.Fail("File not found");
     }
 
     protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
@@ -135,20 +132,20 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         var filePath = GetPathFromOptions(options);
         var fileInfo = new FileInfo(filePath);
 
-        if (fileInfo.Exists)
+        if (!fileInfo.Exists)
         {
-            var result = new BlobMetadata
-            {
-                Name = fileInfo.Name,
-                Uri = new Uri(Path.Combine(_path, filePath)),
-                MimeType = MimeHelper.GetMimeType(fileInfo.Extension),
-                Length = fileInfo.Length
-            };
-
-            return Result<BlobMetadata>.Succeed(result);
+            return Result<BlobMetadata>.Fail("File not found");
         }
 
-        return Result<BlobMetadata>.Fail();
+        var result = new BlobMetadata
+        {
+            Name = fileInfo.Name,
+            Uri = new Uri(Path.Combine(_path, filePath)),
+            MimeType = MimeHelper.GetMimeType(fileInfo.Extension),
+            Length = fileInfo.Length
+        };
+
+        return Result<BlobMetadata>.Succeed(result);
     }
 
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
@@ -185,7 +182,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             var file = await DownloadAsync(filePath, cancellationToken);
 
             if (file.IsError)
-                return Result.Fail();
+                return Result.Fail(file.Error);
 
             var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
             fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
@@ -196,7 +193,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         }
 
         if (!hasLegalHold)
-        {
+        {  
             if (_lockedFiles.ContainsKey(filePath))
             {
                 _lockedFiles[filePath].Unlock(0, _lockedFiles[filePath].Length);

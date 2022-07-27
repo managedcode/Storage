@@ -245,12 +245,12 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     protected override Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
         CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Legal hold is not supported by Data Lake Storage");
+        return Result.Fail(new NotSupportedException("Legal hold is not supported by Data Lake Storage")).AsTask();
     }
 
     protected override Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException("Legal hold is not supported by Data Lake Storage");
+        return Result<bool>.Fail(new NotSupportedException("Legal hold is not supported by Data Lake Storage")).AsTask();
     }
 
     private DataLakeFileClient GetFileClient(BaseOptions options)
