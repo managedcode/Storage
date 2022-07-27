@@ -1,5 +1,7 @@
 ![img|300x200](https://raw.githubusercontent.com/managed-code-hub/Storage/main/logo.png)
+
 # ManagedCode.Storage
+
 [![.NET](https://github.com/managed-code-hub/Storage/actions/workflows/dotnet.yml/badge.svg)](https://github.com/managed-code-hub/Storage/actions/workflows/dotnet.yml)
 [![Coverage Status](https://coveralls.io/repos/github/managed-code-hub/Storage/badge.svg?branch=main&service=github)](https://coveralls.io/github/managed-code-hub/Storage?branch=main)
 [![nuget](https://github.com/managed-code-hub/Storage/actions/workflows/nuget.yml/badge.svg?branch=main)](https://github.com/managed-code-hub/Storage/actions/workflows/nuget.yml)
@@ -16,16 +18,23 @@
 
 # Storage
 ---
+
 ## Storage pattern implementation for C#.
+
 A universal storage for working with multiple storage providers:
-- Azure 
+
+- Azure
 - Google Cloud
 - Amazon
 - FileSystem
-## General concept 
-The library incapsulates all provider specific  to make connection and managing storages as easy as possible. You have as customer just connect the library in your Startup providing necessary connection strings and inject needed interfaces in your services.
+
+## General concept
+
+The library incapsulates all provider specific to make connection and managing storages as easy as possible. You have as customer just connect the
+library in your Startup providing necessary connection strings and inject needed interfaces in your services.
 
 ## Connection modes
+
 You can connect storage interface in two modes provider-specific and default. In case of default you are restricted with one storage type
 
 ### Azure
@@ -82,11 +91,14 @@ public class MyService
     }
 }
 ```
+
 <details>
   <summary>Google Cloud (Click here to expand)</summary>
 
-### Google Cloud 
+### Google Cloud
+
 Default mode connection:
+
 ```cs
 // Startup.cs
 services.AddGCPStorageAsDefault(opt =>
@@ -100,7 +112,9 @@ services.AddGCPStorageAsDefault(opt =>
     };
 });
 ```
+
 Using in default mode:
+
 ```cs
 // MyService.cs
 public class MyService
@@ -113,7 +127,9 @@ public class MyService
     }
 }
 ```
+
 Provider-specific mode connection:
+
 ```cs
 // Startup.cs
 services.AddGCPStorage(new GCPStorageOptions
@@ -125,7 +141,9 @@ services.AddGCPStorage(new GCPStorageOptions
     }
 });
 ```
+
 Using in provider-specific mode
+
 ```cs
 // MyService.cs
 public class MyService
@@ -137,13 +155,16 @@ public class MyService
     }
 }
 ```
+
 </details>
 
 <details>
   <summary>Amazon (Click here to expand)</summary>
-  
+
 ### Amazon
+
 Default mode connection:
+
 ```cs
 // Startup.cs
 //aws libarary overwrites property values. you should only create configurations this way. 
@@ -161,7 +182,9 @@ services.AddAWSStorageAsDefault(opt =>
     opt.OriginalOptions = awsConfig;
 });
 ```
+
 Using in default mode:
+
 ```cs
 // MyService.cs
 public class MyService
@@ -174,7 +197,9 @@ public class MyService
     }
 }
 ```
+
 Provider-specific mode connection:
+
 ```cs
 // Startup.cs
 services.AddAWSStorage(new AWSStorageOptions
@@ -185,7 +210,9 @@ services.AddAWSStorage(new AWSStorageOptions
     OriginalOptions = awsConfig
 });
 ```
+
 Using in provider-specific mode
+
 ```cs
 // MyService.cs
 public class MyService
@@ -197,13 +224,16 @@ public class MyService
     }
 }
 ```
+
 </details>
 
 <details>
   <summary>FileSystem (Click here to expand)</summary>
-  
+
 ### FileSystem
+
 Default mode connection:
+
 ```cs
 // Startup.cs
 services.AddFileSystemStorageAsDefault(opt =>
@@ -211,7 +241,9 @@ services.AddFileSystemStorageAsDefault(opt =>
     opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}");
 });
 ```
+
 Using in default mode:
+
 ```cs
 // MyService.cs
 public class MyService
@@ -224,7 +256,9 @@ public class MyService
     }
 }
 ```
+
 Provider-specific mode connection:
+
 ```cs
 // Startup.cs
 services.AddFileSystemStorage(new FileSystemStorageOptions
@@ -232,7 +266,9 @@ services.AddFileSystemStorage(new FileSystemStorageOptions
     BaseFolder = Path.Combine(Environment.CurrentDirectory, "{YOUR_BUCKET_NAME}"),
 });
 ```
+
 Using in provider-specific mode
+
 ```cs
 // MyService.cs
 public class MyService
@@ -244,9 +280,11 @@ public class MyService
     }
 }
 ```
+
 </details>
 
 ## How to use
+
 We assume that below code snippets are placed in your service class with injected IStorage:
 
 ```cs
@@ -261,6 +299,7 @@ public class MyService
 ```
 
 ### Upload
+
 ```cs
 await _storage.UploadAsync(new Stream());
 await _storage.UploadAsync("some string content");
@@ -268,18 +307,29 @@ await _storage.UploadAsync(new FileInfo("D:\\my_report.txt"));
 ```
 
 ### Delete
+
 ```cs
 await _storage.DeleteAsync("my_report.txt");
 ```
 
 ### Download
+
 ```cs
 var localFile = await _storage.DownloadAsync("my_report.txt");
 ```
 
 ### Get metadata
+
 ```cs
 await _storage.GetBlobMetadataAsync("my_report.txt");
+```
+
+### Native client
+
+If you need more flexibility, you can use native client for any IStorage&lt;T&gt;
+
+```cs
+_storage.StorageClient
 ```
 
 
