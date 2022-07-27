@@ -24,7 +24,7 @@
         <PackageReference Include="Google.Api.Gax" Version="4.0.0" />
         <PackageReference Include="Google.Api.Gax.Rest" Version="4.0.0" />
         <PackageReference Include="Google.Apis.Storage.v1" Version="1.57.0.2685" />
-        <PackageReference Include="ManagedCode.Communication" Version="0.0.6" />
+        <PackageReference Include="ManagedCode.Communication" Version="0.0.8" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
         <PackageReference Include="Google.Cloud.Storage.V1" Version="4.0.0" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />

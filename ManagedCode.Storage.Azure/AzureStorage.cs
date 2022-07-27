@@ -186,20 +186,20 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
             var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
 
-            if (properties != null)
+            if (properties is null)
             {
-                return Result<BlobMetadata>.Succeed(new BlobMetadata
-                {
-                    Name = blobClient.Name,
-                    Uri = blobClient.Uri,
-                    Container = blobClient.BlobContainerName,
-                    Length = properties.Value.ContentLength,
-                    Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
-                    MimeType = properties.Value.ContentType
-                });
+                return Result<BlobMetadata>.Fail("Properties for file not found");
             }
 
-            return Result<BlobMetadata>.Fail();
+            return Result<BlobMetadata>.Succeed(new BlobMetadata
+            {
+                Name = blobClient.Name,
+                Uri = blobClient.Uri,
+                Container = blobClient.BlobContainerName,
+                Length = properties.Value.ContentLength,
+                Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                MimeType = properties.Value.ContentType
+            });
         }
         catch (Exception ex)
         {
@@ -238,8 +238,9 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         {
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
-            var response = await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
-            return response.Value.HasLegalHold ? Result.Succeed() : Result.Fail();
+            await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
+
+            return Result.Succeed();
         }
         catch (Exception ex)
         {

@@ -49,7 +49,7 @@ public static class StorageExtensions
 
         if (result.IsError)
         {
-            return Result<FileResult>.Fail(result.Error);
+            return Result<FileResult>.Fail(result.Error!);
         }
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
@@ -67,7 +67,7 @@ public static class StorageExtensions
 
         if (result.IsError)
         {
-            return Result.Fail<FileResult>(result.Error);
+            return Result.Fail<FileResult>(result.Error!);
         }
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
