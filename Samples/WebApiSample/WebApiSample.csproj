@@ -7,17 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
+        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\ManagedCode.Storage.AspNetExtensions\ManagedCode.Storage.AspNetExtensions.csproj" />
-      <ProjectReference Include="..\..\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj" />
-      <ProjectReference Include="..\..\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
-      <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
-      <ProjectReference Include="..\..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj" />
-      <ProjectReference Include="..\..\ManagedCode.Storage.Gcp\ManagedCode.Storage.Gcp.csproj" />
+        <ProjectReference Include="..\..\ManagedCode.Storage.AspNetExtensions\ManagedCode.Storage.AspNetExtensions.csproj"/>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj"/>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj"/>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
+        <ProjectReference Include="..\..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj"/>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Gcp\ManagedCode.Storage.Gcp.csproj"/>
     </ItemGroup>
 
 </Project>

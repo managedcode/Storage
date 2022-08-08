@@ -11,11 +11,12 @@ namespace ManagedCode.Storage.AzureDataLake;
 public interface IAzureDataLakeStorage : IStorage<DataLakeFileSystemClient>
 {
     /// <summary>
-    /// Create directory
+    ///     Create directory
     /// </summary>
     Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default);
+
     /// <summary>
-    /// Rename directory
+    ///     Rename directory
     /// </summary>
     Task<Result> RenameDirectory(string directory, string newDirectory, CancellationToken cancellationToken = default);
 

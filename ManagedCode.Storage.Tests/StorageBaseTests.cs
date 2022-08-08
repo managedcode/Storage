@@ -16,16 +16,16 @@ namespace ManagedCode.Storage.Tests;
 
 public abstract class StorageBaseTests
 {
-    protected IStorage Storage { get; }
-    protected ServiceProvider ServiceProvider { get; }
-
-    protected abstract ServiceProvider ConfigureServices();
-
     protected StorageBaseTests()
     {
         ServiceProvider = ConfigureServices();
         Storage = ServiceProvider.GetService<IStorage>()!;
     }
+
+    protected IStorage Storage { get; }
+    protected ServiceProvider ServiceProvider { get; }
+
+    protected abstract ServiceProvider ConfigureServices();
 
     [Fact]
     public async Task CreateContainer_ShouldBeSuccess()
@@ -44,7 +44,6 @@ public abstract class StorageBaseTests
 
         result.IsSuccess.Should().BeTrue();
     }
-
 
     [Fact]
     public async Task StreamUploadAsyncTest()
@@ -83,7 +82,6 @@ public abstract class StorageBaseTests
         downloadResult.IsSuccess.Should().BeTrue();
     }
 
-
     [Fact]
     public async Task GetFileListAsyncTest()
     {
@@ -95,6 +93,94 @@ public abstract class StorageBaseTests
         files.Count.Should().BeGreaterOrEqualTo(3);
     }
 
+    [Fact]
+    public async Task DeleteDirectory_ShouldBeSuccess()
+    {
+        // Arrange
+        var directory = "test-directory";
+        await UploadTestFileListAsync(directory, 3);
+
+        // Act
+        var result = await Storage.DeleteDirectoryAsync(directory);
+        var blobs = await Storage.GetBlobMetadataListAsync(directory).ToListAsync();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        blobs.Count.Should().Be(0);
+    }
+
+    #region Download
+
+    [Fact]
+    public async Task DownloadAsync_WithoutOptions_AsLocalFile()
+    {
+        // Arrange
+        var fileInfo = await UploadTestFileAsync();
+
+        // Act
+        var result = await Storage.DownloadAsync(fileInfo.Name);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.FileInfo.Length.Should().Be(fileInfo.Length);
+
+        await Storage.DeleteAsync(fileInfo.Name);
+    }
+
+    #endregion
+
+    #region CreateContainer
+
+    [Fact]
+    public async Task CreateContainerAsync()
+    {
+        await FluentActions.Awaiting(() => Storage.CreateContainerAsync())
+            .Should()
+            .NotThrowAsync<Exception>();
+    }
+
+    #endregion
+
+    private async Task<FileInfo> UploadTestFileAsync(string? directory = null)
+    {
+        var file = await GetTestFileAsync();
+
+        UploadOptions options = new() { FileName = file.Name, Directory = directory };
+        var result = await Storage.UploadAsync(file.OpenRead(), options);
+        result.IsSuccess.Should().BeTrue();
+
+        return file;
+    }
+
+    private async Task<List<FileInfo>> UploadTestFileListAsync(string? directory = null, int? count = 10)
+    {
+        List<FileInfo> fileList = new();
+
+        for (var i = 0; i < count; i++)
+        {
+            var file = await UploadTestFileAsync(directory);
+            fileList.Add(file);
+        }
+
+        return fileList;
+    }
+
+    protected async Task<FileInfo> GetTestFileAsync()
+    {
+        var fileName = Path.GetTempFileName();
+        var fs = File.OpenWrite(fileName);
+        var sw = new StreamWriter(fs);
+
+        for (var i = 0; i < 1000; i++)
+        {
+            await sw.WriteLineAsync(Guid.NewGuid().ToString());
+        }
+
+        await sw.DisposeAsync();
+        await fs.DisposeAsync();
+
+        return new FileInfo(fileName);
+    }
 
     #region MemoryPayload
 
@@ -128,7 +214,6 @@ public abstract class StorageBaseTests
 // }
 
     #endregion
-
 
     #region Get
 
@@ -171,22 +256,6 @@ public abstract class StorageBaseTests
     }
 
     #endregion
-
-    [Fact]
-    public async Task DeleteDirectory_ShouldBeSuccess()
-    {
-        // Arrange
-        var directory = "test-directory";
-        await UploadTestFileListAsync(directory, 3);
-
-        // Act
-        var result = await Storage.DeleteDirectoryAsync(directory);
-        var blobs = await Storage.GetBlobMetadataListAsync(directory).ToListAsync();
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        blobs.Count.Should().Be(0);
-    }
 
     #region Upload
 
@@ -236,8 +305,8 @@ public abstract class StorageBaseTests
         var stream = new MemoryStream(byteArray);
 
         // Act
-        var result = await Storage.UploadAsync(stream, new UploadOptions() {FileName = fileName, Directory = directory});
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {FileName = fileName, Directory = directory});
+        var result = await Storage.UploadAsync(stream, new UploadOptions { FileName = fileName, Directory = directory });
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -255,8 +324,8 @@ public abstract class StorageBaseTests
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
 
         // Act
-        var result = await Storage.UploadAsync(byteArray, new UploadOptions() {FileName = fileName, Directory = directory});
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {FileName = fileName, Directory = directory});
+        var result = await Storage.UploadAsync(byteArray, new UploadOptions { FileName = fileName, Directory = directory });
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -274,8 +343,8 @@ public abstract class StorageBaseTests
         var fileName = FileHelper.GenerateRandomFileName();
 
         // Act
-        var result = await Storage.UploadAsync(uploadContent, new UploadOptions() {FileName = fileName, Directory = directory});
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions() {FileName = fileName, Directory = directory});
+        var result = await Storage.UploadAsync(uploadContent, new UploadOptions { FileName = fileName, Directory = directory });
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -285,26 +354,6 @@ public abstract class StorageBaseTests
     }
 
     #endregion
-
-    #endregion
-
-    #region Download
-
-    [Fact]
-    public async Task DownloadAsync_WithoutOptions_AsLocalFile()
-    {
-        // Arrange
-        var fileInfo = await UploadTestFileAsync();
-
-        // Act
-        var result = await Storage.DownloadAsync(fileInfo.Name);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value!.FileInfo.Length.Should().Be(fileInfo.Length);
-
-        await Storage.DeleteAsync(fileInfo.Name);
-    }
 
     #endregion
 
@@ -326,14 +375,13 @@ public abstract class StorageBaseTests
         await Storage.DeleteAsync(fileInfo.Name);
     }
 
-
     [Fact]
     public async Task ExistsAsync_WithOptions_InDirectory_ShouldBeTrue()
     {
         // Arrange
         var directory = "test-directory";
         var fileInfo = await UploadTestFileAsync(directory);
-        ExistOptions options = new() {FileName = fileInfo.Name, Directory = directory};
+        ExistOptions options = new() { FileName = fileInfo.Name, Directory = directory };
 
         // Act
         var result = await Storage.ExistsAsync(options);
@@ -356,14 +404,13 @@ public abstract class StorageBaseTests
         result.Value.Should().BeFalse();
     }
 
-
     [Fact]
     public async Task ExistsAsync_IfFileFileExistInAnotherDirectory_WithOptions_ShouldBeFalse()
     {
         // Arrange
         var directory = "test-directory";
         var fileInfo = await UploadTestFileAsync(directory);
-        ExistOptions options = new() {FileName = fileInfo.Name, Directory = "another-directory"};
+        ExistOptions options = new() { FileName = fileInfo.Name, Directory = "another-directory" };
 
         // Act
         var result = await Storage.ExistsAsync(options);
@@ -393,7 +440,6 @@ public abstract class StorageBaseTests
         result.Value.Should().BeTrue();
     }
 
-
     [Fact]
     public async Task DeleteAsync_WithoutOptions_IfFileDontExist_ShouldFalse()
     {
@@ -414,7 +460,7 @@ public abstract class StorageBaseTests
         // Arrange
         var directory = "test-directory";
         var file = await UploadTestFileAsync(directory);
-        DeleteOptions options = new() {FileName = file.Name, Directory = directory};
+        DeleteOptions options = new() { FileName = file.Name, Directory = directory };
 
         // Act
         var result = await Storage.DeleteAsync(options);
@@ -429,7 +475,7 @@ public abstract class StorageBaseTests
     {
         // Arrange
         var directory = "test-directory";
-        DeleteOptions options = new() {FileName = Guid.NewGuid().ToString(), Directory = directory};
+        DeleteOptions options = new() { FileName = Guid.NewGuid().ToString(), Directory = directory };
 
         // Act
         var result = await Storage.DeleteAsync(options);
@@ -440,56 +486,4 @@ public abstract class StorageBaseTests
     }
 
     #endregion
-
-    #region CreateContainer
-
-    [Fact]
-    public async Task CreateContainerAsync()
-    {
-        await FluentActions.Awaiting(() => Storage.CreateContainerAsync())
-            .Should().NotThrowAsync<Exception>();
-    }
-
-    #endregion
-
-    private async Task<FileInfo> UploadTestFileAsync(string? directory = null)
-    {
-        var file = await GetTestFileAsync();
-
-        UploadOptions options = new() {FileName = file.Name, Directory = directory};
-        var result = await Storage.UploadAsync(file.OpenRead(), options);
-        result.IsSuccess.Should().BeTrue();
-
-        return file;
-    }
-
-    private async Task<List<FileInfo>> UploadTestFileListAsync(string? directory = null, int? count = 10)
-    {
-        List<FileInfo> fileList = new();
-
-        for (var i = 0; i < count; i++)
-        {
-            var file = await UploadTestFileAsync(directory);
-            fileList.Add(file);
-        }
-
-        return fileList;
-    }
-
-    protected async Task<FileInfo> GetTestFileAsync()
-    {
-        var fileName = Path.GetTempFileName();
-        var fs = File.OpenWrite(fileName);
-        var sw = new StreamWriter(fs);
-
-        for (var i = 0; i < 1000; i++)
-        {
-            await sw.WriteLineAsync(Guid.NewGuid().ToString());
-        }
-
-        await sw.DisposeAsync();
-        await fs.DisposeAsync();
-
-        return new FileInfo(fileName);
-    }
 }

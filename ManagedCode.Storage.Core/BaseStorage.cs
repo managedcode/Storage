@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,32 +17,13 @@ public class StorageOptions
 
 public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 {
-    protected bool IsContainerCreated;
     protected readonly T StorageOptions;
+    protected bool IsContainerCreated;
 
     protected BaseStorage(T storageOptions)
     {
-        System.Diagnostics.Contracts.Contract.Assert(storageOptions is not null);
+        Contract.Assert(storageOptions is not null);
         StorageOptions = storageOptions!;
-    }
-
-    protected Task<Result> EnsureContainerExist()
-    {
-        if (IsContainerCreated)
-            return Result.Succeed().AsTask();
-
-        return CreateContainerAsync();
-    }
-
-    protected UploadOptions SetUploadOptions(UploadOptions options)
-    {
-        if (string.IsNullOrWhiteSpace(options.FileName))
-            options.FileName = $"{Guid.NewGuid():N}";
-
-        if (!string.IsNullOrWhiteSpace(options.FileNamePrefix))
-            options.FileName = options.FileNamePrefix + options.FileName;
-
-        return options;
     }
 
     public async Task<Result> CreateContainerAsync(CancellationToken cancellationToken = default)
@@ -52,18 +34,12 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return result;
     }
 
-    protected abstract Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default);
     public abstract Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default);
-
-    protected abstract Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default);
 
     public async Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
         return await DeleteDirectoryInternalAsync(directory, cancellationToken);
     }
-
-    protected abstract Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
-        CancellationToken cancellationToken = default);
 
     public Task<Result<BlobMetadata>> UploadAsync(Stream content, CancellationToken cancellationToken = default)
     {
@@ -155,14 +131,10 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return UploadInternalAsync(fileInfo.OpenRead(), SetUploadOptions(options), cancellationToken);
     }
 
-    protected abstract Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
-        CancellationToken cancellationToken = default);
-
-
     public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
     {
         var file = new LocalFile();
-        DownloadOptions options = new() {FileName = fileName};
+        DownloadOptions options = new() { FileName = fileName };
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
@@ -184,11 +156,9 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
-    protected abstract Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default);
-
     public Task<Result<bool>> DeleteAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        DeleteOptions options = new() {FileName = fileName};
+        DeleteOptions options = new() { FileName = fileName };
         return DeleteInternalAsync(options, cancellationToken);
     }
 
@@ -204,11 +174,9 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return DeleteInternalAsync(options, cancellationToken);
     }
 
-    protected abstract Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default);
-
     public Task<Result<bool>> ExistsAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        ExistOptions options = new() {FileName = fileName};
+        ExistOptions options = new() { FileName = fileName };
         return ExistsInternalAsync(options, cancellationToken);
     }
 
@@ -224,12 +192,9 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return ExistsInternalAsync(options, cancellationToken);
     }
 
-    protected abstract Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
-        CancellationToken cancellationToken = default);
-
     public Task<Result<BlobMetadata>> GetBlobMetadataAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        MetadataOptions options = new() {FileName = fileName};
+        MetadataOptions options = new() { FileName = fileName };
         return GetBlobMetadataInternalAsync(options, cancellationToken);
     }
 
@@ -247,13 +212,9 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public abstract IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null, CancellationToken cancellationToken = default);
 
-
-    protected abstract Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
-        CancellationToken cancellationToken = default);
-
     public Task<Result> SetLegalHoldAsync(bool hasLegalHold, string fileName, CancellationToken cancellationToken = default)
     {
-        LegalHoldOptions options = new() {FileName = fileName};
+        LegalHoldOptions options = new() { FileName = fileName };
         return SetLegalHoldInternalAsync(hasLegalHold, options, cancellationToken);
     }
 
@@ -269,11 +230,9 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         return SetLegalHoldInternalAsync(hasLegalHold, options, cancellationToken);
     }
 
-    protected abstract Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default);
-
     public Task<Result<bool>> HasLegalHoldAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        LegalHoldOptions options = new() {FileName = fileName};
+        LegalHoldOptions options = new() { FileName = fileName };
         return HasLegalHoldInternalAsync(options, cancellationToken);
     }
 
@@ -288,4 +247,54 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         action.Invoke(options);
         return HasLegalHoldInternalAsync(options, cancellationToken);
     }
+
+    protected Task<Result> EnsureContainerExist()
+    {
+        if (IsContainerCreated)
+        {
+            return Result.Succeed().AsTask();
+        }
+
+        return CreateContainerAsync();
+    }
+
+    protected UploadOptions SetUploadOptions(UploadOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(options.FileName))
+        {
+            options.FileName = $"{Guid.NewGuid():N}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.FileNamePrefix))
+        {
+            options.FileName = options.FileNamePrefix + options.FileName;
+        }
+
+        return options;
+    }
+
+    protected abstract Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream,
+        UploadOptions options,
+        CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile,
+        DownloadOptions options,
+        CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
+        CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold,
+        LegalHoldOptions options,
+        CancellationToken cancellationToken = default);
+
+    protected abstract Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default);
 }

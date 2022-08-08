@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddScoped<IStorage,AzureStorage>();
+        return serviceCollection.AddScoped<IStorage, AzureStorage>();
     }
 
     private static void CheckConfiguration(AzureStorageOptions options)

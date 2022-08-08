@@ -18,12 +18,12 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddFileSystemStorageAsDefault(new FileSystemStorageOptions
 {
-    BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"),
+    BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket")
 });
 
 builder.Services.AddFileSystemStorage(new FileSystemStorageOptions
 {
-    BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"),
+    BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket")
 });
 
 #endregion
@@ -34,7 +34,7 @@ builder.Services.AddAzureStorage(new AzureStorageOptions
 {
     Container = "managed-code-bucket",
     ConnectionString =
-        "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;",
+        "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;"
 });
 
 #endregion
@@ -64,17 +64,16 @@ builder.Services.AddAWSStorage(opt =>
 
 builder.Services.AddGCPStorage(new GCPStorageOptions
 {
-    BucketOptions = new BucketOptions()
+    BucketOptions = new BucketOptions
     {
         ProjectId = "api-project-0000000000000",
-        Bucket = "managed-code-bucket",
+        Bucket = "managed-code-bucket"
     }
 });
 
 #endregion
 
 var app = builder.Build();
-
 
 app.UseSwagger();
 app.UseSwaggerUI();

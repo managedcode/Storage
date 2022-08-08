@@ -11,16 +11,13 @@ using Xunit;
 namespace ManagedCode.Storage.Tests.FileSystem;
 
 public class FileSystemTests : StorageBaseTests
-{ 
+{
     protected override ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
-        
-        services.AddFileSystemStorageAsDefault(opt =>
-        {
-            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket");
-        });
-        
+
+        services.AddFileSystemStorageAsDefault(opt => { opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"); });
+
         services.AddFileSystemStorage(new FileSystemStorageOptions
         {
             BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket")

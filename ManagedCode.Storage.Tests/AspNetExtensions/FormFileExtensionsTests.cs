@@ -15,7 +15,7 @@ public class FormFileExtensionsTests
     {
         // Arrange
         const int size = 200 * 1024; // 200 KB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var fileName = FileHelper.GenerateRandomFileName();
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
@@ -31,7 +31,7 @@ public class FormFileExtensionsTests
     {
         // Arrange
         const int size = 300 * 1024 * 1024; // 300 MB
-        var fileName = FileHelper.GenerateRandomFileName("txt");
+        var fileName = FileHelper.GenerateRandomFileName();
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
@@ -53,7 +53,7 @@ public class FormFileExtensionsTests
         for (var i = 0; i < filesCount; i++)
         {
             var size = random.Next(10, 1000) * 1024;
-            var fileName = FileHelper.GenerateRandomFileName("txt");
+            var fileName = FileHelper.GenerateRandomFileName();
             collection.Add(FileHelper.GenerateFormFile(fileName, size));
         }
 

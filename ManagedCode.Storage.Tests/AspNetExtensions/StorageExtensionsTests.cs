@@ -14,14 +14,14 @@ namespace ManagedCode.Storage.Tests.AspNetExtensions;
 
 public class StorageExtensionsTests
 {
-    public IStorage Storage { get; }
-    public ServiceProvider ServiceProvider { get; }
-
     public StorageExtensionsTests()
     {
         ServiceProvider = ConfigureServices();
         Storage = ServiceProvider.GetService<IStorage>()!;
     }
+
+    public IStorage Storage { get; }
+    public ServiceProvider ServiceProvider { get; }
 
     public static ServiceProvider ConfigureServices()
     {
@@ -117,7 +117,7 @@ public class StorageExtensionsTests
         var fileName = FileHelper.GenerateRandomFileName();
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
-        BlobMetadata blobMetadata = new() {Name = fileName};
+        BlobMetadata blobMetadata = new() { Name = fileName };
 
         // Act
         await Storage.UploadAsync(localFile.FileInfo, options => { options.FileName = fileName; });
@@ -150,7 +150,7 @@ public class StorageExtensionsTests
         // Arrange
         var fileName = FileHelper.GenerateRandomFileName();
 
-        BlobMetadata blobMetadata = new() {Name = fileName};
+        BlobMetadata blobMetadata = new() { Name = fileName };
 
         // Act
         var fileResult = await Storage.DownloadAsFileResult(blobMetadata);

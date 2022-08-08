@@ -5,5 +5,4 @@ namespace ManagedCode.Storage.Aws;
 
 public interface IAWSStorage : IStorage<IAmazonS3>
 {
-    
 }

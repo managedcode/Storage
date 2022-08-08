@@ -15,6 +15,18 @@ public class StorageController : Controller
         _storage = storage;
     }
 
+    #region Download files using the extension for storage from Managed Code.Storage.AspNet Extensions;
+
+    [HttpGet("file")]
+    public async Task<FileResult> DownloadFile(string fileName)
+    {
+        var result = await _storage.DownloadAsFileResult(fileName);
+
+        return result.Value;
+    }
+
+    #endregion
+
     #region Upload files using the extension for storage from Managed Code.Storage.AspNet Extensions;
 
     [HttpPost("file")]
@@ -49,18 +61,6 @@ public class StorageController : Controller
         });
 
         return Ok();
-    }
-
-    #endregion
-
-    #region Download files using the extension for storage from Managed Code.Storage.AspNet Extensions;
-
-    [HttpGet("file")]
-    public async Task<FileResult> DownloadFile(string fileName)
-    {
-        var result = await _storage.DownloadAsFileResult(fileName);
-
-        return result.Value;
     }
 
     #endregion

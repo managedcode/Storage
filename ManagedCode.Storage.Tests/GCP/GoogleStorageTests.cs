@@ -21,29 +21,29 @@ public class GoogleStorageTests : StorageBaseTests
 
         services.AddGCPStorageAsDefault(opt =>
         {
-            opt.BucketOptions = new BucketOptions()
+            opt.BucketOptions = new BucketOptions
             {
                 ProjectId = "api-project-0000000000000",
-                Bucket = "managed-code-bucket",
+                Bucket = "managed-code-bucket"
             };
             opt.StorageClientBuilder = new StorageClientBuilder
             {
                 UnauthenticatedAccess = true,
-                BaseUri = "http://localhost:4443/storage/v1/",
+                BaseUri = "http://localhost:4443/storage/v1/"
             };
         });
 
         services.AddGCPStorage(new GCPStorageOptions
         {
-            BucketOptions = new BucketOptions()
+            BucketOptions = new BucketOptions
             {
                 ProjectId = "api-project-0000000000000",
-                Bucket = "managed-code-bucket",
+                Bucket = "managed-code-bucket"
             },
             StorageClientBuilder = new StorageClientBuilder
             {
                 UnauthenticatedAccess = true,
-                BaseUri = "http://localhost:4443/storage/v1/",
+                BaseUri = "http://localhost:4443/storage/v1/"
             }
         });
         return services.BuildServiceProvider();
@@ -56,14 +56,14 @@ public class GoogleStorageTests : StorageBaseTests
 
         Action action = () => services.AddGCPStorage(opt =>
         {
-            opt.BucketOptions = new BucketOptions()
+            opt.BucketOptions = new BucketOptions
             {
-                Bucket = "managed-code-bucket",
+                Bucket = "managed-code-bucket"
             };
             opt.StorageClientBuilder = new StorageClientBuilder
             {
                 UnauthenticatedAccess = true,
-                BaseUri = "http://localhost:4443/storage/v1/",
+                BaseUri = "http://localhost:4443/storage/v1/"
             };
         });
 
@@ -77,14 +77,14 @@ public class GoogleStorageTests : StorageBaseTests
 
         Action action = () => services.AddGCPStorage(opt =>
         {
-            opt.BucketOptions = new BucketOptions()
+            opt.BucketOptions = new BucketOptions
             {
-                ProjectId = "api-project-0000000000000",
+                ProjectId = "api-project-0000000000000"
             };
             opt.StorageClientBuilder = new StorageClientBuilder
             {
                 UnauthenticatedAccess = true,
-                BaseUri = "http://localhost:4443/storage/v1/",
+                BaseUri = "http://localhost:4443/storage/v1/"
             };
         });
 
@@ -98,10 +98,10 @@ public class GoogleStorageTests : StorageBaseTests
 
         Action action = () => services.AddGCPStorageAsDefault(opt =>
         {
-            opt.BucketOptions = new BucketOptions()
+            opt.BucketOptions = new BucketOptions
             {
                 ProjectId = "api-project-0000000000000",
-                Bucket = "managed-code-bucket",
+                Bucket = "managed-code-bucket"
             };
         });
 

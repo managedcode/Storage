@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddScoped<IStorage,AzureDataLakeStorage>();
+        return serviceCollection.AddScoped<IStorage, AzureDataLakeStorage>();
     }
 
     private static void CheckConfiguration(AzureDataLakeStorageOptions options)

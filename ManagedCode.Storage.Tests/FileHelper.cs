@@ -53,6 +53,7 @@ public static class FileHelper
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
         return new string(Enumerable.Repeat(chars, 250_000)
-            .Select(s => s[Random.Next(s.Length)]).ToArray());
+            .Select(s => s[Random.Next(s.Length)])
+            .ToArray());
     }
 }

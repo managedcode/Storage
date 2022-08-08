@@ -45,7 +45,6 @@ public class AWSStorageTests : StorageBaseTests
         return services.BuildServiceProvider();
     }
 
-
     [Fact]
     public void BadConfigurationForStorage_WithoutPublicKey_ThrowException()
     {
@@ -82,7 +81,7 @@ public class AWSStorageTests : StorageBaseTests
         Action action = () => services.AddAWSStorageAsDefault(new AWSStorageOptions
         {
             PublicKey = "localkey",
-            SecretKey = "localsecret",
+            SecretKey = "localsecret"
         });
 
         action.Should().Throw<BadConfigurationException>();

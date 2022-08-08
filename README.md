@@ -30,12 +30,14 @@ A universal storage for working with multiple storage providers:
 
 ## General concept
 
-The library incapsulates all provider specific to make connection and managing storages as easy as possible. You have as customer just connect the
+The library incapsulates all provider specific to make connection and managing storages as easy as possible. You have as
+customer just connect the
 library in your Startup providing necessary connection strings and inject needed interfaces in your services.
 
 ## Connection modes
 
-You can connect storage interface in two modes provider-specific and default. In case of default you are restricted with one storage type
+You can connect storage interface in two modes provider-specific and default. In case of default you are restricted with
+one storage type
 
 ### Azure
 

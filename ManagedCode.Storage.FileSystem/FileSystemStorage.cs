@@ -9,30 +9,17 @@ using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
-using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.FileSystem;
 
 public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSystemStorage
 {
-    private readonly string _path;
     private readonly Dictionary<string, FileStream> _lockedFiles = new();
+    private readonly string _path;
 
     public FileSystemStorage(FileSystemStorageOptions options) : base(options)
     {
         _path = StorageOptions.BaseFolder ?? Environment.CurrentDirectory;
-    }
-
-    protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
-    {
-        await Task.Yield();
-
-        if (!Directory.Exists(_path))
-        {
-            Directory.CreateDirectory(_path);
-        }
-
-        return Result.Succeed();
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
@@ -42,6 +29,41 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         if (Directory.Exists(_path))
         {
             Directory.Delete(_path, true);
+        }
+
+        return Result.Succeed();
+    }
+
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+
+        var path = directory is null ? _path : Path.Combine(_path, directory);
+
+        if (!Directory.Exists(path))
+        {
+            yield break;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(path))
+        {
+            var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
+
+            if (blobMetadata.IsSuccess)
+            {
+                yield return blobMetadata.Value!;
+            }
+        }
+    }
+
+    protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
+    {
+        await Task.Yield();
+
+        if (!Directory.Exists(_path))
+        {
+            Directory.CreateDirectory(_path);
         }
 
         return Result.Succeed();
@@ -58,7 +80,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result.Succeed().AsTask();
     }
 
-    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream,
+        UploadOptions options,
         CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
@@ -91,8 +114,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return filePath;
     }
 
-
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile,
+        DownloadOptions options,
         CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist();
@@ -111,12 +134,13 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         var filePath = GetPathFromOptions(options);
 
         if (!File.Exists(filePath))
+        {
             return Result<bool>.Succeed(false);
+        }
 
         File.Delete(filePath);
         return Result<bool>.Succeed(true);
     }
-
 
     protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
     {
@@ -148,30 +172,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         return Result<BlobMetadata>.Succeed(result);
     }
 
-    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        await EnsureContainerExist();
-
-        var path = directory is null ? _path : Path.Combine(_path, directory);
-
-        if (!Directory.Exists(path))
-        {
-            yield break;
-        }
-
-        foreach (var file in Directory.EnumerateFiles(path))
-        {
-            var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
-
-            if (blobMetadata.IsSuccess)
-            {
-                yield return blobMetadata.Value!;
-            }
-        }
-    }
-
-    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold,
+        LegalHoldOptions options,
         CancellationToken cancellationToken = default)
     {
         var filePath = GetPathFromOptions(options);
@@ -182,7 +184,9 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             var file = await DownloadAsync(filePath, cancellationToken);
 
             if (file.IsError)
+            {
                 return Result.Fail(file.Error);
+            }
 
             var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
             fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
@@ -193,7 +197,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         }
 
         if (!hasLegalHold)
-        {  
+        {
             if (_lockedFiles.ContainsKey(filePath))
             {
                 _lockedFiles[filePath].Unlock(0, _lockedFiles[filePath].Length);
@@ -204,7 +208,6 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
         return Result.Succeed();
     }
-
 
     protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
     {

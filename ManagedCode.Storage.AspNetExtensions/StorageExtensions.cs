@@ -15,10 +15,12 @@ public static class StorageExtensions
 {
     private const int MinLengthForLargeFile = 256 * 1024;
 
-    public static async Task<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage, IFormFile formFile, UploadOptions? options = null,
+    public static async Task<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage,
+        IFormFile formFile,
+        UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        options ??= new UploadOptions(fileName: formFile.FileName, mimeType: formFile.ContentType);
+        options ??= new UploadOptions(formFile.FileName, mimeType: formFile.ContentType);
 
         if (formFile.Length > MinLengthForLargeFile)
         {
@@ -32,7 +34,8 @@ public static class StorageExtensions
         }
     }
 
-    public static async IAsyncEnumerable<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage, IFormFileCollection formFiles,
+    public static async IAsyncEnumerable<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage,
+        IFormFileCollection formFiles,
         UploadOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -42,7 +45,8 @@ public static class StorageExtensions
         }
     }
 
-    public static async Task<Result<FileResult>> DownloadAsFileResult(this IStorage storage, string blobName,
+    public static async Task<Result<FileResult>> DownloadAsFileResult(this IStorage storage,
+        string blobName,
         CancellationToken cancellationToken = default)
     {
         var result = await storage.DownloadAsync(blobName, cancellationToken);
@@ -60,7 +64,8 @@ public static class StorageExtensions
         return Result<FileResult>.Succeed(fileStream);
     }
 
-    public static async Task<Result<FileResult>> DownloadAsFileResult(this IStorage storage, BlobMetadata blobMetadata,
+    public static async Task<Result<FileResult>> DownloadAsFileResult(this IStorage storage,
+        BlobMetadata blobMetadata,
         CancellationToken cancellationToken = default)
     {
         var result = await storage.DownloadAsync(blobMetadata.Name, cancellationToken);

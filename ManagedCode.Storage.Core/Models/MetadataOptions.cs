@@ -4,6 +4,6 @@ public class MetadataOptions : BaseOptions
 {
     public static MetadataOptions FromBaseOptions(BaseOptions options)
     {
-        return new MetadataOptions() {FileName = options.FileName, Directory = options.Directory};
+        return new MetadataOptions { FileName = options.FileName, Directory = options.Directory };
     }
 }

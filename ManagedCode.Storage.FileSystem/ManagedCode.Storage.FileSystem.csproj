@@ -17,13 +17,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="0.0.8" />
-        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+        <PackageReference Include="ManagedCode.Communication" Version="0.0.8"/>
+        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
     </ItemGroup>
 
 </Project>

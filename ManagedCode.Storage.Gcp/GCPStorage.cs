@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -18,13 +19,12 @@ namespace ManagedCode.Storage.Gcp;
 public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 {
     private readonly ILogger<GCPStorage>? _logger;
-    public StorageClient StorageClient { get; }
 
     public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage>? logger = null) : base(options)
     {
         _logger = logger;
 
-        System.Diagnostics.Contracts.Contract.Assert(!string.IsNullOrWhiteSpace(StorageOptions.BucketOptions.Bucket));
+        Contract.Assert(!string.IsNullOrWhiteSpace(StorageOptions.BucketOptions.Bucket));
 
         if (options.StorageClientBuilder != null)
         {
@@ -36,12 +36,48 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
+    public StorageClient StorageClient { get; }
+
+    public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await StorageClient.DeleteBucketAsync(StorageOptions.BucketOptions.Bucket, null, cancellationToken);
+            return Result.Succeed();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex.Message, ex);
+            return Result<string>.Fail(ex);
+        }
+    }
+
+    public override IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
+        CancellationToken cancellationToken = default)
+
+    {
+        return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
+                new ListObjectsOptions { Projection = Projection.Full })
+            .Select(
+                x => new BlobMetadata
+                {
+                    Name = x.Name,
+                    Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink),
+                    Container = x.Bucket,
+                    MimeType = x.ContentType,
+                    Length = (long)(x.Size ?? 0)
+                }
+            );
+    }
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             if (IsContainerCreated)
+            {
                 return Result.Succeed();
+            }
 
             if (StorageOptions.OriginalOptions != null)
             {
@@ -69,27 +105,14 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await StorageClient.DeleteBucketAsync(StorageOptions.BucketOptions.Bucket, null, cancellationToken);
-            return Result.Succeed();
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex.Message, ex);
-            return Result<string>.Fail(ex);
-        }
-    }
-
     protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
     {
         try
         {
             await EnsureContainerExist();
             var blobs = StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, string.Empty,
-                new ListObjectsOptions {Projection = Projection.Full}).Select(x => x);
+                    new ListObjectsOptions { Projection = Projection.Full })
+                .Select(x => x);
 
             await foreach (var blob in blobs.WithCancellation(cancellationToken))
             {
@@ -105,7 +128,8 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
+    protected override async Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream,
+        UploadOptions options,
         CancellationToken cancellationToken = default)
     {
         try
@@ -123,8 +147,8 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-
-    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
+    protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile,
+        DownloadOptions options,
         CancellationToken cancellationToken = default)
     {
         try
@@ -195,7 +219,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                 Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
                 Container = obj.Bucket,
                 MimeType = obj.ContentType,
-                Length = (long) (obj.Size ?? 0),
+                Length = (long)(obj.Size ?? 0)
             });
         }
         catch (Exception ex)
@@ -205,25 +229,8 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         }
     }
 
-    public override IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
-        CancellationToken cancellationToken = default)
-
-    {
-        return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
-                new ListObjectsOptions {Projection = Projection.Full})
-            .Select(
-                x => new BlobMetadata
-                {
-                    Name = x.Name,
-                    Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink),
-                    Container = x.Bucket,
-                    MimeType = x.ContentType,
-                    Length = (long) (x.Size ?? 0),
-                }
-            );
-    }
-
-    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
+    protected override async Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold,
+        LegalHoldOptions options,
         CancellationToken cancellationToken = default)
     {
         try
