@@ -25,7 +25,8 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         _logger = logger;
         StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), options.OriginalOptions);
     }
-    
+
+    public IAmazonS3 StorageClient { get; }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
