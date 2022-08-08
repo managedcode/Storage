@@ -15,8 +15,8 @@ public class BlobStream : Stream
     public const int DefaultBufferSize = 1024 * 1024 * 4;
     private readonly PageBlobClient _pageBlob;
 
-    public BlobStream(string connectionString, string container, string databaseName)
-        : this(GetClient(connectionString, container, databaseName))
+    public BlobStream(string connectionString, string container, string fileName)
+        : this(GetClient(connectionString, container, fileName))
     {
     }
 
