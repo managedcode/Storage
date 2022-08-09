@@ -160,7 +160,11 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 
         var uploadOptions = new BlobUploadOptions
         {
-            Metadata = options.Metadata
+            Metadata = options.Metadata,
+            HttpHeaders = new BlobHttpHeaders
+            {
+                ContentType = options.MimeType
+            }
         };
 
         try
