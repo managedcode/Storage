@@ -13,8 +13,8 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Product>Managed Code - Storage</Product>
-        <Version>2.0.6</Version>
-        <PackageVersion>2.0.6</PackageVersion>
+        <Version>2.0.7</Version>
+        <PackageVersion>2.0.7</PackageVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>

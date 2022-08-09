@@ -166,6 +166,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
             Name = fileInfo.Name,
             Uri = new Uri(Path.Combine(_path, filePath)),
             MimeType = MimeHelper.GetMimeType(fileInfo.Extension),
+            CreationTime = fileInfo.CreationTimeUtc,
+            LastModified = fileInfo.LastWriteTimeUtc,
             Length = fileInfo.Length
         };
 

@@ -70,9 +70,12 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
                 yield return new BlobMetadata
                 {
+                    Name = entry.Key,
                     FullName = entry.Key,
-                    Name = Path.GetFileName(entry.Key),
+                    Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
+                    LastModified = objectMetaResponse.LastModified,
+                    CreationTime = objectMetaResponse.LastModified,
                     MimeType = objectMetaResponse.Headers.ContentType,
                     Length = objectMetaResponse.Headers.ContentLength
                 };
@@ -135,7 +138,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             InputStream = stream,
             AutoCloseStream = false,
             ContentType = options.MimeType,
-            ServerSideEncryptionMethod = null
+            ServerSideEncryptionMethod = null,
         };
 
         try
@@ -162,11 +165,13 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             localFile.BlobMetadata = new BlobMetadata
             {
-                Name = options.FullPath,
+                Name = options.FileName,
+                Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
+                LastModified = response.LastModified,
+                CreationTime = response.LastModified,
                 MimeType = response.Headers.ContentType,
-                Length = response.Headers.ContentLength,
-                Container = StorageOptions.Bucket
+                Length = response.Headers.ContentLength
             };
 
             await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, options.FullPath, null,
@@ -249,8 +254,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             var metadata = new BlobMetadata
             {
-                Name = options.FullPath,
+                Name = options.FileName,
+                Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
+                LastModified = objectMetaResponse.LastModified,
+                CreationTime = objectMetaResponse.LastModified,
                 MimeType = objectMetaResponse.Headers.ContentType,
                 Length = objectMetaResponse.Headers.ContentLength
             };
