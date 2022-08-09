@@ -136,8 +136,16 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         try
         {
+            DataLakeFileUploadOptions dataLakeFileUploadOptions = new()
+            {
+                HttpHeaders = new PathHttpHeaders()
+                {
+                    ContentType = options.MimeType
+                },
+            };
+
             var fileClient = GetFileClient(options);
-            await fileClient.UploadAsync(stream);
+            await fileClient.UploadAsync(stream, dataLakeFileUploadOptions, cancellationToken);
 
             return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
         }
