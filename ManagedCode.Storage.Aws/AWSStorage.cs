@@ -19,7 +19,6 @@ namespace ManagedCode.Storage.Aws;
 public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 {
     private readonly ILogger<AWSStorage>? _logger;
-    private const string CreationTimeKey = "CreationTime";
 
     public AWSStorage(AWSStorageOptions options, ILogger<AWSStorage>? logger = null) : base(options)
     {
@@ -75,7 +74,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                     Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
                     LastModified = objectMetaResponse.LastModified,
-                    CreationTime = DateTimeOffset.Parse(objectMetaResponse.Metadata[CreationTimeKey]),
+                    CreationTime = objectMetaResponse.LastModified,
                     MimeType = objectMetaResponse.Headers.ContentType,
                     Length = objectMetaResponse.Headers.ContentLength
                 };
@@ -141,8 +140,6 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             ServerSideEncryptionMethod = null,
         };
 
-        putRequest.Metadata.Add(CreationTimeKey, DateTimeOffset.UtcNow.ToString());
-
         try
         {
             await EnsureContainerExist();
@@ -171,7 +168,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
                 LastModified = response.LastModified,
-                CreationTime = DateTimeOffset.Parse(response.Metadata[CreationTimeKey]),
+                CreationTime = response.LastModified,
                 MimeType = response.Headers.ContentType,
                 Length = response.Headers.ContentLength
             };
@@ -260,7 +257,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
                 LastModified = objectMetaResponse.LastModified,
-                CreationTime = DateTimeOffset.Parse(objectMetaResponse.Metadata[CreationTimeKey]),
+                CreationTime = objectMetaResponse.LastModified,
                 MimeType = objectMetaResponse.Headers.ContentType,
                 Length = objectMetaResponse.Headers.ContentLength
             };
