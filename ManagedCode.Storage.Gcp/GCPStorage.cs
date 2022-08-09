@@ -57,15 +57,17 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 
     {
         return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
-                new ListObjectsOptions { Projection = Projection.Full })
+                new ListObjectsOptions {Projection = Projection.Full})
             .Select(
                 x => new BlobMetadata
                 {
                     Name = x.Name,
                     Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink),
                     Container = x.Bucket,
+                    CreationTime = x.TimeCreated!.Value,
+                    LastModified = x.Updated!.Value,
                     MimeType = x.ContentType,
-                    Length = (long)(x.Size ?? 0)
+                    Length = (long) (x.Size ?? 0)
                 }
             );
     }
@@ -111,7 +113,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         {
             await EnsureContainerExist();
             var blobs = StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, string.Empty,
-                    new ListObjectsOptions { Projection = Projection.Full })
+                    new ListObjectsOptions {Projection = Projection.Full})
                 .Select(x => x);
 
             await foreach (var blob in blobs.WithCancellation(cancellationToken))
@@ -135,6 +137,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         try
         {
             await EnsureContainerExist();
+
             await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, options.MimeType, stream, null,
                 cancellationToken);
 
@@ -218,8 +221,10 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                 Name = obj.Name,
                 Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
                 Container = obj.Bucket,
+                CreationTime = obj.TimeCreated!.Value,
+                LastModified = obj.Updated!.Value,
                 MimeType = obj.ContentType,
-                Length = (long)(obj.Size ?? 0)
+                Length = (long) (obj.Size ?? 0)
             });
         }
         catch (Exception ex)

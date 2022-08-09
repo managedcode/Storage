@@ -269,6 +269,8 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
                 Uri = blobClient.Uri,
                 Container = blobClient.BlobContainerName,
                 Length = properties.Value.ContentLength,
+                CreationTime = properties.Value.CreatedOn,
+                LastModified = properties.Value.LastModified,
                 Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
                 MimeType = properties.Value.ContentType
             });

@@ -19,6 +19,7 @@ namespace ManagedCode.Storage.Aws;
 public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 {
     private readonly ILogger<AWSStorage>? _logger;
+    private const string CreationTimeKey = "CreationTime";
 
     public AWSStorage(AWSStorageOptions options, ILogger<AWSStorage>? logger = null) : base(options)
     {
@@ -70,9 +71,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
                 yield return new BlobMetadata
                 {
-                    FullName = entry.Key,
-                    Name = Path.GetFileName(entry.Key),
+                    Name = entry.Key,
+                    Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
+                    LastModified = objectMetaResponse.LastModified,
+                    CreationTime = DateTimeOffset.Parse(objectMetaResponse.Metadata[CreationTimeKey]),
                     MimeType = objectMetaResponse.Headers.ContentType,
                     Length = objectMetaResponse.Headers.ContentLength
                 };
@@ -135,8 +138,10 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             InputStream = stream,
             AutoCloseStream = false,
             ContentType = options.MimeType,
-            ServerSideEncryptionMethod = null
+            ServerSideEncryptionMethod = null,
         };
+
+        putRequest.Metadata.Add(CreationTimeKey, DateTimeOffset.UtcNow.ToString());
 
         try
         {
@@ -162,11 +167,13 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             localFile.BlobMetadata = new BlobMetadata
             {
-                Name = options.FullPath,
+                Name = options.FileName,
+                Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
+                LastModified = response.LastModified,
+                CreationTime = DateTimeOffset.Parse(response.Metadata[CreationTimeKey]),
                 MimeType = response.Headers.ContentType,
-                Length = response.Headers.ContentLength,
-                Container = StorageOptions.Bucket
+                Length = response.Headers.ContentLength
             };
 
             await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, options.FullPath, null,
@@ -249,8 +256,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
 
             var metadata = new BlobMetadata
             {
-                Name = options.FullPath,
+                Name = options.FileName,
+                Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
+                LastModified = objectMetaResponse.LastModified,
+                CreationTime = DateTimeOffset.Parse(objectMetaResponse.Metadata[CreationTimeKey]),
                 MimeType = objectMetaResponse.Headers.ContentType,
                 Length = objectMetaResponse.Headers.ContentLength
             };
