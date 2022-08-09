@@ -71,6 +71,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                 yield return new BlobMetadata
                 {
                     Name = entry.Key,
+                    FullName = entry.Key,
                     Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
                     LastModified = objectMetaResponse.LastModified,
