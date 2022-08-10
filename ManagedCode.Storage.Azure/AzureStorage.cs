@@ -60,11 +60,15 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             {
                 var blobMetadata = new BlobMetadata
                 {
-                    Name = blobItem.Name,
+                    FullName = blobItem.Name,
+                    Name = Path.GetFileName(blobItem.Name),
+                    Uri = new Uri(StorageClient.Uri, $"{StorageOptions.Container}/{blobItem.Name}"),
                     Container = StorageOptions.Container,
-                    Length = blobItem.Properties.ContentLength.Value,
+                    Length = blobItem.Properties.ContentLength!.Value,
                     Metadata = blobItem.Metadata.ToDictionary(k => k.Key, v => v.Value),
-                    MimeType = blobItem.Properties.ContentType
+                    LastModified = blobItem.Properties.LastModified!.Value,
+                    CreatedOn = blobItem.Properties.CreatedOn!.Value,
+                    MimeType = blobItem.Properties.ContentType,
                 };
 
                 yield return blobMetadata;
@@ -192,15 +196,18 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
             await EnsureContainerExist();
             var response = await blobClient.DownloadAsync(cancellationToken);
             await localFile.CopyFromStreamAsync(response.Value.Content);
+
             localFile.BlobMetadata = new BlobMetadata
             {
-                Metadata = response.Value.Details?.Metadata?.ToDictionary(k => k.Key, v => v.Value),
-                MimeType = response.Value.ContentType,
-                Length = response.Value.ContentLength,
-                Name = blobClient.Name,
+                FullName = blobClient.Name,
+                Name = Path.GetFileName(blobClient.Name),
                 Uri = blobClient.Uri,
                 Container = blobClient.BlobContainerName,
-                FullName = $"{blobClient.Uri}/{StorageOptions.Container}/{options.FullPath}"
+                Length = response.Value.ContentLength,
+                CreatedOn = response.Value.Details.LastModified,
+                LastModified = response.Value.Details.LastModified,
+                Metadata = response.Value.Details.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                MimeType = response.Value.ContentType
             };
 
             return Result<LocalFile>.Succeed(localFile);
@@ -265,11 +272,12 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
 
             return Result<BlobMetadata>.Succeed(new BlobMetadata
             {
-                Name = blobClient.Name,
+                FullName = blobClient.Name,
+                Name = Path.GetFileName(blobClient.Name),
                 Uri = blobClient.Uri,
                 Container = blobClient.BlobContainerName,
                 Length = properties.Value.ContentLength,
-                CreationTime = properties.Value.CreatedOn,
+                CreatedOn = properties.Value.CreatedOn,
                 LastModified = properties.Value.LastModified,
                 Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
                 MimeType = properties.Value.ContentType

@@ -64,7 +64,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                     Name = x.Name,
                     Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink),
                     Container = x.Bucket,
-                    CreationTime = x.TimeCreated!.Value,
+                    CreatedOn = x.TimeCreated!.Value,
                     LastModified = x.Updated!.Value,
                     MimeType = x.ContentType,
                     Length = (long) (x.Size ?? 0)
@@ -221,7 +221,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                 Name = obj.Name,
                 Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
                 Container = obj.Bucket,
-                CreationTime = obj.TimeCreated!.Value,
+                CreatedOn = obj.TimeCreated!.Value,
                 LastModified = obj.Updated!.Value,
                 MimeType = obj.ContentType,
                 Length = (long) (obj.Size ?? 0)

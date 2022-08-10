@@ -10,7 +10,7 @@ public class BlobMetadata
     public Uri? Uri { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
     public DateTimeOffset LastModified { get; set; }
-    public DateTimeOffset CreationTime { get; set; }
+    public DateTimeOffset CreatedOn { get; set; }
     public string? Container { get; set; }
     public string? MimeType { get; set; }
     public long Length { get; set; }
