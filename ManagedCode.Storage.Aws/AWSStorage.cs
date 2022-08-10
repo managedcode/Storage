@@ -75,7 +75,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                     Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
                     LastModified = objectMetaResponse.LastModified,
-                    CreationTime = objectMetaResponse.LastModified,
+                    CreatedOn = objectMetaResponse.LastModified,
                     MimeType = objectMetaResponse.Headers.ContentType,
                     Length = objectMetaResponse.Headers.ContentLength
                 };
@@ -169,7 +169,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
                 LastModified = response.LastModified,
-                CreationTime = response.LastModified,
+                CreatedOn = response.LastModified,
                 MimeType = response.Headers.ContentType,
                 Length = response.Headers.ContentLength
             };
@@ -258,7 +258,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
                 LastModified = objectMetaResponse.LastModified,
-                CreationTime = objectMetaResponse.LastModified,
+                CreatedOn = objectMetaResponse.LastModified,
                 MimeType = objectMetaResponse.Headers.ContentType,
                 Length = objectMetaResponse.Headers.ContentLength
             };

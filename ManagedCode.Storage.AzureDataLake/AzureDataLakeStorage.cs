@@ -233,7 +233,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
                 Uri = fileClient.Uri,
                 Container = fileClient.FileSystemName,
                 Length = properties.Value.ContentLength,
-                CreationTime = properties.Value.CreatedOn,
+                CreatedOn = properties.Value.CreatedOn,
                 LastModified = properties.Value.LastModified,
                 Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
                 MimeType = properties.Value.ContentType
