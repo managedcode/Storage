@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
+using ManagedCode.Communication.Extensions;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
@@ -123,8 +124,8 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         var filePath = GetPathFromOptions(options);
 
         return File.Exists(filePath)
-            ? Result<LocalFile>.Succeed(new LocalFile(filePath))
-            : Result<LocalFile>.Fail("File not found");
+            ? new LocalFile(filePath)
+            : new Error<ErrorCode>("File not found");
     }
 
     protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
@@ -158,7 +159,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
         if (!fileInfo.Exists)
         {
-            return Result<BlobMetadata>.Fail("File not found");
+            return new Error<ErrorCode>("File not found");
         }
 
         var result = new BlobMetadata
@@ -185,9 +186,9 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         {
             var file = await DownloadAsync(filePath, cancellationToken);
 
-            if (file.IsError)
+            if (file.IsFail)
             {
-                return Result.Fail(file.Error);
+                return file.Error!;
             }
 
             var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
