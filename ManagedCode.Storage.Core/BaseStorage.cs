@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
+using ManagedCode.Communication.Extensions;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 
@@ -134,7 +135,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
     public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
     {
         var file = new LocalFile();
-        DownloadOptions options = new() { FileName = fileName };
+        DownloadOptions options = new() {FileName = fileName};
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
@@ -158,7 +159,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<bool>> DeleteAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        DeleteOptions options = new() { FileName = fileName };
+        DeleteOptions options = new() {FileName = fileName};
         return DeleteInternalAsync(options, cancellationToken);
     }
 
@@ -176,7 +177,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<bool>> ExistsAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        ExistOptions options = new() { FileName = fileName };
+        ExistOptions options = new() {FileName = fileName};
         return ExistsInternalAsync(options, cancellationToken);
     }
 
@@ -194,7 +195,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<BlobMetadata>> GetBlobMetadataAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        MetadataOptions options = new() { FileName = fileName };
+        MetadataOptions options = new() {FileName = fileName};
         return GetBlobMetadataInternalAsync(options, cancellationToken);
     }
 
@@ -214,7 +215,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result> SetLegalHoldAsync(bool hasLegalHold, string fileName, CancellationToken cancellationToken = default)
     {
-        LegalHoldOptions options = new() { FileName = fileName };
+        LegalHoldOptions options = new() {FileName = fileName};
         return SetLegalHoldInternalAsync(hasLegalHold, options, cancellationToken);
     }
 
@@ -232,7 +233,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<bool>> HasLegalHoldAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        LegalHoldOptions options = new() { FileName = fileName };
+        LegalHoldOptions options = new() {FileName = fileName};
         return HasLegalHoldInternalAsync(options, cancellationToken);
     }
 

@@ -48,7 +48,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         catch (Exception ex)
         {
             _logger?.LogError(ex.Message, ex);
-            return Result<string>.Fail(ex);
+            return Error<ErrorCode>.FromException(ex);
         }
     }
 
@@ -103,7 +103,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         catch (Exception ex)
         {
             _logger?.LogError(ex.Message, ex);
-            return Result<string>.Fail(ex);
+            return Error<ErrorCode>.FromException(ex);
         }
     }
 
@@ -126,7 +126,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         catch (Exception ex)
         {
             _logger?.LogError(ex.Message, ex);
-            return Result<string>.Fail(ex);
+            return Error<ErrorCode>.FromException(ex);
         }
     }
 
@@ -253,7 +253,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         catch (Exception ex)
         {
             _logger?.LogError(ex.Message, ex);
-            return Result<string>.Fail(ex);
+            return Error<ErrorCode>.FromException(ex);
         }
     }
 

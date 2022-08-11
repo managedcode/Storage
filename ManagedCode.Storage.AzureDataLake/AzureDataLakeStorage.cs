@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Azure.Storage.Files.DataLake;
 using Azure.Storage.Files.DataLake.Models;
 using ManagedCode.Communication;
+using ManagedCode.Communication.Extensions;
 using ManagedCode.Storage.AzureDataLake.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
@@ -50,7 +51,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         {
             var fileClient = GetFileClient(options);
             var stream = await fileClient.OpenReadAsync(options.Position, options.BufferSize, cancellationToken: cancellationToken);
-            return Result.Succeed(stream);
+            return stream;
         }
         catch (Exception ex)
         {
@@ -66,7 +67,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         {
             var fileClient = GetFileClient(options);
             var stream = await fileClient.OpenWriteAsync(options.Overwrite, cancellationToken: cancellationToken);
-            return Result.Succeed(stream);
+            return stream;
         }
         catch (Exception ex)
         {
@@ -193,7 +194,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         {
             var fileClient = GetFileClient(options);
             await fileClient.DeleteAsync(cancellationToken: cancellationToken);
-            return Result.Succeed(true);
+            return true;
         }
         catch (Exception ex)
         {
@@ -208,7 +209,7 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         {
             var fileClient = GetFileClient(options);
             var result = await fileClient.ExistsAsync(cancellationToken);
-            return Result.Succeed(result.Value);
+            return result.Value;
         }
         catch (Exception ex)
         {
