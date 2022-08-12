@@ -26,9 +26,6 @@ public class BlobStream : Stream
         _pageBlob.CreateIfNotExists(0);
     }
 
-    public long WriteCount { get; private set; }
-    public long ReadCount { get; private set; }
-
     private long BlobLength => _pageBlob.GetProperties().Value.ContentLength;
 
     public override bool CanRead => true;
@@ -112,7 +109,6 @@ public class BlobStream : Stream
         }
 
         Position += bytesRead;
-        ReadCount++;
         return bytesRead;
     }
 
@@ -129,17 +125,30 @@ public class BlobStream : Stream
         }
 
         Position += bytesRead;
-        ReadCount++;
         return bytesRead;
     }
 
-    public override void Write(byte[] buffer, int offset, int count)
+    private void EnsureCapacity(long position)
     {
-        if (BlobLength < Position + count)
+        if (BlobLength < position)
         {
-            var newSize = NextPageAddress(Position + count);
+            var newSize = NextPageAddress(position);
             _pageBlob.Resize(newSize);
         }
+    }
+    
+    private async Task EnsureCapacityAsync(long position)
+    {
+        if (BlobLength < position)
+        {
+            var newSize = NextPageAddress(position);
+            await _pageBlob.ResizeAsync(newSize);
+        }
+    }
+    
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        EnsureCapacity(Position + count);
 
         var pageStartAddress = PreviousPageAddress(Position);
         var pageBytes = NextPageAddress(Position + count) - pageStartAddress;
@@ -153,19 +162,19 @@ public class BlobStream : Stream
             using (var stream = _pageBlob.OpenRead(false, pageStartAddress))
             {
                 _ = stream.Read(bufferToMerge, 0, localCount);
-                ReadCount++;
             }
         }
 
         Buffer.BlockCopy(buffer, offset, bufferToMerge, offsetInFirstPage, count);
+        
+        EnsureCapacity(pageStartAddress + bufferToMerge.Length);
 
         using (var stream = _pageBlob.OpenWrite(false, pageStartAddress))
         {
             stream.Write(bufferToMerge, 0, bufferToMerge.Length);
             stream.Flush();
-            WriteCount++;
         }
-
+        
         Position += count;
         if (Position > Length)
         {
@@ -175,12 +184,8 @@ public class BlobStream : Stream
 
     public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        if (BlobLength < Position + count)
-        {
-            var newSize = NextPageAddress(Position + count);
-            await _pageBlob.ResizeAsync(newSize, cancellationToken: cancellationToken);
-        }
-
+        //await EnsureCapacityAsync(Position + count);
+        
         var pageStartAddress = PreviousPageAddress(Position);
         var pageBytes = NextPageAddress(Position + count) - pageStartAddress;
         var offsetInFirstPage = (int)(Position % PageSizeInBytes);
@@ -192,18 +197,18 @@ public class BlobStream : Stream
             var localCount = (int)(pageBytes - PageSizeInBytes);
             using (var stream = await _pageBlob.OpenReadAsync(false, pageStartAddress, cancellationToken: cancellationToken))
             {
-                _ = stream.Read(bufferToMerge, 0, localCount);
-                ReadCount++;
+                _ = await stream.ReadAsync(bufferToMerge, 0, localCount, cancellationToken);
             }
         }
 
         Buffer.BlockCopy(buffer, offset, bufferToMerge, offsetInFirstPage, count);
-
+        
+        await EnsureCapacityAsync(pageStartAddress + bufferToMerge.Length);
+      
         using (var stream = await _pageBlob.OpenWriteAsync(false, pageStartAddress, cancellationToken: cancellationToken))
         {
             await stream.WriteAsync(bufferToMerge, 0, bufferToMerge.Length, cancellationToken);
             await stream.FlushAsync(cancellationToken);
-            WriteCount++;
         }
 
         Position += count;
