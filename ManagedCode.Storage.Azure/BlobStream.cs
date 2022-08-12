@@ -34,6 +34,11 @@ public class BlobStream : Stream
         return new BufferedStream( new BlobStream(pageBlob), DefaultBufferSize);
     }
     
+    public static BufferedStream OpenBufferedStream(string connectionString, string container, string fileName)
+    {
+        return new BufferedStream( new BlobStream(connectionString,container, fileName), DefaultBufferSize);
+    }
+    
     public BlobStream(string connectionString, string container, string fileName)
         : this(GetClient(connectionString, container, fileName))
     {
