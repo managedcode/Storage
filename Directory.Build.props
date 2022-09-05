@@ -19,6 +19,10 @@
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
+    <PropertyGroup>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
     <ItemGroup>
         <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="\"/>
         <None Include="$(SolutionDir)\README.md" Pack="true" Visible="false" PackagePath="\"/>
