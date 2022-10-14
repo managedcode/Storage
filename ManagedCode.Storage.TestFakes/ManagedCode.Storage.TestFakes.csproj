@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <!--NuGet-->
+    <PropertyGroup>
+        <Title>ManagedCode.Storage.TestFakes</Title>
+        <PackageId>ManagedCode.Storage.TestFakes</PackageId>
+        <Description>Fake implementaions for units tests</Description>
+        <PackageTags>managedcode, aws, gcp, azure storage, cloud, asp.net, file, upload, download</PackageTags>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.AzureDataLake\ManagedCode.Storage.AzureDataLake.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.Gcp\ManagedCode.Storage.Gcp.csproj"/>
+    </ItemGroup>
+
+</Project>
