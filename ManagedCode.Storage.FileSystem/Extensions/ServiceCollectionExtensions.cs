@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddFileSystemStorageAsDefault(this IServiceCollection serviceCollection, FileSystemStorageOptions options)
     {
         serviceCollection.AddSingleton(options);
+        serviceCollection.AddScoped<IFileSystemStorage, FileSystemStorage>();
         return serviceCollection.AddScoped<IStorage, FileSystemStorage>();
     }
 }

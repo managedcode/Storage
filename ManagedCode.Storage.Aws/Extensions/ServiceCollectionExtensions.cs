@@ -39,6 +39,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
         return serviceCollection.AddScoped<IStorage, AWSStorage>();
     }
 
