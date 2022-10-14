@@ -33,3 +33,11 @@ jobs:
           do
             dotnet nuget push "$file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
           done  
+          
+      - name: publish snupkg packages
+        run: |
+          shopt -s globstar
+          for file in **/*.snupkg
+          do
+            dotnet nuget push "$file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          done  
