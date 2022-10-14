@@ -7,5 +7,9 @@ public class AzureDataLakeStorageOptions : StorageOptions
 {
     public string ConnectionString { get; set; }
     public string FileSystem { get; set; }
-    public PublicAccessType PublicAccessType { get; set; } = PublicAccessType.None;
+
+    public DataLakeFileSystemCreateOptions PublicAccessType { get; set; } = new ()
+    {
+        PublicAccessType = Azure.Storage.Files.DataLake.Models.PublicAccessType.None,
+    };
 }
