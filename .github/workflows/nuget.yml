@@ -3,7 +3,7 @@ name: nuget
 on:
   push:
     branches: [ main ]
-    
+  
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -13,23 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release
-    - name: Pack
-      run: dotnet pack -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --configuration Release
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release
+      - name: Pack
+        run: dotnet pack -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --configuration Release
 
-    - name: publish nuget packages
-      run: |
-        shopt -s globstar
-        for file in **/*.nupkg
-        do
-          dotnet nuget push "$file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
-        done  
+      - name: publish nuget packages
+        run: |
+          shopt -s globstar
+          for file in **/*.nupkg
+          do
+            dotnet nuget push "$file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          done  
