@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <LangVersion>10</LangVersion>
         <DebugType>embedded</DebugType>
         <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <!--NuGet-->
