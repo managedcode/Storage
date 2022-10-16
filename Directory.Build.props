@@ -1,27 +1,24 @@
 <Project>
     <!--NuGet-->
     <PropertyGroup>
-        <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <Authors>ManagedCode</Authors>
         <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
         <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
         <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <RepositoryType>Github</RepositoryType>
-        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
         <PackageIcon>logo.png</PackageIcon>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Product>Managed Code - Storage</Product>
-        <Version>2.1.0</Version>
-        <PackageVersion>2.1.0</PackageVersion>
+        <Version>2.1.1</Version>
+        <PackageVersion>2.1.1</PackageVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    </PropertyGroup>
-    <PropertyGroup>
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
     <ItemGroup>
         <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="\"/>

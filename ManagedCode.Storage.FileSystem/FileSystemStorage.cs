@@ -13,23 +13,21 @@ using ManagedCode.Storage.FileSystem.Options;
 
 namespace ManagedCode.Storage.FileSystem;
 
-public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSystemStorage
+public class FileSystemStorage : BaseStorage<string, FileSystemStorageOptions>, IFileSystemStorage
 {
     private readonly Dictionary<string, FileStream> _lockedFiles = new();
-    private readonly string _path;
 
     public FileSystemStorage(FileSystemStorageOptions options) : base(options)
     {
-        _path = StorageOptions.BaseFolder ?? Environment.CurrentDirectory;
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
-        if (Directory.Exists(_path))
+        if (Directory.Exists(StorageClient))
         {
-            Directory.Delete(_path, true);
+            Directory.Delete(StorageClient, true);
         }
 
         return Result.Succeed();
@@ -40,7 +38,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
     {
         await EnsureContainerExist();
 
-        var path = directory is null ? _path : Path.Combine(_path, directory);
+        var path = directory is null ? StorageClient : Path.Combine(StorageClient, directory);
 
         if (!Directory.Exists(path))
         {
@@ -58,13 +56,18 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         }
     }
 
+    protected override string CreateStorageClient()
+    {
+        return StorageOptions.BaseFolder ?? Environment.CurrentDirectory;
+    }
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         await Task.Yield();
 
-        if (!Directory.Exists(_path))
+        if (!Directory.Exists(StorageClient))
         {
-            Directory.CreateDirectory(_path);
+            Directory.CreateDirectory(StorageClient);
         }
 
         return Result.Succeed();
@@ -72,7 +75,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
     protected override Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
     {
-        var path = Path.Combine(_path, directory);
+        var path = Path.Combine(StorageClient, directory);
         if (Directory.Exists(path))
         {
             Directory.Delete(path, true);
@@ -105,11 +108,11 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         if (options.Directory is not null)
         {
             EnsureDirectoryExist(options.Directory);
-            filePath = Path.Combine(_path, options.Directory, options.FileName);
+            filePath = Path.Combine(StorageClient, options.Directory, options.FileName);
         }
         else
         {
-            filePath = Path.Combine(_path, options.FileName);
+            filePath = Path.Combine(StorageClient, options.FileName);
         }
 
         return filePath;
@@ -165,7 +168,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
         var result = new BlobMetadata
         {
             Name = fileInfo.Name,
-            Uri = new Uri(Path.Combine(_path, filePath)),
+            Uri = new Uri(Path.Combine(StorageClient, filePath)),
             MimeType = MimeHelper.GetMimeType(fileInfo.Extension),
             CreatedOn = fileInfo.CreationTimeUtc,
             LastModified = fileInfo.LastWriteTimeUtc,
@@ -221,7 +224,7 @@ public class FileSystemStorage : BaseStorage<FileSystemStorageOptions>, IFileSys
 
     private void EnsureDirectoryExist(string directory)
     {
-        var path = Path.Combine(_path, directory);
+        var path = Path.Combine(StorageClient, directory);
 
         if (!Directory.Exists(path))
         {

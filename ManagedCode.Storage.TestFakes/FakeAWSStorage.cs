@@ -1,5 +1,7 @@
 using Amazon.S3;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Aws;
+using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.FileSystem.Options;
 
@@ -12,4 +14,14 @@ public class FakeAWSStorage : FileSystemStorage, IAWSStorage
     }
 
     public IAmazonS3 StorageClient { get; }
+
+    public Task<Result> SetStorageOptions(AWSStorageOptions options, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
+    }
+
+    public Task<Result> SetStorageOptions(Action<AWSStorageOptions> options, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
+    }
 }

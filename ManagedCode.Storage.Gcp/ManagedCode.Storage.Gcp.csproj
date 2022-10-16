@@ -18,17 +18,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Google.Api.Gax" Version="4.1.1" />
-        <PackageReference Include="Google.Api.Gax.Rest" Version="4.1.1" />
-        <PackageReference Include="Google.Apis.Storage.v1" Version="1.57.0.2742" />
-        <PackageReference Include="ManagedCode.Communication" Version="0.1.2" />
-        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.1.0" />
-        <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2" />
-        <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+        <PackageReference Include="Google.Api.Gax" Version="4.1.1"/>
+        <PackageReference Include="Google.Api.Gax.Rest" Version="4.1.1"/>
+        <PackageReference Include="Google.Apis.Storage.v1" Version="1.57.0.2742"/>
+        <PackageReference Include="ManagedCode.Communication" Version="0.1.2"/>
+        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.1.0"/>
+        <PackageReference Include="Humanizer.Core" Version="2.14.1"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2"/>
+        <PackageReference Include="System.Linq.Async" Version="6.0.1"/>
     </ItemGroup>
 </Project>

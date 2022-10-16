@@ -18,13 +18,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5"/>
     </ItemGroup>
 
 </Project>

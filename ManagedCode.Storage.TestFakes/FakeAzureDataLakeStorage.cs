@@ -15,6 +15,16 @@ public class FakeAzureDataLakeStorage : FileSystemStorage, IAzureDataLakeStorage
 
     public DataLakeFileSystemClient StorageClient { get; }
 
+    public Task<Result> SetStorageOptions(AzureDataLakeStorageOptions options, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
+    }
+
+    public Task<Result> SetStorageOptions(Action<AzureDataLakeStorageOptions> options, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
+    }
+
     public Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
         if (Directory.Exists(directory))

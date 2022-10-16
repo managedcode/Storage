@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.AzureDataLake;
 
-public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IAzureDataLakeStorage
+public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureDataLakeStorageOptions>, IAzureDataLakeStorage
 {
     private readonly DataLakeServiceClient _dataLakeServiceClient;
     private readonly ILogger<AzureDataLakeStorage>? _logger;
@@ -25,7 +25,6 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
     {
         _logger = logger;
         _dataLakeServiceClient = new DataLakeServiceClient(options.ConnectionString);
-        StorageClient = _dataLakeServiceClient.GetFileSystemClient(options.FileSystem);
     }
 
     public DataLakeFileSystemClient StorageClient { get; }
@@ -115,12 +114,17 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         return Result.Succeed();
     }
 
+    protected override DataLakeFileSystemClient CreateStorageClient()
+    {
+        return _dataLakeServiceClient.GetFileSystemClient(StorageOptions.FileSystem);
+    }
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             await _dataLakeServiceClient.CreateFileSystemAsync(StorageOptions.FileSystem, StorageOptions.PublicAccessType,
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             return Result.Succeed();
         }
@@ -139,10 +143,10 @@ public class AzureDataLakeStorage : BaseStorage<AzureDataLakeStorageOptions>, IA
         {
             DataLakeFileUploadOptions dataLakeFileUploadOptions = new()
             {
-                HttpHeaders = new PathHttpHeaders()
+                HttpHeaders = new PathHttpHeaders
                 {
                     ContentType = options.MimeType
-                },
+                }
             };
 
             var fileClient = GetFileClient(options);

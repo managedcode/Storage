@@ -16,17 +16,14 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Aws;
 
-public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
+public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 {
     private readonly ILogger<AWSStorage>? _logger;
 
     public AWSStorage(AWSStorageOptions options, ILogger<AWSStorage>? logger = null) : base(options)
     {
         _logger = logger;
-        StorageClient = new AmazonS3Client(new BasicAWSCredentials(options.PublicKey, options.SecretKey), options.OriginalOptions);
     }
-
-    public IAmazonS3 StorageClient { get; }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
@@ -93,6 +90,11 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
         } while (objectsRequest is not null);
     }
 
+    protected override IAmazonS3 CreateStorageClient()
+    {
+        return new AmazonS3Client(new BasicAWSCredentials(StorageOptions.PublicKey, StorageOptions.SecretKey), StorageOptions.OriginalOptions);
+    }
+
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -138,7 +140,7 @@ public class AWSStorage : BaseStorage<AWSStorageOptions>, IAWSStorage
             InputStream = stream,
             AutoCloseStream = false,
             ContentType = options.MimeType,
-            ServerSideEncryptionMethod = null,
+            ServerSideEncryptionMethod = null
         };
 
         try

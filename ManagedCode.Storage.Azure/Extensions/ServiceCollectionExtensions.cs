@@ -32,15 +32,15 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
+        return serviceCollection.AddTransient<IAzureStorage, AzureStorage>();
     }
 
     public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection, AzureStorageOptions options)
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
-        return serviceCollection.AddScoped<IStorage, AzureStorage>();
+        serviceCollection.AddTransient<IAzureStorage, AzureStorage>();
+        return serviceCollection.AddTransient<IStorage, AzureStorage>();
     }
 
     private static void CheckConfiguration(AzureStorageOptions options)

@@ -3,11 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using ManagedCode.Communication;
+using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 
 namespace ManagedCode.Storage.Azure;
 
-public interface IAzureStorage : IStorage<BlobContainerClient>
+public interface IAzureStorage : IStorage<BlobContainerClient, AzureStorageOptions>
 {
     Task<Result<Stream>> OpenReadStreamAsync(string fileName, CancellationToken cancellationToken = default);
     Task<Result<Stream>> OpenWriteStreamAsync(string fileName, CancellationToken cancellationToken = default);

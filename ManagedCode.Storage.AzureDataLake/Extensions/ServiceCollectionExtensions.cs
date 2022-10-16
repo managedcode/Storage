@@ -32,15 +32,15 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
+        return serviceCollection.AddTransient<IAzureDataLakeStorage, AzureDataLakeStorage>();
     }
 
     public static IServiceCollection AddAzureDataLakeStorageAsDefault(this IServiceCollection serviceCollection, AzureDataLakeStorageOptions options)
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
-        return serviceCollection.AddScoped<IStorage, AzureDataLakeStorage>();
+        serviceCollection.AddTransient<IAzureDataLakeStorage, AzureDataLakeStorage>();
+        return serviceCollection.AddTransient<IStorage, AzureDataLakeStorage>();
     }
 
     private static void CheckConfiguration(AzureDataLakeStorageOptions options)

@@ -12,33 +12,8 @@ public class BlobStream : Stream
     private const int PageSizeInBytes = 512;
     public const int DefaultBufferSize = 1024 * 1024 * 4;
     private readonly PageBlobClient _pageBlob;
-    private object _syncRoot = new ();
+    private readonly object _syncRoot = new();
 
-    public static BlobStream OpenStream(PageBlobClient pageBlob)
-    {
-        if (!pageBlob.Exists())
-        {
-            pageBlob.Create(0);
-        }
-
-        return new BlobStream(pageBlob);
-    }
-    
-    public static BufferedStream OpenBufferedStream(PageBlobClient pageBlob)
-    {
-        if (!pageBlob.Exists())
-        {
-            pageBlob.Create(0);
-        }
-
-        return new BufferedStream( new BlobStream(pageBlob), DefaultBufferSize);
-    }
-    
-    public static BufferedStream OpenBufferedStream(string connectionString, string container, string fileName)
-    {
-        return new BufferedStream( new BlobStream(connectionString,container, fileName), DefaultBufferSize);
-    }
-    
     public BlobStream(string connectionString, string container, string fileName)
         : this(GetClient(connectionString, container, fileName))
     {
@@ -50,7 +25,7 @@ public class BlobStream : Stream
         _pageBlob.CreateIfNotExists(0);
     }
 
-   private long BlobLength => _pageBlob.GetProperties().Value.ContentLength;
+    private long BlobLength => _pageBlob.GetProperties().Value.ContentLength;
 
     public override bool CanRead => true;
 
@@ -78,6 +53,31 @@ public class BlobStream : Stream
     }
 
     public override long Position { get; set; }
+
+    public static BlobStream OpenStream(PageBlobClient pageBlob)
+    {
+        if (!pageBlob.Exists())
+        {
+            pageBlob.Create(0);
+        }
+
+        return new BlobStream(pageBlob);
+    }
+
+    public static BufferedStream OpenBufferedStream(PageBlobClient pageBlob)
+    {
+        if (!pageBlob.Exists())
+        {
+            pageBlob.Create(0);
+        }
+
+        return new BufferedStream(new BlobStream(pageBlob), DefaultBufferSize);
+    }
+
+    public static BufferedStream OpenBufferedStream(string connectionString, string container, string fileName)
+    {
+        return new BufferedStream(new BlobStream(connectionString, container, fileName), DefaultBufferSize);
+    }
 
     private static PageBlobClient GetClient(string connectionString, string container, string fileName)
     {
@@ -107,7 +107,7 @@ public class BlobStream : Stream
                 Position = Length + offset;
                 break;
         }
-        
+
         return Position;
     }
 
@@ -119,7 +119,7 @@ public class BlobStream : Stream
             var newSize = NextPageAddress(value);
             _pageBlob.Resize(newSize);
         }
-        
+
         SetLengthInternal(value);
     }
 
@@ -127,14 +127,14 @@ public class BlobStream : Stream
     {
         lock (_syncRoot)
         {
-            int bytesRead = 0;
+            var bytesRead = 0;
             var length = Length;
-            
+
             if (Position + count > length)
             {
                 count = (int)(length - Position);
             }
-            
+
             using (var stream = _pageBlob.OpenRead(false, Position))
             {
                 bytesRead = stream.Read(buffer, offset, count);
@@ -153,7 +153,7 @@ public class BlobStream : Stream
             _pageBlob.Resize(newSize);
         }
     }
-    
+
     public override void Write(byte[] buffer, int offset, int count)
     {
         lock (_syncRoot)
@@ -174,7 +174,7 @@ public class BlobStream : Stream
             }
 
             Buffer.BlockCopy(buffer, offset, bufferToMerge, offsetInFirstPage, count);
-            
+
             EnsureCapacity(pageStartAddress + bufferToMerge.Length);
 
             using (var stream = _pageBlob.OpenWrite(false, pageStartAddress))
@@ -182,7 +182,7 @@ public class BlobStream : Stream
                 stream.Write(bufferToMerge, 0, bufferToMerge.Length);
                 stream.Flush();
             }
-        
+
             Position += count;
             if (Position > Length)
             {
@@ -202,7 +202,7 @@ public class BlobStream : Stream
         var previousPageAddress = position - position % PageSizeInBytes;
         return previousPageAddress;
     }
-    
+
     private void SetLengthInternal(long newLength)
     {
         _pageBlob.SetMetadata(new Dictionary<string, string>

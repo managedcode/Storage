@@ -16,27 +16,14 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Gcp;
 
-public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
+public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPStorage
 {
     private readonly ILogger<GCPStorage>? _logger;
 
     public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage>? logger = null) : base(options)
     {
         _logger = logger;
-
-        Contract.Assert(!string.IsNullOrWhiteSpace(StorageOptions.BucketOptions.Bucket));
-
-        if (options.StorageClientBuilder != null)
-        {
-            StorageClient = options.StorageClientBuilder.Build();
-        }
-        else if (options.GoogleCredential != null)
-        {
-            StorageClient = StorageClient.Create(options.GoogleCredential);
-        }
     }
-
-    public StorageClient StorageClient { get; }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
@@ -57,7 +44,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
 
     {
         return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
-                new ListObjectsOptions {Projection = Projection.Full})
+                new ListObjectsOptions { Projection = Projection.Full })
             .Select(
                 x => new BlobMetadata
                 {
@@ -67,9 +54,26 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                     CreatedOn = x.TimeCreated!.Value,
                     LastModified = x.Updated!.Value,
                     MimeType = x.ContentType,
-                    Length = (long) (x.Size ?? 0)
+                    Length = (long)(x.Size ?? 0)
                 }
             );
+    }
+
+    protected override StorageClient CreateStorageClient()
+    {
+        Contract.Assert(!string.IsNullOrWhiteSpace(StorageOptions.BucketOptions.Bucket));
+
+        if (StorageOptions.StorageClientBuilder != null)
+        {
+            return StorageOptions.StorageClientBuilder.Build();
+        }
+
+        if (StorageOptions.GoogleCredential != null)
+        {
+            return StorageClient.Create(StorageOptions.GoogleCredential);
+        }
+
+        return StorageClient.Create();
     }
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
@@ -113,7 +117,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
         {
             await EnsureContainerExist();
             var blobs = StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, string.Empty,
-                    new ListObjectsOptions {Projection = Projection.Full})
+                    new ListObjectsOptions { Projection = Projection.Full })
                 .Select(x => x);
 
             await foreach (var blob in blobs.WithCancellation(cancellationToken))
@@ -224,7 +228,7 @@ public class GCPStorage : BaseStorage<GCPStorageOptions>, IGCPStorage
                 CreatedOn = obj.TimeCreated!.Value,
                 LastModified = obj.Updated!.Value,
                 MimeType = obj.ContentType,
-                Length = (long) (obj.Size ?? 0)
+                Length = (long)(obj.Size ?? 0)
             });
         }
         catch (Exception ex)

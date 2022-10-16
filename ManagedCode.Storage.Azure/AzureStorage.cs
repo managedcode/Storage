@@ -17,21 +17,14 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Azure;
 
-public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
+public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions>, IAzureStorage
 {
     private readonly ILogger<AzureStorage>? _logger;
 
     public AzureStorage(AzureStorageOptions options, ILogger<AzureStorage>? logger = null) : base(options)
     {
         _logger = logger;
-        StorageClient = new BlobContainerClient(
-            options.ConnectionString,
-            options.Container,
-            options.OriginalOptions
-        );
     }
-
-    public BlobContainerClient StorageClient { get; }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
@@ -68,7 +61,7 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
                     Metadata = blobItem.Metadata.ToDictionary(k => k.Key, v => v.Value),
                     LastModified = blobItem.Properties.LastModified!.Value,
                     CreatedOn = blobItem.Properties.CreatedOn!.Value,
-                    MimeType = blobItem.Properties.ContentType,
+                    MimeType = blobItem.Properties.ContentType
                 };
 
                 yield return blobMetadata;
@@ -116,6 +109,15 @@ public class AzureStorage : BaseStorage<AzureStorageOptions>, IAzureStorage
         }
 
         return new BlobStream(StorageClient.GetPageBlobClient(fileName));
+    }
+
+    protected override BlobContainerClient CreateStorageClient()
+    {
+        return new BlobContainerClient(
+            StorageOptions.ConnectionString,
+            StorageOptions.Container,
+            StorageOptions.OriginalOptions
+        );
     }
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)

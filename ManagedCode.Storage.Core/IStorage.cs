@@ -8,9 +8,11 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core;
 
-public interface IStorage<out T> : IStorage
+public interface IStorage<out T, TOptions> : IStorage where TOptions : StorageOptions
 {
     T StorageClient { get; }
+    Task<Result> SetStorageOptions(TOptions options, CancellationToken cancellationToken = default);
+    Task<Result> SetStorageOptions(Action<TOptions> options, CancellationToken cancellationToken = default);
 }
 
 public interface IStorage

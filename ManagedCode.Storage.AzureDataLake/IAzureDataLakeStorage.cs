@@ -8,7 +8,7 @@ using ManagedCode.Storage.Core;
 
 namespace ManagedCode.Storage.AzureDataLake;
 
-public interface IAzureDataLakeStorage : IStorage<DataLakeFileSystemClient>
+public interface IAzureDataLakeStorage : IStorage<DataLakeFileSystemClient, AzureDataLakeStorageOptions>
 {
     /// <summary>
     ///     Create directory

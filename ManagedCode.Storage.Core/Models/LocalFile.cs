@@ -21,7 +21,10 @@ public class LocalFile : IDisposable, IAsyncDisposable
         {
             directory = Path.GetDirectoryName(path);
             var name = Path.GetFileName(path);
-            FilePath = Path.Combine(directory, $"{name}.tmp");
+            if (directory != null)
+            {
+                FilePath = Path.Combine(directory, $"{name}.tmp");
+            }
         }
         else
         {

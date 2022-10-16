@@ -32,15 +32,15 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
+        return serviceCollection.AddTransient<IAWSStorage, AWSStorage>();
     }
 
     public static IServiceCollection AddAWSStorageAsDefault(this IServiceCollection serviceCollection, AWSStorageOptions options)
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
-        return serviceCollection.AddScoped<IStorage, AWSStorage>();
+        serviceCollection.AddTransient<IAWSStorage, AWSStorage>();
+        return serviceCollection.AddTransient<IStorage, AWSStorage>();
     }
 
     private static void CheckConfiguration(AWSStorageOptions options)

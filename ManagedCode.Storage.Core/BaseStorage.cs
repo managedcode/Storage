@@ -11,20 +11,16 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core;
 
-public class StorageOptions
+public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOptions : StorageOptions
 {
-    public bool CreateContainerIfNotExists { get; set; } = true;
-}
-
-public abstract class BaseStorage<T> : IStorage where T : StorageOptions
-{
-    protected readonly T StorageOptions;
     protected bool IsContainerCreated;
+    protected TOptions StorageOptions;
 
-    protected BaseStorage(T storageOptions)
+    protected BaseStorage(TOptions storageOptions)
     {
         Contract.Assert(storageOptions is not null);
         StorageOptions = storageOptions!;
+        StorageClient = CreateStorageClient();
     }
 
     public async Task<Result> CreateContainerAsync(CancellationToken cancellationToken = default)
@@ -135,7 +131,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
     public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
     {
         var file = new LocalFile();
-        DownloadOptions options = new() {FileName = fileName};
+        DownloadOptions options = new() { FileName = fileName };
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
@@ -159,7 +155,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<bool>> DeleteAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        DeleteOptions options = new() {FileName = fileName};
+        DeleteOptions options = new() { FileName = fileName };
         return DeleteInternalAsync(options, cancellationToken);
     }
 
@@ -177,7 +173,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<bool>> ExistsAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        ExistOptions options = new() {FileName = fileName};
+        ExistOptions options = new() { FileName = fileName };
         return ExistsInternalAsync(options, cancellationToken);
     }
 
@@ -195,7 +191,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<BlobMetadata>> GetBlobMetadataAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        MetadataOptions options = new() {FileName = fileName};
+        MetadataOptions options = new() { FileName = fileName };
         return GetBlobMetadataInternalAsync(options, cancellationToken);
     }
 
@@ -215,7 +211,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result> SetLegalHoldAsync(bool hasLegalHold, string fileName, CancellationToken cancellationToken = default)
     {
-        LegalHoldOptions options = new() {FileName = fileName};
+        LegalHoldOptions options = new() { FileName = fileName };
         return SetLegalHoldInternalAsync(hasLegalHold, options, cancellationToken);
     }
 
@@ -233,7 +229,7 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
 
     public Task<Result<bool>> HasLegalHoldAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        LegalHoldOptions options = new() {FileName = fileName};
+        LegalHoldOptions options = new() { FileName = fileName };
         return HasLegalHoldInternalAsync(options, cancellationToken);
     }
 
@@ -248,6 +244,24 @@ public abstract class BaseStorage<T> : IStorage where T : StorageOptions
         action.Invoke(options);
         return HasLegalHoldInternalAsync(options, cancellationToken);
     }
+
+    public Task<Result> SetStorageOptions(TOptions options, CancellationToken cancellationToken = default)
+    {
+        StorageOptions = options;
+        StorageClient = CreateStorageClient();
+        return CreateContainerAsync(cancellationToken);
+    }
+
+    public Task<Result> SetStorageOptions(Action<TOptions> options, CancellationToken cancellationToken = default)
+    {
+        options.Invoke(StorageOptions);
+        StorageClient = CreateStorageClient();
+        return CreateContainerAsync(cancellationToken);
+    }
+
+    public T StorageClient { get; protected set; }
+
+    protected abstract T CreateStorageClient();
 
     protected Task<Result> EnsureContainerExist()
     {
