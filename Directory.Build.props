@@ -3,8 +3,8 @@
     <PropertyGroup>
         <Authors>ManagedCode</Authors>
         <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
-        <RepositoryUrl>https://github.com/managed-code-hub/Storage</RepositoryUrl>
-        <PackageProjectUrl>https://github.com/managed-code-hub/Storage</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <IncludeSymbols>true</IncludeSymbols>
@@ -14,8 +14,8 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <Product>Managed Code - Storage</Product>
-        <Version>2.1.1</Version>
-        <PackageVersion>2.1.1</PackageVersion>
+        <Version>2.1.2</Version>
+        <PackageVersion>2.1.2</PackageVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
