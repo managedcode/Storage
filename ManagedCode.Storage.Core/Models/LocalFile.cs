@@ -37,7 +37,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
             Directory.CreateDirectory(directory ?? throw new InvalidOperationException());
         }
 
-        if (!File.Exists(FilePath))
+        if (!string.IsNullOrEmpty(FilePath) && !File.Exists(FilePath))
         {
             var fs = File.Create(FilePath);
             fs.Close();
