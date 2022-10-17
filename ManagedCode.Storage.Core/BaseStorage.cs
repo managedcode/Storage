@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -254,6 +256,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 
     public Task<Result> SetStorageOptions(Action<TOptions> options, CancellationToken cancellationToken = default)
     {
+        StorageOptions = JsonSerializer.Deserialize<TOptions>(JsonSerializer.Serialize(StorageOptions));
         options.Invoke(StorageOptions);
         StorageClient = CreateStorageClient();
         return CreateContainerAsync(cancellationToken);
