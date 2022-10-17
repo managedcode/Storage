@@ -4,7 +4,6 @@ using System.Linq;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 
 namespace ManagedCode.Storage.Tests;
 

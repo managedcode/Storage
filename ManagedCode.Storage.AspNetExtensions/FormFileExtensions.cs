@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ public static class FormFileExtensions
 {
     public static async Task<LocalFile> ToLocalFileAsync(this IFormFile formFile, CancellationToken cancellationToken = default)
     {
-        LocalFile localFile = LocalFile.FromFileName(formFile.FileName);
+        var localFile = LocalFile.FromFileName(formFile.FileName);
         await formFile.CopyToAsync(localFile.FileStream, cancellationToken);
         return localFile;
     }

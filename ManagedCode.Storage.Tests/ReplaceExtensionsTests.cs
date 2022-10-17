@@ -8,7 +8,7 @@ using ManagedCode.Storage.TestFakes;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.AspNetExtensions;
+namespace ManagedCode.Storage.Tests;
 
 public class ReplaceExtensionsTests
 {

@@ -149,11 +149,21 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
         return file;
     }
+
+    public static async Task<LocalFile> FromStreamAsync(Stream stream, string fileName)
+    {
+        var file = FromFileName(fileName);
+        await stream.CopyToAsync(file.FileStream);
+        await file.FileStream.DisposeAsync();
+
+        return file;
+    }
+
     public static LocalFile FromFileName(string fileName)
     {
         return new LocalFile(Path.Combine(Path.GetTempPath(), fileName));
     }
-    
+
     public static LocalFile FromTempFile()
     {
         return new LocalFile();

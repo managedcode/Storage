@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.AspNetExtensions;
-using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.AspNetCore.Http;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.AspNetExtensions;

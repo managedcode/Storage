@@ -22,7 +22,7 @@ public class StorageController : Controller
     {
         var result = await _storage.DownloadAsFileResult(fileName);
 
-        return result.Value;
+        return result.Value!;
     }
 
     #endregion
