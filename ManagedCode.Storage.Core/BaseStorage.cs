@@ -277,7 +277,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     {
         if (string.IsNullOrWhiteSpace(options.FileName))
         {
-            options.FileName = $"{Guid.NewGuid():N}";
+            options.FileName = Guid.NewGuid().ToString("N");
         }
 
         if (!string.IsNullOrWhiteSpace(options.FileNamePrefix))

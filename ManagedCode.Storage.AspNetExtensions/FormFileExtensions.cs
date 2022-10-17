@@ -12,11 +12,8 @@ public static class FormFileExtensions
 {
     public static async Task<LocalFile> ToLocalFileAsync(this IFormFile formFile, CancellationToken cancellationToken = default)
     {
-        var tempPath = Path.GetTempPath();
-        LocalFile localFile = new($"{tempPath}/{formFile.FileName}");
-
+        LocalFile localFile = LocalFile.FromFileName(formFile.FileName);
         await formFile.CopyToAsync(localFile.FileStream, cancellationToken);
-
         return localFile;
     }
 

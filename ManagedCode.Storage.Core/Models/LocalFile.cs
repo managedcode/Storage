@@ -149,4 +149,13 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
         return file;
     }
+    public static LocalFile FromFileName(string fileName)
+    {
+        return new LocalFile(Path.Combine(Path.GetTempPath(), fileName));
+    }
+    
+    public static LocalFile FromTempFile()
+    {
+        return new LocalFile();
+    }
 }
