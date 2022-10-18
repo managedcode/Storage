@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -115,42 +116,6 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public string ReadAllText()
-    {
-        lock (_lockObject)
-        {
-            CloseFileStream();
-            return File.ReadAllText(FilePath);
-        }
-    }
-
-    public Task<string> ReadAllTextAsync()
-    {
-        lock (_lockObject)
-        {
-            CloseFileStream();
-            return File.ReadAllTextAsync(FilePath);
-        }
-    }
-
-    public string[] ReadAllLines()
-    {
-        lock (_lockObject)
-        {
-            CloseFileStream();
-            return File.ReadAllLines(FilePath);
-        }
-    }
-
-    public Task<string[]> ReadAllLinesAsync()
-    {
-        lock (_lockObject)
-        {
-            CloseFileStream();
-            return File.ReadAllLinesAsync(FilePath);
-        }
-    }
-
     ~LocalFile()
     {
         Dispose();
@@ -204,4 +169,129 @@ public class LocalFile : IDisposable, IAsyncDisposable
     {
         return new LocalFile();
     }
+
+    #region Read
+
+    public string ReadAllText()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllText(FilePath);
+        }
+    }
+
+    public Task<string> ReadAllTextAsync()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllTextAsync(FilePath);
+        }
+    }
+
+    public string[] ReadAllLines()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllLines(FilePath);
+        }
+    }
+
+    public Task<string[]> ReadAllLinesAsync()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllLinesAsync(FilePath);
+        }
+    }
+
+    public byte[] ReadAllBytes()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllBytes(FilePath);
+        }
+    }
+
+    public Task<byte[]> ReadAllBytesAsync()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllBytesAsync(FilePath);
+        }
+    }
+
+    public IEnumerable<string> ReadLines()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadLines(FilePath);
+        }
+    }
+
+    #endregion
+
+    #region Write
+
+    public void WriteAllText(string content)
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            File.WriteAllText(FilePath, content);
+        }
+    }
+
+    public Task WriteAllTextAsync(string content)
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.WriteAllTextAsync(FilePath, content);
+        }
+    }
+
+    public void WriteAllLines(IEnumerable<string> contents)
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            File.WriteAllLines(FilePath, contents);
+        }
+    }
+
+    public Task WriteAllLinesAsync(IEnumerable<string> contents)
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.WriteAllLinesAsync(FilePath, contents);
+        }
+    }
+
+    public void WriteAllBytes(byte[] bytes)
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            File.WriteAllBytes(FilePath, bytes);
+        }
+    }
+
+    public Task WriteAllBytesAsync(byte[] bytes)
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.WriteAllBytesAsync(FilePath, bytes);
+        }
+    }
+
+    #endregion
 }
