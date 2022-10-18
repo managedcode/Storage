@@ -9,7 +9,7 @@ public static class BrowserFileExtensions
 {
     public static async Task<LocalFile> ToLocalFileAsync(this IBrowserFile formFile, CancellationToken cancellationToken = default)
     {
-        var localFile = LocalFile.FromFileName(formFile.Name);
+        var localFile = LocalFile.FromRandomNameWithExtension(formFile.Name);
         await localFile.CopyFromStreamAsync(localFile.FileStream);
         return localFile;
     }

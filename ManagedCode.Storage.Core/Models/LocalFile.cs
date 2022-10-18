@@ -75,7 +75,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
                     throw new FileNotFoundException(FilePath);
                 }
 
-                _stream = new FileStream(FilePath, FileMode.Open, FileAccess.ReadWrite);
+                _stream = new FileStream(FilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
                 return _stream;
             }
         }
@@ -83,7 +83,8 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
-        return new ValueTask(Task.Run(Dispose));
+        Dispose();
+        return ValueTask.CompletedTask;
     }
 
     public void Dispose()
@@ -137,8 +138,8 @@ public class LocalFile : IDisposable, IAsyncDisposable
 
     public async Task<LocalFile> CopyFromStreamAsync(Stream stream)
     {
-        await stream.CopyToAsync(FileStream);
-        FileStream.Dispose();
+        var fs = FileStream;
+        await stream.CopyToAsync(fs);
         return this;
     }
 
@@ -146,8 +147,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
     {
         var file = new LocalFile();
         await stream.CopyToAsync(file.FileStream);
-        file.FileStream.Dispose();
-
+        await file.FileStream.DisposeAsync();
         return file;
     }
 
@@ -156,13 +156,18 @@ public class LocalFile : IDisposable, IAsyncDisposable
         var file = FromFileName(fileName);
         await stream.CopyToAsync(file.FileStream);
         await file.FileStream.DisposeAsync();
-
         return file;
     }
 
     public static LocalFile FromFileName(string fileName)
     {
         return new LocalFile(Path.Combine(Path.GetTempPath(), fileName));
+    }
+    
+    public static LocalFile FromRandomNameWithExtension(string fileName)
+    {
+        var extension = Path.GetExtension(fileName);
+        return new LocalFile(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + extension));
     }
 
     public static LocalFile FromTempFile()
