@@ -198,7 +198,7 @@ public abstract class StorageBaseTests
 //
 //     foreach (var localFile in bigFiles)
 //     {
-//         await Storage.UploadStreamAsync(localFile.FileName, localFile.FileStream);
+//         await Storage.UploadStreamAsync(localFile.Name, localFile.FileStream);
 //         await localFile.DisposeAsync();
 //     }
 //
@@ -209,7 +209,7 @@ public abstract class StorageBaseTests
 //
 //     foreach (var localFile in bigFiles)
 //     {
-//         await Storage.DeleteAsync(localFile.FileName);
+//         await Storage.DeleteAsync(localFile.Name);
 //     }
 // }
 

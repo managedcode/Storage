@@ -23,7 +23,7 @@ public class FormFileExtensionsTests
 
         // Assert
         localFile.FileStream.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(formFile.FileName);
+        localFile.Name.Should().Be(formFile.FileName);
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class FormFileExtensionsTests
 
         // Assert
         localFile.FileStream.Length.Should().Be(formFile.Length);
-        localFile.FileName.Should().Be(formFile.FileName);
+        localFile.Name.Should().Be(formFile.FileName);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class FormFileExtensionsTests
         for (var i = 0; i < filesCount; i++)
         {
             localFiles[i].FileStream.Length.Should().Be(collection[i].Length);
-            localFiles[i].FileName.Should().Be(collection[i].FileName);
+            localFiles[i].Name.Should().Be(collection[i].FileName);
         }
     }
 }

@@ -21,7 +21,7 @@ public static class StorageExtensions
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
         {
-            FileDownloadName = result.Value.FileName
+            FileDownloadName = result.Value.Name
         };
 
         return Result<FileResult>.Succeed(fileStream);
@@ -40,7 +40,7 @@ public static class StorageExtensions
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
         {
-            FileDownloadName = result.Value.FileName
+            FileDownloadName = result.Value.Name
         };
 
         return Result<FileResult>.Succeed(fileStream);

@@ -46,7 +46,7 @@ public class StorageExtensionsTests
 
         // Assert
         localFile!.Value.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.Value.FileName.Should().Be(formFile.FileName);
+        localFile.Value.Name.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -64,7 +64,7 @@ public class StorageExtensionsTests
         var result = await Storage.DownloadAsync(fileName);
 
         // Assert
-        result.Value.FileName.Should().Be(formFile.FileName);
+        result.Value.Name.Should().Be(formFile.FileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -84,7 +84,7 @@ public class StorageExtensionsTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         localFile.Value.FileInfo.Length.Should().Be(formFile.Length);
-        localFile.Value.FileName.Should().Be(fileName);
+        localFile.Value.Name.Should().Be(fileName);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -104,7 +104,7 @@ public class StorageExtensionsTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
-        result.Value.FileDownloadName.Should().Be(localFile.FileName);
+        result.Value.FileDownloadName.Should().Be(localFile.Name);
 
         await Storage.DeleteAsync(fileName);
     }
@@ -126,7 +126,7 @@ public class StorageExtensionsTests
         // Assert
         result.IsSuccess.Should().Be(true);
         result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
-        result.Value.FileDownloadName.Should().Be(localFile.FileName);
+        result.Value.FileDownloadName.Should().Be(localFile.Name);
 
         await Storage.DeleteAsync(fileName);
     }

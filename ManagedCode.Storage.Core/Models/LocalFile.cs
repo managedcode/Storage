@@ -43,12 +43,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
             fs.Close();
         }
 
-        FileName = FileInfo.Name;
+        Name = FileInfo.Name;
     }
 
     public string FilePath { get; }
 
-    public string FileName { get; }
+    public string Name { get; }
 
     public bool KeepAlive { get; set; }
 
@@ -112,6 +112,42 @@ public class LocalFile : IDisposable, IAsyncDisposable
             {
                 _disposed = true;
             }
+        }
+    }
+
+    public string ReadAllText()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllText(FilePath);
+        }
+    }
+
+    public Task<string> ReadAllTextAsync()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllTextAsync(FilePath);
+        }
+    }
+
+    public string[] ReadAllLines()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllLines(FilePath);
+        }
+    }
+
+    public Task<string[]> ReadAllLinesAsync()
+    {
+        lock (_lockObject)
+        {
+            CloseFileStream();
+            return File.ReadAllLinesAsync(FilePath);
         }
     }
 
