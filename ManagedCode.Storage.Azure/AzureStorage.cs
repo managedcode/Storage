@@ -124,14 +124,20 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
     {
         try
         {
-            _ = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
-            await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
+            _  = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
+            var policy = await StorageClient.GetAccessPolicyAsync(cancellationToken: cancellationToken);
+            if (policy.Value.BlobPublicAccess != StorageOptions.PublicAccessType)
+            {
+                await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
+            }
+            
             IsContainerCreated = true;
 
             return Result.Succeed();
         }
         catch (Exception ex)
         {
+            IsContainerCreated = false;
             _logger?.LogError(ex.Message, ex);
             return Result.Fail(ex);
         }
@@ -146,7 +152,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
             foreach (var blob in blobs)
             {
                 var blobClient = StorageClient.GetBlobClient(blob.Name);
-                await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+                await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.None, null, cancellationToken);
             }
 
             return Result.Succeed();
@@ -227,8 +233,8 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         {
             await EnsureContainerExist();
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
-            var response = await blobClient.DeleteAsync(DeleteSnapshotsOption.None, null, cancellationToken);
-            return Result<bool>.Succeed(!response.IsError);
+            var response = await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+            return Result<bool>.Succeed(response);
         }
         catch (RequestFailedException ex)
             when (ex.Status is 404)
