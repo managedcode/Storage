@@ -114,7 +114,9 @@ public class FileSystemStorage : BaseStorage<string, FileSystemStorageOptions>, 
         {
             filePath = Path.Combine(StorageClient, options.FileName);
         }
-
+        
+        EnsureDirectoryExist(Path.GetDirectoryName(filePath));
+        
         return filePath;
     }
 
