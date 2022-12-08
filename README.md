@@ -28,12 +28,23 @@ In addition, a universal wrapper can provide additional functionality that is no
 
 Overall, using a universal wrapper for cloud blob storages can provide many benefits, including improved flexibility, simplicity, and reliability in your application.
 A universal storage for working with multiple storage providers:
-
-## Blob providers
 - Azure
 - Google Cloud
 - Amazon
 - FileSystem
+
+## Motivation
+Cloud storage is a popular and convenient way to store and access data in the cloud. 
+However, different cloud storage providers often have their own unique APIs and interfaces for accessing and manipulating data. 
+This can make it difficult to switch between different providers or to use multiple providers simultaneously.
+
+Our library, provides a universal interface for accessing and manipulating data in different cloud blob storage providers. 
+This makes it easy to switch between providers or to use multiple providers at the same time, without having to learn and use multiple APIs.
+
+## Features
+- Provides a universal interface for accessing and manipulating data in different cloud blob storage providers.
+- Makes it easy to switch between providers or to use multiple providers simultaneously.
+- Supports common operations such as uploading, downloading, and deleting data.
 
 ## Connection modes
 
@@ -335,4 +346,7 @@ If you need more flexibility, you can use native client for any IStorage&lt;T&gt
 _storage.StorageClient
 ```
 
-
+## Conclusion
+In summary, Storage library provides a universal interface for accessing and manipulating data in different cloud blob storage providers. 
+It makes it easy to switch between providers or to use multiple providers simultaneously, without having to learn and use multiple APIs. 
+We hope you find it useful in your own projects!
