@@ -50,7 +50,7 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         {
             var fileClient = GetFileClient(options);
             var stream = await fileClient.OpenReadAsync(options.Position, options.BufferSize, cancellationToken: cancellationToken);
-            return stream;
+            return Result.Succeed(stream);
         }
         catch (Exception ex)
         {
@@ -66,7 +66,7 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         {
             var fileClient = GetFileClient(options);
             var stream = await fileClient.OpenWriteAsync(options.Overwrite, cancellationToken: cancellationToken);
-            return stream;
+            return Result.Succeed(stream);
         }
         catch (Exception ex)
         {
@@ -198,7 +198,7 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         {
             var fileClient = GetFileClient(options);
             await fileClient.DeleteAsync(cancellationToken: cancellationToken);
-            return true;
+            return Result.Succeed(true);
         }
         catch (Exception ex)
         {
@@ -213,7 +213,7 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         {
             var fileClient = GetFileClient(options);
             var result = await fileClient.ExistsAsync(cancellationToken);
-            return result.Value;
+            return Result.Succeed(result.Value);
         }
         catch (Exception ex)
         {

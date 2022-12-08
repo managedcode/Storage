@@ -19,20 +19,21 @@
 # Storage
 ---
 
-## Storage pattern implementation for C#.
+## General concept
+One of the key benefits of using a universal wrapper for cloud blob storages is that it provides a consistent, easy-to-use interface for working with different types of blob storage. This can make it much easier for developers to switch between different storage providers, or to use multiple providers in the same project.
 
+A universal wrapper can also simplify the development process by providing a single set of methods for working with blob storage, rather than requiring developers to learn and use the different APIs provided by each storage provider. This can save time and reduce the complexity of the code, making it easier to write, maintain, and debug.
+
+In addition, a universal wrapper can provide additional functionality that is not available through the individual storage providers, such as support for common patterns like asynchronous programming and error handling. This can make it easier to write high-quality, reliable code that is robust and resilient to errors.
+
+Overall, using a universal wrapper for cloud blob storages can provide many benefits, including improved flexibility, simplicity, and reliability in your application.
 A universal storage for working with multiple storage providers:
 
+## Blob providers
 - Azure
 - Google Cloud
 - Amazon
 - FileSystem
-
-## General concept
-
-The library incapsulates all provider specific to make connection and managing storages as easy as possible. You have as
-customer just connect the
-library in your Startup providing necessary connection strings and inject needed interfaces in your services.
 
 ## Connection modes
 

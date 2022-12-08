@@ -275,7 +275,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
 
             if (properties is null)
             {
-                return new Error<ErrorCode>("Properties for file not found");
+                return Result<BlobMetadata>.Fail("Properties for file not found");
             }
 
             return Result<BlobMetadata>.Succeed(new BlobMetadata

@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+        <LangVersion>11</LangVersion>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <LangVersion>10</LangVersion>
         <DebugType>embedded</DebugType>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
@@ -18,12 +18,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="1.0.0"/>
-        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0"/>
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.10" />
+        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0" />
     </ItemGroup>
 
 </Project>

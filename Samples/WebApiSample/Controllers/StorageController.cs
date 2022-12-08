@@ -36,7 +36,7 @@ public class StorageController : Controller
 
         return result.IsSuccess
             ? Ok(result.Value)
-            : BadRequest(result.Error?.Message);
+            : BadRequest(result.GetError()?.Message);
     }
 
     [HttpPost("files")]

@@ -14,9 +14,9 @@ public static class StorageExtensions
     {
         var result = await storage.DownloadAsync(blobName, cancellationToken);
 
-        if (result.IsFail)
+        if (result.IsFailed)
         {
-            return Result<FileResult>.Fail(result.Error!);
+            return Result<FileResult>.Fail(result.Errors);
         }
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
@@ -33,9 +33,9 @@ public static class StorageExtensions
     {
         var result = await storage.DownloadAsync(blobMetadata.Name, cancellationToken);
 
-        if (result.IsFail)
+        if (result.IsFailed)
         {
-            return result.Error!;
+            return Result<FileResult>.Fail(result.Errors);
         }
 
         var fileStream = new FileStreamResult(result.Value!.FileStream, MimeHelper.GetMimeType(result.Value.FileInfo.Extension))

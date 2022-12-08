@@ -129,8 +129,8 @@ public class FileSystemStorage : BaseStorage<string, FileSystemStorageOptions>, 
         var filePath = GetPathFromOptions(options);
 
         return File.Exists(filePath)
-            ? new LocalFile(filePath)
-            : new Error<ErrorCode>("File not found");
+            ? Result<LocalFile>.Succeed(new LocalFile(filePath))
+            : Result<LocalFile>.Fail("File not found");
     }
 
     protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
@@ -164,7 +164,7 @@ public class FileSystemStorage : BaseStorage<string, FileSystemStorageOptions>, 
 
         if (!fileInfo.Exists)
         {
-            return new Error<ErrorCode>("File not found");
+            return Result<BlobMetadata>.Fail("File not found");
         }
 
         var result = new BlobMetadata
@@ -191,14 +191,17 @@ public class FileSystemStorage : BaseStorage<string, FileSystemStorageOptions>, 
         {
             var file = await DownloadAsync(filePath, cancellationToken);
 
-            if (file.IsFail)
+            if (file.IsFailed)
             {
-                return file.Error!;
+                return Result.Fail(file.Errors);
             }
 
             var fileStream = File.OpenRead(file.Value!.FilePath); // Opening with FileAccess.Read only
-            fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
-
+            if (Environment.OSVersion.Platform != PlatformID.MacOSX)
+            {
+                fileStream.Lock(0, fileStream.Length); // Attempting to lock a region of the read-only file
+            }
+            
             _lockedFiles.Add(filePath, fileStream);
 
             return Result.Succeed();
