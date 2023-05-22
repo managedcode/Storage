@@ -2,6 +2,7 @@ using Azure.Storage.Blobs;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Options;
+using ManagedCode.Storage.Core;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.FileSystem.Options;
 
@@ -15,12 +16,24 @@ public class FakeAzureStorage : FileSystemStorage, IAzureStorage
 
     public BlobContainerClient StorageClient { get; }
 
+    public Task<Result> SetStorageOptions(IStorageOptions options, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
+    }
+
+    public Task<Result> SetStorageOptions(Action<IStorageOptions> options,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
+    }
+
     public Task<Result> SetStorageOptions(AzureStorageOptions options, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Succeed());
     }
 
-    public Task<Result> SetStorageOptions(Action<AzureStorageOptions> options, CancellationToken cancellationToken = default)
+    public Task<Result> SetStorageOptions(Action<AzureStorageOptions> options,
+        CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Succeed());
     }

@@ -1,6 +1,6 @@
 namespace ManagedCode.Storage.Core;
 
-public class StorageOptions
+public interface IStorageOptions
 {
-    public bool CreateContainerIfNotExists { get; set; } = true;
+    public bool CreateContainerIfNotExists { get; set; } 
 }

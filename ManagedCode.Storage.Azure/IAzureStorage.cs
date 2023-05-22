@@ -8,7 +8,7 @@ using ManagedCode.Storage.Core;
 
 namespace ManagedCode.Storage.Azure;
 
-public interface IAzureStorage : IStorage<BlobContainerClient, AzureStorageOptions>
+public interface IAzureStorage : IStorage<BlobContainerClient, IStorageOptions>
 {
     Task<Result<Stream>> OpenReadStreamAsync(string fileName, CancellationToken cancellationToken = default);
     Task<Result<Stream>> OpenWriteStreamAsync(string fileName, CancellationToken cancellationToken = default);

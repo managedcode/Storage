@@ -12,7 +12,7 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Core;
 
-public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOptions : StorageOptions
+public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOptions : IStorageOptions
 {
     protected bool IsContainerCreated;
     protected TOptions StorageOptions;

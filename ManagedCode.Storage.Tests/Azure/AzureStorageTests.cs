@@ -52,7 +52,12 @@ public class AzureStorageTests : StorageBaseTests
     {
         var services = new ServiceCollection();
 
-        Action action = () => services.AddAzureStorageAsDefault(opt => { opt.Container = "managed-code-bucket"; });
+        Action action = () =>
+            services.AddAzureStorageAsDefault(options =>
+            {
+                options.Container = "managed-code-bucket";
+                options.ConnectionString = null;
+            });
 
         action.Should().Throw<BadConfigurationException>();
     }
