@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ManagedCode.Storage.AspNetExtensions": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:52866;http://localhost:52867"
+    }
+  }
+}
