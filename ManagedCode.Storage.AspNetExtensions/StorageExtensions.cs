@@ -10,7 +10,7 @@ namespace ManagedCode.Storage.AspNetExtensions;
 
 public static class StorageExtensions
 {
-    public static async Task<Result<FileResult>> DownloadAsFileResult(this IStorage storage, string blobName, CancellationToken cancellationToken = default)
+    public static async Task<Result<FileResult>> DownloadAsFileResultAsync(this IStorage storage, string blobName, CancellationToken cancellationToken = default)
     {
         var result = await storage.DownloadAsync(blobName, cancellationToken);
 
@@ -27,7 +27,7 @@ public static class StorageExtensions
         return Result<FileResult>.Succeed(fileStream);
     }
 
-    public static async Task<Result<FileResult>> DownloadAsFileResult(this IStorage storage,
+    public static async Task<Result<FileResult>> DownloadAsFileResultAsync(this IStorage storage,
         BlobMetadata blobMetadata,
         CancellationToken cancellationToken = default)
     {

@@ -99,7 +99,7 @@ public class StorageExtensionsTests
 
         // Act
         await Storage.UploadAsync(localFile.FileInfo);
-        var result = await Storage.DownloadAsFileResult(fileName);
+        var result = await Storage.DownloadAsFileResultAsync(fileName);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -121,7 +121,7 @@ public class StorageExtensionsTests
 
         // Act
         await Storage.UploadAsync(localFile.FileInfo, options => { options.FileName = fileName; });
-        var result = await Storage.DownloadAsFileResult(fileName);
+        var result = await Storage.DownloadAsFileResultAsync(fileName);
 
         // Assert
         result.IsSuccess.Should().Be(true);
@@ -138,7 +138,7 @@ public class StorageExtensionsTests
         var fileName = FileHelper.GenerateRandomFileName();
 
         // Act
-        var fileResult = await Storage.DownloadAsFileResult(fileName);
+        var fileResult = await Storage.DownloadAsFileResultAsync(fileName);
 
         // Assert
         fileResult.IsSuccess.Should().BeFalse();
@@ -153,7 +153,7 @@ public class StorageExtensionsTests
         BlobMetadata blobMetadata = new() { Name = fileName };
 
         // Act
-        var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
+        var fileResult = await Storage.DownloadAsFileResultAsync(blobMetadata);
 
         // Assert
         fileResult.IsSuccess.Should().BeFalse();

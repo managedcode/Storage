@@ -13,39 +13,39 @@ public static class StorageBrowserFileExtensions
     private const int MinLengthForLargeFile = 256 * 1024;
 
     public static async Task<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage,
-        IBrowserFile formFile,
+        IBrowserFile browserFile,
         UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        options ??= new UploadOptions(formFile.Name, mimeType: formFile.ContentType);
+        options ??= new UploadOptions(browserFile.Name, mimeType: browserFile.ContentType);
 
-        if (formFile.Size > MinLengthForLargeFile)
+        if (browserFile.Size > MinLengthForLargeFile)
         {
-            var localFile = await formFile.ToLocalFileAsync(cancellationToken);
+            var localFile = await browserFile.ToLocalFileAsync(cancellationToken);
             return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         }
 
-        await using (var stream = formFile.OpenReadStream())
+        await using (var stream = browserFile.OpenReadStream())
         {
             return await storage.UploadAsync(stream, options, cancellationToken);
         }
     }
 
     public static async Task<Result<BlobMetadata>> UploadToStorageAsync(this IStorage storage,
-        IBrowserFile formFile,
+        IBrowserFile browserFile,
         Action<UploadOptions> options,
         CancellationToken cancellationToken = default)
     {
-        var newOptions = new UploadOptions(formFile.Name, mimeType: formFile.ContentType);
+        var newOptions = new UploadOptions(browserFile.Name, mimeType: browserFile.ContentType);
         options.Invoke(newOptions);
 
-        if (formFile.Size > MinLengthForLargeFile)
+        if (browserFile.Size > MinLengthForLargeFile)
         {
-            var localFile = await formFile.ToLocalFileAsync(cancellationToken);
+            var localFile = await browserFile.ToLocalFileAsync(cancellationToken);
             return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         }
 
-        await using (var stream = formFile.OpenReadStream())
+        await using (var stream = browserFile.OpenReadStream())
         {
             return await storage.UploadAsync(stream, options, cancellationToken);
         }

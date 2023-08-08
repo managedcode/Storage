@@ -20,7 +20,7 @@ public class StorageController : Controller
     [HttpGet("file")]
     public async Task<FileResult> DownloadFile(string fileName)
     {
-        var result = await _storage.DownloadAsFileResult(fileName);
+        var result = await _storage.DownloadAsFileResultAsync(fileName);
 
         return result.Value!;
     }
