@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,5 +68,23 @@ public class BaseStorageController : Controller
         {
             yield return await _storage.UploadToStorageAsync(formFile, options);
         }
+    }
+
+    protected async Task<Stream> GetStreamFromStorageAsync(string blobName)
+    {
+        var result = await _storage.DownloadAsFileResultAsync(blobName);
+
+        if (result.IsSuccess)
+        {
+            var fileStreamResult = result.Value as FileStreamResult;
+
+            if (fileStreamResult != null)
+            {
+                var fileStream = fileStreamResult.FileStream;
+                return fileStream;
+            }
+        }
+
+        return default;
     }
 }
