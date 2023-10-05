@@ -42,7 +42,7 @@ jobs:
       uses: ndepend/ndepend-action@v1
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-        license: ${{ secrets.NDependLicense }}
+        license: ${{ secrets.NDEPENDLICENSE }}
         
     - name: azuright
       uses: potatoqualitee/azuright@v1.1      
