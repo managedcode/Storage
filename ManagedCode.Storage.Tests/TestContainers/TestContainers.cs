@@ -5,13 +5,17 @@ using Azure;
 using Azure.Storage.Blobs;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
+using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Gcp.Extensions;
+using ManagedCode.Storage.Gcp.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Azurite;
+using Testcontainers.GCS;
 using Testcontainers.LocalStack;
 using Xunit;
 
@@ -114,6 +118,51 @@ public class AmazonStorageTests : UploadTests<LocalStackContainer>
             SecretKey = "localsecret",
             Bucket = "managed-code-bucket",
             OriginalOptions = config
+        });
+        return services.BuildServiceProvider();
+    }
+    
+}
+
+public class GCSStorageTests : UploadTests<GCSContainer>
+{
+    protected override GCSContainer Build()
+    {
+        return new GCSBuilder().Build();
+    }
+
+    protected override ServiceProvider ConfigureServices()
+    {
+        Container.GetConnectionString();
+        
+        var services = new ServiceCollection();
+
+        services.AddGCPStorageAsDefault(opt =>
+        {
+            opt.BucketOptions = new BucketOptions
+            {
+                ProjectId = "api-project-0000000000000",
+                Bucket = "managed-code-bucket"
+            };
+            opt.StorageClientBuilder = new StorageClientBuilder
+            {
+                UnauthenticatedAccess = true,
+                BaseUri = Container.GetConnectionString()
+            };
+        });
+
+        services.AddGCPStorage(new GCPStorageOptions
+        {
+            BucketOptions = new BucketOptions
+            {
+                ProjectId = "api-project-0000000000000",
+                Bucket = "managed-code-bucket"
+            },
+            StorageClientBuilder = new StorageClientBuilder
+            {
+                UnauthenticatedAccess = true,
+                BaseUri = Container.GetConnectionString() 
+            }
         });
         return services.BuildServiceProvider();
     }

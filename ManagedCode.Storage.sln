@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.AzureDa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.TestFakes", "ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj", "{7190B548-4BE9-4EF6-B55F-8432757AEAD5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testcontainers.GCS", "Testcontainers.GCS\Testcontainers.GCS.csproj", "{40638DBB-CB6F-4B11-B4B5-50446CE426E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{7190B548-4BE9-4EF6-B55F-8432757AEAD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7190B548-4BE9-4EF6-B55F-8432757AEAD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7190B548-4BE9-4EF6-B55F-8432757AEAD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
