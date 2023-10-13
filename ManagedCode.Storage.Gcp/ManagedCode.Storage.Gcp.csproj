@@ -24,11 +24,11 @@
     <ItemGroup>
         <PackageReference Include="Google.Api.Gax" Version="4.4.0" />
         <PackageReference Include="Google.Api.Gax.Rest" Version="4.4.0" />
-        <PackageReference Include="Google.Apis.Storage.v1" Version="1.60.0.2981" />
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.23" />
-        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.5.0" />
+        <PackageReference Include="Google.Apis.Storage.v1" Version="1.62.1.3190" />
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
+        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     </ItemGroup>
 </Project>

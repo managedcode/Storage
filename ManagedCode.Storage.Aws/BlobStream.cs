@@ -184,4 +184,3 @@ public class BlobStream : Stream
             } while (c > 0);
         }
     }
-}

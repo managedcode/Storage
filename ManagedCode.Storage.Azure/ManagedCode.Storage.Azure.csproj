@@ -22,12 +22,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.9.0" />
-        <PackageReference Include="Azure.Storage.Files.DataLake" Version="12.14.0" />
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.23" />
-        <PackageReference Include="Azure.Storage.Blobs" Version="12.16.0" />
+        <PackageReference Include="Azure.Identity" Version="1.10.2" />
+        <PackageReference Include="Azure.Storage.Files.DataLake" Version="12.16.0" />
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     </ItemGroup>
 

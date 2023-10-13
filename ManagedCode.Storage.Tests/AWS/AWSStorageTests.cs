@@ -8,6 +8,7 @@ using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
+using Testcontainers.LocalStack;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.AWS;
@@ -16,6 +17,8 @@ public class AWSStorageTests : StorageBaseTests
 {
     protected override ServiceProvider ConfigureServices()
     {
+        
+        
         var services = new ServiceCollection();
 
         // AWS library overwrites property values. you should only create configurations this way. 
