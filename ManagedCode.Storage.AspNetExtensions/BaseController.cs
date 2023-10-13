@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Storage.AspNetExtensions;
 
-public class BaseController : Controller
+public class BaseController : ControllerBase
 {
     private readonly IStorage _storage;
 

@@ -49,6 +49,8 @@ jobs:
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         license: ${{ secrets.NDEPENDLICENSE }}
+        coveragefolder: ManagedCode.Storage.Tests
+        baseline: recent
         
     - name : coverlet
       uses: b3b00/coverlet-action@1.1.9

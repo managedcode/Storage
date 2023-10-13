@@ -133,8 +133,7 @@ public class GCSStorageTests : UploadTests<GCSContainer>
 
     protected override ServiceProvider ConfigureServices()
     {
-        Container.GetConnectionString();
-        
+
         var services = new ServiceCollection();
 
         services.AddGCPStorageAsDefault(opt =>
