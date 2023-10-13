@@ -17,6 +17,9 @@ jobs:
           
     steps:
 
+    - name: checkout
+      uses: actions/checkout@v3
+      
     - name: docker run fake-gcs-server
       run: |
         docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http -external-url "http://localhost:4443"
@@ -27,7 +30,6 @@ jobs:
         curl http://localhost:4443  
       
       
-    - uses: actions/checkout@v3
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
