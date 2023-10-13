@@ -24,9 +24,7 @@ jobs:
         
     - name: check storage emulators
       run: |
-        curl http://localhost:4443/
-        curl http://localhost:4566/
-        curl http://localhost:10000/     
+        curl http://localhost:4443  
       
       
     - uses: actions/checkout@v3
