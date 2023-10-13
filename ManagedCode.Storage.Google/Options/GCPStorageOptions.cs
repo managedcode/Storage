@@ -2,7 +2,7 @@
 using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Core;
 
-namespace ManagedCode.Storage.Gcp.Options;
+namespace ManagedCode.Storage.Google.Options;
 
 public class GCPStorageOptions : IStorageOptions
 {

@@ -1,10 +1,10 @@
 ﻿using System;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
-using ManagedCode.Storage.Gcp.Options;
+using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ManagedCode.Storage.Gcp.Extensions;
+namespace ManagedCode.Storage.Google.Extensions;
 
 public static class ServiceCollectionExtensions
 {

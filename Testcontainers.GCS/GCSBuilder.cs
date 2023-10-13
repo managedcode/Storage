@@ -42,8 +42,9 @@ public sealed class GCSBuilder : ContainerBuilder<GCSBuilder, GCSContainer, GCSC
         return base.Init()
             .WithImage(GCSImage)
             .WithPortBinding(GCSPort, true)
+            .WithCommand("-scheme", "http")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request =>
-                request.ForPath("/").ForPort(GCSPort).ForStatusCode(HttpStatusCode.BadRequest)));
+                request.ForPath("/").ForPort(GCSPort).ForStatusCode(HttpStatusCode.NotFound)));
     }
 
     /// <inheritdoc />

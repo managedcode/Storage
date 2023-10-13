@@ -11,10 +11,10 @@ using Google.Cloud.Storage.V1;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
-using ManagedCode.Storage.Gcp.Options;
+using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.Logging;
 
-namespace ManagedCode.Storage.Gcp;
+namespace ManagedCode.Storage.Google;
 
 public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPStorage
 {

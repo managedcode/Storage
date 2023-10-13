@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Aws", "ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj", "{0AFE156D-0DA5-4B23-8262-CA98E4C0FB5F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Gcp", "ManagedCode.Storage.Gcp\ManagedCode.Storage.Gcp.csproj", "{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Google", "ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj", "{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.FileSystem", "ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
 EndProject

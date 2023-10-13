@@ -5,8 +5,8 @@ using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.FileSystem.Extensions;
 using ManagedCode.Storage.FileSystem.Options;
-using ManagedCode.Storage.Gcp.Extensions;
-using ManagedCode.Storage.Gcp.Options;
+using ManagedCode.Storage.Google.Extensions;
+using ManagedCode.Storage.Google.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 

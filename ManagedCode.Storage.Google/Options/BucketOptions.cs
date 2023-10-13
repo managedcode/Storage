@@ -1,4 +1,4 @@
-﻿namespace ManagedCode.Storage.Gcp.Options;
+﻿namespace ManagedCode.Storage.Google.Options;
 
 public class BucketOptions
 {

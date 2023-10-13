@@ -3,9 +3,9 @@
 // using Google.Cloud.Storage.V1;
 // using ManagedCode.Storage.Core;
 // using ManagedCode.Storage.Core.Exceptions;
-// using ManagedCode.Storage.Gcp;
-// using ManagedCode.Storage.Gcp.Extensions;
-// using ManagedCode.Storage.Gcp.Options;
+// using ManagedCode.Storage.Google;
+// using ManagedCode.Storage.Google.Extensions;
+// using ManagedCode.Storage.Google.Options;
 // using Microsoft.Extensions.DependencyInjection;
 // using Xunit;
 //

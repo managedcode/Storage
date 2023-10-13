@@ -12,9 +12,9 @@
     <!--NuGet-->
     <PropertyGroup>
         <Title>ManagedCode.Storage.Gcp</Title>
-        <PackageId>ManagedCode.Storage.Gcp</PackageId>
-        <Description>Storage for GCP</Description>
-        <PackageTags>managedcode, gcp, storage, cloud, blob</PackageTags>
+        <PackageId>ManagedCode.Storage.Google</PackageId>
+        <Description>Storage for Google Cloud Storage</Description>
+        <PackageTags>managedcode, gcs, storage, cloud, blob</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
@@ -25,8 +25,8 @@
         <PackageReference Include="Google.Api.Gax" Version="4.4.0" />
         <PackageReference Include="Google.Api.Gax.Rest" Version="4.4.0" />
         <PackageReference Include="Google.Apis.Storage.v1" Version="1.62.1.3190" />
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
         <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0" />
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
