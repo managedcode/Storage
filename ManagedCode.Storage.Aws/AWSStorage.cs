@@ -34,7 +34,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
@@ -104,7 +104,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
@@ -124,7 +124,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
@@ -183,7 +183,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<LocalFile>.Fail(ex);
         }
     }
@@ -211,7 +211,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -235,7 +235,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -269,7 +269,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -301,7 +301,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
@@ -323,7 +323,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<bool>.Fail(ex);
         }
     }

@@ -15,17 +15,25 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Google"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.FileSystem", "ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.AspNetExtensions", "ManagedCode.Storage.AspNetExtensions\ManagedCode.Storage.AspNetExtensions.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Server", "ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{C812D2D8-1854-4043-94A9-4AA32D606D68}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiSample", "Samples\WebApiSample\WebApiSample.csproj", "{39E5D805-04B4-442B-9B64-116A96041A93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.AzureDataLake", "ManagedCode.Storage.AzureDataLake\ManagedCode.Storage.AzureDataLake.csproj", "{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Azure.DataLake", "ManagedCode.Storage.Azure.DataLake\ManagedCode.Storage.Azure.DataLake.csproj", "{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.TestFakes", "ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj", "{7190B548-4BE9-4EF6-B55F-8432757AEAD5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testcontainers.GCS", "Testcontainers.GCS\Testcontainers.GCS.csproj", "{40638DBB-CB6F-4B11-B4B5-50446CE426E7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Storages", "Storages", "{92201402-E361-440F-95DB-68663D228C2D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder1", "SolutionFolder1", "{94DB7354-F5C7-4347-B9EC-FCCA38B86876}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client", "ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj", "{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client.SignalR", "ManagedCode.Storage.Client.SignalR\ManagedCode.Storage.Client.SignalR.csproj", "{ED216AAD-CBA2-40F2-AA01-63C60E906632}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,6 +85,14 @@ Global
 		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -86,5 +102,13 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{39E5D805-04B4-442B-9B64-116A96041A93} = {C812D2D8-1854-4043-94A9-4AA32D606D68}
+		{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3} = {92201402-E361-440F-95DB-68663D228C2D}
+		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690} = {92201402-E361-440F-95DB-68663D228C2D}
+		{0D6304D1-911D-489E-A716-6CBD5D0FE05D} = {92201402-E361-440F-95DB-68663D228C2D}
+		{0AFE156D-0DA5-4B23-8262-CA98E4C0FB5F} = {92201402-E361-440F-95DB-68663D228C2D}
+		{EDFA1CB7-1721-4447-9C25-AE110821717C} = {92201402-E361-440F-95DB-68663D228C2D}
+		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
+		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
+		{ED216AAD-CBA2-40F2-AA01-63C60E906632} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
 	EndGlobalSection
 EndGlobal

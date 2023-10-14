@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
@@ -16,7 +16,7 @@
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj"/>
-        <ProjectReference Include="..\ManagedCode.Storage.AzureDataLake\ManagedCode.Storage.AzureDataLake.csproj"/>
+        <ProjectReference Include="..\ManagedCode.Storage.Azure.DataLake\ManagedCode.Storage.Azure.DataLake.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj"/>
         <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
         <ProjectReference Include="..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj"/>

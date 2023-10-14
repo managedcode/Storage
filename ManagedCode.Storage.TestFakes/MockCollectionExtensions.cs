@@ -1,6 +1,6 @@
 ﻿using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Azure;
-using ManagedCode.Storage.AzureDataLake;
+using ManagedCode.Storage.Azure.DataLake;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Google;
 using Microsoft.Extensions.DependencyInjection;
