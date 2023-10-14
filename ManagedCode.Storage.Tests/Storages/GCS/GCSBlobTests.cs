@@ -3,7 +3,7 @@ using Testcontainers.GCS;
 
 // ReSharper disable MethodHasAsyncOverload
 
-namespace ManagedCode.Storage.Tests.GCP;
+namespace ManagedCode.Storage.Tests.Storages.GCS;
 
 public class GCSBlobTests : BlobTests<GCSContainer>
 {

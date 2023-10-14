@@ -8,7 +8,7 @@ using ManagedCode.Storage.TestFakes;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests;
+namespace ManagedCode.Storage.Tests.ExtensionsTests;
 
 public class ReplaceExtensionsTests
 {

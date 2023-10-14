@@ -1,11 +1,12 @@
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
+using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests;
+namespace ManagedCode.Storage.Tests.Storages;
 
-public abstract class DownloadTests<T> : BaseContainer<T> where T : DockerContainer
+public abstract class DownloadTests<T> : BaseContainer<T> where T : IContainer
 {
     [Fact]
     public async Task DownloadAsync_WithoutOptions_AsLocalFile()

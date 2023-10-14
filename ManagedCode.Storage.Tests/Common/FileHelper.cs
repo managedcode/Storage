@@ -5,7 +5,7 @@ using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
 
-namespace ManagedCode.Storage.Tests;
+namespace ManagedCode.Storage.Tests.Common;
 
 public static class FileHelper
 {

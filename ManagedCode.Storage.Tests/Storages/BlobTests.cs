@@ -4,11 +4,12 @@ using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests;
+namespace ManagedCode.Storage.Tests.Storages;
 
-public abstract class BlobTests<T> : BaseContainer<T> where T : DockerContainer
+public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 {
     [Fact]
     public async Task GetBlobListAsync_WithoutOptions()
@@ -20,7 +21,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : DockerContainer
         var result = await Storage.GetBlobMetadataListAsync().ToListAsync();
 
         // Assert
-        result.Count.Should().BeGreaterThan(fileList.Count);
+        result.Count.Should().Be(fileList.Count);
 
         foreach (var item in fileList)
         {

@@ -2,15 +2,12 @@
 using FluentAssertions;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Extensions;
-using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
-using ManagedCode.Storage.Tests.GCP;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.Azurite;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.Azure;
+namespace ManagedCode.Storage.Tests.Storages.Azure;
 
 
 public class AzureConfigTests 

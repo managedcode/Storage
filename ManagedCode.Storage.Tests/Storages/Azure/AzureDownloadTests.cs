@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Azurite;
 
-namespace ManagedCode.Storage.Tests.GCP;
+namespace ManagedCode.Storage.Tests.Storages.Azure;
 
 public class AzureDownloadTests : DownloadTests<AzuriteContainer>
 {

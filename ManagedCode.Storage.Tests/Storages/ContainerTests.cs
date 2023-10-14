@@ -3,11 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
+using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests;
+namespace ManagedCode.Storage.Tests.Storages;
 
-public abstract class ContainerTests<T> : BaseContainer<T> where T : DockerContainer
+public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
 {
     
     [Fact]
@@ -25,7 +26,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : DockerConta
             .NotThrowAsync<Exception>();
     }
     
-    [Fact(Skip = "Other tests fail because container removal is too slow")]
+    [Fact]
     public async Task RemoveContainer_ShouldBeSuccess()
     {
         var createResult = await Storage.CreateContainerAsync();

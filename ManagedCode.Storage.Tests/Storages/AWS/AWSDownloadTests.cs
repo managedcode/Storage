@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.LocalStack;
 
-namespace ManagedCode.Storage.Tests.GCP;
+namespace ManagedCode.Storage.Tests.Storages.AWS;
 
 public class AWSDownloadTests : DownloadTests<LocalStackContainer>
 {

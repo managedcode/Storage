@@ -1,10 +1,7 @@
-using Google.Cloud.Storage.V1;
-using ManagedCode.Storage.Google.Extensions;
-using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.GCS;
 
-namespace ManagedCode.Storage.Tests.GCP;
+namespace ManagedCode.Storage.Tests.Storages.GCS;
 
 public class GCSContainerTests : ContainerTests<GCSContainer>
 {

@@ -3,7 +3,7 @@ using ManagedCode.Storage.Google.Extensions;
 using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ManagedCode.Storage.Tests.GCP;
+namespace ManagedCode.Storage.Tests.Storages.GCS;
 
 public class GCSConfigurator
 {

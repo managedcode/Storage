@@ -1,19 +1,17 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
-using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
-using Microsoft.Extensions.DependencyInjection;
+using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
 // ReSharper disable MethodHasAsyncOverload
 
-namespace ManagedCode.Storage.Tests;
+namespace ManagedCode.Storage.Tests.Storages;
 
-public abstract class UploadTests<T> : BaseContainer<T> where T : DockerContainer
+public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 {
     [Fact]
     public async Task UploadAsync_AsText_WithoutOptions()

@@ -1,16 +1,11 @@
-﻿using System.ComponentModel;
-using Amazon.S3;
-using Google.Cloud.Storage.V1;
+﻿using Amazon.S3;
 using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Aws.Options;
-using ManagedCode.Storage.Google.Extensions;
-using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.GCS;
 
 // ReSharper disable MethodHasAsyncOverload
 
-namespace ManagedCode.Storage.Tests.GCP;
+namespace ManagedCode.Storage.Tests.Storages.AWS;
 
 public class AWSConfigurator
 {

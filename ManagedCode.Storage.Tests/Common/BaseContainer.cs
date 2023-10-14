@@ -2,29 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Amazon.S3;
-using Azure;
-using Azure.Storage.Blobs;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
-using Google.Cloud.Storage.V1;
-using ManagedCode.Storage.Aws.Extensions;
-using ManagedCode.Storage.Aws.Options;
-using ManagedCode.Storage.Azure.Extensions;
-using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
-using ManagedCode.Storage.Google.Extensions;
-using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.DependencyInjection;
-using Testcontainers.Azurite;
-using Testcontainers.GCS;
-using Testcontainers.LocalStack;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests;
+namespace ManagedCode.Storage.Tests.Common;
 
-public abstract class BaseContainer<T> : IAsyncLifetime where T : DockerContainer
+public abstract class BaseContainer<T> : IAsyncLifetime where T : IContainer
 {
     protected T Container { get; private set; }
     protected abstract T Build();
