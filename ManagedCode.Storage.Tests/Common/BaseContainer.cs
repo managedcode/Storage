@@ -47,7 +47,7 @@ public abstract class BaseContainer<T> : IAsyncLifetime where T : DockerContaine
         return Container.DisposeAsync().AsTask();
     }
     
-    private async Task<FileInfo> UploadTestFileAsync(string? directory = null)
+    protected async Task<FileInfo> UploadTestFileAsync(string? directory = null)
     {
         var file = await GetTestFileAsync();
 
@@ -58,7 +58,7 @@ public abstract class BaseContainer<T> : IAsyncLifetime where T : DockerContaine
         return file;
     }
 
-    private async Task<List<FileInfo>> UploadTestFileListAsync(string? directory = null, int? count = 10)
+    protected async Task<List<FileInfo>> UploadTestFileListAsync(string? directory = null, int? count = 10)
     {
         List<FileInfo> fileList = new();
 

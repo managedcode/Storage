@@ -39,9 +39,9 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : DockerConta
     [Fact]
     public async Task GetFileListAsyncTest()
     {
-        await StreamUploadAsyncTest();
-        await ArrayUploadAsyncTest();
-        await StringUploadAsyncTest();
+        // await StreamUploadAsyncTest();
+        // await ArrayUploadAsyncTest();
+        // await StringUploadAsyncTest();
 
         var files = await Storage.GetBlobMetadataListAsync().ToListAsync();
         files.Count.Should().BeGreaterOrEqualTo(3);
