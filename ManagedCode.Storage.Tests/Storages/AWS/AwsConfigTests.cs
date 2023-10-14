@@ -7,6 +7,7 @@ using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
+using ManagedCode.Storage.Tests.GCP;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.LocalStack;
 using Xunit;
@@ -14,37 +15,9 @@ using Xunit;
 namespace ManagedCode.Storage.Tests.AWS;
 
 
-public class AmazonStorageTests : StorageBaseTests<LocalStackContainer>
+public class AwsConfigTests 
 {
-    protected override LocalStackContainer Build()
-    {
-        return new LocalStackBuilder().Build();
-    }
 
-    protected override ServiceProvider ConfigureServices()
-    {
-        var services = new ServiceCollection();
-        
-        var config = new AmazonS3Config();
-        config.ServiceURL = Container.GetConnectionString();
-        
-        services.AddAWSStorageAsDefault(opt =>
-        {
-            opt.PublicKey = "localkey";
-            opt.SecretKey = "localsecret";
-            opt.Bucket = "managed-code-bucket";
-            opt.OriginalOptions = config;
-        });
-
-        services.AddAWSStorage(new AWSStorageOptions
-        {
-            PublicKey = "localkey",
-            SecretKey = "localsecret",
-            Bucket = "managed-code-bucket",
-            OriginalOptions = config
-        });
-        return services.BuildServiceProvider();
-    }
     
     [Fact]
     public void BadConfigurationForStorage_WithoutPublicKey_ThrowException()
@@ -91,8 +64,8 @@ public class AmazonStorageTests : StorageBaseTests<LocalStackContainer>
     [Fact]
     public void StorageAsDefaultTest()
     {
-        var storage = ServiceProvider.GetService<IAWSStorage>();
-        var defaultStorage = ServiceProvider.GetService<IStorage>();
+        var storage = AWSConfigurator.ConfigureServices("test").GetService<IAWSStorage>();
+        var defaultStorage = AWSConfigurator.ConfigureServices("test").GetService<IStorage>();
         storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
     

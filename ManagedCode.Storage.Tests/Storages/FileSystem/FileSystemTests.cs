@@ -11,31 +11,31 @@ using Xunit;
 
 namespace ManagedCode.Storage.Tests.FileSystem;
 
-public class FileSystemTests : StorageBaseTests<AzuriteContainer>
+public class FileSystemTests 
 {
-    protected override AzuriteContainer Build()
-    {
-        return new AzuriteBuilder().Build();
-    }
-    
-    protected override ServiceProvider ConfigureServices()
-    {
-        var services = new ServiceCollection();
-
-        services.AddFileSystemStorageAsDefault(opt => { opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket"); });
-
-        services.AddFileSystemStorage(new FileSystemStorageOptions
-        {
-            BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket")
-        });
-        return services.BuildServiceProvider();
-    }
-    
+  
     [Fact]
     public void StorageAsDefaultTest()
     {
-        var storage = ServiceProvider.GetService<IFileSystemStorage>();
-        var defaultStorage = ServiceProvider.GetService<IStorage>();
+        var storage = FileSystemConfigurator.ConfigureServices("test").GetService<IFileSystemStorage>();
+        var defaultStorage = FileSystemConfigurator.ConfigureServices("test").GetService<IStorage>();
         storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
+    }
+}
+
+public class FileSystemConfigurator
+{
+    public static ServiceProvider ConfigureServices(string connectionString)
+    {
+
+        var services = new ServiceCollection();
+
+        services.AddFileSystemStorageAsDefault(opt => { opt.BaseFolder = Path.Combine(Environment.CurrentDirectory,connectionString); });
+
+        services.AddFileSystemStorage(new FileSystemStorageOptions
+        {
+            BaseFolder = Path.Combine(Environment.CurrentDirectory, connectionString)
+        });
+        return services.BuildServiceProvider();
     }
 }
