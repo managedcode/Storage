@@ -40,9 +40,9 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
     [Fact]
     public async Task GetFileListAsyncTest()
     {
-        // await StreamUploadAsyncTest();
-        // await ArrayUploadAsyncTest();
-        // await StringUploadAsyncTest();
+        await UploadTestFileAsync();
+        await UploadTestFileAsync();
+        await UploadTestFileAsync();
 
         var files = await Storage.GetBlobMetadataListAsync().ToListAsync();
         files.Count.Should().BeGreaterOrEqualTo(3);

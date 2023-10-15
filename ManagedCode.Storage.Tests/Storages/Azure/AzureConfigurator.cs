@@ -1,6 +1,5 @@
-﻿using Google.Cloud.Storage.V1;
-using ManagedCode.Storage.Google.Extensions;
-using ManagedCode.Storage.Google.Options;
+﻿using ManagedCode.Storage.Azure.Extensions;
+using ManagedCode.Storage.Azure.Options;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable MethodHasAsyncOverload
@@ -14,32 +13,16 @@ public class AzureConfigurator
 
         var services = new ServiceCollection();
 
-        services.AddGCPStorageAsDefault(opt =>
+        services.AddAzureStorageAsDefault(opt =>
         {
-            opt.BucketOptions = new BucketOptions
-            {
-                ProjectId = "api-project-0000000000000",
-                Bucket = "managed-code-bucket"
-            };
-            opt.StorageClientBuilder = new StorageClientBuilder
-            {
-                UnauthenticatedAccess = true,
-                BaseUri = connectionString
-            };
+            opt.Container = "managed-code-bucket";
+            opt.ConnectionString = connectionString;
         });
 
-        services.AddGCPStorage(new GCPStorageOptions
+        services.AddAzureStorage(new AzureStorageOptions
         {
-            BucketOptions = new BucketOptions
-            {
-                ProjectId = "api-project-0000000000000",
-                Bucket = "managed-code-bucket"
-            },
-            StorageClientBuilder = new StorageClientBuilder
-            {
-                UnauthenticatedAccess = true,
-                BaseUri = connectionString
-            }
+            Container = "managed-code-bucket",
+            ConnectionString = connectionString
         });
         return services.BuildServiceProvider();
     }

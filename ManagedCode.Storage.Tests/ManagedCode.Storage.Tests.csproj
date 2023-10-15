@@ -55,7 +55,7 @@
         <ProjectReference Include="..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj" />
-        <ProjectReference Include="..\Testcontainers.GCS\Testcontainers.GCS.csproj" />
+        <ProjectReference Include="..\TestcontainersGCS\TestcontainersGCS.csproj" />
     </ItemGroup>
 
 </Project>

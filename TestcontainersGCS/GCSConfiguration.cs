@@ -1,4 +1,4 @@
-namespace Testcontainers.GCS;
+namespace TestcontainersGCS;
 
 /// <inheritdoc cref="ContainerConfiguration" />
 [PublicAPI]

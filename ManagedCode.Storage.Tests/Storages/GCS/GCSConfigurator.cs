@@ -2,9 +2,11 @@ using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Google.Extensions;
 using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
 namespace ManagedCode.Storage.Tests.Storages.GCS;
 
+[Collection("Google")]
 public class GCSConfigurator
 {
     public static ServiceProvider ConfigureServices(string connectionString)

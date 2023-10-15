@@ -45,8 +45,9 @@ public class AzureConfigTests
     [Fact]
     public void StorageAsDefaultTest()
     {
-        var storage = AzureConfigurator.ConfigureServices("test").GetService<IAzureStorage>();
-        var defaultStorage = AzureConfigurator.ConfigureServices("test").GetService<IStorage>();
+        var connectionString = "UseDevelopmentStorage=true";
+        var storage = AzureConfigurator.ConfigureServices(connectionString).GetService<IAzureStorage>();
+        var defaultStorage = AzureConfigurator.ConfigureServices(connectionString).GetService<IStorage>();
         storage?.GetType().FullName.Should().Be(defaultStorage?.GetType().FullName);
     }
 }

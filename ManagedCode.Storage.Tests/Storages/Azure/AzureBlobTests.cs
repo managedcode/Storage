@@ -7,7 +7,9 @@ public class AzureBlobTests : BlobTests<AzuriteContainer>
 {
     protected override AzuriteContainer Build()
     {
-        return new AzuriteBuilder().Build();
+        return new AzuriteBuilder()
+            .WithImage("mcr.microsoft.com/azure-storage/azurite:3.26.0")
+            .Build();
     }
 
     protected override ServiceProvider ConfigureServices()
