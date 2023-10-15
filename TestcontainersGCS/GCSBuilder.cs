@@ -1,11 +1,15 @@
+using System.Text;
+using System.Text.RegularExpressions;
+
 namespace TestcontainersGCS;
 
 /// <inheritdoc cref="ContainerBuilder{TBuilderEntity, TContainerEntity, TConfigurationEntity}" />
 [PublicAPI]
 public sealed class GCSBuilder : ContainerBuilder<GCSBuilder, GCSContainer, GCSConfiguration>
 {
-    public const string GCSImage = "fsouza/fake-gcs-server:1.47.5";
-    public const ushort GCSPort = 30000;
+    public const string FakeGCSServerImage = "fsouza/fake-gcs-server:1.47.5";
+    public const ushort FakeGCSServerPort = 4443;
+    public const string StartupScriptFilePath = "/testcontainers.sh";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GCSBuilder" /> class.
@@ -40,14 +44,21 @@ public sealed class GCSBuilder : ContainerBuilder<GCSBuilder, GCSContainer, GCSC
     protected override GCSBuilder Init()
     {
         return base.Init()
-            .WithImage(GCSImage)
-            .WithPortBinding(GCSPort, GCSPort)
-            .WithCommand("-scheme", "http")
-            .WithCommand("-backend", "memory")
-            .WithCommand("-external-url", $"http://localhost:{GCSPort}")
-            .WithCommand("-port", $"{GCSPort}")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request =>
-                request.ForPath("/").ForPort(GCSPort).ForStatusCode(HttpStatusCode.NotFound)));
+            .WithImage(FakeGCSServerImage)
+            .WithPortBinding(FakeGCSServerPort, true)
+            .WithEntrypoint("/bin/sh", "-c")
+            .WithCommand($"while [ ! -f {StartupScriptFilePath} ]; do sleep 0.1; done; sh {StartupScriptFilePath}")
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(new Regex("server started at.*", RegexOptions.IgnoreCase)))
+            .WithStartupCallback((container, ct) =>
+            {
+                const char lf = '\n';
+                var startupScript = new StringBuilder();
+                startupScript.Append("#!/bin/bash");
+                startupScript.Append(lf);
+                startupScript.Append($"fake-gcs-server -backend memory -scheme http -port {FakeGCSServerPort} -external-url \"http://localhost:{container.GetMappedPublicPort(FakeGCSServerPort)}\"");
+                startupScript.Append(lf);
+                return container.CopyAsync(Encoding.Default.GetBytes(startupScript.ToString()), StartupScriptFilePath, Unix.FileMode755, ct);
+            });
     }
 
     /// <inheritdoc />
