@@ -14,75 +14,39 @@ jobs:
   
   build-and-test:
     runs-on: ubuntu-latest
-    services:
-      localstack:
-        image: localstack/localstack:latest
-        ports:
-          - 4563-4599:4563-4599
-          - 8055:8080
-        env:
-          SERVICES: s3
-          DEBUG: 1
-          DATA_DIR: /tmp/localstack/data
-          AWS_SECRET_KEY: 'localkey'
-          AWS_BUCKET_NAME: 'managed-code-bucket'
-          AWS_ACCESS_KEY_ID: 'localkey'
-          AWS_SECRET_ACCESS_KEY: 'localsecret'
-          DEFAULT_REGION: 'eu-west-1'
           
     steps:
+
+    - name: checkout
+      uses: actions/checkout@v3
       
-    - uses: actions/checkout@v3
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 7.0.x
-        
+    
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore
+      
+    - name: Test
+      run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
+      
+    - name: Collect Code Coverage
+      run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Storage.Tests/lcov.info
+      
+
     - name: NDepend
       uses: ndepend/ndepend-action@v1
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         license: ${{ secrets.NDEPENDLICENSE }}
+        coveragefolder: ManagedCode.Storage.Tests
+        baseline: recent
+        #baseline: main_recent
         
-    - name: azuright
-      uses: potatoqualitee/azuright@v1.1      
-      
-    - name: docker run fake-gcs-server
-      run: |
-        docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/examples/data:/data fsouza/fake-gcs-server -scheme http -external-url "http://localhost:4443"
-        sleep 5s
-      
-    - name: check storage emulators
-      run: |
-        curl http://localhost:4443/
-        curl http://localhost:4566/
-        curl http://localhost:10000/     
-      
-      # run build and test           
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
-      env:
-        DEFAULT_REGION: eu-west-1
-        AWS_ACCESS_KEY_ID: localkey
-        AWS_SECRET_ACCESS_KEY: localsecret  
-    - name: Collect Code Coverage
-      run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Storage.Tests/lcov.info
-      env:
-        DEFAULT_REGION: eu-west-1
-        AWS_ACCESS_KEY_ID: localkey
-        AWS_SECRET_ACCESS_KEY: localsecret
-        
-#    - name: test-reports
-#      uses: dorny/test-reporter@v1.5.0
-#      with:
-#        name: Test Reporter
-#        reporter: dotnet-trx
-#        path: ManagedCode.Storage.Tests/test-results.trx
-    
     - name : coverlet
       uses: b3b00/coverlet-action@1.1.9
       with:
@@ -95,3 +59,5 @@ jobs:
       with:
         github-token: ${{secrets.GITHUB_TOKEN }}
         path-to-lcov: ManagedCode.Storage.Tests/lcov.info
+        
+

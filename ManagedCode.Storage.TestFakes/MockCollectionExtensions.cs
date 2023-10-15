@@ -1,8 +1,8 @@
 ﻿using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Azure;
-using ManagedCode.Storage.AzureDataLake;
+using ManagedCode.Storage.Azure.DataLake;
 using ManagedCode.Storage.Core;
-using ManagedCode.Storage.Gcp;
+using ManagedCode.Storage.Google;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -55,18 +55,18 @@ public static class MockCollectionExtensions
         return serviceCollection;
     }
 
-    public static IServiceCollection ReplaceGCPStorageAsDefault(this IServiceCollection serviceCollection)
+    public static IServiceCollection ReplaceGoogleStorageAsDefault(this IServiceCollection serviceCollection)
     {
-        serviceCollection.ReplaceGCPStorage();
+        serviceCollection.ReplaceGoogleStorage();
         serviceCollection.AddTransient<IStorage, FakeAzureStorage>();
         return serviceCollection;
     }
 
-    public static IServiceCollection ReplaceGCPStorage(this IServiceCollection serviceCollection)
+    public static IServiceCollection ReplaceGoogleStorage(this IServiceCollection serviceCollection)
     {
         serviceCollection.RemoveAll<IGCPStorage>();
         serviceCollection.RemoveAll<GCPStorage>();
-        serviceCollection.AddTransient<IGCPStorage, FakeGCPStorage>();
+        serviceCollection.AddTransient<IGCPStorage, FakeGoogleStorage>();
         return serviceCollection;
     }
 }

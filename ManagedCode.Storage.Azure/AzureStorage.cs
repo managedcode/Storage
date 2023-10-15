@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
@@ -17,11 +19,11 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Azure;
 
-public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions>, IAzureStorage
+public class AzureStorage : BaseStorage<BlobContainerClient, IAzureStorageOptions>, IAzureStorage
 {
     private readonly ILogger<AzureStorage>? _logger;
 
-    public AzureStorage(AzureStorageOptions options, ILogger<AzureStorage>? logger = null) : base(options)
+    public AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? logger = null) : base(options)
     {
         _logger = logger;
     }
@@ -36,7 +38,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
@@ -69,7 +71,8 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
     }
 
-    public async Task<Result<Stream>> OpenReadStreamAsync(string fileName, CancellationToken cancellationToken = default)
+    public async Task<Result<Stream>> OpenReadStreamAsync(string fileName,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -80,12 +83,13 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<Stream>.Fail(ex);
         }
     }
 
-    public async Task<Result<Stream>> OpenWriteStreamAsync(string fileName, CancellationToken cancellationToken = default)
+    public async Task<Result<Stream>> OpenWriteStreamAsync(string fileName,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -96,7 +100,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<Stream>.Fail(ex);
         }
     }
@@ -113,24 +117,36 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
 
     protected override BlobContainerClient CreateStorageClient()
     {
-        return new BlobContainerClient(
-            StorageOptions.ConnectionString,
-            StorageOptions.Container,
-            StorageOptions.OriginalOptions
-        );
+        return StorageOptions switch
+        {
+            AzureStorageOptions azureStorageOptions => new BlobContainerClient(
+                azureStorageOptions.ConnectionString,
+                azureStorageOptions.Container,
+                azureStorageOptions.OriginalOptions
+            ),
+
+            AzureStorageCredentialsOptions azureStorageCredentialsOptions => new BlobContainerClient(
+                new Uri(
+                    $"https://{azureStorageCredentialsOptions.AccountName}.blob.core.windows.net/{azureStorageCredentialsOptions.ContainerName}"),
+                azureStorageCredentialsOptions.Credentials,
+                azureStorageCredentialsOptions.OriginalOptions
+            ),
+        };
     }
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            _  = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, cancellationToken: cancellationToken);
+            _ = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer,
+                cancellationToken: cancellationToken);
             var policy = await StorageClient.GetAccessPolicyAsync(cancellationToken: cancellationToken);
             if (policy.Value.BlobPublicAccess != StorageOptions.PublicAccessType)
             {
-                await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
+                await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType,
+                    cancellationToken: cancellationToken);
             }
-            
+
             IsContainerCreated = true;
 
             return Result.Succeed();
@@ -138,12 +154,13 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         catch (Exception ex)
         {
             IsContainerCreated = false;
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
 
-    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
+    protected override async Task<Result> DeleteDirectoryInternalAsync(string directory,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -159,7 +176,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
@@ -188,7 +205,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -222,12 +239,13 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<LocalFile>.Fail(ex);
         }
     }
 
-    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> DeleteInternalAsync(DeleteOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -243,12 +261,13 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<bool>.Fail(ex);
         }
     }
 
-    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> ExistsInternalAsync(ExistOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -259,7 +278,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<bool>.Fail(ex);
         }
     }
@@ -293,7 +312,7 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<BlobMetadata>.Fail(ex);
         }
     }
@@ -312,12 +331,13 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result.Fail(ex);
         }
     }
 
-    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default)
+    protected override async Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -328,8 +348,30 @@ public class AzureStorage : BaseStorage<BlobContainerClient, AzureStorageOptions
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex.Message, ex);
+            _logger.LogException(ex);
             return Result<bool>.Fail(ex);
         }
+    }
+
+    public async Task<Result> SetStorageOptions(IStorageOptions options, CancellationToken cancellationToken = default)
+    {
+        StorageOptions = options as IAzureStorageOptions;
+
+        StorageClient = CreateStorageClient();
+        return await CreateContainerAsync(cancellationToken);
+    }
+
+    public async Task<Result> SetStorageOptions(Action<IStorageOptions> options,
+        CancellationToken cancellationToken = default)
+    {
+        var type = options.GetType().GetGenericArguments()[0];
+
+        StorageOptions = JsonSerializer.Deserialize(JsonSerializer.Serialize(StorageOptions), type) as IAzureStorageOptions;
+
+        options.Invoke(StorageOptions);
+
+        StorageClient = CreateStorageClient();
+
+        return await CreateContainerAsync(cancellationToken);
     }
 }

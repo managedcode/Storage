@@ -1,4 +1,4 @@
-using ManagedCode.Storage.Gcp;
+using ManagedCode.Storage.Google;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApiSample.Controllers;

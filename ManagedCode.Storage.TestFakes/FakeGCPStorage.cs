@@ -2,14 +2,14 @@ using Google.Cloud.Storage.V1;
 using ManagedCode.Communication;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.FileSystem.Options;
-using ManagedCode.Storage.Gcp;
-using ManagedCode.Storage.Gcp.Options;
+using ManagedCode.Storage.Google;
+using ManagedCode.Storage.Google.Options;
 
 namespace ManagedCode.Storage.TestFakes;
 
-public class FakeGCPStorage : FileSystemStorage, IGCPStorage
+public class FakeGoogleStorage : FileSystemStorage, IGCPStorage
 {
-    public FakeGCPStorage() : base(new FileSystemStorageOptions())
+    public FakeGoogleStorage() : base(new FileSystemStorageOptions())
     {
     }
 

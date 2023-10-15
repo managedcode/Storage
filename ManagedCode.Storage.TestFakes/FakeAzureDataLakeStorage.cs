@@ -1,7 +1,7 @@
 using Azure.Storage.Files.DataLake;
 using ManagedCode.Communication;
-using ManagedCode.Storage.AzureDataLake;
-using ManagedCode.Storage.AzureDataLake.Options;
+using ManagedCode.Storage.Azure.DataLake;
+using ManagedCode.Storage.Azure.DataLake.Options;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.FileSystem.Options;
 
