@@ -5,7 +5,7 @@ namespace TestcontainersGCS;
 public sealed class GCSBuilder : ContainerBuilder<GCSBuilder, GCSContainer, GCSConfiguration>
 {
     public const string GCSImage = "fsouza/fake-gcs-server:1.47.5";
-    public const ushort GCSPort = 4443;
+    public const ushort GCSPort = 30000;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GCSBuilder" /> class.
@@ -41,8 +41,11 @@ public sealed class GCSBuilder : ContainerBuilder<GCSBuilder, GCSContainer, GCSC
     {
         return base.Init()
             .WithImage(GCSImage)
-            .WithPortBinding(GCSPort, true)
+            .WithPortBinding(GCSPort, GCSPort)
             .WithCommand("-scheme", "http")
+            .WithCommand("-backend", "memory")
+            .WithCommand("-external-url", $"http://localhost:{GCSPort}")
+            .WithCommand("-port", $"{GCSPort}")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request =>
                 request.ForPath("/").ForPort(GCSPort).ForStatusCode(HttpStatusCode.NotFound)));
     }

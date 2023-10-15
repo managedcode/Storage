@@ -25,11 +25,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Azure.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.TestFakes", "ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj", "{7190B548-4BE9-4EF6-B55F-8432757AEAD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testcontainers.GCS", "Testcontainers.GCS\Testcontainers.GCS.csproj", "{40638DBB-CB6F-4B11-B4B5-50446CE426E7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestcontainersGCS", "TestcontainersGCS\TestcontainersGCS.csproj", "{40638DBB-CB6F-4B11-B4B5-50446CE426E7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Storages", "Storages", "{92201402-E361-440F-95DB-68663D228C2D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder1", "SolutionFolder1", "{94DB7354-F5C7-4347-B9EC-FCCA38B86876}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AspNet", "AspNet", "{94DB7354-F5C7-4347-B9EC-FCCA38B86876}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client", "ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj", "{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}"
 EndProject
