@@ -11,9 +11,10 @@ public class HttpHostProgram
 
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
+        builder.Services.AddEndpointsApiExplorer();
 
         var app = builder.Build();
-
+    
         app.MapControllers();
 
         app.Run();
