@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -23,17 +24,18 @@ public class StorageClient
     public async Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, CancellationToken cancellationToken = default)
     {
         var streamContent = new StreamContent(stream);
-
-        using (var formData = new MultipartFormDataContent())
+        
+        using (var formData = new MultipartFormDataContent
+               {
+                   // TODO: get filename from parameters
+                   {streamContent, "file", "file.txt"}
+               })
         {
-            formData.Add(streamContent);
-
             var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStreamAsync(cancellationToken);
-                var result = await JsonSerializer.DeserializeAsync<Result<BlobMetadata>>(content, cancellationToken: cancellationToken);
+                var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
                 return result;
             }
             else

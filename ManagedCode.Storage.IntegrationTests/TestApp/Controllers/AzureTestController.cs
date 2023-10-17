@@ -9,5 +9,5 @@ public class AzureTestController : BaseTestController<IAzureStorage>
 {
     public AzureTestController(IAzureStorage storage) : base(storage)
     {
-    }
+    }       
 }

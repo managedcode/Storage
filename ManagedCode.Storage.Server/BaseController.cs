@@ -14,46 +14,46 @@ namespace ManagedCode.Storage.Server;
 
 public abstract class BaseController : ControllerBase
 {
-    private readonly IStorage _storage;
+    protected readonly IStorage Storage;
 
     protected BaseController(IStorage storage)
     {
-        _storage = storage;
+        Storage = storage;
     }
 
     protected async Task<Result<BlobMetadata>>UploadToStorageAsync(IBrowserFile formFile,
         UploadOptions? options = null)
     {
-        return await _storage.UploadToStorageAsync(formFile, options);
+        return await Storage.UploadToStorageAsync(formFile, options);
     }
     
     protected async Task<Result<BlobMetadata>>UploadToStorageAsync(IBrowserFile formFile,
         Action<UploadOptions> options)
     {
-        return await _storage.UploadToStorageAsync(formFile, options);
+        return await Storage.UploadToStorageAsync(formFile, options);
     }
 
     protected async Task<Result<FileResult>> DownloadAsFileResult(string blobName, CancellationToken cancellationToken = default)
     {
-        return await _storage.DownloadAsFileResult(blobName, cancellationToken);
+        return await Storage.DownloadAsFileResult(blobName, cancellationToken);
     }
     protected async Task<Result<FileResult>> DownloadAsFileResult(BlobMetadata blobMetadata, CancellationToken cancellationToken = default)
     {
-        return await _storage.DownloadAsFileResult(blobMetadata, cancellationToken);
+        return await Storage.DownloadAsFileResult(blobMetadata, cancellationToken);
     }
 
     protected async Task<Result<BlobMetadata>> UploadToStorageAsync(IFormFile formFile,
         UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        return await _storage.UploadToStorageAsync(formFile, options, cancellationToken);
+        return await Storage.UploadToStorageAsync(formFile, options, cancellationToken);
     }
 
     protected async Task<Result<BlobMetadata>> UploadToStorageAsync(IFormFile formFile,
         Action<UploadOptions> options,
         CancellationToken cancellationToken = default)
     {
-        return await _storage.UploadToStorageAsync(formFile, options, cancellationToken);
+        return await Storage.UploadToStorageAsync(formFile, options, cancellationToken);
     }
     protected async IAsyncEnumerable<Result<BlobMetadata>> UploadToStorageAsync(IFormFileCollection formFiles,
         UploadOptions? options = null,
@@ -61,7 +61,7 @@ public abstract class BaseController : ControllerBase
     {
         foreach (var formFile in formFiles)
         {
-            yield return await _storage.UploadToStorageAsync(formFile, options, cancellationToken);
+            yield return await Storage.UploadToStorageAsync(formFile, options, cancellationToken);
         }
     }
     protected async IAsyncEnumerable<Result<BlobMetadata>> UploadToStorageAsync(IFormFileCollection formFiles,
@@ -70,7 +70,7 @@ public abstract class BaseController : ControllerBase
     {
         foreach (var formFile in formFiles)
         {
-            yield return await _storage.UploadToStorageAsync(formFile, options, cancellationToken);
+            yield return await Storage.UploadToStorageAsync(formFile, options, cancellationToken);
         }
     }
 

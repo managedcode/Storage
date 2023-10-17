@@ -1,4 +1,6 @@
 ﻿using FluentAssertions;
+using ManagedCode.Storage.Client;
+using ManagedCode.Storage.IntegrationTests.Helpers;
 using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;
@@ -14,11 +16,14 @@ public class AzureControllerTests : BaseControllerTests
     {
         // Arrange
         var client = GetHttpClient();
+        var storageClient = new StorageClient(client);
+        var fileToUpload = FileHelper.GenerateLocalFile("test.txt", 20000);
 
         // Act
-        var result = await client.PostAsync("azure/upload", null);
+        var result = await storageClient.UploadFile(fileToUpload.FileStream, "azure/upload");
 
         // Assert
-        result.IsSuccessStatusCode.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
     }
 }
