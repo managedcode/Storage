@@ -28,7 +28,7 @@ public class BaseFileController : ControllerBase
             return Result.Fail();
         }
     }
-    
+
     [HttpGet("download/{fileName}")]
     public async Task<Result<FileStream>> DownloadFile([FromQuery] string fileName, CancellationToken cancellationToken)
     {
