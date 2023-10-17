@@ -30,24 +30,17 @@ public class BaseFileController : ControllerBase
     }
     
     [HttpGet("download/{fileName}")]
-    public async Task<Stream> DownloadFile([FromQuery] string fileName, CancellationToken cancellationToken)
+    public async Task<Result<FileStream>> DownloadFile([FromQuery] string fileName, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await _storage.DownloadAsync(fileName, cancellationToken);
+        var result = await _storage.DownloadAsync(fileName, cancellationToken);
 
-            if (result.Value is null)
-            {
-                return null;
-            }
-            else
-            {
-                return result.Value.FileStream;
-            }
-        }
-        catch (Exception ex)
+        if (result.Value is null)
         {
-            return null;
+            return Result.Fail();
+        }
+        else
+        {
+            return Result.Succeed(result.Value.FileStream);
         }
     }
 }
