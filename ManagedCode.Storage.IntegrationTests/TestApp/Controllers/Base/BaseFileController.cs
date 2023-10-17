@@ -3,7 +3,7 @@ using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers;
+namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
 
 [ApiController]
 public class BaseFileController : ControllerBase

@@ -8,21 +8,37 @@ public static class FileHelper
 {
     private static readonly Random Random = new();
 
-    public static LocalFile GenerateLocalFile(string fileName, int byteSize)
+    public static LocalFile GenerateLocalFile(LocalFile file, int sizeInMegabytes)
     {
-        var path = Path.Combine(Path.GetTempPath(), fileName);
-        var localFile = new LocalFile(path);
+        var sizeInBytes = sizeInMegabytes * 1024 * 1024;
 
-        var fs = localFile.FileStream;
+        using (var fileStream = file.FileStream)
+        {
+            Random random = new Random();
+            byte[] buffer = new byte[1024]; // Buffer for writing in chunks
 
-        fs.Seek(byteSize, SeekOrigin.Begin);
-        fs.WriteByte(0);
-        fs.Close();
+            while (sizeInBytes > 0)
+            {
+                int bytesToWrite = (int) Math.Min(sizeInBytes, buffer.Length);
 
-        return localFile;
+                for (int i = 0; i < bytesToWrite; i++)
+                {
+                    buffer[i] = (byte) random.Next(65, 91); // 'A' to 'Z'
+                    if (random.Next(2) == 0)
+                    {
+                        buffer[i] = (byte) random.Next(97, 123); // 'a' to 'z'
+                    }
+                }
+
+                fileStream.Write(buffer, 0, bytesToWrite);
+                sizeInBytes -= bytesToWrite;
+            }
+        }
+
+        return file;
     }
 
-    public static IFormFile GenerateFormFile(string fileName, int byteSize)
+    /*public static IFormFile GenerateFormFile(string fileName, int byteSize)
     {
         var localFile = GenerateLocalFile(fileName, byteSize);
 
@@ -51,5 +67,5 @@ public static class FileHelper
         return new string(Enumerable.Repeat(chars, 250_000)
             .Select(s => s[Random.Next(s.Length)])
             .ToArray());
-    }
+    }*/
 }

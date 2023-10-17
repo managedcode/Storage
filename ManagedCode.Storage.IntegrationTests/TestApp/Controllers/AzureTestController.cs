@@ -1,4 +1,5 @@
 ﻿using ManagedCode.Storage.Azure;
+using ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers;

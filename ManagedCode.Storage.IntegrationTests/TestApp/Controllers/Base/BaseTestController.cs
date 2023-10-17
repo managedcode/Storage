@@ -2,11 +2,10 @@
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Server;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers;
+namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
 
 [ApiController]
 public abstract class BaseTestController<TStorage> : BaseController
@@ -26,5 +25,15 @@ public abstract class BaseTestController<TStorage> : BaseController
         }
 
         return await Storage.UploadAsync(file.OpenReadStream(), cancellationToken);
+    }
+
+    [HttpGet("download/{fileName}")]
+    public async Task<FileResult> DownloadFileAsync([FromRoute] string fileName)
+    {
+        var result = await Storage.DownloadAsFileResult(fileName);
+        
+        result.ThrowIfFail();
+
+        return result.Value!;
     }
 }

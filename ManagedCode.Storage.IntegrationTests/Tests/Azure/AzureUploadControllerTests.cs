@@ -1,5 +1,6 @@
-﻿using FluentAssertions;
-using ManagedCode.Storage.Client;
+﻿using System.Net;
+using FluentAssertions;
+using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.IntegrationTests.Constants;
 using ManagedCode.Storage.IntegrationTests.Helpers;
 using Xunit;
@@ -17,16 +18,35 @@ public class AzureUploadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        var fileName = "test.txt";
         var contentName = "file";
-        var fileToUpload = FileHelper.GenerateLocalFile(fileName, 20000);
+
+        await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+        FileHelper.GenerateLocalFile(localFile, 1);
 
         // Act
-        var result = await storageClient.UploadFile(fileToUpload.FileStream, ApiEndpoints.Azure.UploadFile, contentName);
+        var result = await storageClient.UploadFile(localFile.FileStream, ApiEndpoints.Azure.UploadFile, contentName);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
+    }
+    
+    [Fact]
+    public async Task UploadFileFromStream_WhenFileSizeIsForbidden_ReturnFail()
+    {
+        // Arrange
+        var storageClient = GetStorageClient();
+        var contentName = "file";
+
+        await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+        FileHelper.GenerateLocalFile(localFile, 200);
+
+        // Act
+        var result = await storageClient.UploadFile(localFile.FileStream, ApiEndpoints.Azure.UploadFile, contentName);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.GetError().Value.ErrorCode.Should().Be(HttpStatusCode.BadRequest.ToString());
     }
 
     [Fact]
@@ -36,50 +56,57 @@ public class AzureUploadControllerTests : BaseControllerTests
         var storageClient = GetStorageClient();
         var fileName = "test.txt";
         var contentName = "file";
-        var fileToUpload = FileHelper.GenerateLocalFile(fileName, 20000);
-
-        // Act
-        var result = await storageClient.UploadFile(fileToUpload.FileInfo, ApiEndpoints.Azure.UploadFile, contentName);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task UploadFileFromBytes_WhenFileValid_ReturnSuccess()
-    {
-        // Arrange
-        var storageClient = GetStorageClient();
-        var fileName = "test.txt";
-        var contentName = "file";
-        var fileToUpload = FileHelper.GenerateLocalFile(fileName, 20000);
-        var fileAsBytes = await fileToUpload.ReadAllBytesAsync();
-
-        // Act
-        var result = await storageClient.UploadFile(fileAsBytes, ApiEndpoints.Azure.UploadFile, contentName);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task UploadFileFromBase64String_WhenFileValid_ReturnSuccess()
-    {
-        // Arrange
-        var storageClient = GetStorageClient();
-        var fileName = "test.txt";
-        var contentName = "file";
-        var fileToUpload = FileHelper.GenerateLocalFile(fileName, 20000);
-        var fileAsBytes = await fileToUpload.ReadAllBytesAsync();
-        var fileAsString64 = Convert.ToBase64String(fileAsBytes);
-
-        // Act
-        var result = await storageClient.UploadFile(fileAsString64, ApiEndpoints.Azure.UploadFile, contentName);
         
+        await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+        FileHelper.GenerateLocalFile(localFile, 1);
+
+        // Act
+        var result = await storageClient.UploadFile(localFile.FileInfo, ApiEndpoints.Azure.UploadFile, contentName);
+
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
     }
+
+    [Fact]
+     public async Task UploadFileFromBytes_WhenFileValid_ReturnSuccess()
+     {
+         // Arrange
+         var storageClient = GetStorageClient();
+         var fileName = "test.txt";
+         var contentName = "file";
+         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+         FileHelper.GenerateLocalFile(localFile, 1);
+         
+         var fileAsBytes = await localFile.ReadAllBytesAsync();
+    
+         // Act
+         var result = await storageClient.UploadFile(fileAsBytes, ApiEndpoints.Azure.UploadFile, contentName);
+    
+         // Assert
+         result.IsSuccess.Should().BeTrue();
+         result.Value.Should().NotBeNull();
+     }
+    
+     [Fact]
+     public async Task UploadFileFromBase64String_WhenFileValid_ReturnSuccess()
+     {
+         // Arrange
+         var storageClient = GetStorageClient();
+         var fileName = "test.txt";
+         var contentName = "file";
+         
+         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+         FileHelper.GenerateLocalFile(localFile, 1);
+         
+         var fileAsBytes = await localFile.ReadAllBytesAsync();
+         var fileAsString64 = Convert.ToBase64String(fileAsBytes);
+    
+         // Act
+         var result = await storageClient.UploadFile(fileAsString64, ApiEndpoints.Azure.UploadFile, contentName);
+         
+         // Assert
+         result.IsSuccess.Should().BeTrue();
+         result.Value.Should().NotBeNull();
+     }
 }

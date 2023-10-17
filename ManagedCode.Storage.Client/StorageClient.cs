@@ -38,8 +38,10 @@ public class StorageClient : IStorageClient
                 var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
                 return result;
             }
-            
-            return Result<BlobMetadata>.Fail(response.StatusCode);
+
+            string content = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
+
+            return Result<BlobMetadata>.Fail(response.StatusCode, content);
         }
     }
     
