@@ -109,27 +109,10 @@ public class StorageClient : IStorageClient
         return Result<BlobMetadata>.Fail(response.StatusCode);
     }
     
-    public async Task<string> DownloadFile(string fileName, string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<Stream> DownloadFile(string fileName, string apiUrl, CancellationToken cancellationToken = default)
     {
         var response = await _httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
-        
-        Stream responseStream = response;
 
-        using (MemoryStream memoryStream = new MemoryStream())
-        {
-            byte[] buffer = new byte[8192];
-
-            int bytesRead;
-            while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
-            {
-                memoryStream.Write(buffer, 0, bytesRead);
-            }
-
-            byte[] byteArray = memoryStream.ToArray();
-
-            string content = System.Text.Encoding.UTF8.GetString(byteArray);
-            
-            return content;
-        }
+        return response;
     }
 }

@@ -12,5 +12,5 @@ public interface IStorageClient
     Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default);
     Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default);
     Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName, CancellationToken cancellationToken = default);
-    Task<string> DownloadFile(string fileName, string apiUrl, CancellationToken cancellationToken = default);
+    Task<Stream> DownloadFile(string fileName, string apiUrl, CancellationToken cancellationToken = default);
 }
