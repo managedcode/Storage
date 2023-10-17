@@ -4,11 +4,11 @@ using ManagedCode.Storage.IntegrationTests.Constants;
 using ManagedCode.Storage.IntegrationTests.Helpers;
 using Xunit;
 
-namespace ManagedCode.Storage.IntegrationTests.Tests;
+namespace ManagedCode.Storage.IntegrationTests.Tests.Azure;
 
-public class AzureControllerTests : BaseControllerTests
+public class AzureUploadControllerTests : BaseUploadControllerTests
 {
-    public AzureControllerTests(StorageTestApplication testApplication) : base(testApplication)
+    public AzureUploadControllerTests(StorageTestApplication testApplication) : base(testApplication)
     {
     }
 

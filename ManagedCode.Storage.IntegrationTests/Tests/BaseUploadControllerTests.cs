@@ -3,11 +3,11 @@
 namespace ManagedCode.Storage.IntegrationTests.Tests;
 
 [Collection(nameof(StorageTestApplication))]
-public abstract class BaseControllerTests
+public abstract class BaseUploadControllerTests
 {
     protected readonly StorageTestApplication TestApplication;
 
-    protected BaseControllerTests(StorageTestApplication testApplication)
+    protected BaseUploadControllerTests(StorageTestApplication testApplication)
     {
         TestApplication = testApplication;
     }
