@@ -23,13 +23,13 @@ public class StorageClient : IStorageClient
         _httpClient = httpClient;
     }
     
-    public async Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default)
     {
         var streamContent = new StreamContent(stream);
 
         using (var formData = new MultipartFormDataContent())
         {
-            formData.Add(streamContent);
+            formData.Add(streamContent, contentName, contentName);
 
             var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
             

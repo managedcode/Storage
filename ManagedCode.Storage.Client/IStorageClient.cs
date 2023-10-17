@@ -8,7 +8,7 @@ namespace ManagedCode.Storage.Client;
 
 public interface IStorageClient
 {
-    Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default);
     Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl,
         CancellationToken cancellationToken = default);
     Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, CancellationToken cancellationToken = default);

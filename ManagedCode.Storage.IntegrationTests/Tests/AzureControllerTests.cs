@@ -22,7 +22,7 @@ public class AzureControllerTests : BaseControllerTests
         var fileToUpload = FileHelper.GenerateLocalFile(fileName, 20000);
 
         // Act
-        var result = await storageClient.UploadFile(fileToUpload.FileStream, "azure/upload", contentName, fileName);
+        var result = await storageClient.UploadFile(fileToUpload.FileStream, "azure/upload", contentName);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
