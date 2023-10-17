@@ -43,14 +43,16 @@ public class StorageClient : IStorageClient
         }
     }
     
-    public async Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default)
     {
-        var streamContent = new StreamContent(fileInfo.OpenRead());
+        using var streamContent = new StreamContent(fileInfo.OpenRead());
 
         using (var formData = new MultipartFormDataContent())
         {
-            var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+            formData.Add(streamContent, contentName, contentName);
             
+            var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
