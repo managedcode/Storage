@@ -20,25 +20,25 @@ public class StorageClient
         _httpClient = httpClient;
     }
     
-    public async Task<BlobMetadata> UploadFile(Stream stream, string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, CancellationToken cancellationToken = default)
     {
         var streamContent = new StreamContent(stream);
 
         using (var formData = new MultipartFormDataContent())
         {
-            formData.Add(streamContent, $"file_{Guid.NewGuid().ToString()}");
+            formData.Add(streamContent);
 
-            var response = await _httpClient.PostAsync(apiUrl, formData);
+            var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStreamAsync(cancellationToken);
-                var result = await JsonSerializer.DeserializeAsync<BlobMetadata>(content, cancellationToken: cancellationToken);
+                var result = await JsonSerializer.DeserializeAsync<Result<BlobMetadata>>(content, cancellationToken: cancellationToken);
                 return result;
             }
             else
             {
-                return null;
+                return Result.Fail();
             }
         }
     }
