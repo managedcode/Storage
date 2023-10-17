@@ -43,7 +43,7 @@ jobs:
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         license: ${{ secrets.NDEPENDLICENSE }}
-        coveragefolder: ManagedCode.Storage.Tests
+        coveragefolder: ManagedCode.Storage.Tests/lcov.info
         baseline: recent
         #baseline: main_recent
         
