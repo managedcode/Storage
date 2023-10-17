@@ -12,11 +12,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Storage.Server;
 
-public class BaseController : ControllerBase
+public abstract class BaseController : ControllerBase
 {
     private readonly IStorage _storage;
 
-    public BaseController(IStorage storage)
+    protected BaseController(IStorage storage)
     {
         _storage = storage;
     }
