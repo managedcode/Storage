@@ -38,10 +38,8 @@ public class StorageClient : IStorageClient
                 var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
                 return result;
             }
-            else
-            {
-                return Result.Fail();
-            }
+            
+            return Result<BlobMetadata>.Fail(response.StatusCode);
         }
     }
     
@@ -58,10 +56,8 @@ public class StorageClient : IStorageClient
                 var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
                 return result;
             }
-            else
-            {
-                return Result.Fail();
-            }
+            
+            return Result<BlobMetadata>.Fail(response.StatusCode);
         }
     }
     
@@ -87,13 +83,11 @@ public class StorageClient : IStorageClient
                             cancellationToken: cancellationToken);
                     return result;
                 }
-                else
-                {
-                    return Result.Fail();
-                }
+                
+                return Result<BlobMetadata>.Fail(response.StatusCode);
             }
         }
-    }
+    }   
 
     public async Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, CancellationToken cancellationToken = default)
     {
