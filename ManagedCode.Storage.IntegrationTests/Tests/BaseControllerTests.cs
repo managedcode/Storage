@@ -1,13 +1,14 @@
-﻿using Xunit;
+﻿using ManagedCode.Storage.Client;
+using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;
 
 [Collection(nameof(StorageTestApplication))]
-public abstract class BaseUploadControllerTests
+public abstract class BaseControllerTests
 {
     protected readonly StorageTestApplication TestApplication;
 
-    protected BaseUploadControllerTests(StorageTestApplication testApplication)
+    protected BaseControllerTests(StorageTestApplication testApplication)
     {
         TestApplication = testApplication;
     }
@@ -15,5 +16,10 @@ public abstract class BaseUploadControllerTests
     protected HttpClient GetHttpClient()
     {
         return TestApplication.CreateClient();
+    }
+
+    protected IStorageClient GetStorageClient()
+    {
+        return new StorageClient(TestApplication.CreateClient());
     }
 }

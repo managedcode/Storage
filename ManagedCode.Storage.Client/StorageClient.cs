@@ -63,26 +63,23 @@ public class StorageClient : IStorageClient
         }
     }
     
-    public async Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default)
     {
         using (var stream = new MemoryStream())
         {
             stream.Write(bytes, 0, bytes.Length);
 
-            var streamContent = new StreamContent(stream);
+            using var streamContent = new StreamContent(stream);
 
             using (var formData = new MultipartFormDataContent())
             {
-                formData.Add(streamContent);
+                formData.Add(streamContent, contentName, contentName);
 
                 var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStreamAsync(cancellationToken);
-                    var result =
-                        await JsonSerializer.DeserializeAsync<Result<BlobMetadata>>(content,
-                            cancellationToken: cancellationToken);
+                    var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
                     return result;
                 }
                 
@@ -91,11 +88,23 @@ public class StorageClient : IStorageClient
         }
     }   
 
-    public async Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName, CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.PostAsync(apiUrl, new StringContent(base64), cancellationToken);
-        var content = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
-        return content;
+        byte[] fileAsBytes = Convert.FromBase64String(base64);
+        using var fileContent = new ByteArrayContent(fileAsBytes);
+        
+        using var formData = new MultipartFormDataContent();
+        
+        formData.Add(fileContent, contentName, contentName);
+
+        var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+            
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
+        }
+            
+        return Result<BlobMetadata>.Fail(response.StatusCode);
     }
     
     public async Task<string> DownloadFile(string fileName, string apiUrl, CancellationToken cancellationToken = default)
