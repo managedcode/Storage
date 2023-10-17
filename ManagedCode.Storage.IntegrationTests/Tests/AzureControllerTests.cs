@@ -17,10 +17,12 @@ public class AzureControllerTests : BaseControllerTests
         // Arrange
         var client = GetHttpClient();
         var storageClient = new StorageClient(client);
-        var fileToUpload = FileHelper.GenerateLocalFile("test.txt", 20000);
+        var fileName = "test.txt";
+        var contentName = "file";
+        var fileToUpload = FileHelper.GenerateLocalFile(fileName, 20000);
 
         // Act
-        var result = await storageClient.UploadFile(fileToUpload.FileStream, "azure/upload");
+        var result = await storageClient.UploadFile(fileToUpload.FileStream, "azure/upload", contentName, fileName);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
