@@ -1,11 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <CollectCoverage>true</CollectCoverage>
-        <CoverletOutput>lcov.info</CoverletOutput>
-        <CoverletOutputFormat>lcov</CoverletOutputFormat>
-    </PropertyGroup>
-    <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <IsPackable>false</IsPackable>
