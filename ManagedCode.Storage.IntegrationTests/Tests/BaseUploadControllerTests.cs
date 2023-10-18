@@ -10,10 +10,12 @@ namespace ManagedCode.Storage.IntegrationTests.Tests;
 public abstract class BaseUploadControllerTests : BaseControllerTests
 {
     private readonly string _uploadEndpoint;
+    private readonly string _uploadChunksEndpoint;
     
     protected BaseUploadControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
         _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
+        _uploadChunksEndpoint = string.Format(ApiEndpoints.Base.UploadFileChunks, ApiEndpoint);
     }
     
     [Fact]
@@ -111,5 +113,24 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
          // Assert
          result.IsSuccess.Should().BeTrue();
          result.Value.Should().NotBeNull();
+     }
+     
+     [Fact]
+     public async Task UploadFileInChunks_WhenFileValid_ReturnSuccess()
+     {
+         // Arrange
+         var storageClient = GetStorageClient();
+         var fileName = "test.txt";
+         var contentName = "file";
+         
+         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+         FileHelper.GenerateLocalFile(localFile, 500);
+    
+         // Act
+         var result = await storageClient.UploadFileInChunks(localFile.FileStream, _uploadChunksEndpoint, 100000000);
+         
+         // Assert
+         result.IsSuccess.Should().BeTrue();
+         //result.Value.Should().NotBeNull();
      }
 }

@@ -1,4 +1,4 @@
-﻿using ManagedCode.Communication;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Server;
@@ -17,7 +17,7 @@ public abstract class BaseFileController<TStorage> : ControllerBase
     {
         Storage = storage;
     }
-    
+
     [HttpPost("upload")]
     public async Task<Result<BlobMetadata>> UploadFile([FromForm] IFormFile file, CancellationToken cancellationToken)
     {
@@ -33,7 +33,7 @@ public abstract class BaseFileController<TStorage> : ControllerBase
     public async Task<FileResult> DownloadFile([FromRoute] string fileName, CancellationToken cancellationToken)
     {
         var result = await Storage.DownloadAsFileResult(fileName, cancellationToken: cancellationToken);
-        
+
         result.ThrowIfFail();
 
         return result.Value!;

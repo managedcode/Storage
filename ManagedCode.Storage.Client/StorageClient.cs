@@ -109,7 +109,7 @@ public class StorageClient : IStorageClient
             
         return Result<BlobMetadata>.Fail(response.StatusCode);
     }
-    
+
     public async Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null,  CancellationToken cancellationToken = default)
     {
         try
@@ -124,5 +124,39 @@ public class StorageClient : IStorageClient
         {
             return Result<LocalFile>.Fail(e.StatusCode ?? HttpStatusCode.InternalServerError);
         }
+    }
+    
+    public async Task<Result> UploadFileInChunks(Stream file, string apiUrl, int chunkSize, CancellationToken cancellationToken)
+    {
+        var buffer = new byte[chunkSize];
+        int bytesRead;
+        int chunkIndex = 0;
+
+        while ((bytesRead = await file.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+        {
+            // Create a MemoryStream for the current chunk.
+            using (var memoryStream = new MemoryStream(buffer, 0, bytesRead))
+            {
+                var content = new StreamContent(memoryStream);
+
+                using (var chunk = new MultipartFormDataContent())
+                {
+                    chunk.Add(content, "file", "file");
+                    
+                    var byteArrayContent = new ByteArrayContent(await chunk.ReadAsByteArrayAsync(cancellationToken));
+                    // Send the current chunk to the API endpoint.
+                    var response = await _httpClient.PostAsync(apiUrl, byteArrayContent, cancellationToken);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return Result.Fail();
+                    }
+                }
+            }
+        }
+
+        var mergeResult = await _httpClient.PostAsync(apiUrl + "/complete", JsonContent.Create("file"));
+        
+        return await mergeResult.Content.ReadFromJsonAsync<Result>();
     }
 }
