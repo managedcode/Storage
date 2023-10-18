@@ -34,12 +34,12 @@ jobs:
       run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
       
     - name: Collect Code Coverage
-      run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Storage.Tests/lcov.info
+      run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov,cobertura,opencover /p:CoverletOutput=ManagedCode.Storage.Tests/coverage
 
     - name: NDepend
       uses: ndepend/ndepend-action@v1
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         license: ${{ secrets.NDEPENDLICENSE }}
-        coveragefolder: ManagedCode.Storage.Tests/lcov.info
+        coveragefolder: ManagedCode.Storage.Tests/coverage
         baseline: recent
