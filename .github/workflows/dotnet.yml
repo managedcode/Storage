@@ -43,3 +43,17 @@ jobs:
         license: ${{ secrets.NDEPENDLICENSE }}
         coveragefolder: ManagedCode.Storage.Tests/lcov.info
         baseline: recent
+        
+    - name: coverlet
+      uses: b3b00/coverlet-action@1.1.9
+      with:
+        testProject: 'ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj'
+        output: 'lcov.info'
+        outputFormat: 'lcov'
+        excludes: '[program]*,[test]test.*'
+        
+    - name: coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN }}
+        path-to-lcov: ManagedCode.Storage.Tests/lcov.info
