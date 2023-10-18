@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
@@ -109,12 +110,19 @@ public class StorageClient : IStorageClient
         return Result<BlobMetadata>.Fail(response.StatusCode);
     }
     
-    public async Task<LocalFile> DownloadFile(string fileName, string apiUrl, string? path = null,  CancellationToken cancellationToken = default)
+    public async Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null,  CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
+        try
+        {
+            var response = await _httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
+            
+            var localFile = path is null ? await LocalFile.FromStreamAsync(response, fileName) : await LocalFile.FromStreamAsync(response, path, fileName);
 
-        var localFile = path is null ? await LocalFile.FromStreamAsync(response, fileName) : await LocalFile.FromStreamAsync(response, path, fileName);
-
-        return localFile;
+            return Result<LocalFile>.Succeed(localFile);
+        }
+        catch (HttpRequestException e)
+        {
+            return Result<LocalFile>.Fail(e.StatusCode ?? HttpStatusCode.InternalServerError);
+        }
     }
 }

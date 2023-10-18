@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Net;
+using FluentAssertions;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.IntegrationTests.Constants;
 using ManagedCode.Storage.IntegrationTests.Helpers;
@@ -13,7 +14,7 @@ public class AzureDownloadControllerTests : BaseControllerTests
     }
 
     [Fact]
-    public async Task DownloadFile_WhenFileExists_ReturnSuccess()
+    public async Task DownloadFile_WhenFileExists_SaveToTempStorage_ReturnSuccess()
     {
         // Arrange
         var storageClient = GetStorageClient();
@@ -25,11 +26,26 @@ public class AzureDownloadControllerTests : BaseControllerTests
         var uploadFileBlob = await storageClient.UploadFile(localFile.FileStream, ApiEndpoints.Azure.UploadFile, contentName);
         
         // Act
-        var downloadedFile = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, ApiEndpoints.Azure.DownloadFile);
+        var downloadedFileResult = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, ApiEndpoints.Azure.DownloadFile);
 
         // Assert
-        downloadedFile.Should().NotBeNull();
-        var downloadedFileCRC = Crc32Helper.Calculate(await downloadedFile.ReadAllBytesAsync());
+        downloadedFileResult.IsSuccess.Should().BeTrue();
+        downloadedFileResult.Value.Should().NotBeNull();
+        var downloadedFileCRC = Crc32Helper.Calculate(await downloadedFileResult.Value.ReadAllBytesAsync());
         downloadedFileCRC.Should().Be(fileCRC);
+    }
+
+    [Fact]
+    public async Task DownloadFile_WhenFileDoNotExist_ReturnFail()
+    {
+        // Arrange
+        var storageClient = GetStorageClient();;
+        
+        // Act
+        var downloadedFileResult = await storageClient.DownloadFile(Guid.NewGuid().ToString(), ApiEndpoints.Azure.DownloadFile);
+
+        // Assert
+        downloadedFileResult.IsFailed.Should().BeTrue();
+        downloadedFileResult.GetError().Value.ErrorCode.Should().Be(HttpStatusCode.InternalServerError.ToString());
     }
 }
