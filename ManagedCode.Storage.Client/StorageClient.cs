@@ -109,10 +109,12 @@ public class StorageClient : IStorageClient
         return Result<BlobMetadata>.Fail(response.StatusCode);
     }
     
-    public async Task<Stream> DownloadFile(string fileName, string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<LocalFile> DownloadFile(string fileName, string apiUrl, string? path = null,  CancellationToken cancellationToken = default)
     {
         var response = await _httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
 
-        return response;
+        var localFile = path is null ? await LocalFile.FromStreamAsync(response, fileName) : await LocalFile.FromStreamAsync(response, path, fileName);
+
+        return localFile;
     }
 }

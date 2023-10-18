@@ -150,6 +150,17 @@ public class LocalFile : IDisposable, IAsyncDisposable
         await file.FileStream.DisposeAsync();
         return file;
     }
+    
+    public static async Task<LocalFile> FromStreamAsync(Stream stream, string path, string fileName)
+    {
+        var pathWithName = Path.Combine(path, $"{fileName}.tmp");
+        var file = new LocalFile(pathWithName);
+        
+        await stream.CopyToAsync(file.FileStream);
+        await file.FileStream.DisposeAsync();
+        
+        return file;
+    }
 
     public static async Task<LocalFile> FromStreamAsync(Stream stream, string fileName)
     {

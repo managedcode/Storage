@@ -25,11 +25,10 @@ public class AzureDownloadControllerTests : BaseControllerTests
         var uploadFileBlob = await storageClient.UploadFile(localFile.FileStream, ApiEndpoints.Azure.UploadFile, contentName);
         
         // Act
-        var downloadResult = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, ApiEndpoints.Azure.DownloadFile);
+        var downloadedFile = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, ApiEndpoints.Azure.DownloadFile);
 
         // Assert
-        downloadResult.Should().NotBeNull();
-        var downloadedFile = await LocalFile.FromStreamAsync(downloadResult);
+        downloadedFile.Should().NotBeNull();
         var downloadedFileCRC = Crc32Helper.Calculate(await downloadedFile.ReadAllBytesAsync());
         downloadedFileCRC.Should().Be(fileCRC);
     }
