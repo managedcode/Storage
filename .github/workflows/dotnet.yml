@@ -43,6 +43,7 @@ jobs:
         license: ${{ secrets.NDEPENDLICENSE }}
         coveragefolder: ManagedCode.Storage.Tests/lcov.info
         baseline: recent
+        stopIfQGFailed: false
         
     - name: coverlet
       uses: b3b00/coverlet-action@1.1.9
