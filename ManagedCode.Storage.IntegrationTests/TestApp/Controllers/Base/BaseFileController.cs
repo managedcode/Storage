@@ -1,46 +1,41 @@
 ﻿using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.Server;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
 
 [ApiController]
-public class BaseFileController : ControllerBase
+public abstract class BaseFileController<TStorage> : ControllerBase
+    where TStorage : IStorage
 {
-    private readonly IStorage _storage;
+    protected readonly IStorage Storage;
 
-    public BaseFileController(IStorage storage)
+    protected BaseFileController(IStorage storage)
     {
-        _storage = storage;
+        Storage = storage;
     }
     
     [HttpPost("upload")]
-    public async Task<Result<BlobMetadata>> UploadFile([FromBody] MultipartFormDataContent content, CancellationToken cancellationToken)
+    public async Task<Result<BlobMetadata>> UploadFile([FromForm] IFormFile file, CancellationToken cancellationToken)
     {
-        try
+        if (Request.HasFormContentType is false)
         {
-            var result = await _storage.UploadAsync(await content.ReadAsStreamAsync(cancellationToken), cancellationToken);
-            return result;
+            return Result<BlobMetadata>.Fail("invalid body");
         }
-        catch (Exception ex)
-        {
-            return Result.Fail();
-        }
+
+        return await Storage.UploadAsync(file.OpenReadStream(), cancellationToken);
     }
 
     [HttpGet("download/{fileName}")]
-    public async Task<Result<FileStream>> DownloadFile([FromQuery] string fileName, CancellationToken cancellationToken)
+    public async Task<FileResult> DownloadFile([FromRoute] string fileName, CancellationToken cancellationToken)
     {
-        var result = await _storage.DownloadAsync(fileName, cancellationToken);
+        var result = await Storage.DownloadAsFileResult(fileName, cancellationToken: cancellationToken);
+        
+        result.ThrowIfFail();
 
-        if (result.Value is null)
-        {
-            return Result.Fail();
-        }
-        else
-        {
-            return Result.Succeed(result.Value.FileStream);
-        }
+        return result.Value!;
     }
 }
