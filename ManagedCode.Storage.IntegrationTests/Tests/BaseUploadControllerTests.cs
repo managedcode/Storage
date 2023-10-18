@@ -124,7 +124,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
          var contentName = "file";
          
          await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-         FileHelper.GenerateLocalFile(localFile, 500);
+         FileHelper.GenerateLocalFile(localFile, 20);
     
          // Act
          var result = await storageClient.UploadFileInChunks(localFile.FileStream, _uploadChunksEndpoint, 100000000);

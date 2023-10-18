@@ -15,14 +15,12 @@ public abstract class BaseTestController<TStorage> : ControllerBase
     protected readonly IStorage Storage;
     protected readonly ResponseContext ResponseData;
     protected readonly int ChunkSize;
-    protected readonly string TempFolder;
 
     protected BaseTestController(TStorage storage)
     {
         Storage = storage;
         ResponseData = new ResponseContext();
         ChunkSize = 100000000;
-        TempFolder = "C:\\Users\\sasha";
     }
 
     [HttpPost("upload")]
@@ -57,7 +55,7 @@ public abstract class BaseTestController<TStorage> : ControllerBase
         try
         {
             var chunkNumber = Guid.NewGuid().ToString();
-            string newpath = Path.Combine(TempFolder + "/TEMP", "file" + chunkNumber);
+            string newpath = Path.Combine(Path.GetTempPath(), "file" + chunkNumber);
             
             await using (FileStream fs = System.IO.File.Create(newpath))
             {
@@ -83,7 +81,7 @@ public abstract class BaseTestController<TStorage> : ControllerBase
     {
         try
         {
-            string tempPath = TempFolder + "/TEMP";
+            string tempPath = Path.GetTempPath();
             string newPath = Path.Combine(tempPath, fileName);
             // string[] filePaths = Directory.GetFiles(tempPath).Where(p => p.Contains(fileName))
             //     .OrderBy(p => Int32.Parse(p.Replace(fileName, "$").Split('$')[1])).ToArray();
@@ -93,7 +91,7 @@ public abstract class BaseTestController<TStorage> : ControllerBase
                 MergeChunks(newPath, filePath);
             }
 
-            System.IO.File.Move(Path.Combine(tempPath, fileName), Path.Combine(TempFolder, fileName));
+            System.IO.File.Move(Path.Combine(tempPath, fileName), Path.Combine(tempPath, fileName));
         }
         catch (Exception ex)
         {
