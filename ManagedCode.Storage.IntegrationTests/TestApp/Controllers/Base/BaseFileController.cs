@@ -1,7 +1,10 @@
-﻿using ManagedCode.Communication;
+﻿using Amazon.Runtime.Internal;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
 
@@ -9,10 +12,11 @@ namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
 public class BaseFileController : ControllerBase
 {
     private readonly IStorage _storage;
-
+    
     public BaseFileController(IStorage storage)
     {
         _storage = storage;
+        
     }
     
     [HttpPost("upload")]
