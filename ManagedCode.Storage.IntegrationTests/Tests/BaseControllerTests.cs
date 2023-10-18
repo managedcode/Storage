@@ -7,10 +7,12 @@ namespace ManagedCode.Storage.IntegrationTests.Tests;
 public abstract class BaseControllerTests
 {
     protected readonly StorageTestApplication TestApplication;
+    protected readonly string ApiEndpoint;
 
-    protected BaseControllerTests(StorageTestApplication testApplication)
+    protected BaseControllerTests(StorageTestApplication testApplication, string apiEndpoint)
     {
         TestApplication = testApplication;
+        ApiEndpoint = apiEndpoint;
     }
 
     protected HttpClient GetHttpClient()

@@ -2,9 +2,11 @@
 
 public static class ApiEndpoints
 {
-    public static class Azure
+    public const string Azure = "azure";
+    
+    public static class Base
     {
-        public const string UploadFile = "azure/upload";
-        public const string DownloadFile = "azure/download";
+        public const string UploadFile = "{0}/upload";
+        public const string DownloadFile = "{0}/download";
     }
 }
