@@ -34,4 +34,31 @@ public static class Crc32Helper
         }
         return ~crcValue;
     }
+    
+    public static uint CalculateFileCRC(string filePath)
+    {
+        uint crcValue = 0xffffffff;
+        
+        using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+        {
+            byte[] buffer = new byte[4096]; // 4KB buffer
+            int bytesRead;
+            while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                crcValue = Calculate(buffer, crcValue);
+            }
+        }
+
+        return ~crcValue;  // Return the final CRC value
+    }
+    
+    public static uint Calculate(byte[] bytes, uint crcValue = 0xffffffff)
+    {
+        foreach (byte by in bytes)
+        {
+            byte tableIndex = (byte)(((crcValue) & 0xff) ^ by);
+            crcValue = Crc32Table[tableIndex] ^ (crcValue >> 8);
+        }
+        return crcValue;
+    }
 }
