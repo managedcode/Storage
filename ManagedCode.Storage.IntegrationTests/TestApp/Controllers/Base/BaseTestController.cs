@@ -1,4 +1,4 @@
-﻿using Amazon.Runtime.Internal;
+using Amazon.Runtime.Internal;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
@@ -9,18 +9,18 @@ using Microsoft.AspNetCore.Mvc;
 namespace ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
 
 [ApiController]
-public abstract class BaseTestController<TStorage> : BaseController
+public abstract class BaseTestController<TStorage> : ControllerBase
     where TStorage : IStorage
 {
-    private readonly ResponseContext _responseData;
-    private readonly int chunkSize;
-    private readonly string tempFolder;
+    protected readonly IStorage Storage;
+    protected readonly ResponseContext ResponseData;
+    protected readonly int ChunkSize;
 
-    protected BaseTestController(TStorage storage) : base(storage)
+    protected BaseTestController(TStorage storage)
     {
-        _responseData = new ResponseContext();
-        chunkSize = 100000000;
-        tempFolder = "C:\\Users\\sasha";
+        Storage = storage;
+        ResponseData = new ResponseContext();
+        ChunkSize = 100000000;
     }
 
     [HttpPost("upload")]
@@ -55,11 +55,11 @@ public abstract class BaseTestController<TStorage> : BaseController
         try
         {
             var chunkNumber = Guid.NewGuid().ToString();
-            string newpath = Path.Combine(tempFolder + "/TEMP", "file" + chunkNumber);
+            string newpath = Path.Combine(Path.GetTempPath(), "file" + chunkNumber);
             
             await using (FileStream fs = System.IO.File.Create(newpath))
             {
-                byte[] bytes = new byte[chunkSize];
+                byte[] bytes = new byte[ChunkSize];
                 int bytesRead = 0;
                 while ((bytesRead = await Request.Body.ReadAsync(bytes, 0, bytes.Length, cancellationToken)) > 0)
                 {
@@ -73,7 +73,7 @@ public abstract class BaseTestController<TStorage> : BaseController
             // _responseData.IsSuccess = false;
         }
 
-        return Ok(_responseData);
+        return Ok(ResponseData);
     }
 
     [HttpPost("upload-chunks/complete")]
@@ -81,7 +81,7 @@ public abstract class BaseTestController<TStorage> : BaseController
     {
         try
         {
-            string tempPath = tempFolder + "/TEMP";
+            string tempPath = Path.GetTempPath();
             string newPath = Path.Combine(tempPath, fileName);
             // string[] filePaths = Directory.GetFiles(tempPath).Where(p => p.Contains(fileName))
             //     .OrderBy(p => Int32.Parse(p.Replace(fileName, "$").Split('$')[1])).ToArray();
@@ -91,7 +91,7 @@ public abstract class BaseTestController<TStorage> : BaseController
                 MergeChunks(newPath, filePath);
             }
 
-            System.IO.File.Move(Path.Combine(tempPath, fileName), Path.Combine(tempFolder, fileName));
+            System.IO.File.Move(Path.Combine(tempPath, fileName), Path.Combine(tempPath, fileName));
         }
         catch (Exception ex)
         {
