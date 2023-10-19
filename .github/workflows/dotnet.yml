@@ -34,12 +34,17 @@ jobs:
         run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
 
       - name: Collect Code Coverage
-        run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Storage.Tests/lcov.info
+        run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov
 
-      - name: NDepend
-        uses: ndepend/ndepend-action@v1
+      - name: Debug
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
+          echo "Contents of ManagedCode.Storage.Tests directory:"
+          ls -la ManagedCode.Storage.Tests
+
+      - name: coveralls
+        uses: coverallsapp/github-action@master
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ManagedCode.Storage.Tests/lcov.info
-          baseline: recent
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ManagedCode.Storage.Tests/TestResults/lcov.info
