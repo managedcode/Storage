@@ -30,13 +30,14 @@ jobs:
       - name: Collect Code Coverage
         run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov
 
-      - name: Debug
-        run: |
-          echo "Current directory: $(pwd)"
-          ls -la
-          echo "Contents of ManagedCode.Storage.Tests directory:"
-          ls -la ManagedCode.Storage.Tests
-
+      - name: NDepend
+        uses: ndepend/ndepend-action@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          license: ${{ secrets.NDEPENDLICENSE }}
+          coveragefolder: ManagedCode.Storage.Tests/TestResults
+          baseline: recent
+            
       - name: coveralls
         uses: coverallsapp/github-action@master
         with:
