@@ -8,6 +8,7 @@ namespace ManagedCode.Storage.Azure;
 
 public class BlobStream : Stream
 {
+    // TODO: add same thing to google and aws
     private const string MetadataLengthKey = "STREAM_LENGTH";
     private const int PageSizeInBytes = 512;
     public const int DefaultBufferSize = 1024 * 1024 * 4;
@@ -39,6 +40,7 @@ public class BlobStream : Stream
         {
             var realLength = 0L;
             var metadata = _pageBlob.GetProperties().Value.Metadata;
+            var contentLenght = _pageBlob.GetProperties().Value.ContentLength;
             if (metadata.TryGetValue(MetadataLengthKey, out var length))
             {
                 if (long.TryParse(length, out realLength))
@@ -47,8 +49,8 @@ public class BlobStream : Stream
                 }
             }
 
-            SetLengthInternal(realLength);
-            return realLength;
+            SetLengthInternal(contentLenght);
+            return contentLenght;
         }
     }
 
