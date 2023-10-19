@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using FluentAssertions;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.IntegrationTests.Constants;
-using ManagedCode.Storage.IntegrationTests.Helpers;
 using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;
@@ -124,10 +124,10 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
          var contentName = "file";
          
          await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-         FileHelper.GenerateLocalFile(localFile, 20);
+         FileHelper.GenerateLocalFile(localFile, 200);
     
          // Act
-         var result = await storageClient.UploadFileInChunks(localFile.FileStream, _uploadChunksEndpoint, 100000000);
+         var result = await storageClient.UploadLargeFile(localFile.FileStream, _uploadChunksEndpoint, new CancellationToken());
          
          // Assert
          result.IsSuccess.Should().BeTrue();

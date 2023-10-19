@@ -1,16 +1,13 @@
-﻿using System;
+﻿
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Client;
@@ -126,37 +123,45 @@ public class StorageClient : IStorageClient
         }
     }
     
-    public async Task<Result> UploadFileInChunks(Stream file, string apiUrl, int chunkSize, CancellationToken cancellationToken)
+    public async Task<Result> UploadLargeFile(Stream file, string apiUrl, CancellationToken cancellationToken)
     {
-        var buffer = new byte[chunkSize];
+        var bufferSize = 4096000; //TODO: chunk size get from config
+        var buffer = new byte[bufferSize];
         int bytesRead;
-        int chunkIndex = 0;
+        int chunkIndex = 1;
+        var fileCRC = Crc32Helper.Calculate(file);
+        
+        var createdFileResponse = await _httpClient.PostAsync(apiUrl + "/create", JsonContent.Create(file.Length), cancellationToken);
+        var createdFile = await createdFileResponse.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
 
         while ((bytesRead = await file.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
         {
-            // Create a MemoryStream for the current chunk.
-            using (var memoryStream = new MemoryStream(buffer, 0, bytesRead))
+            Task.Factory.StartNew(async () =>
             {
-                var content = new StreamContent(memoryStream);
-
-                using (var chunk = new MultipartFormDataContent())
+                using (var memoryStream = new MemoryStream(buffer, 0, bytesRead))
                 {
-                    chunk.Add(content, "file", "file");
-                    
-                    var byteArrayContent = new ByteArrayContent(await chunk.ReadAsByteArrayAsync(cancellationToken));
-                    // Send the current chunk to the API endpoint.
-                    var response = await _httpClient.PostAsync(apiUrl, byteArrayContent, cancellationToken);
+                    var content = new StreamContent(memoryStream);
 
-                    if (!response.IsSuccessStatusCode)
+                    using (var chunk = new MultipartFormDataContent())
                     {
-                        return Result.Fail();
+                        chunk.Add(content, "file", "file234");
+                        chunk.Add(new StringContent(createdFile.Value.FullName), "Payload.BlobName");
+                        chunk.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
+                        chunk.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
+                        chunk.Add(new StringContent(fileCRC.ToString()), "Payload.FullCRC");
+
+                        await _httpClient.PostAsync(apiUrl, chunk, cancellationToken);
                     }
                 }
-            }
+            }, cancellationToken);
+            chunkIndex++;
         }
-
-        var mergeResult = await _httpClient.PostAsync(apiUrl + "/complete", JsonContent.Create("file"));
         
-        return await mergeResult.Content.ReadFromJsonAsync<Result>();
+        await Task.WhenAll();
+        
+        var mergeResult = await _httpClient.PostAsync(apiUrl + "/complete", JsonContent.Create(
+            new {fileCrc = fileCRC, blobName = createdFile.Value.FullName}), cancellationToken);
+        
+        return await mergeResult.Content.ReadFromJsonAsync<Result>(cancellationToken: cancellationToken);
     }
 }

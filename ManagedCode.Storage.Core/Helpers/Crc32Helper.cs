@@ -1,4 +1,6 @@
-﻿namespace ManagedCode.Storage.IntegrationTests.Helpers;
+﻿using System.IO;
+
+namespace ManagedCode.Storage.Core.Helpers;
 
 public static class Crc32Helper
 {
@@ -35,6 +37,19 @@ public static class Crc32Helper
         return ~crcValue;
     }
     
+    public static uint Calculate(Stream stream)
+    {
+        var bytes = StreamToByteArray(stream);
+        uint crcValue = 0xffffffff;
+
+        foreach (byte by in bytes)
+        {
+            byte tableIndex = (byte)(((crcValue) & 0xff) ^ by);
+            crcValue = Crc32Table[tableIndex] ^ (crcValue >> 8);
+        }
+        return ~crcValue;
+    }
+    
     public static uint CalculateFileCRC(string filePath)
     {
         uint crcValue = 0xffffffff;
@@ -60,5 +75,25 @@ public static class Crc32Helper
             crcValue = Crc32Table[tableIndex] ^ (crcValue >> 8);
         }
         return crcValue;
+    }
+    
+    private static byte[] StreamToByteArray(Stream stream)
+    {
+        // Create a memory stream to store the data from the input stream
+        using (MemoryStream memoryStream = new MemoryStream())
+        {
+            int bufferSize = 4096;
+            byte[] buffer = new byte[bufferSize];
+            int bytesRead;
+
+            // Read from the input stream and write to the memory stream
+            while ((bytesRead = stream.Read(buffer, 0, bufferSize)) > 0)
+            {
+                memoryStream.Write(buffer, 0, bytesRead);
+            }
+
+            // Convert the memory stream to a byte array
+            return memoryStream.ToArray();
+        }
     }
 }
