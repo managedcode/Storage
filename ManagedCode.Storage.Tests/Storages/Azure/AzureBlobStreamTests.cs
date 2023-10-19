@@ -1,10 +1,10 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Core.Models;
-using ManagedCode.Storage.Server;
 using ManagedCode.Storage.Tests.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Azurite;
@@ -31,8 +31,9 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
     {
         // Arrange
         var directory = "test-directory";
+        var fileSizeInBytes = 10;
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        FileHelper.GenerateLocalFileWithData(localFile, 10);
+        FileHelper.GenerateLocalFileWithData(localFile, fileSizeInBytes);
         var storage = (IAzureStorage) Storage;
         
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
@@ -59,8 +60,9 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
     {
         // Arrange
         var directory = "test-directory";
+        var fileSizeInBytes = 10;
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        FileHelper.GenerateLocalFileWithData(localFile, 10);
+        FileHelper.GenerateLocalFileWithData(localFile, fileSizeInBytes);
         var storage = (IAzureStorage) Storage;
         
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
@@ -106,12 +108,13 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
     }
 
     [Fact]
-    public async Task WriteStreamWithStreamWriter_WhenFileExists_SaveData()
+    public async Task WriteStreamWithStreamWriter_SaveData()
     {
         // Arrange
         var directory = "test-directory";
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        FileHelper.GenerateLocalFileWithData(localFile, 512);
+        var fileSizeInBytes = 10;
+        FileHelper.GenerateLocalFileWithData(localFile, fileSizeInBytes);
         var fullFileName = $"{directory}/{localFile.FileInfo.FullName}";
 
         var storage = (IAzureStorage) Storage;
@@ -135,5 +138,38 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         using var streamReader = new StreamReader(fileStream);
         var fileContent = await streamReader.ReadLineAsync();
         fileContent.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Seek_WhenFileExists_ReturnData()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var fileSizeInBytes = 10;
+        await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+        FileHelper.GenerateLocalFileWithData(localFile, fileSizeInBytes);
+        var storage = (IAzureStorage) Storage;
+        
+        UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
+        await using var localFileStream = localFile.FileInfo.OpenRead();
+        var result = await storage.UploadAsync(localFileStream, options);
+
+        await using var blobStream = storage.GetBlobStream(result.Value.FullName);
+        
+        // Act
+        var seekInPosition = fileSizeInBytes / 2;
+        blobStream.Seek(seekInPosition, SeekOrigin.Current);
+        var buffer = new byte[seekInPosition];
+        var bytesRead = await blobStream.ReadAsync(buffer);
+        
+        // Assert
+        bytesRead.Should().Be(seekInPosition);
+        await using var fileStream = localFile.FileInfo.OpenRead();
+        using var fileReader = new StreamReader(fileStream);
+        var fileContent = await fileReader.ReadToEndAsync();
+        var content = Encoding.UTF8.GetString(buffer);
+        content.Should().NotBeNullOrEmpty();
+        var trimmedFileContent = fileContent.Remove(0, seekInPosition); 
+        content.Should().Be(trimmedFileContent);
     }
 }
