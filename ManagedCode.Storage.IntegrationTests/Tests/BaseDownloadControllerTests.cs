@@ -36,7 +36,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         // Assert
         downloadedFileResult.IsSuccess.Should().BeTrue();
         downloadedFileResult.Value.Should().NotBeNull();
-        var downloadedFileCRC = Crc32Helper.Calculate(await downloadedFileResult.Value.ReadAllBytesAsync());
+        var downloadedFileCRC = Crc32Helper.CalculateFileCRC(downloadedFileResult.Value.FilePath);
         downloadedFileCRC.Should().Be(fileCRC);
     }
 
