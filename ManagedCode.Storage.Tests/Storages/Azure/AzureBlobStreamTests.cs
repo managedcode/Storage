@@ -26,33 +26,60 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
     }
     
     [Fact]
-    public async Task ReadStream_WhenFileExists_ReturnData()
+    public async Task ReadStreamWithStreamReader_WhenFileExists_ReturnData()
     {
         // Arrange
         var directory = "test-directory";
-        var fileName = Guid.NewGuid().ToString();
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
         FileHelper.GenerateLocalFileWithData(localFile, 10);
         var storage = (IAzureStorage) Storage;
         
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
-        var result = await storage.UploadAsync(localFile.FileInfo.OpenRead(), options);
+        await using var localFileStream = localFile.FileInfo.OpenRead();
+        var result = await storage.UploadAsync(localFileStream, options);
 
         await using var blobStream = storage.GetBlobStream(result.Value.FullName);
-
-        var chunkSize = localFile.FileInfo.Length;
-        byte[] fileChunk1 = new byte[chunkSize];
-        byte[] fileChunk2 = new byte[chunkSize];
         
         // Act
         using var streamReader = new StreamReader(blobStream);
         var content = await streamReader.ReadToEndAsync();
         
         // Assert
-        content.Should().NotBeNullOrEmpty();
-        using var fileReader = new StreamReader(localFile.FileStream);
+        await using var fileStream = localFile.FileInfo.OpenRead();
+        using var fileReader = new StreamReader(fileStream);
         var fileContent = await fileReader.ReadToEndAsync();
+        content.Should().NotBeNullOrEmpty();
         fileContent.Should().NotBeNullOrEmpty();
         content.Should().Be(fileContent);
+    }
+
+    [Fact]
+    public async Task ReadStream_WhenFileExists_ReturnData()
+    {
+        // Arrange
+        var directory = "test-directory";
+        var localFile = LocalFile.FromRandomNameWithExtension(".txt");
+        FileHelper.GenerateLocalFileWithData(localFile, 10);
+        var storage = (IAzureStorage) Storage;
+        
+        UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
+        await using var fileStream = localFile.FileInfo.OpenRead();
+        var result = await storage.UploadAsync(fileStream, options);
+    
+        await using var blobStream = storage.GetBlobStream(result.Value.FullName);
+
+        var chunkSize = (int) blobStream.Length / 2;
+        var chunk1 = new byte[chunkSize];
+        var chunk2 = new byte[chunkSize];
+
+        // Act
+        var bytesReadForChunk1 = await blobStream.ReadAsync(chunk1, 0, chunkSize);
+        var bytesReadForChunk2 = await blobStream.ReadAsync(chunk2, 0, chunkSize);
+
+        // Assert
+        bytesReadForChunk1.Should().Be(chunkSize);
+        bytesReadForChunk2.Should().Be(chunkSize);
+        chunk1.Should().NotBeNullOrEmpty().And.HaveCount(chunkSize);
+        chunk2.Should().NotBeNullOrEmpty().And.HaveCount(chunkSize);
     }
 }
