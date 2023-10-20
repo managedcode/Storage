@@ -27,23 +27,18 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build
 
       - name: Test
-        run: dotnet test --no-build /p:CollectCoverage=true  /p:CoverletOutputFormat=opencover
+        run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover
  
-
-  
-      
-   
-
 
       - name: NDepend
         uses: ndepend/ndepend-action@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: Coverage
+          coveragefolder: ${{ github.workspace }}
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
