@@ -33,7 +33,7 @@ jobs:
         run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
 
       - name: Collect Code Coverage
-        run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov
 
       - name: NDepend
         uses: ndepend/ndepend-action@v1
