@@ -20,7 +20,7 @@ public sealed class GCSContainer : DockerContainer
     /// <returns>The GCS connection string.</returns>
     public string GetConnectionString()
     {
-        var builder = new UriBuilder(Uri.UriSchemeHttp, Hostname, GetMappedPublicPort(GCSBuilder.GCSPort), "storage/v1/");
+        var builder = new UriBuilder(Uri.UriSchemeHttp, Hostname, GetMappedPublicPort(GCSBuilder.FakeGCSServerPort), "storage/v1/");
         return builder.ToString();
     }
 }

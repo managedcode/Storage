@@ -1,32 +1,17 @@
-using System;
-using System.IO;
-using System.Linq;
-using ManagedCode.MimeTypes;
+﻿using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
 
-namespace ManagedCode.Storage.Tests.Common;
+namespace ManagedCode.Storage.IntegrationTests.Helpers;
 
 public static class FileHelper
 {
     private static readonly Random Random = new();
 
-    public static LocalFile GenerateLocalFile(string fileName, int byteSize)
+    public static LocalFile GenerateLocalFile(LocalFile file, int sizeInMegabytes)
     {
-        var path = Path.Combine(Path.GetTempPath(), fileName);
-        var localFile = new LocalFile(path);
+        var sizeInBytes = sizeInMegabytes * 1024 * 1024;
 
-        var fs = localFile.FileStream;
-
-        fs.Seek(byteSize, SeekOrigin.Begin);
-        fs.WriteByte(0);
-        fs.Close();
-
-        return localFile;
-    }
-
-    public static LocalFile GenerateLocalFileWithData(LocalFile file, int sizeInBytes)
-    {
         using (var fileStream = file.FileStream)
         {
             Random random = new Random();
@@ -53,7 +38,7 @@ public static class FileHelper
         return file;
     }
 
-    public static IFormFile GenerateFormFile(string fileName, int byteSize)
+    /*public static IFormFile GenerateFormFile(string fileName, int byteSize)
     {
         var localFile = GenerateLocalFile(fileName, byteSize);
 
@@ -82,5 +67,5 @@ public static class FileHelper
         return new string(Enumerable.Repeat(chars, 250_000)
             .Select(s => s[Random.Next(s.Length)])
             .ToArray());
-    }
+    }*/
 }

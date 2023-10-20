@@ -6,7 +6,7 @@ using Xunit;
 
 namespace ManagedCode.Storage.Tests.Storages.GCS;
 
-[Collection("Google")]
+
 public class GCSBlobTests : BlobTests<GCSContainer>
 {
     protected override GCSContainer Build()
