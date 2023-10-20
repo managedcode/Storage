@@ -30,14 +30,15 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Test
-        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat=opencover
-     
+        #run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat=opencover
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=${{ github.workspace }}/CoverageRoot/ /p:CoverletOutputFormat=opencover
+ 
       - name: NDepend
         uses: ndepend/ndepend-action@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ManagedCode.Storage.Tests/CoverageResults
+          coveragefolder: ${{ github.workspace }}/CoverageRoot
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
