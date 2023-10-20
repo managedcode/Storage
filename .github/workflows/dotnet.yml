@@ -30,19 +30,10 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Test
-        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=codecoverage /p:CoverletOutputFormat=opencover
+        run: dotnet test --no-build /p:CollectCoverage=true  /p:CoverletOutputFormat=opencover
  
 
-      - name: Copy and rename *.opencover.xml files to CoverageRoot using parts of the path
-        run: |
-          for %%f in (**\*.opencover.xml) do (
-            set "filename=%%f"
-            setlocal enabledelayedexpansion
-            set "unique_name=!filename:\=_!"
-            copy "%%f" "Coverage\!unique_name!"
-            endlocal
-          )
-        shell: cmd
+  
       
    
 
