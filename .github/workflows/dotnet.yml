@@ -36,7 +36,7 @@ jobs:
     
 # Merge coverage reports using ReportGenerator
       - name: Merge Coverage Reports
-        run: reportgenerator "-reports:${{ github.workspace }}/CoverageRoot/**/*.coverage.opencover.xml" "-targetdir:${{ github.workspace }}/CoverageRoot/Merged" -reporttypes:Opencover
+        run: reportgenerator "-reports:${{ github.workspace }}/CoverageRoot/**/*.opencover.xml" "-targetdir:${{ github.workspace }}/CoverageRoot/Merged" -reporttypes:Opencover
 
 
       - name: NDepend
