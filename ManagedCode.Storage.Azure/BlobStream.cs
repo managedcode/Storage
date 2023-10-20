@@ -37,18 +37,19 @@ public class BlobStream : Stream
     {
         get
         {
-            var realLength = 0L;
-            var metadata = _pageBlob.GetProperties().Value.Metadata;
+            var properties = _pageBlob.GetProperties();
+            var metadata = properties.Value.Metadata;
             if (metadata.TryGetValue(MetadataLengthKey, out var length))
             {
-                if (long.TryParse(length, out realLength))
+                if (long.TryParse(length, out var realLength))
                 {
                     return realLength;
                 }
             }
-
-            SetLengthInternal(realLength);
-            return realLength;
+ 
+            var contentLenght = properties.Value.ContentLength;
+            SetLengthInternal(contentLenght);
+            return contentLenght;
         }
     }
 
