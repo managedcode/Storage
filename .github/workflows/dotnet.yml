@@ -30,7 +30,7 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Test
-        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat=opencover,lcov
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat="opencover,lcov"
      
       - name: NDepend
         uses: ndepend/ndepend-action@v1
