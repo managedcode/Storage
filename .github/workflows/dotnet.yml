@@ -31,14 +31,20 @@ jobs:
 
       - name: Test
         #run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat=opencover
-        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=${{ github.workspace }}/CoverageRoot/ /p:CoverletOutputFormat=opencover
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageRoot /p:CoverletOutputFormat=opencover
  
+    
+# Merge coverage reports using ReportGenerator
+      - name: Merge Coverage Reports
+        run: reportgenerator "-reports:${{ github.workspace }}/CoverageRoot/**/*.coverage.opencover.xml" "-targetdir:${{ github.workspace }}/CoverageRoot/Merged" -reporttypes:Opencover
+
+
       - name: NDepend
         uses: ndepend/ndepend-action@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}/CoverageRoot
+          coveragefolder: ${{ github.workspace }}/CoverageRoot/Merged
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
