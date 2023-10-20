@@ -5,59 +5,46 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   
   build-and-test:
     runs-on: ubuntu-latest
-          
+    
     steps:
 
-    - name: checkout
-      uses: actions/checkout@v3
-      
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 7.0.x
-    
-    - name: Restore dependencies
-      run: dotnet restore
-      
-    - name: Build
-      run: dotnet build --no-restore
-      
-    - name: Test
-      run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
-      
-    - name: Collect Code Coverage
-      run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Storage.Tests/lcov.info
-      
+      - name: checkout
+        uses: actions/checkout@v3
 
-    - name: NDepend
-      uses: ndepend/ndepend-action@v1
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        license: ${{ secrets.NDEPENDLICENSE }}
-        coveragefolder: ManagedCode.Storage.Tests/lcov.info
-        baseline: recent
-        #baseline: main_recent
-        
-    - name : coverlet
-      uses: b3b00/coverlet-action@1.1.9
-      with:
-        testProject: 'ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj'
-        output: 'lcov.info'
-        outputFormat: 'lcov'
-        excludes: '[program]*,[test]test.*'
-    - name: coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN }}
-        path-to-lcov: ManagedCode.Storage.Tests/lcov.info
-        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
 
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx'
+
+      - name: Collect Code Coverage
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov
+
+      - name: NDepend
+        uses: ndepend/ndepend-action@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          license: ${{ secrets.NDEPENDLICENSE }}
+          coveragefolder: ManagedCode.Storage.Tests/TestResults
+          baseline: recent
+            
+      - name: coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ManagedCode.Storage.Tests/TestResults/coverage.info
