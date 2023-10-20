@@ -31,14 +31,15 @@ jobs:
 
       - name: Test
         #run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat=opencover
-        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=codecoverage /p:CoverletOutputFormat=opencover
+       # run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=codecoverage /p:CoverletOutputFormat=opencover
  
-      - name: Install ReportGenerator
-        run: dotnet tool install --global dotnet-reportgenerator-globaltool
-      
-# Merge coverage reports using ReportGenerator
-      - name: Merge Coverage Reports
-        run: reportgenerator "-reports:${{ github.workspace }}/**/*.opencover.xml" "-targetdir:${{ github.workspace }}/Coverage" -reporttypes:Opencover
+
+      - name: Install dotCover
+        run: choco install dotcover-cli --confirm
+
+      - name: Test with dotCover
+        run: |
+          dotcover cover /TargetExecutable="dotnet" /Output="coverage.xml" /ReportType="XML" /TargetArguments="test --no-build"
 
 
       - name: NDepend
@@ -46,7 +47,8 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}/Coverage
+          #coveragefolder: ${{ github.workspace }}/Coverage
+          coveragefolder: 
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
