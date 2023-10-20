@@ -42,8 +42,7 @@ jobs:
           retention-days: 15
           #stopIfQGFailed: true
 
-      - name: coveralls
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          file: ManagedCode.Storage.Tests/CoverageResults/coverage.opencover.xml
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
