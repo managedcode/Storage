@@ -41,9 +41,9 @@ jobs:
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
-            
+
       - name: coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: ManagedCode.Storage.Tests/CoverageResults/coverage.opencover.xml
