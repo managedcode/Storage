@@ -29,15 +29,15 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
-      - name: Collect Code Coverage
-        run: dotnet test --no-build --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=opencover
-
+      - name: Test
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat=opencover,lcov
+     
       - name: NDepend
         uses: ndepend/ndepend-action@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ManagedCode.Storage.Tests/TestResults
+          coveragefolder: ManagedCode.Storage.Tests/CoverageResults
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
@@ -46,4 +46,4 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ManagedCode.Storage.Tests/TestResults/coverage.info
+          path-to-lcov: ManagedCode.Storage.Tests/CoverageResults/coverage.info
