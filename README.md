@@ -3,9 +3,10 @@
 # ManagedCode.Storage
 
 [![.NET](https://github.com/managedcode/Storage/actions/workflows/dotnet.yml/badge.svg)](https://github.com/managedcode/Storage/actions/workflows/dotnet.yml)
-[![Coverage Status](https://coveralls.io/repos/github/managedcode/Storage/badge.svg?branch=main&service=github)](https://coveralls.io/github/managedcode/Storage?branch=main)
+[![codecov](https://codecov.io/gh/managedcode/Storage/graph/badge.svg?token=OMKP91GPVD)](https://codecov.io/gh/managedcode/Storage)
 [![nuget](https://github.com/managedcode/Storage/actions/workflows/nuget.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/nuget.yml)
 [![CodeQL](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml)
+
 
 | Version | Package                                                                                                                               | Description     |
 | ------- |---------------------------------------------------------------------------------------------------------------------------------------|-----------------|
