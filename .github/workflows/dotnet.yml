@@ -29,17 +29,22 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
-      #- name: Test
-        #run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=CoverageResults/ /p:CoverletOutputFormat=opencover
-       # run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=codecoverage /p:CoverletOutputFormat=opencover
+      - name: Test
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=codecoverage /p:CoverletOutputFormat=opencover
  
 
-      - name: Install dotCover
-        run: choco install dotcover-cli --confirm
-
-      - name: Test with dotCover
+      - name: Copy and rename *.opencover.xml files to CoverageRoot using parts of the path
         run: |
-          dotcover cover /TargetExecutable="dotnet" /Output="coverage.xml" /ReportType="XML" /TargetArguments="test --no-build"
+          for %%f in (**\*.opencover.xml) do (
+            set "filename=%%f"
+            setlocal enabledelayedexpansion
+            set "unique_name=!filename:\=_!"
+            copy "%%f" "Coverage\!unique_name!"
+            endlocal
+          )
+        shell: cmd
+      
+   
 
 
       - name: NDepend
@@ -47,7 +52,7 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}/Coverage
+          coveragefolder: Coverage
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
