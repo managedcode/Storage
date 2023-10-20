@@ -38,7 +38,7 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}
+         # coveragefolder: ${{ github.workspace }}
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
