@@ -128,6 +128,7 @@ public class StorageClient : IStorageClient
         string сreateApiUrl,  
         string uploadApiUrl, 
         string completeApiUrl, 
+        Action<double>? onProgressChanged,
         CancellationToken cancellationToken)
     {
         var bufferSize = 4096000; //TODO: chunk size get from config
@@ -135,6 +136,7 @@ public class StorageClient : IStorageClient
         int bytesRead;
         int chunkIndex = 1;
         var fileCRC = Crc32Helper.Calculate(file);
+        var partOfProgress = file.Length / bufferSize;
         
         var createdFileResponse = await _httpClient.PostAsync(сreateApiUrl, JsonContent.Create(file.Length), cancellationToken);
         var createdFile = await createdFileResponse.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
@@ -162,6 +164,8 @@ public class StorageClient : IStorageClient
 
                             _httpClient.PostAsync(uploadApiUrl, chunk, cancellationToken);
                         }
+                        
+                        onProgressChanged?.Invoke(partOfProgress * chunkIndex);
                     }
                 }
                 finally

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -12,6 +13,6 @@ public interface IStorageClient
     Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default);
     Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default);
     Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName, CancellationToken cancellationToken = default);
-    Task<Result> UploadLargeFile(Stream file, string сreateApiUrl, string uploadApiUrl, string completeApiUrl, CancellationToken cancellationToken = default);
+    Task<Result> UploadLargeFile(Stream file, string сreateApiUrl, string uploadApiUrl, string completeApiUrl, Action<double>? onProgressChanged, CancellationToken cancellationToken = default);
     Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null, CancellationToken cancellationToken = default);
 }
