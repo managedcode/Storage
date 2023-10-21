@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace ManagedCode.Storage.Client.Models;
+namespace ManagedCode.Storage.Server;
 
 public class FileUploadPayload
 {

@@ -127,7 +127,8 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
          FileHelper.GenerateLocalFile(localFile, 200);
     
          // Act
-         var result = await storageClient.UploadLargeFile(localFile.FileStream, _uploadChunksEndpoint, new CancellationToken());
+         var result = await storageClient.UploadLargeFile(localFile.FileStream, _uploadChunksEndpoint + "/create", 
+             _uploadChunksEndpoint + "/upload", _uploadChunksEndpoint + "/complete", new CancellationToken());
          
          // Assert
          result.IsSuccess.Should().BeTrue();

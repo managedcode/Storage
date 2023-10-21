@@ -1,10 +1,10 @@
 ﻿using Azure.Storage.Blobs.Specialized;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Azure;
-using ManagedCode.Storage.Client.Models;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.IntegrationTests.TestApp.Controllers.Base;
+using ManagedCode.Storage.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,7 +27,7 @@ public class AzureTestController : BaseTestController<IAzureStorage>
         return await Storage.UploadAsync(new MemoryStream(new byte[fileSize]), cancellationToken);
     }
     
-    [HttpPost("upload-chunks")]
+    [HttpPost("upload-chunks/upload")]
     public async Task<Result> UploadChunks([FromForm] FileUploadPayload file, CancellationToken cancellationToken)
     {
         using (var stream = new BlobStream(_storage.StorageClient.GetPageBlobClient(file.Payload.BlobName)))
