@@ -25,6 +25,34 @@ public static class FileHelper
         return localFile;
     }
 
+    public static LocalFile GenerateLocalFileWithData(LocalFile file, int sizeInBytes)
+    {
+        using (var fileStream = file.FileStream)
+        {
+            Random random = new Random();
+            byte[] buffer = new byte[1024]; // Buffer for writing in chunks
+
+            while (sizeInBytes > 0)
+            {
+                int bytesToWrite = (int) Math.Min(sizeInBytes, buffer.Length);
+
+                for (int i = 0; i < bytesToWrite; i++)
+                {
+                    buffer[i] = (byte) random.Next(65, 91); // 'A' to 'Z'
+                    if (random.Next(2) == 0)
+                    {
+                        buffer[i] = (byte) random.Next(97, 123); // 'a' to 'z'
+                    }
+                }
+
+                fileStream.Write(buffer, 0, bytesToWrite);
+                sizeInBytes -= bytesToWrite;
+            }
+        }
+
+        return file;
+    }
+
     public static IFormFile GenerateFormFile(string fileName, int byteSize)
     {
         var localFile = GenerateLocalFile(fileName, byteSize);
