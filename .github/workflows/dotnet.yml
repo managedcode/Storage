@@ -48,6 +48,7 @@ jobs:
             -Dsonar.organization=managedcode
             -Dsonar.projectKey=managedcode_Storage
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.cs.opencover.reportsPaths=${{ github.workspace }}/coverage/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -57,7 +58,7 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}/coverage
+          coveragefolder: ${{ github.workspace }}/coverage/
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
