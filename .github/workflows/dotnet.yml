@@ -35,8 +35,11 @@ jobs:
 
       - name: Copy coverage files
         run: |
-          mkdir ${{ github.workspace }}/coverage
+          mkdir '${{ github.workspace }}/coverage'
           find . -name "*.opencover.xml" -exec sh -c 'cp "$0" "coverage/coverage-$(basename $0)"' {} \;
+
+      - name: List coverage files
+        run: ls '${{ github.workspace }}/coverage/'
  
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
