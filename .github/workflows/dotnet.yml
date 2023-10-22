@@ -3,9 +3,10 @@ name: .NET
 on:
   push:
     branches: [ main ]
+    
   pull_request:
-    branches: [ main ]
-
+    types: [opened, synchronize, reopened]
+    
   workflow_dispatch:
 
 jobs:
@@ -31,6 +32,11 @@ jobs:
 
       - name: Test
         run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover
+
+      - name: Copy coverage files
+        run: |
+          mkdir ${{ github.workspace }}/coverage
+          find . -name "*.opencover.xml" -exec sh -c 'cp "$0" "coverage/coverage-$(basename $0)"' {} \;
  
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
@@ -48,7 +54,7 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}/ManagedCode.Storage.IntegrationTests
+          coveragefolder: ${{ github.workspace }}/coverage
           baseline: main_recent
           retention-days: 15
           #stopIfQGFailed: true
