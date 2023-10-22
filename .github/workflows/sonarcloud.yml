@@ -46,5 +46,5 @@ jobs:
           .\.sonar\scanner\dotnet-sonarscanner begin /k:"managedcode_Storage" /o:"managedcode" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
           dotnet restore
           dotnet build
-          dotnet test
+          dotnet dotnet test /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
