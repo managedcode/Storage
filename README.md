@@ -7,6 +7,11 @@
 [![nuget](https://github.com/managedcode/Storage/actions/workflows/nuget.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/nuget.yml)
 [![CodeQL](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml)
 
+[![Alert Status](https://sonarcloud.io/api/project_badges/measure?project=managedcode_Storage&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=managedcode_Storage)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=managedcode_Storage&metric=coverage)](https://sonarcloud.io/summary/new_code?id=managedcode_Storage)
+
+
+
 
 | Version | Package                                                                                                                               | Description     |
 | ------- |---------------------------------------------------------------------------------------------------------------------------------------|-----------------|
