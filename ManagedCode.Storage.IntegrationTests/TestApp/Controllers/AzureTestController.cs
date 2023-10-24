@@ -61,7 +61,7 @@ public class AzureTestController : BaseTestController<IAzureStorage>
     }
     
     [HttpPost("upload-chunks-merge/complete")]
-    public async Task<Result> UploadChunksUsingMergeComplete(uint fileCrc, List<string> blobNames, CancellationToken cancellationToken)
+    public async Task<Result<BlobMetadata>> UploadChunksUsingMergeComplete(uint fileCrc, List<string> blobNames, CancellationToken cancellationToken)
     {
         using (var memoryStream = new MemoryStream())
         {
@@ -74,9 +74,16 @@ public class AzureTestController : BaseTestController<IAzureStorage>
                     await memoryStream.CopyToAsync(stream, cancellationToken);
                 }
             }
+
+            var result = await _storage.UploadAsync(memoryStream, cancellationToken: cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                return Result.Succeed(result.Value);
+            }
         }
 
-        return Result.Succeed();
+        return Result.Fail();
     }
 
     [HttpPost("upload-chunks-stream/complete")]
