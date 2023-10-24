@@ -216,7 +216,7 @@ public class StorageClient : IStorageClient
 
                         using (var chunk = new MultipartFormDataContent())
                         {
-                            chunk.Add(content, "chunk", "file");
+                            chunk.Add(content, "chunk");
                             chunk.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
                             chunk.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
                             chunk.Add(new StringContent(fileCRC.ToString()), "Payload.FullCRC");
