@@ -136,7 +136,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
          result.IsSuccess.Should().BeTrue();
          //result.Value.Should().NotBeNull();
      }
-     
+
      [Fact]
      public async Task UploadFileInChunksUsingMerge_WhenFileValid_ReturnSuccess()
      {
@@ -144,22 +144,18 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
          var storageClient = GetStorageClient();
          var fileName = "test.txt";
          var contentName = "file";
-         
+
          await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
          FileHelper.GenerateLocalFile(localFile, 200);
-    
+
          //Act
          var result = await storageClient.UploadLargeFileUsingMerge(localFile.FileStream,
-             _uploadChunksMergeEndpoint + "/upload", 
-             _uploadChunksMergeEndpoint + "/complete", 
+             _uploadChunksMergeEndpoint + "/upload",
+             _uploadChunksMergeEndpoint + "/complete",
              null,
              new CancellationToken());
-         
+
          // Assert
          result.IsSuccess.Should().BeTrue();
-         //result.Value.Should().NotBeNull();
      }
-     
-     //Task<Result> UploadLargeFileUsingMerge(Stream file, string uploadApiUrl, string mergeApiUrl, Action<double>? onProgressChanged, CancellationToken cancellationToken);
-
 }
