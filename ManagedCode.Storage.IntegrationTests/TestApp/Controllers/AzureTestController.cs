@@ -21,14 +21,14 @@ public class AzureTestController : BaseTestController<IAzureStorage>
         _storage = storage;
     }    
     
-    [HttpPost("upload-chunks/create")]
+    [HttpPost("upload-chunks-stream/create")]
     public async Task<Result<BlobMetadata>> CreateFile([FromBody] long fileSize, CancellationToken cancellationToken)
     {
         return await Storage.UploadAsync(new MemoryStream(new byte[fileSize]), cancellationToken);
     }
     
-    [HttpPost("upload-chunks/upload")]
-    public async Task<Result> UploadChunks([FromForm] FileUploadPayload file, CancellationToken cancellationToken)
+    [HttpPost("upload-chunks-stream/upload")]
+    public async Task<Result> UploadChunksUsingStream([FromForm] FileUploadPayload file, CancellationToken cancellationToken)
     {
         using (var stream = new BlobStream(_storage.StorageClient.GetPageBlobClient(file.Payload.BlobName)))
         {
@@ -40,15 +40,47 @@ public class AzureTestController : BaseTestController<IAzureStorage>
             {
                 await stream.WriteAsync(bytes, offset, bytesRead, cancellationToken);
             }
-            
-            //check crc
+        }
+
+        return Result.Succeed();
+    }
+    
+    [HttpPost("upload-chunks-merge/upload")]
+    public async Task<Result<string>> UploadChunksUsingMerge([FromForm] FileUploadPayload file, CancellationToken cancellationToken)
+    {
+        var uploadResult = await _storage.UploadToStorageAsync(file.File, 
+            new UploadOptions($"{file.File.Name}_{file.Payload.ChunkIndex}", $"{file.File.Name}_directory" ), 
+            cancellationToken: cancellationToken);
+
+        if (uploadResult.IsSuccess)
+        {
+            return Result.Succeed(uploadResult.Value.FullName);
+        }
+
+        return Result.Fail();
+    }
+    
+    [HttpPost("upload-chunks-merge/complete")]
+    public async Task<Result> UploadChunksUsingMergeComplete(uint fileCrc, List<string> blobNames, CancellationToken cancellationToken)
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            foreach (var blobName in blobNames)
+            {
+                var file = await _storage.DownloadAsync(blobName, cancellationToken: cancellationToken);
+
+                using (Stream stream = file.Value.FileStream)
+                {
+                    await memoryStream.CopyToAsync(stream, cancellationToken);
+                }
+            }
         }
 
         return Result.Succeed();
     }
 
-    [HttpPost("upload-chunks/complete")]
-    public async Task<bool> UploadComplete([FromBody] uint fileCrc, string blobName)
+    [HttpPost("upload-chunks-stream/complete")]
+    public async Task<bool> UploadChunksUsingStramComplete([FromBody] uint fileCrc, string blobName)
     {
         using (var stream = new BlobStream(_storage.StorageClient.GetPageBlobClient(blobName)))
         {
