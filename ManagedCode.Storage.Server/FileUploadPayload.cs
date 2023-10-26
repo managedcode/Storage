@@ -12,5 +12,4 @@ public class FilePayload
 {
     public int ChunkIndex { get; set; }
     public int ChunkSize { get; set; }
-    public uint FullCRC { get; set; }
 }

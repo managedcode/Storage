@@ -9,24 +9,41 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
-using ManagedCode.Storage.Server;
-using Microsoft.Extensions.Configuration;
 
 namespace ManagedCode.Storage.Client;
 
 public class StorageClient : IStorageClient
 {
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-
-    public StorageClient(HttpClient httpClient, IConfiguration configuration)
+    private long _chunkSize;
+    
+    public StorageClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _configuration = configuration;
     }
     
+    public long ChunkSize
+    {
+        get
+        {
+            if (_chunkSize == null)
+            {
+                throw new NullReferenceException("ChunkSize doesn't set");
+            }
+            return _chunkSize;
+        }
+        set
+        {
+            _chunkSize = value;
+        }
+    }
+
+    public void SetChunkSize(long size)
+    {
+        ChunkSize = size;
+    }
+
     public async Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default)
     {
         var streamContent = new StreamContent(stream);
@@ -135,10 +152,9 @@ public class StorageClient : IStorageClient
         Action<double>? onProgressChanged,
         CancellationToken cancellationToken = default)
     {
-        int bufferSize = Int32.Parse(_configuration.GetSection("ChunkSize").Value);
+        long bufferSize = ChunkSize;
         var buffer = new byte[bufferSize];
         int chunkIndex = 1;
-        uint fileCRC = 123214;
         var partOfProgress = file.Length / bufferSize;
         var fileName = "file" + Guid.NewGuid();
         
@@ -157,7 +173,6 @@ public class StorageClient : IStorageClient
                         formData.Add(content, "File", fileName);
                         formData.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
                         formData.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
-                        formData.Add(new StringContent(fileCRC.ToString()), "Payload.FullCRC");
                         await _httpClient.PostAsync(uploadApiUrl, formData, cancellationToken);
                     }
                 }

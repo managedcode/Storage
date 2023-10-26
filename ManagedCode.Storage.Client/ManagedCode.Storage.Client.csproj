@@ -20,7 +20,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
-        <ProjectReference Include="..\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj" />
     </ItemGroup>
 
     <ItemGroup>
