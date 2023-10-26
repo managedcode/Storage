@@ -11,16 +11,20 @@ using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.Server;
+using Microsoft.Extensions.Configuration;
 
 namespace ManagedCode.Storage.Client;
 
 public class StorageClient : IStorageClient
 {
     private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
 
-    public StorageClient(HttpClient httpClient)
+    public StorageClient(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
     }
     
     public async Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default)
@@ -125,130 +129,53 @@ public class StorageClient : IStorageClient
         }
     }
     
-    public async Task<Result> UploadLargeFileUsingStream(Stream file, 
-        string сreateApiUrl,  
+    public async Task<Result<uint>> UploadLargeFile(Stream file,
         string uploadApiUrl, 
         string completeApiUrl, 
         Action<double>? onProgressChanged,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
-        var bufferSize = 4096000; //TODO: chunk size get from config
+        int bufferSize = Int32.Parse(_configuration.GetSection("ChunkSize").Value);
         var buffer = new byte[bufferSize];
-        int bytesRead;
         int chunkIndex = 1;
-        var fileCRC = Crc32Helper.Calculate(file);
+        uint fileCRC = 123214;
         var partOfProgress = file.Length / bufferSize;
-        
-        var createdFileResponse = await _httpClient.PostAsync(сreateApiUrl, JsonContent.Create(file.Length), cancellationToken);
-        var createdFile = await createdFileResponse.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
+        var fileName = "file" + Guid.NewGuid();
         
         var semaphore = new SemaphoreSlim(0, 4);
         var tasks = new List<Task>();
+        int bytesRead;
         while ((bytesRead = await file.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
         {
-            var task = Task.Run(() =>
+            var task = Task.Run(async () =>
             {
-                try
+                using (var memoryStream = new MemoryStream(buffer, 0, bytesRead))
                 {
-                    semaphore.WaitAsync(cancellationToken);
-                    using (var memoryStream = new MemoryStream(buffer, 0, bytesRead))
+                    var content = new StreamContent(memoryStream);
+                    using (var formData = new MultipartFormDataContent())
                     {
-                        var content = new StreamContent(memoryStream);
-
-                        using (var chunk = new MultipartFormDataContent())
-                        {
-                            chunk.Add(content, "chunk", createdFile.Value.FullName);
-                            chunk.Add(new StringContent(createdFile.Value.FullName), "Payload.BlobName");
-                            chunk.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
-                            chunk.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
-                            chunk.Add(new StringContent(fileCRC.ToString()), "Payload.FullCRC");
-
-                            _httpClient.PostAsync(uploadApiUrl, chunk, cancellationToken);
-                        }
-                        
-                        onProgressChanged?.Invoke(partOfProgress * chunkIndex);
+                        formData.Add(content, "File", fileName);
+                        formData.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
+                        formData.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
+                        formData.Add(new StringContent(fileCRC.ToString()), "Payload.FullCRC");
+                        await _httpClient.PostAsync(uploadApiUrl, formData, cancellationToken);
                     }
                 }
-                finally
-                {
-                    semaphore.Release();
-                }
+                
+                semaphore.Release();
             }, cancellationToken);
-            
+ 
+            await semaphore.WaitAsync(cancellationToken);
             tasks.Add(task);
-            
+             onProgressChanged?.Invoke(partOfProgress * chunkIndex);
             chunkIndex++;
         }
         
         await Task.WhenAll(tasks.ToArray());
         
         var mergeResult = await _httpClient.PostAsync(completeApiUrl, JsonContent.Create(
-            new {fileCrc = fileCRC, blobName = createdFile.Value.FullName}), cancellationToken);
+            fileName), cancellationToken);
         
-        return await mergeResult.Content.ReadFromJsonAsync<Result>(cancellationToken: cancellationToken);
-    }
-    
-    public async Task<Result> UploadLargeFileUsingMerge(Stream file,
-        string uploadApiUrl, 
-        string mergeApiUrl, 
-        Action<double>? onProgressChanged,
-        CancellationToken cancellationToken)
-    {
-        var bufferSize = 4096000; //TODO: chunk size get from config
-        var buffer = new byte[bufferSize];
-        int bytesRead;
-        int chunkIndex = 1;
-        var fileCRC = Crc32Helper.Calculate(file);
-        var partOfProgress = file.Length / bufferSize;
-        
-        var semaphore = new SemaphoreSlim(0, 4);
-        var tasks = new List<Task<HttpResponseMessage>>();
-        while ((bytesRead = await file.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
-        {
-            var task = Task.Run(() =>
-            {
-                try
-                {
-                    semaphore.WaitAsync(cancellationToken);
-                    using (var memoryStream = new MemoryStream(buffer, 0, bytesRead))
-                    {
-                        var content = new StreamContent(memoryStream);
-
-                        using (var chunk = new MultipartFormDataContent())
-                        {
-                            chunk.Add(content, "chunk");
-                            chunk.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
-                            chunk.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
-                            chunk.Add(new StringContent(fileCRC.ToString()), "Payload.FullCRC");
-
-                            var result = _httpClient.PostAsync(uploadApiUrl, chunk, cancellationToken);
-                            onProgressChanged?.Invoke(partOfProgress * chunkIndex);
-                            
-                            return result;
-                        }
-                    }
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            }, cancellationToken);
-            
-            tasks.Add(task);
-            chunkIndex++;
-        }
-        
-        var tasksResult =  await Task.WhenAll(tasks.ToArray());
-        var blobNames = tasksResult
-            .Select(async x =>
-            {
-                var content = await x.Content.ReadFromJsonAsync<Result<string>>(cancellationToken: cancellationToken);
-                return content.Value;
-            });
-        
-        var mergeResult = await _httpClient.PostAsync(mergeApiUrl, JsonContent.Create(
-            new {fileCrc = fileCRC, blobNames = blobNames}), cancellationToken);
-        
-        return await mergeResult.Content.ReadFromJsonAsync<Result>(cancellationToken: cancellationToken);
+        return await mergeResult.Content.ReadFromJsonAsync<Result<uint>>(cancellationToken: cancellationToken);
     }
 }

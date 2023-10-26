@@ -10,9 +10,7 @@ public class FileUploadPayload
 
 public class FilePayload
 {
-    public string? BlobName { get; set; }
     public int ChunkIndex { get; set; }
     public int ChunkSize { get; set; }
     public uint FullCRC { get; set; }
-    public string? UploadedCRC { get; set; }
 }

@@ -1,4 +1,5 @@
 ﻿using ManagedCode.Storage.Client;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;
@@ -22,6 +23,15 @@ public abstract class BaseControllerTests
 
     protected IStorageClient GetStorageClient()
     {
-        return new StorageClient(TestApplication.CreateClient());
+        var myConfiguration = new Dictionary<string, string>
+        {
+            {"ChunkSize", "4096000"}
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(myConfiguration)
+            .Build();
+        
+        return new StorageClient(TestApplication.CreateClient(), configuration);
     }
 }

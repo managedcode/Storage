@@ -7,10 +7,7 @@ public static class ApiEndpoints
     public static class Base
     {
         public const string UploadFile = "{0}/upload";
-        public const string UploadCreateFile = "{0}/upload-chunks/create";
-        public const string UploadFileChunksUsingStream = "{0}/upload-chunks-stream";
-        public const string UploadFileChunksUsingMerge = "{0}/upload-chunks-merge";
-        public const string UploadFileComplete = "{0}/upload-chunks/complete";
+        public const string UploadLargeFile = "{0}/upload-chunks";
         public const string DownloadFile = "{0}/download";
     }
 }

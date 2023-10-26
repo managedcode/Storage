@@ -10,14 +10,12 @@ namespace ManagedCode.Storage.IntegrationTests.Tests;
 public abstract class BaseUploadControllerTests : BaseControllerTests
 {
     private readonly string _uploadEndpoint;
-    private readonly string _uploadChunksStreamEndpoint;
-    private readonly string _uploadChunksMergeEndpoint;
+    private readonly string _uploadLargeFile;
 
     protected BaseUploadControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
         _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
-        _uploadChunksStreamEndpoint = string.Format(ApiEndpoints.Base.UploadFileChunksUsingStream, ApiEndpoint);
-        _uploadChunksMergeEndpoint = string.Format(ApiEndpoints.Base.UploadFileChunksUsingMerge, ApiEndpoint);
+        _uploadLargeFile = string.Format(ApiEndpoints.Base.UploadLargeFile, ApiEndpoint);
     }
     
     [Fact]
@@ -46,7 +44,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        FileHelper.GenerateLocalFile(localFile, 200);
+        FileHelper.GenerateLocalFile(localFile, 1);
 
         // Act
         var result = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
@@ -118,44 +116,23 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
      }
      
      [Fact]
-     public async Task UploadFileInChunksUsingStream_WhenFileValid_ReturnSuccess()
+     public async Task UploadLargeFile_WhenFileValid_ReturnSuccess()
      {
          // Arrange
          var storageClient = GetStorageClient();
-         var fileName = "test.txt";
-         var contentName = "file";
          
          await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-         FileHelper.GenerateLocalFile(localFile, 200);
-    
+         FileHelper.GenerateLocalFile(localFile, 750);
+         var crc32 = Crc32Helper.Calculate(await localFile.ReadAllBytesAsync());
+         
          // Act
-         var result = await storageClient.UploadLargeFileUsingStream(localFile.FileStream, _uploadChunksStreamEndpoint + "/create", 
-             _uploadChunksStreamEndpoint + "/upload", _uploadChunksStreamEndpoint + "/complete", null, new CancellationToken());
+         var result = await storageClient.UploadLargeFile(localFile.FileStream,
+             _uploadLargeFile + "/upload", 
+             _uploadLargeFile + "/complete", 
+             null);
          
          // Assert
          result.IsSuccess.Should().BeTrue();
-         //result.Value.Should().NotBeNull();
-     }
-
-     [Fact]
-     public async Task UploadFileInChunksUsingMerge_WhenFileValid_ReturnSuccess()
-     {
-         // Arrange
-         var storageClient = GetStorageClient();
-         var fileName = "test.txt";
-         var contentName = "file";
-
-         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-         FileHelper.GenerateLocalFile(localFile, 200);
-
-         //Act
-         var result = await storageClient.UploadLargeFileUsingMerge(localFile.FileStream,
-             _uploadChunksMergeEndpoint + "/upload",
-             _uploadChunksMergeEndpoint + "/complete",
-             null,
-             new CancellationToken());
-
-         // Assert
-         result.IsSuccess.Should().BeTrue();
+         result.Value.Should().Be(crc32);
      }
 }

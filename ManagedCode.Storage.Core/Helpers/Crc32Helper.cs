@@ -37,19 +37,6 @@ public static class Crc32Helper
         return ~crcValue;
     }
     
-    public static uint Calculate(Stream stream)
-    {
-        var bytes = StreamToByteArray(stream);
-        uint crcValue = 0xffffffff;
-
-        foreach (byte by in bytes)
-        {
-            byte tableIndex = (byte)(((crcValue) & 0xff) ^ by);
-            crcValue = Crc32Table[tableIndex] ^ (crcValue >> 8);
-        }
-        return ~crcValue;
-    }
-    
     public static uint CalculateFileCRC(string filePath)
     {
         uint crcValue = 0xffffffff;
