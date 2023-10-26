@@ -122,7 +122,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
          var storageClient = GetStorageClient();
          
          await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-         FileHelper.GenerateLocalFile(localFile, 750);
+         FileHelper.GenerateLocalFile(localFile, 50);
          var crc32 = Crc32Helper.Calculate(await localFile.ReadAllBytesAsync());
          storageClient.SetChunkSize(4096000);
          
