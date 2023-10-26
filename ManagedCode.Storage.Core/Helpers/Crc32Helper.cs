@@ -63,24 +63,4 @@ public static class Crc32Helper
         }
         return crcValue;
     }
-    
-    private static byte[] StreamToByteArray(Stream stream)
-    {
-        // Create a memory stream to store the data from the input stream
-        using (MemoryStream memoryStream = new MemoryStream())
-        {
-            int bufferSize = 4096;
-            byte[] buffer = new byte[bufferSize];
-            int bytesRead;
-
-            // Read from the input stream and write to the memory stream
-            while ((bytesRead = stream.Read(buffer, 0, bufferSize)) > 0)
-            {
-                memoryStream.Write(buffer, 0, bytesRead);
-            }
-
-            // Convert the memory stream to a byte array
-            return memoryStream.ToArray();
-        }
-    }
 }
