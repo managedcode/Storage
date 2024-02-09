@@ -1,8 +1,6 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -44,26 +42,23 @@ public class StorageClient : IStorageClient
         ChunkSize = size;
     }
 
+    public event EventHandler<ProgressStatus>? OnProgressStatusChanged;
+
     public async Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default)
     {
-        var streamContent = new StreamContent(stream);
+        using var streamContent = new StreamContent(stream);
+        using var formData = new MultipartFormDataContent();
+        formData.Add(streamContent, contentName, contentName);
 
-        using (var formData = new MultipartFormDataContent())
+        var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
         {
-            formData.Add(streamContent, contentName, contentName);
-
-            var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
-                return result;
-            }
-
-            string content = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
-
-            return Result<BlobMetadata>.Fail(response.StatusCode, content);
+            return await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
         }
+
+        var content = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
+        return Result<BlobMetadata>.Fail(response.StatusCode, content);
     }
     
     public async Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default)
@@ -130,19 +125,21 @@ public class StorageClient : IStorageClient
         return Result<BlobMetadata>.Fail(response.StatusCode);
     }
 
-    public async Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null,  CancellationToken cancellationToken = default)
+    public async Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null, CancellationToken cancellationToken = default)
     {
         try
         {
-            var response = await _httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
-            
+            using var response = await _httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
             var localFile = path is null ? await LocalFile.FromStreamAsync(response, fileName) : await LocalFile.FromStreamAsync(response, path, fileName);
-
             return Result<LocalFile>.Succeed(localFile);
         }
-        catch (HttpRequestException e)
+        catch (HttpRequestException e) when (e.StatusCode != null)
         {
-            return Result<LocalFile>.Fail(e.StatusCode ?? HttpStatusCode.InternalServerError);
+            return Result<LocalFile>.Fail(e.StatusCode.Value);
+        }
+        catch (Exception)
+        {
+            return Result<LocalFile>.Fail(HttpStatusCode.InternalServerError);
         }
     }
     
@@ -192,5 +189,80 @@ public class StorageClient : IStorageClient
             fileName), cancellationToken);
         
         return await mergeResult.Content.ReadFromJsonAsync<Result<uint>>(cancellationToken: cancellationToken);
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(string content, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(string content, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, Action<UploadOptions> action, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

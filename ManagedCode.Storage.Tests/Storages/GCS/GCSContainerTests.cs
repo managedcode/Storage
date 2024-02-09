@@ -1,15 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
-using TestcontainersGCS;
+using Testcontainers.FakeGcsServer;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.Storages.GCS;
 
 
-public class GCSContainerTests : ContainerTests<GCSContainer>
+public class GCSContainerTests : ContainerTests<FakeGcsServerContainer>
 {
-    protected override GCSContainer Build()
+    protected override FakeGcsServerContainer Build()
     {
-        return new GCSBuilder().Build();
+        return new FakeGcsServerBuilder().Build();
     }
 
     protected override ServiceProvider ConfigureServices()
