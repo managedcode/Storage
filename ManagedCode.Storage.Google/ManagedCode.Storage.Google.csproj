@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-        <LangVersion>11</LangVersion>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>12</LangVersion>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <DebugType>embedded</DebugType>
         <Nullable>enable</Nullable>
@@ -22,13 +22,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Google.Api.Gax" Version="4.4.0" />
-        <PackageReference Include="Google.Api.Gax.Rest" Version="4.4.0" />
-        <PackageReference Include="Google.Apis.Storage.v1" Version="1.62.1.3206" />
-        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0" />
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
+        <PackageReference Include="Google.Api.Gax" Version="4.5.0" />
+        <PackageReference Include="Google.Api.Gax.Rest" Version="4.5.0" />
+        <PackageReference Include="Google.Apis.Storage.v1" Version="1.66.0.3291" />
+        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.7.0" />
+        <PackageReference Include="ManagedCode.Communication" Version="8.0.0" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using TestcontainersGCS;
+using Testcontainers.FakeGcsServer;
 using Xunit;
 
 // ReSharper disable MethodHasAsyncOverload
@@ -7,11 +7,11 @@ using Xunit;
 namespace ManagedCode.Storage.Tests.Storages.GCS;
 
 
-public class GCSBlobTests : BlobTests<GCSContainer>
+public class GCSBlobTests : BlobTests<FakeGcsServerContainer>
 {
-    protected override GCSContainer Build()
+    protected override FakeGcsServerContainer Build()
     {
-        return new GCSBuilder().Build();
+        return new FakeGcsServerBuilder().Build();
     }
 
     protected override ServiceProvider ConfigureServices()
