@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
@@ -38,6 +38,8 @@
       <ProjectReference Include="..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj" />
       <ProjectReference Include="..\ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj" />
       <ProjectReference Include="..\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj" />
+      <ProjectReference Include="..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj" />
+      <ProjectReference Include="..\Samples\WebApiSample\WebApiSample.csproj" />
     </ItemGroup>
 
 </Project>
