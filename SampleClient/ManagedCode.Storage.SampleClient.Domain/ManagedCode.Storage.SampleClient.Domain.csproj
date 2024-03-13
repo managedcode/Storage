@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ManagedCode.Storage.Aws" Version="2.1.14" />
+    <PackageReference Include="ManagedCode.Storage.Azure" Version="2.1.14" />
+    <PackageReference Include="ManagedCode.Storage.AzureDataLake" Version="2.1.14" />
+    <PackageReference Include="ManagedCode.Storage.Core" Version="2.1.14" />
+    <PackageReference Include="ManagedCode.Storage.FileSystem" Version="2.1.14" />
+    <PackageReference Include="ManagedCode.Storage.Gcp" Version="2.1.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ManagedCode.Storage.SampleClient.Core\ManagedCode.Storage.SampleClient.Core.csproj" />
+  </ItemGroup>
+
+</Project>
