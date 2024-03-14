@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Extensions;
 
 public static class BrowserFileExtensions
 {

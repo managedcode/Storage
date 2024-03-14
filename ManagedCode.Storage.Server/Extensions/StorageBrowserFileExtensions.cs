@@ -6,7 +6,7 @@ using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Extensions;
 
 public static class StorageBrowserFileExtensions
 {

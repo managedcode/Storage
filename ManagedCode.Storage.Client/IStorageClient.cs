@@ -11,7 +11,17 @@ namespace ManagedCode.Storage.Client;
 public interface IStorageClient : IUploader, IDownloader
 {
     void SetChunkSize(long size);
-    
+    Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<uint>> UploadLargeFile(Stream file,
+        string uploadApiUrl,
+        string completeApiUrl,
+        Action<double>? onProgressChanged,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     ///     Event triggered when the progress status changes during an upload or download operation.
     /// </summary>

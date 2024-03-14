@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.Server.Extensions;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Controllers;
 
 public abstract class BaseController : ControllerBase
 {
@@ -21,13 +22,13 @@ public abstract class BaseController : ControllerBase
         Storage = storage;
     }
 
-    protected async Task<Result<BlobMetadata>>UploadToStorageAsync(IBrowserFile formFile,
+    protected async Task<Result<BlobMetadata>> UploadToStorageAsync(IBrowserFile formFile,
         UploadOptions? options = null)
     {
         return await Storage.UploadToStorageAsync(formFile, options);
     }
-    
-    protected async Task<Result<BlobMetadata>>UploadToStorageAsync(IBrowserFile formFile,
+
+    protected async Task<Result<BlobMetadata>> UploadToStorageAsync(IBrowserFile formFile,
         Action<UploadOptions> options)
     {
         return await Storage.UploadToStorageAsync(formFile, options);

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Extensions;
 
 public static class FormFileExtensions
 {
