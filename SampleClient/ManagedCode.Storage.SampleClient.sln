@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.SampleClient.Core", "ManagedCode.Storage.SampleClient.Core\ManagedCode.Storage.SampleClient.Core.csproj", "{5FA1A9E0-8D49-4DDA-974B-B5EFDE94EBCF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.SampleClient.Domain", "ManagedCode.Storage.SampleClient.Domain\ManagedCode.Storage.SampleClient.Domain.csproj", "{D4A6C5D7-E73C-4A28-8F9E-EDD61AA37DC0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.SampleClient.WebApi", "ManagedCode.Storage.SampleClient.WebApi\ManagedCode.Storage.SampleClient.WebApi.csproj", "{4C3E5331-9F06-4409-A66D-8F20D62ACC12}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5FA1A9E0-8D49-4DDA-974B-B5EFDE94EBCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FA1A9E0-8D49-4DDA-974B-B5EFDE94EBCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FA1A9E0-8D49-4DDA-974B-B5EFDE94EBCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FA1A9E0-8D49-4DDA-974B-B5EFDE94EBCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4A6C5D7-E73C-4A28-8F9E-EDD61AA37DC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4A6C5D7-E73C-4A28-8F9E-EDD61AA37DC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4A6C5D7-E73C-4A28-8F9E-EDD61AA37DC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4A6C5D7-E73C-4A28-8F9E-EDD61AA37DC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C3E5331-9F06-4409-A66D-8F20D62ACC12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C3E5331-9F06-4409-A66D-8F20D62ACC12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C3E5331-9F06-4409-A66D-8F20D62ACC12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C3E5331-9F06-4409-A66D-8F20D62ACC12}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
