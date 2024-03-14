@@ -1,4 +1,4 @@
-﻿using ManagedCode.Communication;
+﻿using System.ComponentModel.DataAnnotations;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.SampleClient.Core;
@@ -11,6 +11,7 @@ namespace ManagedCode.Storage.SampleClient.Domain.Services;
 
 public class FileStorageService : IFileStorageService
 {
+    // Concrete storage will be provided depending on CurrentState.StorageProvider value
     private IStorage _storage;
 
     public FileStorageService(IStorage storage)
@@ -20,6 +21,16 @@ public class FileStorageService : IFileStorageService
 
     public async Task DeleteFileAsync(DeleteFileRequest request)
     {
+        var existResult = await _storage.ExistsAsync(new ExistOptions
+        {
+            FileName = request.FileName
+        });
+
+        if (!existResult.Value)
+        {
+            throw new ValidationException($"File with name {request.FileName} not found.");
+        }
+
         var result = await _storage.DeleteAsync(new DeleteOptions 
         {
             FileName = request.FileName

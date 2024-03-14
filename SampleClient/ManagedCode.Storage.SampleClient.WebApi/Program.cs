@@ -1,4 +1,5 @@
 using ManagedCode.Storage.SampleClient.WebApi.Extensions;
+using ManagedCode.Storage.SampleClient.WebApi.Middleware.ExceptionHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 app.UseCors(cpb => cpb.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 

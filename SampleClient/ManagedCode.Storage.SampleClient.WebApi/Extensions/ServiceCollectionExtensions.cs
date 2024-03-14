@@ -26,6 +26,8 @@ public static class ServiceCollectionExtensions
             options.BaseFolder = builder.Configuration.GetValue<string>("FileStorage:BaseFolder");
         });
 
+        // TODO: Add other storages registration with related configuration
+
         builder.Services.AddTransient<IStorage>(serviceProvider => 
         {
             var currentState = serviceProvider.GetRequiredService<CurrentState>();

@@ -5,8 +5,10 @@ using ManagedCode.Storage.SampleClient.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
-namespace ManagedCode.Storage.SampleClient.WebApi;
+namespace ManagedCode.Storage.SampleClient.WebApi.Controllers.Base;
 
+// This is the base implementation for controller with files operations
+// IMPORTANT: Concrete controller should set StorageProvider for scoped CurrentState object in constructor
 [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
 [RequestSizeLimit(int.MaxValue)]
 public abstract class BaseStorageController : ControllerBase
