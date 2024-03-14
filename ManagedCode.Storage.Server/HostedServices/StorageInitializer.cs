@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,7 +5,7 @@ using ManagedCode.Storage.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.HostedServices;
 
 public class StorageSetupBackgroundService(IEnumerable<IStorage> storages) : BackgroundService
 {
