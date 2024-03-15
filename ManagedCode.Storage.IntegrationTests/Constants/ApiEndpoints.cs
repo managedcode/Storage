@@ -3,7 +3,6 @@
 public static class ApiEndpoints
 {
     public const string Azure = "azure";
-    public const string FileSystem = "fileSystem";
     
     public static class Base
     {
