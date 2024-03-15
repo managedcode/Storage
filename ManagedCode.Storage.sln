@@ -33,6 +33,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E609A83E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.IntegrationTests", "ManagedCode.Storage.IntegrationTests\ManagedCode.Storage.IntegrationTests.csproj", "{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlobStorageAccess", "BlobStorageAccess", "{76E946A3-0653-4745-A2FD-7E24DC0EBEA4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlobStorageAccessApi", "BlobStorageAccessApi\BlobStorageAccessApi.csproj", "{BD7FB9E5-2EE6-412A-9746-DEEB127CBD84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlobStorageAccessClient", "BlobStorageAccessClient\BlobStorageAccessClient.csproj", "{797166F9-FCAB-4ACF-8684-56A1878D42FD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +93,14 @@ Global
 		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD7FB9E5-2EE6-412A-9746-DEEB127CBD84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD7FB9E5-2EE6-412A-9746-DEEB127CBD84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD7FB9E5-2EE6-412A-9746-DEEB127CBD84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD7FB9E5-2EE6-412A-9746-DEEB127CBD84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{797166F9-FCAB-4ACF-8684-56A1878D42FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{797166F9-FCAB-4ACF-8684-56A1878D42FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{797166F9-FCAB-4ACF-8684-56A1878D42FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{797166F9-FCAB-4ACF-8684-56A1878D42FD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -105,5 +119,7 @@ Global
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
 		{F9DA9E52-2DDF-40E3-B0A4-4EC7B118FE8F} = {E609A83E-6400-42B0-AD5A-5B006EABC275}
 		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE} = {E609A83E-6400-42B0-AD5A-5B006EABC275}
+		{BD7FB9E5-2EE6-412A-9746-DEEB127CBD84} = {76E946A3-0653-4745-A2FD-7E24DC0EBEA4}
+		{797166F9-FCAB-4ACF-8684-56A1878D42FD} = {76E946A3-0653-4745-A2FD-7E24DC0EBEA4}
 	EndGlobalSection
 EndGlobal

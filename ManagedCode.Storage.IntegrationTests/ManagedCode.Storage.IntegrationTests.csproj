@@ -32,6 +32,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\BlobStorageAccessClient\BlobStorageAccessClient.csproj" />
       <ProjectReference Include="..\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj" />
       <ProjectReference Include="..\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
       <ProjectReference Include="..\ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj" />
