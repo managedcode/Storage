@@ -6,7 +6,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Communication.Extensions;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 
@@ -37,6 +36,32 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     public async Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
         return await DeleteDirectoryInternalAsync(directory, cancellationToken);
+    }
+
+    public Task<Result<uint>> UploadLargeFile(Stream file, string uploadApiUrl, string completeApiUrl, Action<double>? onProgressChanged,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     public Task<Result<BlobMetadata>> UploadAsync(Stream content, CancellationToken cancellationToken = default)
@@ -127,6 +152,11 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         options.FileName = fileInfo.Name;
 
         return UploadInternalAsync(fileInfo.OpenRead(), SetUploadOptions(options), cancellationToken);
+    }
+
+    public Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)

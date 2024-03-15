@@ -18,6 +18,8 @@ public interface IStorage<out T, TOptions> : IStorage where TOptions : IStorageO
 
 public interface IDownloader
 {
+    Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null,
+        CancellationToken cancellationToken = default);
     /// <summary>
     ///     Downloads and saves the file to the local file system.
     /// </summary>
@@ -36,6 +38,24 @@ public interface IDownloader
 
 public interface IUploader
 {
+    Task<Result<uint>> UploadLargeFile(Stream file,
+        string uploadApiUrl,
+        string completeApiUrl,
+        Action<double>? onProgressChanged,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName,
+        CancellationToken cancellationToken = default);
+    
     /// <summary>
     ///     Upload data from the stream into the blob storage.
     /// </summary>
