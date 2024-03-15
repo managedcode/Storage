@@ -128,11 +128,6 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         return UploadInternalAsync(fileInfo.OpenRead(), SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
     {
         var file = new LocalFile();
