@@ -38,32 +38,6 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         return await DeleteDirectoryInternalAsync(directory, cancellationToken);
     }
 
-    public Task<Result<uint>> UploadLargeFile(Stream file, string uploadApiUrl, string completeApiUrl, Action<double>? onProgressChanged,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<Result<BlobMetadata>> UploadAsync(Stream content, CancellationToken cancellationToken = default)
     {
         return UploadAsync(content, new UploadOptions(), cancellationToken);
