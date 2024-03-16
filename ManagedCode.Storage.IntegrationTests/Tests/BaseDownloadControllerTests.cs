@@ -1,8 +1,9 @@
 ﻿using System.Net;
 using FluentAssertions;
+using ManagedCode.Storage.Client;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.IntegrationTests.Constants;
-using ManagedCode.Storage.IntegrationTests.Helpers;
 using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;
@@ -23,6 +24,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
+        
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
