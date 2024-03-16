@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using FluentAssertions;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
@@ -23,6 +23,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
+        
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");

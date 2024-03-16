@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,8 +20,14 @@ public interface IStorageClient : IUploader, IDownloader
     ///     This includes the file name, progress percentage, total bytes, transferred bytes, elapsed time, remaining time, speed, and any error message.
     /// </remarks>
     event EventHandler<ProgressStatus> OnProgressStatusChanged;
-}
 
+    Task<Result<BlobMetadata>> UploadFile(Stream stream, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadFile(FileInfo fileInfo, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName, CancellationToken cancellationToken = default);
+    Task<Result<uint>> UploadLargeFile(Stream file, string uploadApiUrl, string completeApiUrl,Action<double>? onProgressChanged,CancellationToken cancellationToken = default);
+    Task<Result<LocalFile>> DownloadFile(string fileName, string apiUrl, string? path = null, CancellationToken cancellationToken = default);
+}
 
 public record ProgressStatus(
     string File, 
