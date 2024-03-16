@@ -11,8 +11,11 @@ public class FileSystemBlobStorageController(
     ILogger<FileSystemBlobStorageController> logger)
     : ControllerBase
 {
-    private readonly IFileSystemStorage _fileSystemStorage = fileSystemStorage ?? throw new ArgumentNullException(nameof(fileSystemStorage));
-    private readonly ILogger<FileSystemBlobStorageController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IFileSystemStorage _fileSystemStorage =
+        fileSystemStorage ?? throw new ArgumentNullException(nameof(fileSystemStorage));
+
+    private readonly ILogger<FileSystemBlobStorageController> _logger =
+        logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     ///     Uploads a file to the file system storage.
@@ -29,10 +32,7 @@ public class FileSystemBlobStorageController(
             var result = await _fileSystemStorage.UploadAsync(stream, options =>
                 options.FileName = formFile.FileName);
 
-            if (result.IsSuccess)
-            {
-                return Ok(result);
-            }
+            if (result.IsSuccess) return Ok(result);
 
             _logger.LogError($"Failed to upload file: {result.GetError()?.Message}");
             return Problem(result.GetError()?.Message, result.GetError()?.ErrorCode);
@@ -102,6 +102,31 @@ public class FileSystemBlobStorageController(
             _logger.LogError(ex, "An error occurred while deleting the file.");
             return Problem("An error occurred while deleting the file.",
                 statusCode: (int)HttpStatusCode.InternalServerError);
+        }
+    }
+
+    /// <summary>
+    ///     Endpoint to get the URL of the video page for streaming.
+    /// </summary>
+    [HttpGet("stream")]
+    public IActionResult GetVideoPageUrl(string fileName)
+    {
+        // Check if the file name is provided
+        if (string.IsNullOrEmpty(fileName))
+            return BadRequest("File name is required.");
+
+        try
+        {
+            // Create the URL of the video page
+            var videoPageUrl = Url.Page("/WatchVideo", null, new { fileName }, Request.Scheme);
+
+            // Return the URL of the video page
+            return Ok(videoPageUrl);
+        }
+        catch (Exception ex)
+        {
+            // Log errors if necessary
+            return StatusCode(500, "An error occurred while getting the video page URL.");
         }
     }
 }

@@ -3,6 +3,7 @@ using ManagedCode.Storage.FileSystem.Extensions;
 using ManagedCode.Storage.FileSystem.Options;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddRazorPages();
 
 // Large Files Upload 
 
@@ -46,5 +48,12 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.MapControllers();
+app.MapRazorPages();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Environment.CurrentDirectory, "managed-code-bucket")),
+    RequestPath = "/managed-code-bucket"
+});
 
 app.Run();
