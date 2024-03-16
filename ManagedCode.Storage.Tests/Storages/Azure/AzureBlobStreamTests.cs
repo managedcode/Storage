@@ -17,7 +17,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
     protected override AzuriteContainer Build()
     {
         return new AzuriteBuilder()
-            .WithImage("mcr.microsoft.com/azure-storage/azurite:3.26.0")
+            .WithImage("mcr.microsoft.com/azure-storage/azurite:latest")
             .Build();
     }
 

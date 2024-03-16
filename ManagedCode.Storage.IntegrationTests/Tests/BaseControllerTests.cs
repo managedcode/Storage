@@ -1,5 +1,5 @@
-﻿using ManagedCode.Storage.Client;
-using Microsoft.Extensions.Configuration;
+﻿using BlobStorageAccessClient;
+using ManagedCode.Storage.Client;
 using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;
@@ -25,4 +25,10 @@ public abstract class BaseControllerTests
     {
         return new StorageClient(TestApplication.CreateClient());
     }
+
+    protected IApiClient GetApiClient()
+    {
+        return new ApiClient(TestApplication.CreateClient());
+    }
+    
 }

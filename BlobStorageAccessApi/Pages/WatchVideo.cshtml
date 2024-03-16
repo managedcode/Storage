@@ -1,0 +1,46 @@
+@page
+@model BlobStorageAccessApi.Pages.WatchVideoModel
+@{
+    ViewData["Title"] = "Watch Video";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .video-container {
+            position: relative;
+            width: 80%; /* Adjust the width as needed */
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="video-container">
+    <h1 style="text-align: center;">Watch Video</h1>
+    <video controls autoplay>
+        <source src="@Model.VideoUrl" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+</body>
+</html>

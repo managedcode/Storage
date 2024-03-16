@@ -6,7 +6,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Communication.Extensions;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 
