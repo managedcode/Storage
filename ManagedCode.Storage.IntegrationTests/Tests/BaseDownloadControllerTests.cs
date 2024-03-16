@@ -1,6 +1,5 @@
-﻿using System.Net;
+using System.Net;
 using FluentAssertions;
-using ManagedCode.Storage.Client;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.IntegrationTests.Constants;
