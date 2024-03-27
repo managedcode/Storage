@@ -24,7 +24,7 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
     public StorageTestApplication()
     {
         _azuriteContainer = new AzuriteBuilder()
-            .WithImage("mcr.microsoft.com/azure-storage/azurite:3.26.0")
+            .WithImage("mcr.microsoft.com/azure-storage/azurite:3.29.0")
             .Build();
         
         _azuriteContainer.StartAsync().Wait();

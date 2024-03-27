@@ -10,6 +10,7 @@ using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem.Options;
+using Microsoft.Extensions.Options;
 
 namespace ManagedCode.Storage.FileSystem;
 
@@ -235,5 +236,16 @@ public class FileSystemStorage : BaseStorage<string, FileSystemStorageOptions>, 
         {
             Directory.CreateDirectory(path);
         }
+    }
+
+    public override async Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+
+        var filePath = GetPathFromOptions(new DownloadOptions() { FileName = fileName });
+
+        return File.Exists(filePath)
+            ? Result<Stream>.Succeed(new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            : Result<Stream>.Fail("File not found");
     }
 }

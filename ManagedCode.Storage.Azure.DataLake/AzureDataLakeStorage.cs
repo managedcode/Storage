@@ -277,4 +277,16 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
             _ => StorageClient.GetDirectoryClient(options.Directory).GetFileClient(options.FileName)
         };
     }
+
+    public override async Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        return await OpenReadStreamAsync(
+            new OpenReadStreamOptions()
+            {
+                FileName = fileName,
+                Position = 0,
+                BufferSize = 4096
+            },
+            cancellationToken);
+    }
 }
