@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.10.3" />
+        <PackageReference Include="Azure.Identity" Version="1.11.0" />
         <PackageReference Include="Azure.Storage.Files.DataLake" Version="12.16.0" />
         <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
