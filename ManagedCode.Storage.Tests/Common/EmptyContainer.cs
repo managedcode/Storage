@@ -83,6 +83,10 @@ public sealed class EmptyContainer : IContainer
         throw new NotImplementedException();
     }
 
+    public DateTime CreatedTime { get; }
+    public DateTime StartedTime { get; }
+    public DateTime StoppedTime { get; }
+
     public ILogger Logger { get; } = NullLogger.Instance;
     public string Id { get; } = "none";
     public string Name { get; } = "none";

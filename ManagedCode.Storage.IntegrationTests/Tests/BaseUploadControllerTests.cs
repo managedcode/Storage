@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using FluentAssertions;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.IntegrationTests.Constants;
-using ManagedCode.Storage.IntegrationTests.Helpers;
 using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;
@@ -10,12 +10,12 @@ namespace ManagedCode.Storage.IntegrationTests.Tests;
 public abstract class BaseUploadControllerTests : BaseControllerTests
 {
     private readonly string _uploadEndpoint;
-    private readonly string _uploadChunksEndpoint;
-    
+    private readonly string _uploadLargeFile;
+
     protected BaseUploadControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
         _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
-        _uploadChunksEndpoint = string.Format(ApiEndpoints.Base.UploadFileChunks, ApiEndpoint);
+        _uploadLargeFile = string.Format(ApiEndpoints.Base.UploadLargeFile, ApiEndpoint);
     }
     
     [Fact]
@@ -116,21 +116,24 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
      }
      
      [Fact]
-     public async Task UploadFileInChunks_WhenFileValid_ReturnSuccess()
+     public async Task UploadLargeFile_WhenFileValid_ReturnSuccess()
      {
          // Arrange
          var storageClient = GetStorageClient();
-         var fileName = "test.txt";
-         var contentName = "file";
          
          await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-         FileHelper.GenerateLocalFile(localFile, 20);
-    
+         FileHelper.GenerateLocalFile(localFile, 50);
+         var crc32 = Crc32Helper.CalculateFileCRC(localFile.FilePath);
+         storageClient.SetChunkSize(4096000);
+         
          // Act
-         var result = await storageClient.UploadFileInChunks(localFile.FileStream, _uploadChunksEndpoint, 100000000);
+         var result = await storageClient.UploadLargeFile(localFile.FileStream,
+             _uploadLargeFile + "/upload", 
+             _uploadLargeFile + "/complete", 
+             null);
          
          // Assert
          result.IsSuccess.Should().BeTrue();
-         //result.Value.Should().NotBeNull();
+         result.Value.Should().Be(crc32);
      }
 }

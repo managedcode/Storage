@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Amazon.S3;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Aws;

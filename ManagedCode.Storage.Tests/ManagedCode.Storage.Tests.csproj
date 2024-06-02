@@ -1,10 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-        <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <IsPackable>false</IsPackable>
-        <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup>
@@ -17,36 +14,38 @@
         </None>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Azure.Search.Documents" Version="11.4.0" />
-        <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
-        <PackageReference Include="Azure.Storage.Files.DataLake" Version="12.16.0" />
-        <PackageReference Include="CsvHelper" Version="30.0.1" />
+        <PackageReference Include="Azure.Search.Documents" Version="11.5.1" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.20.0" />
+        <PackageReference Include="Azure.Storage.Files.DataLake" Version="12.18.0" />
+        <PackageReference Include="CsvHelper" Version="32.0.3" />
         <PackageReference Include="FluentAssertions" Version="6.12.0" />
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
+        <PackageReference Include="ManagedCode.Communication" Version="8.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-        <PackageReference Include="Testcontainers" Version="3.5.0" />
-        <PackageReference Include="Testcontainers.Azurite" Version="3.5.0" />
-        <PackageReference Include="Testcontainers.LocalStack" Version="3.5.0" />
-        <PackageReference Include="xunit" Version="2.5.3" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3">
+        <PackageReference Include="Testcontainers" Version="3.8.0" />
+        <PackageReference Include="Testcontainers.Azurite" Version="3.8.0" />
+        <PackageReference Include="Testcontainers.FakeGcsServer" Version="3.8.0" />
+        <PackageReference Include="Testcontainers.LocalStack" Version="3.8.0" />
+        <PackageReference Include="xunit" Version="2.8.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="coverlet.collector" Version="6.0.0">
+        <PackageReference Include="coverlet.collector" Version="6.0.2">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="coverlet.msbuild" Version="6.0.0">
+        <PackageReference Include="coverlet.msbuild" Version="6.0.2">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Azure.DataLake\ManagedCode.Storage.Azure.DataLake.csproj" />
@@ -55,7 +54,6 @@
         <ProjectReference Include="..\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj" />
         <ProjectReference Include="..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj" />
-        <ProjectReference Include="..\TestcontainersGCS\TestcontainersGCS.csproj" />
     </ItemGroup>
 
 </Project>

@@ -15,23 +15,27 @@ public interface IStorage<out T, TOptions> : IStorage where TOptions : IStorageO
     Task<Result> SetStorageOptions(Action<TOptions> options, CancellationToken cancellationToken = default);
 }
 
-public interface IStorage
+
+public interface IDownloader
 {
     /// <summary>
-    ///     Create a container if it does not already exist.
+    ///     Downloads and saves the file to the local file system.
     /// </summary>
-    Task<Result> CreateContainerAsync(CancellationToken cancellationToken = default);
+    Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default);
 
     /// <summary>
-    ///     Delete a container if it does not already exist.
+    ///     Downloads and saves the file to the local file system.
     /// </summary>
-    Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default);
+    Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
-    ///     Delete the folder along with its contents
+    ///     Downloads and saves the file to the local file system.
     /// </summary>
-    Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default);
+    Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default);
+}
 
+public interface IUploader
+{
     /// <summary>
     ///     Upload data from the stream into the blob storage.
     /// </summary>
@@ -92,21 +96,10 @@ public interface IStorage
     /// </summary>
     Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, Action<UploadOptions> action, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    ///     Downloads and saves the file to the local file system.
-    /// </summary>
-    Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default);
+}
 
-    /// <summary>
-    ///     Downloads and saves the file to the local file system.
-    /// </summary>
-    Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    ///     Downloads and saves the file to the local file system.
-    /// </summary>
-    Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default);
-
+public interface IStorageOperations
+{
     /// <summary>
     ///     Deletes a file from the blob storage
     /// </summary>
@@ -156,6 +149,11 @@ public interface IStorage
     ///     Returns metadata of all files in the specified path from the blob storage
     /// </summary>
     IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    ///     Delete the folder along with its contents
+    /// </summary>
+    Task<Result> DeleteDirectoryAsync(string directory, CancellationToken cancellationToken = default);
 
     /// <summary>
     ///     Set LegalHold
@@ -186,4 +184,17 @@ public interface IStorage
     ///     Check LegalHold
     /// </summary
     Task<Result<bool>> HasLegalHoldAsync(Action<LegalHoldOptions> action, CancellationToken cancellationToken = default);
+}
+
+public interface IStorage : IUploader, IDownloader, IStorageOperations
+{
+    /// <summary>
+    ///     Create a container if it does not already exist.
+    /// </summary>
+    Task<Result> CreateContainerAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Delete a container if it does not already exist.
+    /// </summary>
+    Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default);
 }

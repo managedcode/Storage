@@ -1,4 +1,6 @@
-﻿namespace ManagedCode.Storage.IntegrationTests.Helpers;
+﻿using System.IO;
+
+namespace ManagedCode.Storage.Core.Helpers;
 
 public static class Crc32Helper
 {

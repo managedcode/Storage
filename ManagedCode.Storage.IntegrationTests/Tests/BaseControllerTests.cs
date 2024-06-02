@@ -1,4 +1,6 @@
-﻿using ManagedCode.Storage.Client;
+﻿using System.Net.Http;
+using ManagedCode.Storage.Client;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace ManagedCode.Storage.IntegrationTests.Tests;

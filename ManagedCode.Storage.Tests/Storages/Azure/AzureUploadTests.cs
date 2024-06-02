@@ -3,7 +3,7 @@ using Testcontainers.Azurite;
 
 namespace ManagedCode.Storage.Tests.Storages.Azure;
 
-public class AzureUploadTests : UploadTests<AzuriteContainer>
+public class  AzureUploadTests : UploadTests<AzuriteContainer>
 {
     protected override AzuriteContainer Build()
     {

@@ -1,11 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-        <LangVersion>11</LangVersion>
-        <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <DebugType>embedded</DebugType>
-        <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
     </PropertyGroup>

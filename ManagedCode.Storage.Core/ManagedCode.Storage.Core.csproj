@@ -1,11 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-        <LangVersion>11</LangVersion>
-        <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <DebugType>embedded</DebugType>
-        <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
@@ -18,10 +13,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
+        <PackageReference Include="ManagedCode.Communication" Version="8.0.0" />
         <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     </ItemGroup>
 
 </Project>
