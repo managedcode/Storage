@@ -85,17 +85,21 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                 return Result.Succeed();
             }
 
-            if (StorageOptions.OriginalOptions != null)
+            if (StorageOptions.CreateContainerIfNotExists)
             {
-                await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
-                    StorageOptions.OriginalOptions,
-                    cancellationToken);
+                if (StorageOptions.OriginalOptions != null)
+                {
+                    await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                        StorageOptions.OriginalOptions,
+                        cancellationToken);
+                }
+                else
+                {
+                    await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                        cancellationToken: cancellationToken);
+                }
             }
-            else
-            {
-                await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
-                    cancellationToken: cancellationToken);
-            }
+         
 
             return Result.Succeed();
         }

@@ -99,7 +99,11 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
+            if (StorageOptions.CreateContainerIfNotExists)
+            {
+                await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
+            }
+
             return Result.Succeed();
         }
         catch (Exception ex)

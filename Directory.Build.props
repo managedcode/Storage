@@ -17,8 +17,8 @@
     <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
     <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
     <Product>Managed Code - Storage</Product>
-    <Version>2.1.15-alpha</Version>
-    <PackageVersion>2.1.15-alpha</PackageVersion>
+    <Version>2.1.16</Version>
+    <PackageVersion>2.1.16</PackageVersion>
 
 </PropertyGroup>
 <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

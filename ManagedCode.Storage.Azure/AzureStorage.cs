@@ -138,16 +138,18 @@ public class AzureStorage : BaseStorage<BlobContainerClient, IAzureStorageOption
     {
         try
         {
-            _ = await StorageClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer,
-                cancellationToken: cancellationToken);
-            var policy = await StorageClient.GetAccessPolicyAsync(cancellationToken: cancellationToken);
-            if (policy.Value.BlobPublicAccess != StorageOptions.PublicAccessType)
+            if (StorageOptions.CreateContainerIfNotExists)
             {
-                await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType,
-                    cancellationToken: cancellationToken);
+                _ = await StorageClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+                var policy = await StorageClient.GetAccessPolicyAsync(cancellationToken: cancellationToken);
+                if (policy.Value.BlobPublicAccess != StorageOptions.PublicAccessType)
+                {
+                    await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType,
+                        cancellationToken: cancellationToken);
+                }
             }
-
-            IsContainerCreated = true;
+            
+            IsContainerCreated = await StorageClient.ExistsAsync(cancellationToken);;
 
             return Result.Succeed();
         }

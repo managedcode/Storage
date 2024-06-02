@@ -23,7 +23,7 @@
 
     <ItemGroup>
         <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
-        <PackageReference Include="AWSSDK.S3" Version="3.7.205.14" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.308.7" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
