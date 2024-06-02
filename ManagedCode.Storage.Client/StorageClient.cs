@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ManagedCode.Communication;
+using ManagedCode.Storage.Core.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -6,8 +8,6 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using ManagedCode.Communication;
-using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Client;
 
@@ -191,78 +191,26 @@ public class StorageClient : IStorageClient
         return await mergeResult.Content.ReadFromJsonAsync<Result<uint>>(cancellationToken: cancellationToken);
     }
 
-    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<Result<Stream>> GetFileStream(string fileName, string apiUrl, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        try
+        {
+            var response = await _httpClient.GetAsync($"{apiUrl}/{fileName}");
+            if (response.IsSuccessStatusCode)
+            {
+                var stream = await response.Content.ReadAsStreamAsync();
+                return Result<Stream>.Succeed(stream);
+            }
 
-    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(string content, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(Stream stream, Action<UploadOptions> action, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, Action<UploadOptions> action, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(string content, Action<UploadOptions> action, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, Action<UploadOptions> action, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+            return Result<Stream>.Fail(response.StatusCode);
+        }
+        catch (HttpRequestException e) when (e.StatusCode != null)
+        {
+            return Result<Stream>.Fail(e.StatusCode.Value);
+        }
+        catch (Exception)
+        {
+            return Result<Stream>.Fail(HttpStatusCode.InternalServerError);
+        }
     }
 }

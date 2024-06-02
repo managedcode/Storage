@@ -376,4 +376,9 @@ public class AzureStorage : BaseStorage<BlobContainerClient, IAzureStorageOption
 
         return await CreateContainerAsync(cancellationToken);
     }
+
+    public async override Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        return await OpenReadStreamAsync(fileName, cancellationToken);
+    }
 }

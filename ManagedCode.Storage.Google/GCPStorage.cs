@@ -4,6 +4,8 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Security.AccessControl;
 using System.Threading;
 using System.Threading.Tasks;
 using Google;
@@ -19,10 +21,15 @@ namespace ManagedCode.Storage.Google;
 public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPStorage
 {
     private readonly ILogger<GCPStorage>? _logger;
+    private UrlSigner urlSigner;
 
     public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage>? logger = null) : base(options)
     {
         _logger = logger;
+        if (options.GoogleCredential != null)
+        {
+            urlSigner = UrlSigner.FromCredential(options.GoogleCredential);
+        }
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
@@ -280,6 +287,24 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
         {
             _logger.LogException(ex);
             return Result<bool>.Fail(ex);
+        }
+    }
+
+    public override async Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        await EnsureContainerExist();
+
+        if (urlSigner == null)
+        {
+            return Result<Stream>.Fail("Google credentials are required to get stream");
+        }
+
+        string signedUrl = urlSigner.Sign(StorageOptions.BucketOptions.Bucket, fileName, TimeSpan.FromHours(1), HttpMethod.Get);
+
+        using (HttpClient httpClient = new HttpClient())
+        {
+            Stream stream = await httpClient.GetStreamAsync(signedUrl, cancellationToken);
+            return Result<Stream>.Succeed(stream);
         }
     }
 }

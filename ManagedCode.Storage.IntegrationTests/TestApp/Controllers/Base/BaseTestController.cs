@@ -1,6 +1,5 @@
 using Amazon.Runtime.Internal;
 using ManagedCode.Communication;
-using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
@@ -45,7 +44,17 @@ public abstract class BaseTestController<TStorage> : ControllerBase
 
         return result.Value!;
     }
-    
+
+    [HttpGet("stream/{fileName}")]
+    public async Task<Microsoft.AspNetCore.Http.IResult> StreamFileAsync([FromRoute] string fileName)
+    {
+        var result = await Storage.GetStreamAsync(fileName);
+        var metadataAsync = await Storage.GetBlobMetadataAsync(fileName);
+
+        result.ThrowIfFail();
+        return Results.Stream(result.Value, metadataAsync.Value?.MimeType ?? "application/octet-stream", fileName);
+    }
+
     [HttpPost("upload-chunks/upload")]
     public async Task<Result> UploadLargeFile([FromForm] FileUploadPayload file, CancellationToken cancellationToken = default)
     {

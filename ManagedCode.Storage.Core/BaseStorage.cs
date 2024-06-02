@@ -261,6 +261,8 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         return CreateContainerAsync(cancellationToken);
     }
 
+    public abstract Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default);
+
     public T StorageClient { get; protected set; }
 
     protected abstract T CreateStorageClient();

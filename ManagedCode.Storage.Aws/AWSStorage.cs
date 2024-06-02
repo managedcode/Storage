@@ -13,6 +13,7 @@ using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ManagedCode.Storage.Aws;
 
@@ -88,6 +89,13 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 objectsRequest = null;
             }
         } while (objectsRequest is not null);
+    }
+
+    public override async Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        Stream stream = await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, fileName, null,
+                cancellationToken);
+        return Result<Stream>.Succeed(stream);
     }
 
     protected override IAmazonS3 CreateStorageClient()

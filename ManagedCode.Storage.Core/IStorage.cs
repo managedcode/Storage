@@ -15,7 +15,6 @@ public interface IStorage<out T, TOptions> : IStorage where TOptions : IStorageO
     Task<Result> SetStorageOptions(Action<TOptions> options, CancellationToken cancellationToken = default);
 }
 
-
 public interface IDownloader
 {
     /// <summary>
@@ -32,6 +31,14 @@ public interface IDownloader
     ///     Downloads and saves the file to the local file system.
     /// </summary>
     Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default);
+}
+
+public interface IStreamer
+{
+    /// <summary>
+    ///     Gets file stream.
+    /// </summary>
+    Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default);
 }
 
 public interface IUploader
@@ -186,7 +193,7 @@ public interface IStorageOperations
     Task<Result<bool>> HasLegalHoldAsync(Action<LegalHoldOptions> action, CancellationToken cancellationToken = default);
 }
 
-public interface IStorage : IUploader, IDownloader, IStorageOperations
+public interface IStorage : IUploader, IDownloader, IStreamer, IStorageOperations
 {
     /// <summary>
     ///     Create a container if it does not already exist.
