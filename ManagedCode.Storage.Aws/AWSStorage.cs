@@ -68,7 +68,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 yield return new BlobMetadata
                 {
                     Name = entry.Key,
-                    FullName = entry.Key,
+                    FullName = $"{StorageOptions.Bucket}/{entry.Key}",
                     Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
                     LastModified = objectMetaResponse.LastModified,
@@ -99,7 +99,11 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
+            if (StorageOptions.CreateContainerIfNotExists)
+            {
+                await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
+            }
+
             return Result.Succeed();
         }
         catch (Exception ex)

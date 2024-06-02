@@ -45,10 +45,10 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
                 new ListObjectsOptions { Projection = Projection.Full })
-            .Select(
-                x => new BlobMetadata
+            .Select(x => new BlobMetadata
                 {
                     Name = x.Name,
+                    FullName = $"{x.Bucket}/{x.Name}",
                     Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink),
                     Container = x.Bucket,
                     CreatedOn = x.TimeCreated!.Value,
@@ -85,17 +85,21 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                 return Result.Succeed();
             }
 
-            if (StorageOptions.OriginalOptions != null)
+            if (StorageOptions.CreateContainerIfNotExists)
             {
-                await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
-                    StorageOptions.OriginalOptions,
-                    cancellationToken);
+                if (StorageOptions.OriginalOptions != null)
+                {
+                    await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                        StorageOptions.OriginalOptions,
+                        cancellationToken);
+                }
+                else
+                {
+                    await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
+                        cancellationToken: cancellationToken);
+                }
             }
-            else
-            {
-                await StorageClient.CreateBucketAsync(StorageOptions.BucketOptions.ProjectId, StorageOptions.BucketOptions.Bucket,
-                    cancellationToken: cancellationToken);
-            }
+         
 
             return Result.Succeed();
         }
