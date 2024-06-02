@@ -1,11 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <LangVersion>12</LangVersion>
-        <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <DebugType>embedded</DebugType>
-        <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
     </PropertyGroup>
