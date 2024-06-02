@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <!--NuGet-->
+    <PropertyGroup>
+        <Title>ManagedCode.Storage.Client.SignalR</Title>
+        <PackageId>MManagedCode.Storage.Client.SignalR</PackageId>
+        <Description>Extensions for ASP.NET for Storage</Description>
+        <PackageTags>managedcode, aws, gcp, azure storage, cloud, asp.net, file, upload, download</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.6" />
+    </ItemGroup>
+
+</Project>

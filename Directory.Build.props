@@ -1,47 +1,47 @@
 <Project>
-    
-<PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>12</LangVersion>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <DebugType>embedded</DebugType>
-    <Nullable>enable</Nullable>
-</PropertyGroup>    
-    
-<!--NuGet-->
-<PropertyGroup>
-    <Authors>ManagedCode</Authors>
-    <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <RepositoryType>Github</RepositoryType>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <PackageIcon>logo.png</PackageIcon>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
 
-    <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
-    <Product>Managed Code - Storage</Product>
-    <Version>2.1.16</Version>
-    <PackageVersion>2.1.16</PackageVersion>
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net6.0;net7.0</TargetFrameworks>
+        <LangVersion>12</LangVersion>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <DebugType>embedded</DebugType>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-</PropertyGroup>
-    
-<PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-</PropertyGroup>
-<ItemGroup>
-    <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="\"/>
-    <None Include="$(SolutionDir)\README.md" Pack="true" Visible="false" PackagePath="\"/>
-</ItemGroup>
-<ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-</ItemGroup>
+    <!--NuGet-->
+    <PropertyGroup>
+        <Authors>ManagedCode</Authors>
+        <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <RepositoryType>Github</RepositoryType>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <EnablePackageValidation>true</EnablePackageValidation>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
+        <Product>Managed Code - Storage</Product>
+        <Version>2.1.18</Version>
+        <PackageVersion>2.1.18</PackageVersion>
+
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="$(SolutionDir)\logo.png" Pack="true" Visible="false" PackagePath="\"/>
+        <None Include="$(SolutionDir)\README.md" Pack="true" Visible="false" PackagePath="\"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 </Project>

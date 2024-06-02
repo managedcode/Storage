@@ -6,7 +6,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Communication.Extensions;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 
@@ -90,9 +89,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     public Task<Result<BlobMetadata>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
-        {
             options.MimeType = MimeHelper.BIN;
-        }
 
         return UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
@@ -100,9 +97,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     public Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
-        {
             options.MimeType = MimeHelper.BIN;
-        }
 
         return UploadInternalAsync(new MemoryStream(data), SetUploadOptions(options), cancellationToken);
     }
@@ -110,9 +105,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     public Task<Result<BlobMetadata>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
-        {
             options.MimeType = MimeHelper.TEXT;
-        }
 
         return UploadInternalAsync(new StringStream(content), SetUploadOptions(options), cancellationToken);
     }
@@ -120,9 +113,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
-        {
             options.MimeType = MimeHelper.GetMimeType(fileInfo.Extension);
-        }
 
         options.FileName = fileInfo.Name;
 
@@ -270,9 +261,8 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     protected Task<Result> EnsureContainerExist()
     {
         if (IsContainerCreated)
-        {
-            return Result.Succeed().AsTask();
-        }
+            return Result.Succeed()
+                .AsTask();
 
         return CreateContainerAsync();
     }
@@ -280,14 +270,11 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     protected UploadOptions SetUploadOptions(UploadOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.FileName))
-        {
-            options.FileName = Guid.NewGuid().ToString("N");
-        }
+            options.FileName = Guid.NewGuid()
+                .ToString("N");
 
         if (!string.IsNullOrWhiteSpace(options.FileNamePrefix))
-        {
             options.FileName = options.FileNamePrefix + options.FileName;
-        }
 
         return options;
     }
@@ -296,12 +283,10 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 
     protected abstract Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default);
 
-    protected abstract Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream,
-        UploadOptions options,
+    protected abstract Task<Result<BlobMetadata>> UploadInternalAsync(Stream stream, UploadOptions options,
         CancellationToken cancellationToken = default);
 
-    protected abstract Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile,
-        DownloadOptions options,
+    protected abstract Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
         CancellationToken cancellationToken = default);
 
     protected abstract Task<Result<bool>> DeleteInternalAsync(DeleteOptions options, CancellationToken cancellationToken = default);
@@ -311,8 +296,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     protected abstract Task<Result<BlobMetadata>> GetBlobMetadataInternalAsync(MetadataOptions options,
         CancellationToken cancellationToken = default);
 
-    protected abstract Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold,
-        LegalHoldOptions options,
+    protected abstract Task<Result> SetLegalHoldInternalAsync(bool hasLegalHold, LegalHoldOptions options,
         CancellationToken cancellationToken = default);
 
     protected abstract Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default);

@@ -8,13 +8,11 @@ public class BadConfigurationException : Exception
     {
     }
 
-    public BadConfigurationException(string message)
-        : base(message)
+    public BadConfigurationException(string message) : base(message)
     {
     }
 
-    public BadConfigurationException(string message, Exception inner)
-        : base(message, inner)
+    public BadConfigurationException(string message, Exception inner) : base(message, inner)
     {
     }
 }

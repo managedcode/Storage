@@ -1,66 +1,65 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace ManagedCode.Storage.Core.Helpers;
 
 public static class Crc32Helper
 {
+    private const uint Polynomial = 0xedb88320;
     private static readonly uint[] Crc32Table;
-    private const uint polynomial = 0xedb88320;
 
     static Crc32Helper()
     {
         Crc32Table = new uint[256];
-        
-        for (int i = 0; i < 256; i++)
+
+        for (var i = 0; i < 256; i++)
         {
-            uint crc = (uint)i;
-            for (int j = 8; j > 0; j--)
-            {
+            var crc = (uint)i;
+            for (var j = 8; j > 0; j--)
                 if ((crc & 1) == 1)
-                    crc = (crc >> 1) ^ polynomial;
+                    crc = (crc >> 1) ^ Polynomial;
                 else
                     crc >>= 1;
-            }
+
             Crc32Table[i] = crc;
         }
     }
 
     public static uint Calculate(byte[] bytes)
     {
-        uint crcValue = 0xffffffff;
+        var crcValue = 0xffffffff;
 
-        foreach (byte by in bytes)
+        foreach (var by in bytes)
         {
-            byte tableIndex = (byte)(((crcValue) & 0xff) ^ by);
+            var tableIndex = (byte)((crcValue & 0xff) ^ by);
             crcValue = Crc32Table[tableIndex] ^ (crcValue >> 8);
         }
+
         return ~crcValue;
     }
-    
-    public static uint CalculateFileCRC(string filePath)
+
+    public static uint CalculateFileCrc(string filePath)
     {
-        uint crcValue = 0xffffffff;
-        
-        using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+        var crcValue = 0xffffffff;
+
+        using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
         {
-            byte[] buffer = new byte[4096]; // 4KB buffer
-            int bytesRead;
-            while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
-            {
+            var buffer = new byte[4096]; // 4KB buffer
+            while (fs.Read(buffer, 0, buffer.Length) > 0)
                 crcValue = Calculate(buffer, crcValue);
-            }
         }
 
-        return ~crcValue;  // Return the final CRC value
+        return ~crcValue; // Return the final CRC value
     }
-    
-    public static uint Calculate(byte[] bytes, uint crcValue = 0xffffffff)
+
+    private static uint Calculate(byte[] bytes, uint crcValue = 0xffffffff)
     {
-        foreach (byte by in bytes)
+        foreach (var by in bytes)
         {
-            byte tableIndex = (byte)(((crcValue) & 0xff) ^ by);
+            var tableIndex = (byte)((crcValue & 0xff) ^ by);
             crcValue = Crc32Table[tableIndex] ^ (crcValue >> 8);
         }
+
         return crcValue;
     }
 }

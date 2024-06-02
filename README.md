@@ -10,44 +10,55 @@
 [![Alert Status](https://sonarcloud.io/api/project_badges/measure?project=managedcode_Storage&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=managedcode_Storage)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=managedcode_Storage&metric=coverage)](https://sonarcloud.io/summary/new_code?id=managedcode_Storage)
 
-
-
-
-| Version | Package                                                                                                                               | Description     |
-| ------- |---------------------------------------------------------------------------------------------------------------------------------------|-----------------|
-|[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Core.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Core) | [ManagedCode.Storage.Core](https://www.nuget.org/packages/ManagedCode.Storage.Core)                                                   | Core            |
-|[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem)                                       | FileSystem         |
-|[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Azure.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Azure) | [ManagedCode.Storage.Azure](https://www.nuget.org/packages/ManagedCode.Storage.Azure)                                                 | Azure           |
-|[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Aws.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Aws) | [ManagedCode.Storage.Aws](https://www.nuget.org/packages/ManagedCode.Storage.Aws)                                     | AWS             |
-|[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                                         | GCP             |
-|[![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.AspNetExtensions.svg)](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | [ManagedCode.Storage.AspNetExtensions](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions)                                         | AspNetExtensions          |
+| Version                                                                                                                                                          | Package                                                                                                     | Description      |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|------------------|
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Core.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Core)                         | [ManagedCode.Storage.Core](https://www.nuget.org/packages/ManagedCode.Storage.Core)                         | Core             |
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem)             | [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem)             | FileSystem       |
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Azure.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Azure)                       | [ManagedCode.Storage.Azure](https://www.nuget.org/packages/ManagedCode.Storage.Azure)                       | Azure            |
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Aws.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Aws)                           | [ManagedCode.Storage.Aws](https://www.nuget.org/packages/ManagedCode.Storage.Aws)                           | AWS              |
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                           | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                           | GCP              |
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.AspNetExtensions.svg)](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | [ManagedCode.Storage.AspNetExtensions](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | AspNetExtensions |
 
 # Storage
 ---
 
 ## General concept
-One of the key benefits of using a universal wrapper for cloud blob storages is that it provides a consistent, easy-to-use interface for working with different types of blob storage. This can make it much easier for developers to switch between different storage providers, or to use multiple providers in the same project.
 
-A universal wrapper can also simplify the development process by providing a single set of methods for working with blob storage, rather than requiring developers to learn and use the different APIs provided by each storage provider. This can save time and reduce the complexity of the code, making it easier to write, maintain, and debug.
+One of the key benefits of using a universal wrapper for cloud blob storages is that it provides a consistent,
+easy-to-use interface for working with different types of blob storage. This can make it much easier for developers to
+switch between different storage providers, or to use multiple providers in the same project.
 
-In addition, a universal wrapper can provide additional functionality that is not available through the individual storage providers, such as support for common patterns like asynchronous programming and error handling. This can make it easier to write high-quality, reliable code that is robust and resilient to errors.
+A universal wrapper can also simplify the development process by providing a single set of methods for working with blob
+storage, rather than requiring developers to learn and use the different APIs provided by each storage provider. This
+can save time and reduce the complexity of the code, making it easier to write, maintain, and debug.
 
-Overall, using a universal wrapper for cloud blob storages can provide many benefits, including improved flexibility, simplicity, and reliability in your application.
+In addition, a universal wrapper can provide additional functionality that is not available through the individual
+storage providers, such as support for common patterns like asynchronous programming and error handling. This can make
+it easier to write high-quality, reliable code that is robust and resilient to errors.
+
+Overall, using a universal wrapper for cloud blob storages can provide many benefits, including improved flexibility,
+simplicity, and reliability in your application.
 A universal storage for working with multiple storage providers:
+
 - Azure
 - Google Cloud
 - Amazon
 - FileSystem
 
 ## Motivation
-Cloud storage is a popular and convenient way to store and access data in the cloud. 
-However, different cloud storage providers often have their own unique APIs and interfaces for accessing and manipulating data. 
+
+Cloud storage is a popular and convenient way to store and access data in the cloud.
+However, different cloud storage providers often have their own unique APIs and interfaces for accessing and
+manipulating data.
 This can make it difficult to switch between different providers or to use multiple providers simultaneously.
 
-Our library, provides a universal interface for accessing and manipulating data in different cloud blob storage providers. 
-This makes it easy to switch between providers or to use multiple providers at the same time, without having to learn and use multiple APIs.
+Our library, provides a universal interface for accessing and manipulating data in different cloud blob storage
+providers.
+This makes it easy to switch between providers or to use multiple providers at the same time, without having to learn
+and use multiple APIs.
 
 ## Features
+
 - Provides a universal interface for accessing and manipulating data in different cloud blob storage providers.
 - Makes it easy to switch between providers or to use multiple providers simultaneously.
 - Supports common operations such as uploading, downloading, and deleting data.
@@ -353,6 +364,9 @@ _storage.StorageClient
 ```
 
 ## Conclusion
-In summary, Storage library provides a universal interface for accessing and manipulating data in different cloud blob storage providers. 
-It makes it easy to switch between providers or to use multiple providers simultaneously, without having to learn and use multiple APIs. 
+
+In summary, Storage library provides a universal interface for accessing and manipulating data in different cloud blob
+storage providers.
+It makes it easy to switch between providers or to use multiple providers simultaneously, without having to learn and
+use multiple APIs.
 We hope you find it useful in your own projects!
