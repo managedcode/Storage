@@ -154,8 +154,17 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                     await StorageClient.SetAccessPolicyAsync(StorageOptions.PublicAccessType, cancellationToken: cancellationToken);
             }
 
-            IsContainerCreated = await StorageClient.ExistsAsync(cancellationToken);
-            ;
+            try
+            {
+                IsContainerCreated = await StorageClient.ExistsAsync(cancellationToken);
+            }
+            catch (RequestFailedException e)
+            {
+                logger.LogException(e);
+                //probably we don't have permission to check if container exists
+                IsContainerCreated = true;
+            }
+            
 
             return Result.Succeed();
         }
