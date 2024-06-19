@@ -93,10 +93,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     protected override IAmazonS3 CreateStorageClient()
     {
         return string.IsNullOrWhiteSpace(StorageOptions.RoleName)
-            ? new AmazonS3Client(new BasicAWSCredentials(StorageOptions.PublicKey, StorageOptions.SecretKey),
-                StorageOptions.OriginalOptions)
-            : new AmazonS3Client(new InstanceProfileAWSCredentials(StorageOptions.RoleName),
-                StorageOptions.OriginalOptions);
+            ? new AmazonS3Client(new BasicAWSCredentials(StorageOptions.PublicKey, StorageOptions.SecretKey), StorageOptions.OriginalOptions)
+            : new AmazonS3Client(new InstanceProfileAWSCredentials(StorageOptions.RoleName), StorageOptions.OriginalOptions);
     }
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
