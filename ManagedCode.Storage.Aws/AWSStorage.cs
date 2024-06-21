@@ -92,10 +92,16 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
     protected override IAmazonS3 CreateStorageClient()
     {
-        // Check if IAM role is provided, if not use the basic credentials.
-        return string.IsNullOrWhiteSpace(StorageOptions.RoleName)
-            ? new AmazonS3Client(new BasicAWSCredentials(StorageOptions.PublicKey, StorageOptions.SecretKey), StorageOptions.OriginalOptions)
-            : new AmazonS3Client(new InstanceProfileAWSCredentials(StorageOptions.RoleName), StorageOptions.OriginalOptions);
+        // Check if we should use the instance profile credentials.
+        if (StorageOptions.UseInstanceProfileCredentials)
+        {
+            return string.IsNullOrWhiteSpace(StorageOptions.RoleName)
+                ? new AmazonS3Client(new InstanceProfileAWSCredentials(), StorageOptions.OriginalOptions)
+                : new AmazonS3Client(new InstanceProfileAWSCredentials(StorageOptions.RoleName), StorageOptions.OriginalOptions);
+        }
+
+        // If not, use the basic credentials.
+        return new AmazonS3Client(new BasicAWSCredentials(StorageOptions.PublicKey, StorageOptions.SecretKey), StorageOptions.OriginalOptions);
     }
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
