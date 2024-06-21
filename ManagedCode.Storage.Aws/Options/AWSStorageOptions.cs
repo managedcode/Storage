@@ -37,12 +37,12 @@ public class AWSStorageOptions : IStorageOptions
     public AmazonS3Config? OriginalOptions { get; set; } = new();
 
     /// <summary>
-    ///     Whether to create the container if it does not exist.
+    ///     Whether to create the container if it does not exist. Default is <c>true</c>.
     /// </summary>
     public bool CreateContainerIfNotExists { get; set; } = true;
     
     /// <summary>
-    ///     Whether to use the instance profile credentials.
+    ///     Whether to use the instance profile credentials. Default is <c>false</c>.
     /// </summary>
     /// <remarks>
     ///    If this is set to <c>true</c>, the <see cref="PublicKey"/> and <see cref="SecretKey"/> will be ignored.
