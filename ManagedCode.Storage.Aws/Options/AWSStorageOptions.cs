@@ -32,7 +32,7 @@ public class AWSStorageOptions : IStorageOptions
     public string? Bucket { get; set; }
 
     /// <summary>
-    ///     The 
+    ///     The underlying Amazon S3 configuration.
     /// </summary>
     public AmazonS3Config? OriginalOptions { get; set; } = new();
 
