@@ -52,7 +52,6 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        ;
 
         // Act
         var downloadedFileResult = await storageClient.DownloadFile(Guid.NewGuid()

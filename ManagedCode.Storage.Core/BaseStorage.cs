@@ -246,7 +246,8 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 
     public Task<Result> SetStorageOptions(Action<TOptions> options, CancellationToken cancellationToken = default)
     {
-        StorageOptions = JsonSerializer.Deserialize<TOptions>(JsonSerializer.Serialize(StorageOptions));
+        //try to make deep copy of StorageOptions
+        StorageOptions = JsonSerializer.Deserialize<TOptions>(JsonSerializer.Serialize(StorageOptions))!;
         options.Invoke(StorageOptions);
         StorageClient = CreateStorageClient();
         return CreateContainerAsync(cancellationToken);
