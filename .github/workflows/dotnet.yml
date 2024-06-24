@@ -42,7 +42,8 @@ jobs:
         run: ls '${{ github.workspace }}/coverage/'
  
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: sonarsource/sonarcloud-github-action@v2.3.0
+        if: github.ref == 'refs/heads/main'
         with:
           args: >
             -Dsonar.organization=managedcode
