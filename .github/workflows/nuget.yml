@@ -1,35 +1,46 @@
- name: nuget
+name: nuget
 
- on:
-   push:
-     branches: [ main ]
-  
-   # Allows you to run this workflow manually from the Actions tab
-   workflow_dispatch:
+on:
+  push:
+    branches: [ main ]
 
- jobs:
-   nuget-pack:
+  workflow_dispatch:
 
-     runs-on: ubuntu-latest
+jobs:
+  nuget-pack:
+    runs-on: ubuntu-latest
 
-     steps:
-       - uses: actions/checkout@v3
-       - name: Setup .NET
-         uses: actions/setup-dotnet@v3
-         with:
-           dotnet-version: 7.0.x
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-       - name: Restore dependencies
-         run: dotnet restore
-       - name: Build
-         run: dotnet build --configuration Release
-       - name: Pack
-         run: dotnet pack -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --configuration Release
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-       - name: publish nuget packages
-         run: |
-           shopt -s globstar
-           for file in **/*.nupkg
-           do
-             dotnet nuget push "$file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
-           done
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Test
+        run: dotnet test --configuration Release
+
+      - name: NDepend
+        uses: ndepend/ndepend-action@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          license: ${{ secrets.NDEPENDLICENSE }}
+          coveragefolder: ${{ github.workspace }}/coverage/
+          baseline: main_recent
+          retention-days: 15
+            #stopIfQGFailed: true
+            
+            
+      - name: Pack
+        run: dotnet pack --configuration Release -p:IncludeSymbols=false -p:SymbolPackageFormat=snupkg -o "packages"
+
+      - name: Push
+        run: dotnet nuget push "packages/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

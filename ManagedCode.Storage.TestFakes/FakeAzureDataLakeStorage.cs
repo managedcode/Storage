@@ -1,3 +1,7 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Azure.Storage.Files.DataLake;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Azure.DataLake;
@@ -28,9 +32,7 @@ public class FakeAzureDataLakeStorage : FileSystemStorage, IAzureDataLakeStorage
     public Task<Result> CreateDirectoryAsync(string directory, CancellationToken cancellationToken = default)
     {
         if (Directory.Exists(directory))
-        {
             Task.FromResult(Result.Fail());
-        }
 
         try
         {
@@ -46,9 +48,7 @@ public class FakeAzureDataLakeStorage : FileSystemStorage, IAzureDataLakeStorage
     public Task<Result> RenameDirectory(string directory, string newDirectory, CancellationToken cancellationToken = default)
     {
         if (!Directory.Exists(directory))
-        {
             Task.FromResult(Result.Fail());
-        }
 
         try
         {
@@ -64,9 +64,7 @@ public class FakeAzureDataLakeStorage : FileSystemStorage, IAzureDataLakeStorage
     public Task<Result<Stream>> OpenWriteStreamAsync(OpenWriteStreamOptions options, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(options.FullPath))
-        {
             return Task.FromResult(Result<Stream>.Fail());
-        }
 
         try
         {
@@ -81,9 +79,7 @@ public class FakeAzureDataLakeStorage : FileSystemStorage, IAzureDataLakeStorage
     public Task<Result<Stream>> OpenReadStreamAsync(OpenReadStreamOptions options, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(options.FullPath))
-        {
             return Task.FromResult(Result<Stream>.Fail());
-        }
 
         try
         {

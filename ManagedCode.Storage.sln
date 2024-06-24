@@ -5,39 +5,31 @@ VisualStudioVersion = 16.0.31729.503
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Core", "ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj", "{1B494908-A80A-4EEE-97A7-ABDEAC3EC64F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Azure", "ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj", "{0D6304D1-911D-489E-A716-6CBD5D0FE05D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Azure", "Storages\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj", "{0D6304D1-911D-489E-A716-6CBD5D0FE05D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Tests", "ManagedCode.Storage.Tests\ManagedCode.Storage.Tests.csproj", "{F9DA9E52-2DDF-40E3-B0A4-4EC7B118FE8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Tests", "Tests\ManagedCode.Storage.Tests\ManagedCode.Storage.Tests.csproj", "{F9DA9E52-2DDF-40E3-B0A4-4EC7B118FE8F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Aws", "ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj", "{0AFE156D-0DA5-4B23-8262-CA98E4C0FB5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Aws", "Storages\ManagedCode.Storage.Aws\ManagedCode.Storage.Aws.csproj", "{0AFE156D-0DA5-4B23-8262-CA98E4C0FB5F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Google", "ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj", "{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Google", "Storages\ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj", "{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.FileSystem", "ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.FileSystem", "Storages\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Server", "ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Server", "Integraions\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{C812D2D8-1854-4043-94A9-4AA32D606D68}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiSample", "Samples\WebApiSample\WebApiSample.csproj", "{39E5D805-04B4-442B-9B64-116A96041A93}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Azure.DataLake", "ManagedCode.Storage.Azure.DataLake\ManagedCode.Storage.Azure.DataLake.csproj", "{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Azure.DataLake", "Storages\ManagedCode.Storage.Azure.DataLake\ManagedCode.Storage.Azure.DataLake.csproj", "{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.TestFakes", "ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj", "{7190B548-4BE9-4EF6-B55F-8432757AEAD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestcontainersGCS", "TestcontainersGCS\TestcontainersGCS.csproj", "{40638DBB-CB6F-4B11-B4B5-50446CE426E7}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Storages", "Storages", "{92201402-E361-440F-95DB-68663D228C2D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AspNet", "AspNet", "{94DB7354-F5C7-4347-B9EC-FCCA38B86876}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integraions", "Integraions", "{94DB7354-F5C7-4347-B9EC-FCCA38B86876}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client", "ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj", "{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client", "Integraions\ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj", "{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client.SignalR", "ManagedCode.Storage.Client.SignalR\ManagedCode.Storage.Client.SignalR.csproj", "{ED216AAD-CBA2-40F2-AA01-63C60E906632}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client.SignalR", "Integraions\ManagedCode.Storage.Client.SignalR\ManagedCode.Storage.Client.SignalR.csproj", "{ED216AAD-CBA2-40F2-AA01-63C60E906632}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E609A83E-6400-42B0-AD5A-5B006EABC275}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.IntegrationTests", "ManagedCode.Storage.IntegrationTests\ManagedCode.Storage.IntegrationTests.csproj", "{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,10 +65,6 @@ Global
 		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{39E5D805-04B4-442B-9B64-116A96041A93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{39E5D805-04B4-442B-9B64-116A96041A93}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{39E5D805-04B4-442B-9B64-116A96041A93}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{39E5D805-04B4-442B-9B64-116A96041A93}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -85,10 +73,6 @@ Global
 		{7190B548-4BE9-4EF6-B55F-8432757AEAD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7190B548-4BE9-4EF6-B55F-8432757AEAD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7190B548-4BE9-4EF6-B55F-8432757AEAD5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{40638DBB-CB6F-4B11-B4B5-50446CE426E7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -97,10 +81,6 @@ Global
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Release|Any CPU.Build.0 = Release|Any CPU
-		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,7 +89,6 @@ Global
 		SolutionGuid = {A594F814-80A8-49D2-B751-B3A58869B30D}
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{39E5D805-04B4-442B-9B64-116A96041A93} = {C812D2D8-1854-4043-94A9-4AA32D606D68}
 		{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3} = {92201402-E361-440F-95DB-68663D228C2D}
 		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690} = {92201402-E361-440F-95DB-68663D228C2D}
 		{0D6304D1-911D-489E-A716-6CBD5D0FE05D} = {92201402-E361-440F-95DB-68663D228C2D}
@@ -119,7 +98,5 @@ Global
 		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
 		{F9DA9E52-2DDF-40E3-B0A4-4EC7B118FE8F} = {E609A83E-6400-42B0-AD5A-5B006EABC275}
-		{40638DBB-CB6F-4B11-B4B5-50446CE426E7} = {E609A83E-6400-42B0-AD5A-5B006EABC275}
-		{39EFEB67-4C0F-4FAD-8FE8-06D7A5D02FEE} = {E609A83E-6400-42B0-AD5A-5B006EABC275}
 	EndGlobalSection
 EndGlobal

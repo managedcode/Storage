@@ -1,3 +1,7 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Azure;
@@ -21,19 +25,7 @@ public class FakeAzureStorage : FileSystemStorage, IAzureStorage
         return Task.FromResult(Result.Succeed());
     }
 
-    public Task<Result> SetStorageOptions(Action<IStorageOptions> options,
-        CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(Result.Succeed());
-    }
-
-    public Task<Result> SetStorageOptions(AzureStorageOptions options, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(Result.Succeed());
-    }
-
-    public Task<Result> SetStorageOptions(Action<AzureStorageOptions> options,
-        CancellationToken cancellationToken = default)
+    public Task<Result> SetStorageOptions(Action<IStorageOptions> options, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Succeed());
     }
@@ -41,9 +33,7 @@ public class FakeAzureStorage : FileSystemStorage, IAzureStorage
     public Task<Result<Stream>> OpenReadStreamAsync(string fileName, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(fileName))
-        {
             return Task.FromResult(Result<Stream>.Fail());
-        }
 
         try
         {
@@ -58,9 +48,7 @@ public class FakeAzureStorage : FileSystemStorage, IAzureStorage
     public Task<Result<Stream>> OpenWriteStreamAsync(string fileName, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(fileName))
-        {
             return Task.FromResult(Result<Stream>.Fail());
-        }
 
         try
         {
@@ -75,5 +63,15 @@ public class FakeAzureStorage : FileSystemStorage, IAzureStorage
     public Stream GetBlobStream(string fileName, bool userBuffer = true, int bufferSize = BlobStream.DefaultBufferSize)
     {
         return File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+    }
+
+    public Task<Result> SetStorageOptions(AzureStorageOptions options, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
+    }
+
+    public Task<Result> SetStorageOptions(Action<AzureStorageOptions> options, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result.Succeed());
     }
 }
