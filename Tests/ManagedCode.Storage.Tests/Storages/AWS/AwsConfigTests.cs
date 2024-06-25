@@ -58,6 +58,52 @@ public class AwsConfigTests
     }
 
     [Fact]
+    public void BadInstanceProfileConfigurationForStorage_WithoutBucket_ThrowException()
+    {
+        var services = new ServiceCollection();
+
+        Action action = () => services.AddAWSStorageAsDefault(new AWSStorageOptions
+        {
+            RoleName = "my-role-name",
+            UseInstanceProfileCredentials = true
+        });
+
+        action.Should()
+            .Throw<BadConfigurationException>();
+    }
+
+    [Fact]
+    public void ValidInstanceProfileConfigurationForStorage_WithRoleName_DoesNotThrowException()
+    {
+        var services = new ServiceCollection();
+
+        Action action = () => services.AddAWSStorageAsDefault(new AWSStorageOptions
+        {
+            Bucket = "managed-code-bucket",
+            RoleName = "my-role-name",
+            UseInstanceProfileCredentials = true
+        });
+
+        action.Should()
+            .NotThrow<Exception>();
+    }
+
+    [Fact]
+    public void ValidInstanceProfileConfigurationForStorage_WithoutRoleName_DoesNotThrowException()
+    {
+        var services = new ServiceCollection();
+
+        Action action = () => services.AddAWSStorageAsDefault(new AWSStorageOptions
+        {
+            Bucket = "managed-code-bucket",
+            UseInstanceProfileCredentials = true
+        });
+
+        action.Should()
+            .NotThrow<Exception>();
+    }
+
+    [Fact]
     public void StorageAsDefaultTest()
     {
         var storage = AWSConfigurator.ConfigureServices("http://localhost")

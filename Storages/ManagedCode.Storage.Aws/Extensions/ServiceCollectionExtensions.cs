@@ -45,13 +45,18 @@ public static class ServiceCollectionExtensions
 
     private static void CheckConfiguration(AWSStorageOptions options)
     {
-        if (string.IsNullOrEmpty(options.PublicKey))
-            throw new BadConfigurationException($"{nameof(options.PublicKey)} cannot be empty");
-
-        if (string.IsNullOrEmpty(options.SecretKey))
-            throw new BadConfigurationException($"{nameof(options.SecretKey)} cannot be empty");
-
+        // Make sure the bucket name is set.
         if (string.IsNullOrEmpty(options.Bucket))
             throw new BadConfigurationException($"{nameof(options.Bucket)} cannot be empty");
+
+        // If we are using instance profile credentials, we don't need to check for the public and secret keys.
+        if (!options.UseInstanceProfileCredentials)
+        {
+            if (string.IsNullOrEmpty(options.PublicKey))
+                throw new BadConfigurationException($"{nameof(options.PublicKey)} cannot be empty");
+
+            if (string.IsNullOrEmpty(options.SecretKey))
+                throw new BadConfigurationException($"{nameof(options.SecretKey)} cannot be empty");
+        }
     }
 }
