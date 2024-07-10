@@ -23,6 +23,7 @@ public class AWSStorageOptions : IStorageOptions
     /// </summary>
     /// <remarks>
     ///     If this is set, the <see cref="PublicKey"/> and <see cref="SecretKey"/> will be ignored.
+    ///     Note that this can only be used when running on an EC2 instance.
     /// </remarks>
     public string? RoleName { get; set; }
 
@@ -46,6 +47,7 @@ public class AWSStorageOptions : IStorageOptions
     /// </summary>
     /// <remarks>
     ///    If this is set to <c>true</c>, the <see cref="PublicKey"/> and <see cref="SecretKey"/> will be ignored.
+    ///     Note that this can only be used when running on an EC2 instance.
     /// </remarks>
     public bool UseInstanceProfileCredentials { get; set; } = false;
 }
