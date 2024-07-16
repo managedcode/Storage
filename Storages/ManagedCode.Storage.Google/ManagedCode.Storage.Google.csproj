@@ -7,7 +7,7 @@
     <!--NuGet-->
     <PropertyGroup>
         <Title>ManagedCode.Storage.Gcp</Title>
-        <PackageId>ManagedCode.Storage.Google</PackageId>
+        <PackageId>ManagedCode.Storage.Gcp</PackageId>
         <Description>Storage for Google Cloud Storage</Description>
         <PackageTags>managedcode, gcs, storage, cloud, blob</PackageTags>
     </PropertyGroup>
