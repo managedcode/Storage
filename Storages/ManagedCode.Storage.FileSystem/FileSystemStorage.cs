@@ -92,7 +92,7 @@ public class FileSystemStorage : BaseStorage<string, FileSystemStorageOptions>, 
 
         var filePath = GetPathFromOptions(options);
 
-        using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write))
+        using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
         {
             stream.Seek(0, SeekOrigin.Begin);
             await stream.CopyToAsync(fs, 81920, cancellationToken);
