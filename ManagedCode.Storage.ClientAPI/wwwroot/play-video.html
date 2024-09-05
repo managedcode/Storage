@@ -1,0 +1,17 @@
+﻿<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Video Playback</title>
+    <link href='https://vjs.zencdn.net/8.3.0/video-js.css' rel='stylesheet' />
+</head>
+<body>
+    <h3>Playing: {{fileName}}</h3>
+    <video id='videoPlayer' class='video-js vjs-default-skin' controls autoplay preload='auto' width='640' height='264' data-setup='{}'>
+        <source src='{{videoUrl}}' type='video/mp4'>
+        Your browser does not support the video tag.
+    </video>
+    <script src='https://vjs.zencdn.net/8.3.0/video.min.js'></script>
+</body>
+</html>
