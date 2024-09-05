@@ -49,6 +49,5 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.MapControllers();
-app.MapRazorPages();
 
 app.Run();
