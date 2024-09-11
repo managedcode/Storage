@@ -1,0 +1,13 @@
+﻿@page "/download"
+
+<h3>File Download</h3>
+
+<InputText @bind-Value="fileName" placeholder="Enter file name" />
+<button @onclick="DownloadFile">Download</button>
+
+<p>@message</p>
+
+@if (!string.IsNullOrEmpty(result))
+{
+    <textarea rows="20" cols="80" readonly>@result</textarea>
+}

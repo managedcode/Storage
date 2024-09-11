@@ -1,0 +1,9 @@
+﻿global using ManagedCode.Communication;
+global using ManagedCode.Storage.Core;
+global using ManagedCode.Storage.Core.Models;
+global using Microsoft.AspNetCore.Http.Features;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.Extensions.Options;
+global using ManagedCode.Storage.Client.Configurations;
+global using ManagedCode.Storage.Client.Constants;
+global using ManagedCode.Storage.Client.Services.Interfaces;

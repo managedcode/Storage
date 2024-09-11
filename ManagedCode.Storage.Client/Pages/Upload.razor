@@ -1,0 +1,33 @@
+﻿@page "/upload"
+@using System.Net.Http.Headers
+@using System.Text.Json
+
+<PageTitle>File Upload</PageTitle>
+
+<h1>File Upload Example</h1>
+
+<p>
+    <label>
+        Select a file to upload:
+        <InputFile OnChange="OnInputFileChange" />
+    </label>
+</p>
+
+@if (isLoading)
+{
+    <p>Uploading...</p>
+}
+else if (uploadMessage != null)
+{
+    <p>@uploadMessage</p>
+}
+
+@if (selectedFile != null)
+{
+    <ul>
+        <li>Name: @selectedFile.Name</li>
+        <li>Last modified: @selectedFile.LastModified.ToString()</li>
+        <li>Size (bytes): @selectedFile.Size</li>
+        <li>Content type: @selectedFile.ContentType</li>
+    </ul>
+}
