@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31729.503
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Core", "ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj", "{1B494908-A80A-4EEE-97A7-ABDEAC3EC64F}"
 EndProject
@@ -13,23 +13,30 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Aws", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Google", "Storages\ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj", "{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.FileSystem", "Storages\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.FileSystem", "Storages\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj", "{EDFA1CB7-1721-4447-9C25-AE110821717C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Server", "Integraions\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Server", "Integraions\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj", "{852B0DBD-37F0-4DC0-B966-C284AE03C2F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Azure.DataLake", "Storages\ManagedCode.Storage.Azure.DataLake\ManagedCode.Storage.Azure.DataLake.csproj", "{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Azure.DataLake", "Storages\ManagedCode.Storage.Azure.DataLake\ManagedCode.Storage.Azure.DataLake.csproj", "{4D4D2AC7-923D-4219-9BC9-341FBA7FE690}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.TestFakes", "ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj", "{7190B548-4BE9-4EF6-B55F-8432757AEAD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.TestFakes", "ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj", "{7190B548-4BE9-4EF6-B55F-8432757AEAD5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Storages", "Storages", "{92201402-E361-440F-95DB-68663D228C2D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integraions", "Integraions", "{94DB7354-F5C7-4347-B9EC-FCCA38B86876}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client", "Integraions\ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj", "{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Client", "Integraions\ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj", "{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Storage.Client.SignalR", "Integraions\ManagedCode.Storage.Client.SignalR\ManagedCode.Storage.Client.SignalR.csproj", "{ED216AAD-CBA2-40F2-AA01-63C60E906632}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedCode.Storage.Client.SignalR", "Integraions\ManagedCode.Storage.Client.SignalR\ManagedCode.Storage.Client.SignalR.csproj", "{ED216AAD-CBA2-40F2-AA01-63C60E906632}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E609A83E-6400-42B0-AD5A-5B006EABC275}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserAPI", "UserAPI\UserAPI.csproj", "{66E24FB9-F971-4114-8B69-7CE7F64E3624}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9969F6B8-CA5F-4872-A343-A5E2ADB4740F}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,22 +88,26 @@ Global
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66E24FB9-F971-4114-8B69-7CE7F64E3624}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66E24FB9-F971-4114-8B69-7CE7F64E3624}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66E24FB9-F971-4114-8B69-7CE7F64E3624}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66E24FB9-F971-4114-8B69-7CE7F64E3624}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {A594F814-80A8-49D2-B751-B3A58869B30D}
-	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3} = {92201402-E361-440F-95DB-68663D228C2D}
-		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690} = {92201402-E361-440F-95DB-68663D228C2D}
 		{0D6304D1-911D-489E-A716-6CBD5D0FE05D} = {92201402-E361-440F-95DB-68663D228C2D}
+		{F9DA9E52-2DDF-40E3-B0A4-4EC7B118FE8F} = {E609A83E-6400-42B0-AD5A-5B006EABC275}
 		{0AFE156D-0DA5-4B23-8262-CA98E4C0FB5F} = {92201402-E361-440F-95DB-68663D228C2D}
+		{C3B4FF9C-1C6A-4EA0-9291-E7E0C0EF2BA3} = {92201402-E361-440F-95DB-68663D228C2D}
 		{EDFA1CB7-1721-4447-9C25-AE110821717C} = {92201402-E361-440F-95DB-68663D228C2D}
 		{852B0DBD-37F0-4DC0-B966-C284AE03C2F5} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
+		{4D4D2AC7-923D-4219-9BC9-341FBA7FE690} = {92201402-E361-440F-95DB-68663D228C2D}
 		{D5A7D3A7-E6E8-4153-911D-D7C0C5C8B19C} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
 		{ED216AAD-CBA2-40F2-AA01-63C60E906632} = {94DB7354-F5C7-4347-B9EC-FCCA38B86876}
-		{F9DA9E52-2DDF-40E3-B0A4-4EC7B118FE8F} = {E609A83E-6400-42B0-AD5A-5B006EABC275}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A594F814-80A8-49D2-B751-B3A58869B30D}
 	EndGlobalSection
 EndGlobal
