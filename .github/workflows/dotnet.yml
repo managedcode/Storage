@@ -54,15 +54,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: NDepend
-        uses: ndepend/ndepend-action@v1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}/coverage/
-          baseline: main_recent
-          retention-days: 15
-          #stopIfQGFailed: true
+      # - name: NDepend
+      #   uses: ndepend/ndepend-action@v1
+      #   with:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     license: ${{ secrets.NDEPENDLICENSE }}
+      #     coveragefolder: ${{ github.workspace }}/coverage/
+      #     baseline: main_recent
+      #     retention-days: 15
+      #     #stopIfQGFailed: true
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
