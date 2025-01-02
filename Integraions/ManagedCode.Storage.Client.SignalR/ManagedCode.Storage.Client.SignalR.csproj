@@ -19,7 +19,7 @@
 
     <ItemGroup>
         <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0"/>
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.6" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
     </ItemGroup>
 
 </Project>
