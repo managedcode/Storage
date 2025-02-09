@@ -14,27 +14,28 @@ using Microsoft.Net.Http.Headers;
 
 namespace ManagedCode.Storage.Server.Extensions;
 
-public static class ControllerBaseExtensions
+public static class ControllerUploadExtensions
 {
     private const int DefaultMultipartBoundaryLengthLimit = 70;
+    private const int MinLengthForLargeFile = 256 * 1024;
 
-    public static async Task<Result<BlobMetadata>> UploadFromFormFileAsync(
+    public static async Task<Result<BlobMetadata>> UploadFormFileAsync(
         this ControllerBase controller,
         IStorage storage,
         IFormFile file,
         UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
+        options ??= new UploadOptions(file.FileName, mimeType: file.ContentType);
+
+        if (file.Length > MinLengthForLargeFile)
         {
-            options = new UploadOptions 
-            { 
-                FileName = file.FileName,
-                MimeType = file.ContentType
-            };
+            var localFile = await file.ToLocalFileAsync(cancellationToken);
+            return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         }
-        
-        return await storage.UploadToStorageAsync(file, options, cancellationToken);
+
+        await using var stream = file.OpenReadStream();
+        return await storage.UploadAsync(stream, options, cancellationToken);
     }
 
     public static async Task<Result<BlobMetadata>> UploadFromBrowserFileAsync(
@@ -44,16 +45,16 @@ public static class ControllerBaseExtensions
         UploadOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
+        options ??= new UploadOptions(file.Name, mimeType: file.ContentType);
+
+        if (file.Size > MinLengthForLargeFile)
         {
-            options = new UploadOptions 
-            { 
-                FileName = file.Name,
-                MimeType = file.ContentType
-            };
+            var localFile = await file.ToLocalFileAsync(cancellationToken);
+            return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         }
-        
-        return await storage.UploadToStorageAsync(file, options);
+
+        await using var stream = file.OpenReadStream();
+        return await storage.UploadAsync(stream, options, cancellationToken);
     }
 
     public static async Task<Result<BlobMetadata>> UploadFromStreamAsync(
@@ -83,14 +84,7 @@ public static class ControllerBaseExtensions
                 var fileName = contentDisposition.FileName.Value;
                 var contentType = section.ContentType;
 
-                if (options == null)
-                {
-                    options = new UploadOptions 
-                    { 
-                        FileName = fileName,
-                        MimeType = contentType
-                    };
-                }
+                options ??= new UploadOptions(fileName, mimeType: contentType);
 
                 using var memoryStream = new MemoryStream();
                 await section.Body.CopyToAsync(memoryStream, cancellationToken);
@@ -103,14 +97,5 @@ public static class ControllerBaseExtensions
         }
 
         return Result<BlobMetadata>.Fail(HttpStatusCode.BadRequest, "No file found in request");
-    }
-
-    public static async Task<Result<FileResult>> DownloadAsFileResultAsync(
-        this ControllerBase controller,
-        IStorage storage,
-        string blobName,
-        CancellationToken cancellationToken = default)
-    {
-        return await storage.DownloadAsFileResult(blobName, cancellationToken);
     }
 }
