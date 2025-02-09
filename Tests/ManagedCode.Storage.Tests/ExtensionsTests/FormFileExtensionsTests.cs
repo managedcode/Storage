@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -24,7 +25,7 @@ public class FormFileExtensionsTests
 
         // Assert
         localFile.FileStream.Length.Should().Be(formFile.Length);
-        localFile.Name.Should().Be(formFile.FileName);
+        Path.GetExtension(localFile.Name).Should().Be(Path.GetExtension(formFile.FileName));
     }
 
     [Fact]
@@ -40,9 +41,9 @@ public class FormFileExtensionsTests
 
         // Assert
         localFile.FileStream.Length.Should().Be(formFile.Length);
-        localFile.Name.Should().Be(formFile.FileName);
+        Path.GetExtension(localFile.Name).Should().Be(Path.GetExtension(formFile.FileName));
     }
-
+    
     [Fact]
     public async Task ToLocalFilesAsync_SmallFiles()
     {
@@ -67,7 +68,7 @@ public class FormFileExtensionsTests
         for (var i = 0; i < filesCount; i++)
         {
             localFiles[i].FileStream.Length.Should().Be(collection[i].Length);
-            localFiles[i].Name.Should().Be(collection[i].FileName);
+            Path.GetExtension(localFiles[i].Name).Should().Be(Path.GetExtension(collection[i].FileName));
         }
     }
 }

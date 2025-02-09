@@ -8,7 +8,8 @@ public class AzureContainerTests : ContainerTests<AzuriteContainer>
 {
     protected override AzuriteContainer Build()
     {
-        return new AzuriteBuilder().WithImage(ContainerImages.Azurite)
+        return new AzuriteBuilder()
+            .WithImage(ContainerImages.Azurite)
             .Build();
     }
 

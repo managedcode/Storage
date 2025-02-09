@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ManagedCode.Storage.Core.Models;
@@ -103,6 +104,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
+    public void Delete()
+    {
+        KeepAlive = false;
+        Dispose();
+    }
+
     ~LocalFile()
     {
         Dispose();
@@ -122,36 +129,36 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public async Task<LocalFile> CopyFromStreamAsync(Stream stream)
+    public async Task<LocalFile> CopyFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         var fs = FileStream;
-        await stream.CopyToAsync(fs);
+        await stream.CopyToAsync(fs, cancellationToken);
         return this;
     }
 
-    public static async Task<LocalFile> FromStreamAsync(Stream stream)
+    public static async Task<LocalFile> FromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         var file = new LocalFile();
-        await stream.CopyToAsync(file.FileStream);
+        await stream.CopyToAsync(file.FileStream, cancellationToken);
         await file.FileStream.DisposeAsync();
         return file;
     }
 
-    public static async Task<LocalFile> FromStreamAsync(Stream stream, string path, string fileName)
+    public static async Task<LocalFile> FromStreamAsync(Stream stream, string path, string fileName, CancellationToken cancellationToken = default)
     {
         var pathWithName = Path.Combine(path, $"{fileName}.tmp");
         var file = new LocalFile(pathWithName);
 
-        await stream.CopyToAsync(file.FileStream);
+        await stream.CopyToAsync(file.FileStream, cancellationToken);
         await file.FileStream.DisposeAsync();
 
         return file;
     }
 
-    public static async Task<LocalFile> FromStreamAsync(Stream stream, string fileName)
+    public static async Task<LocalFile> FromStreamAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)
     {
         var file = FromFileName(fileName);
-        await stream.CopyToAsync(file.FileStream);
+        await stream.CopyToAsync(file.FileStream, cancellationToken);
         await file.FileStream.DisposeAsync();
         return file;
     }
@@ -184,12 +191,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public Task<string> ReadAllTextAsync()
+    public Task<string> ReadAllTextAsync(CancellationToken cancellationToken = default)
     {
         lock (_lockObject)
         {
             CloseFileStream();
-            return File.ReadAllTextAsync(FilePath);
+            return File.ReadAllTextAsync(FilePath, cancellationToken);
         }
     }
 
@@ -202,12 +209,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public Task<string[]> ReadAllLinesAsync()
+    public Task<string[]> ReadAllLinesAsync(CancellationToken cancellationToken = default)
     {
         lock (_lockObject)
         {
             CloseFileStream();
-            return File.ReadAllLinesAsync(FilePath);
+            return File.ReadAllLinesAsync(FilePath, cancellationToken);
         }
     }
 
@@ -220,12 +227,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public Task<byte[]> ReadAllBytesAsync()
+    public Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
     {
         lock (_lockObject)
         {
             CloseFileStream();
-            return File.ReadAllBytesAsync(FilePath);
+            return File.ReadAllBytesAsync(FilePath, cancellationToken);
         }
     }
 
@@ -251,12 +258,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public Task WriteAllTextAsync(string content)
+    public Task WriteAllTextAsync(string content, CancellationToken cancellationToken = default)
     {
         lock (_lockObject)
         {
             CloseFileStream();
-            return File.WriteAllTextAsync(FilePath, content);
+            return File.WriteAllTextAsync(FilePath, content, cancellationToken);
         }
     }
 
@@ -269,12 +276,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public Task WriteAllLinesAsync(IEnumerable<string> contents)
+    public Task WriteAllLinesAsync(IEnumerable<string> contents, CancellationToken cancellationToken = default)
     {
         lock (_lockObject)
         {
             CloseFileStream();
-            return File.WriteAllLinesAsync(FilePath, contents);
+            return File.WriteAllLinesAsync(FilePath, contents, cancellationToken);
         }
     }
 
@@ -287,12 +294,12 @@ public class LocalFile : IDisposable, IAsyncDisposable
         }
     }
 
-    public Task WriteAllBytesAsync(byte[] bytes)
+    public Task WriteAllBytesAsync(byte[] bytes, CancellationToken cancellationToken = default)
     {
         lock (_lockObject)
         {
             CloseFileStream();
-            return File.WriteAllBytesAsync(FilePath, bytes);
+            return File.WriteAllBytesAsync(FilePath, bytes, cancellationToken);
         }
     }
 

@@ -78,12 +78,14 @@ public static class FileHelper
 
         return formFile;
     }
-
-    public static string GenerateRandomFileName(string extension = "txt")
+    
+    public static string GenerateRandomFileName()
     {
-        return $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.{extension}";
+        string[] extensions = { "txt", "jpg", "png", "pdf", "docx", "xlsx", "pptx", "mp3", "mp4", "zip" };
+        var randomExtension = extensions[Random.Next(extensions.Length)];
+        return $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.{randomExtension}";
     }
-
+    
     public static string GenerateRandomFileContent()
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789_abcdefghijklmnopqrstuvwxyz";

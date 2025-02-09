@@ -8,7 +8,8 @@ public class GCSContainerTests : ContainerTests<FakeGcsServerContainer>
 {
     protected override FakeGcsServerContainer Build()
     {
-        return new FakeGcsServerBuilder().WithImage(ContainerImages.FakeGCSServer)
+        return new FakeGcsServerBuilder()
+            .WithImage(ContainerImages.FakeGCSServer)
             .Build();
     }
 

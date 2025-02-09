@@ -12,7 +12,7 @@ public static class FormFileExtensions
     public static async Task<LocalFile> ToLocalFileAsync(this IFormFile formFile, CancellationToken cancellationToken = default)
     {
         var localFile = LocalFile.FromRandomNameWithExtension(formFile.FileName);
-        await localFile.CopyFromStreamAsync(formFile.OpenReadStream());
+        await localFile.CopyFromStreamAsync(formFile.OpenReadStream(), cancellationToken);
         return localFile;
     }
 
