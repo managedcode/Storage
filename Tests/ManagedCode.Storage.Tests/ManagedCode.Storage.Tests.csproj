@@ -3,6 +3,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <GenerateProgramFile>false</GenerateProgramFile>
         <IsPackable>false</IsPackable>
+        <TargetFrameworks />
     </PropertyGroup>
     <PropertyGroup>
         <VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>

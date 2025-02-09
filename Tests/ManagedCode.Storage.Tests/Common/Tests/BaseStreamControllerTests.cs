@@ -29,7 +29,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         var contentName = "file";
         var extension = ".txt";
         await using var localFile = LocalFile.FromRandomNameWithExtension(extension);
-        Helpers.FileHelper.GenerateLocalFile(localFile, 1);
+        FileHelper.GenerateLocalFile(localFile, 1);
         var fileCRC = Crc32Helper.Calculate(await localFile.ReadAllBytesAsync());
         var uploadFileBlob = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
 

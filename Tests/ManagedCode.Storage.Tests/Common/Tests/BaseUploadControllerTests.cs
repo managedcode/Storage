@@ -28,7 +28,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        Helpers.FileHelper.GenerateLocalFile(localFile, 1);
+        FileHelper.GenerateLocalFile(localFile, 1);
 
         // Act
         var result = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
@@ -50,7 +50,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        Helpers.FileHelper.GenerateLocalFile(localFile, 200);
+        FileHelper.GenerateLocalFile(localFile, 200);
 
         // Act
         var result = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
@@ -75,7 +75,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        Helpers.FileHelper.GenerateLocalFile(localFile, 1);
+        FileHelper.GenerateLocalFile(localFile, 1);
 
         // Act
         var result = await storageClient.UploadFile(localFile.FileInfo, _uploadEndpoint, contentName);
@@ -97,7 +97,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var fileName = "test.txt";
         var contentName = "file";
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        Helpers.FileHelper.GenerateLocalFile(localFile, 1);
+        FileHelper.GenerateLocalFile(localFile, 1);
 
         var fileAsBytes = await localFile.ReadAllBytesAsync();
 
@@ -122,7 +122,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        Helpers.FileHelper.GenerateLocalFile(localFile, 1);
+        FileHelper.GenerateLocalFile(localFile, 1);
 
         var fileAsBytes = await localFile.ReadAllBytesAsync();
         var fileAsString64 = Convert.ToBase64String(fileAsBytes);
@@ -146,7 +146,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var storageClient = GetStorageClient();
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        Helpers.FileHelper.GenerateLocalFile(localFile, 50);
+        FileHelper.GenerateLocalFile(localFile, 50);
         var crc32 = Crc32Helper.CalculateFileCrc(localFile.FilePath);
         storageClient.SetChunkSize(4096000);
 

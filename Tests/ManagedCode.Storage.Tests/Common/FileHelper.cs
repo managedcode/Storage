@@ -10,6 +10,17 @@ namespace ManagedCode.Storage.Tests.Common;
 public static class FileHelper
 {
     private static readonly Random Random = new();
+    
+    public static LocalFile GenerateLocalFile(LocalFile localFile, int byteSize)
+    {
+        var fs = localFile.FileStream;
+
+        fs.Seek(byteSize, SeekOrigin.Begin);
+        fs.WriteByte(0);
+        fs.Close();
+
+        return localFile;
+    }
 
     public static LocalFile GenerateLocalFile(string fileName, int byteSize)
     {
