@@ -14,9 +14,9 @@
 
     <ItemGroup>
         <PackageReference Include="ManagedCode.Communication" Version="9.0.0" />
-        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.2" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.1" />
     </ItemGroup>
 
 </Project>
