@@ -33,15 +33,36 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddTransient<IAzureDataLakeStorage, AzureDataLakeStorage>();
+        return serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
     }
 
     public static IServiceCollection AddAzureDataLakeStorageAsDefault(this IServiceCollection serviceCollection, AzureDataLakeStorageOptions options)
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddTransient<IAzureDataLakeStorage, AzureDataLakeStorage>();
-        return serviceCollection.AddTransient<IStorage, AzureDataLakeStorage>();
+        serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
+        return serviceCollection.AddScoped<IStorage, AzureDataLakeStorage>();
+    }
+    
+    public static IServiceCollection AddAzureStorage(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
+    {
+        var options = new AzureDataLakeStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, (_, _) => options);
+        return serviceCollection.AddKeyedScoped<IAzureDataLakeStorage, AzureDataLakeStorage>(key);
+    }
+
+    public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
+    {
+        var options = new AzureDataLakeStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, (_, _) => options);
+        serviceCollection.AddKeyedScoped<IAzureDataLakeStorage, AzureDataLakeStorage>(key);
+        return serviceCollection.AddKeyedScoped<IStorage, AzureDataLakeStorage>(key);
     }
 
     private static void CheckConfiguration(AzureDataLakeStorageOptions options)

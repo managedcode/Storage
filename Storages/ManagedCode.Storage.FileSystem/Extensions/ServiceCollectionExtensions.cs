@@ -25,13 +25,32 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddFileSystemStorage(this IServiceCollection serviceCollection, FileSystemStorageOptions options)
     {
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddTransient<IFileSystemStorage, FileSystemStorage>();
+        return serviceCollection.AddScoped<IFileSystemStorage>(sp => new FileSystemStorage(defaultOptions: options));
     }
 
     public static IServiceCollection AddFileSystemStorageAsDefault(this IServiceCollection serviceCollection, FileSystemStorageOptions options)
     {
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddTransient<IFileSystemStorage, FileSystemStorage>();
-        return serviceCollection.AddTransient<IStorage, FileSystemStorage>();
+        serviceCollection.AddScoped<IFileSystemStorage>(sp => new FileSystemStorage(defaultOptions: options));
+        return serviceCollection.AddScoped<IStorage>(sp => new FileSystemStorage(defaultOptions: options));
+    }
+
+    public static IServiceCollection AddFileSystemStorage(this IServiceCollection serviceCollection, string key, Action<FileSystemStorageOptions> action)
+    {
+        var options = new FileSystemStorageOptions();
+        action.Invoke(options);
+        
+        serviceCollection.AddKeyedSingleton<FileSystemStorageOptions>(key, (_, _) => options);
+        return serviceCollection.AddKeyedScoped<IFileSystemStorage, FileSystemStorage>(key);
+    }
+
+    public static IServiceCollection AddFileSystemStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<FileSystemStorageOptions> action)
+    {
+        var options = new FileSystemStorageOptions();
+        action.Invoke(options);
+        
+        serviceCollection.AddKeyedSingleton<FileSystemStorageOptions>(key, (_, _) => options);
+        serviceCollection.AddKeyedScoped<IFileSystemStorage, FileSystemStorage>(key);
+        return serviceCollection.AddKeyedScoped<IStorage, FileSystemStorage>(key);
     }
 }

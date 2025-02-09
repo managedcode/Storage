@@ -53,15 +53,36 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddTransient<IAzureStorage, AzureStorage>();
+        return serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
     }
 
     public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection, IAzureStorageOptions options)
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddTransient<IAzureStorage, AzureStorage>();
-        return serviceCollection.AddTransient<IStorage, AzureStorage>();
+        serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
+        return serviceCollection.AddScoped<IStorage, AzureStorage>();
+    }
+
+    public static IServiceCollection AddAzureStorage(this IServiceCollection serviceCollection, string key, Action<AzureStorageOptions> action)
+    {
+        var options = new AzureStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<AzureStorageOptions>(key, (_, _) => options);
+        return serviceCollection.AddKeyedScoped<IAzureStorage, AzureStorage>(key);
+    }
+
+    public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<AzureStorageOptions> action)
+    {
+        var options = new AzureStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<AzureStorageOptions>(key, (_, _) => options);
+        serviceCollection.AddKeyedScoped<IAzureStorage, AzureStorage>(key);
+        return serviceCollection.AddKeyedScoped<IStorage, AzureStorage>(key);
     }
 
     private static void CheckConfiguration(IAzureStorageOptions options)

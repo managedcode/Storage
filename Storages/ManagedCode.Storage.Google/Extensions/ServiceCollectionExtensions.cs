@@ -32,7 +32,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddTransient<IGCPStorage, GCPStorage>();
+        return serviceCollection.AddScoped<IGCPStorage, GCPStorage>();
     }
 
     public static IServiceCollection AddGCPStorageAsDefault(this IServiceCollection serviceCollection, GCPStorageOptions options)
@@ -40,8 +40,29 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
 
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddTransient<IGCPStorage, GCPStorage>();
-        return serviceCollection.AddTransient<IStorage, GCPStorage>();
+        serviceCollection.AddScoped<IGCPStorage, GCPStorage>();
+        return serviceCollection.AddScoped<IStorage, GCPStorage>();
+    }
+
+    public static IServiceCollection AddGCPStorage(this IServiceCollection serviceCollection, string key, Action<GCPStorageOptions> action)
+    {
+        var options = new GCPStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, (_, _) => options);
+        return serviceCollection.AddKeyedScoped<IGCPStorage, GCPStorage>(key);
+    }
+
+    public static IServiceCollection AddGCPStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<GCPStorageOptions> action)
+    {
+        var options = new GCPStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, (_, _) => options);
+        serviceCollection.AddKeyedScoped<IGCPStorage, GCPStorage>(key);
+        return serviceCollection.AddKeyedScoped<IStorage, GCPStorage>(key);
     }
 
     private static void CheckConfiguration(GCPStorageOptions options)

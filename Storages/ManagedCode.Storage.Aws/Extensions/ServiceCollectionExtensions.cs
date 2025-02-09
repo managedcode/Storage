@@ -32,15 +32,36 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        return serviceCollection.AddTransient<IAWSStorage, AWSStorage>();
+        return serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
     }
 
     public static IServiceCollection AddAWSStorageAsDefault(this IServiceCollection serviceCollection, AWSStorageOptions options)
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.AddTransient<IAWSStorage, AWSStorage>();
-        return serviceCollection.AddTransient<IStorage, AWSStorage>();
+        serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
+        return serviceCollection.AddScoped<IStorage, AWSStorage>();
+    }
+
+    public static IServiceCollection AddAWSStorage(this IServiceCollection serviceCollection, string key, Action<AWSStorageOptions> action)
+    {
+        var options = new AWSStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, (_, _) => options);
+        return serviceCollection.AddKeyedScoped<IAWSStorage, AWSStorage>(key);
+    }
+
+    public static IServiceCollection AddAWSStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<AWSStorageOptions> action)
+    {
+        var options = new AWSStorageOptions();
+        action.Invoke(options);
+        CheckConfiguration(options);
+        
+        serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, (_, _) => options);
+        serviceCollection.AddKeyedScoped<IAWSStorage, AWSStorage>(key);
+        return serviceCollection.AddKeyedScoped<IStorage, AWSStorage>(key);
     }
 
     private static void CheckConfiguration(AWSStorageOptions options)
