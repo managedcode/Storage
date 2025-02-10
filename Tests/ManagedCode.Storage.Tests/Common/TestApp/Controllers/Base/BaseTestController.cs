@@ -9,6 +9,7 @@ using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Server;
+using ManagedCode.Storage.Server.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using IResult = Microsoft.AspNetCore.Http.IResult;
@@ -34,28 +35,26 @@ public abstract class BaseTestController<TStorage> : ControllerBase where TStora
     {
         if (Request.HasFormContentType is false)
             return Result<BlobMetadata>.Fail("invalid body");
-
-        return await Storage.UploadAsync(file.OpenReadStream(), cancellationToken);
+        
+        return await Result.From(() => this.UploadFormFileAsync(Storage, file, cancellationToken:cancellationToken), cancellationToken);
     }
 
     [HttpGet("download/{fileName}")]
     public async Task<FileResult> DownloadFileAsync([FromRoute] string fileName)
     {
-        var result = await Storage.DownloadAsFileResult(fileName);
-
-        result.ThrowIfFail();
-
-        return result.Value!;
+        return await this.DownloadAsFileResultAsync(Storage, fileName);
     }
 
     [HttpGet("stream/{fileName}")]
     public async Task<IResult> StreamFileAsync([FromRoute] string fileName)
     {
-        var result = await Storage.GetStreamAsync(fileName);
-        var metadataAsync = await Storage.GetBlobMetadataAsync(fileName);
+        return await this.DownloadAsStreamAsync(Storage, fileName);
+    }
 
-        result.ThrowIfFail();
-        return Results.Stream(result.Value, metadataAsync.Value?.MimeType ?? "application/octet-stream", fileName);
+    [HttpGet("download-bytes/{fileName}")]
+    public async Task<FileContentResult> DownloadBytesAsync([FromRoute] string fileName)
+    {
+        return await this.DownloadAsFileContentResultAsync(Storage, fileName);
     }
 
     [HttpPost("upload-chunks/upload")]

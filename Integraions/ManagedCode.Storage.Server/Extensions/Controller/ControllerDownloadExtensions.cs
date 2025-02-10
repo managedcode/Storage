@@ -1,36 +1,49 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using ManagedCode.Communication;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
-using ManagedCode.Storage.Core.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace ManagedCode.Storage.Server.Extensions;
 
 public static class ControllerDownloadExtensions
 {
-    public static async Task<Result<FileResult>> DownloadFileAsync(
+    public static async Task<IResult> DownloadAsStreamAsync(
         this ControllerBase controller,
         IStorage storage,
         string blobName,
+        bool enableRangeProcessing = true,
         CancellationToken cancellationToken = default)
     {
-        var result = await storage.DownloadAsync(blobName, cancellationToken);
+        var result = await storage.GetStreamAsync(blobName, cancellationToken);
         if (result.IsFailed)
-            return Result<FileResult>.Fail(result.Errors);
-
-        var fileStream = new FileStreamResult(result.Value!.FileStream, 
-            MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
+            throw new FileNotFoundException(blobName);
+        
+        return Results.Stream(result.Value, MimeHelper.GetMimeType(blobName), blobName, enableRangeProcessing: enableRangeProcessing);
+    }
+    
+    public static async Task<FileResult> DownloadAsFileResultAsync(
+        this ControllerBase controller,
+        IStorage storage,
+        string blobName,
+        bool enableRangeProcessing = true,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await storage.GetStreamAsync(blobName, cancellationToken);
+        if (result.IsFailed)
+            throw new FileNotFoundException(blobName);
+        
+        return new FileStreamResult(result.Value, MimeHelper.GetMimeType(blobName))
         {
-            FileDownloadName = result.Value.Name
+            FileDownloadName = blobName,
+            EnableRangeProcessing = enableRangeProcessing
         };
-
-        return Result<FileResult>.Succeed(fileStream);
     }
 
-    public static async Task<Result<FileResult>> StreamVideoAsync(
+    public static async Task<FileContentResult> DownloadAsFileContentResultAsync(
         this ControllerBase controller,
         IStorage storage,
         string blobName,
@@ -38,37 +51,13 @@ public static class ControllerDownloadExtensions
     {
         var result = await storage.DownloadAsync(blobName, cancellationToken);
         if (result.IsFailed)
-            return Result<FileResult>.Fail(result.Errors);
-
-        var fileStream = new FileStreamResult(result.Value!.FileStream, 
-            MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
-        {
-            EnableRangeProcessing = true,
-            FileDownloadName = result.Value.Name
-        };
-
-        return Result<FileResult>.Succeed(fileStream);
-    }
-
-    public static async Task<Result<FileContentResult>> DownloadAsByteArrayAsync(
-        this ControllerBase controller,
-        IStorage storage,
-        string blobName,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await storage.DownloadAsync(blobName, cancellationToken);
-        if (result.IsFailed)
-            return Result<FileContentResult>.Fail(result.Errors);
+            throw new FileNotFoundException(blobName);
 
         using var memoryStream = new MemoryStream();
-        await result.Value!.FileStream.CopyToAsync(memoryStream, cancellationToken);
-        
-        var fileContent = new FileContentResult(memoryStream.ToArray(), 
-            MimeHelper.GetMimeType(result.Value.FileInfo.Extension))
+        await result.Value.FileStream.CopyToAsync(memoryStream, cancellationToken);
+        return new FileContentResult(memoryStream.ToArray(), MimeHelper.GetMimeType(blobName))
         {
-            FileDownloadName = result.Value.Name
+            FileDownloadName = blobName
         };
-
-        return Result<FileContentResult>.Succeed(fileContent);
     }
 }
