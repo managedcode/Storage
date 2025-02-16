@@ -3,16 +3,16 @@ using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.MimeTypes;
-using ManagedCode.Storage.Server;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.FileSystem.Extensions;
+using ManagedCode.Storage.Server;
 using ManagedCode.Storage.Tests.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.AspNetExtensions;
+namespace ManagedCode.Storage.Tests.ExtensionsTests;
 
 public class StorageExtensionsTests
 {

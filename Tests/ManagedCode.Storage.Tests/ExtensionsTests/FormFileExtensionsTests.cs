@@ -8,7 +8,7 @@ using ManagedCode.Storage.Tests.Common;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.AspNetExtensions;
+namespace ManagedCode.Storage.Tests.ExtensionsTests;
 
 public class FormFileExtensionsTests
 {

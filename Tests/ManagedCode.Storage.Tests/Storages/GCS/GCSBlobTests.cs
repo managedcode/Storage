@@ -1,4 +1,5 @@
 ﻿using ManagedCode.Storage.Tests.Common;
+using ManagedCode.Storage.Tests.Storages.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.FakeGcsServer;
 

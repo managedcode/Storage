@@ -1,4 +1,4 @@
-﻿namespace ManagedCode.Storage.Tests.Common.Constants;
+﻿namespace ManagedCode.Storage.Tests.Constants;
 
 public static class ApiEndpoints
 {

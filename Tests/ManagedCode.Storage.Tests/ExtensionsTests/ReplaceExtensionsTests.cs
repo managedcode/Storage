@@ -29,7 +29,7 @@ public class ReplaceExtensionsTests
 
         var build = services.BuildServiceProvider();
         build.GetService<IStorage>()
-            .GetType()
+            !.GetType()
             .Should()
             .Be(typeof(FakeAzureStorage));
     }
@@ -51,7 +51,7 @@ public class ReplaceExtensionsTests
 
         var build = services.BuildServiceProvider();
         build.GetService<IAzureStorage>()
-            .GetType()
+            !.GetType()
             .Should()
             .Be(typeof(FakeAzureStorage));
     }

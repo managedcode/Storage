@@ -6,6 +6,7 @@ using FluentAssertions;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
+using ManagedCode.Storage.Tests.Storages.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Azurite;
 using Xunit;

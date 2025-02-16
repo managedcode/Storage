@@ -11,15 +11,9 @@ using ManagedCode.Storage.Core.Models;
 
 namespace ManagedCode.Storage.Client;
 
-public class StorageClient : IStorageClient
+public class StorageClient(HttpClient httpClient) : IStorageClient
 {
-    private readonly HttpClient _httpClient;
     private long _chunkSize;
-
-    public StorageClient(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
 
     public long ChunkSize
     {
@@ -47,7 +41,7 @@ public class StorageClient : IStorageClient
         using var formData = new MultipartFormDataContent();
         formData.Add(streamContent, contentName, contentName);
 
-        var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+        var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
         if (response.IsSuccessStatusCode)
             return await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
@@ -65,7 +59,7 @@ public class StorageClient : IStorageClient
         {
             formData.Add(streamContent, contentName, contentName);
 
-            var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+            var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -89,7 +83,7 @@ public class StorageClient : IStorageClient
             {
                 formData.Add(streamContent, contentName, contentName);
 
-                var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+                var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -112,7 +106,7 @@ public class StorageClient : IStorageClient
 
         formData.Add(fileContent, contentName, contentName);
 
-        var response = await _httpClient.PostAsync(apiUrl, formData, cancellationToken);
+        var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
         if (response.IsSuccessStatusCode)
             return await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
@@ -125,7 +119,7 @@ public class StorageClient : IStorageClient
     {
         try
         {
-            using var response = await _httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
+            using var response = await httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
             var localFile = path is null
                 ? await LocalFile.FromStreamAsync(response, fileName)
                 : await LocalFile.FromStreamAsync(response, path, fileName);
@@ -165,7 +159,7 @@ public class StorageClient : IStorageClient
                         formData.Add(content, "File", fileName);
                         formData.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
                         formData.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
-                        await _httpClient.PostAsync(uploadApiUrl, formData, cancellationToken);
+                        await httpClient.PostAsync(uploadApiUrl, formData, cancellationToken);
                     }
                 }
 
@@ -180,7 +174,7 @@ public class StorageClient : IStorageClient
 
         await Task.WhenAll(tasks.ToArray());
 
-        var mergeResult = await _httpClient.PostAsync(completeApiUrl, JsonContent.Create(fileName), cancellationToken);
+        var mergeResult = await httpClient.PostAsync(completeApiUrl, JsonContent.Create(fileName), cancellationToken);
 
         return await mergeResult.Content.ReadFromJsonAsync<Result<uint>>(cancellationToken: cancellationToken);
     }
@@ -189,7 +183,7 @@ public class StorageClient : IStorageClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"{apiUrl}/{fileName}");
+            var response = await httpClient.GetAsync($"{apiUrl}/{fileName}");
             if (response.IsSuccessStatusCode)
             {
                 var stream = await response.Content.ReadAsStreamAsync();

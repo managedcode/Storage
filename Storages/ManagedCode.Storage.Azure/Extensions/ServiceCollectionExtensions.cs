@@ -3,6 +3,9 @@ using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Storage;
+using Storage.Providers;
 
 namespace ManagedCode.Storage.Azure.Extensions;
 
@@ -28,7 +31,7 @@ public static class ServiceCollectionExtensions
         return serviceCollection.AddAzureStorageAsDefault(options);
     }
 
-    public static IServiceCollection AddAzureStorage(this IServiceCollection serviceCollection, Action<AzureStorageCredentialsOptions> action)
+    public static IServiceCollection AddAzureStorageWithCredential(this IServiceCollection serviceCollection, Action<AzureStorageCredentialsOptions> action)
     {
         var options = new AzureStorageCredentialsOptions();
         action.Invoke(options);
@@ -53,6 +56,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, AzureStorageProvider>();
         return serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
     }
 
@@ -60,6 +64,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, AzureStorageProvider>();
         serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
         return serviceCollection.AddScoped<IStorage, AzureStorage>();
     }

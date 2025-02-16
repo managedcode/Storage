@@ -10,7 +10,7 @@ using ManagedCode.Storage.Client;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.Storages;
+namespace ManagedCode.Storage.Tests.Storages.Abstracts;
 
 public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContainer
 {

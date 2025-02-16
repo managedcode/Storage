@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
-using ManagedCode.Storage.Tests.Common.Constants;
+using ManagedCode.Storage.Tests.Common;
+using ManagedCode.Storage.Tests.Constants;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.Common.Tests;
+namespace ManagedCode.Storage.Tests.AspNetTests.Abstracts;
 
 public abstract class BaseStreamControllerTests : BaseControllerTests
 {
@@ -57,7 +58,6 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        ;
 
         // Act
         var streamFileResult = await storageClient.GetFileStream(Guid.NewGuid()

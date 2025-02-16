@@ -4,7 +4,7 @@ using FluentAssertions;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.Storages;
+namespace ManagedCode.Storage.Tests.Storages.Abstracts;
 
 public abstract class DownloadTests<T> : BaseContainer<T> where T : IContainer
 {

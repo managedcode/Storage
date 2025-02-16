@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.Tests.Common;
+using ManagedCode.Storage.Tests.Storages.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

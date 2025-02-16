@@ -9,7 +9,7 @@ using Xunit;
 
 // ReSharper disable MethodHasAsyncOverload
 
-namespace ManagedCode.Storage.Tests.Storages;
+namespace ManagedCode.Storage.Tests.Storages.Abstracts;
 
 public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 {

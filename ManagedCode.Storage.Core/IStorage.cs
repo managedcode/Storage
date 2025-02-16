@@ -37,7 +37,7 @@ namespace ManagedCode.Storage.Core
     /// <summary>
     /// Represents a storage interface that includes uploader, downloader, streamer, and storage operations.
     /// </summary>
-    public interface IStorage : IUploader, IDownloader, IStreamer, IStorageOperations
+    public interface IStorage : IUploader, IDownloader, IStreamer, IStorageOperations, IDisposable
     {
         /// <summary>
         /// Creates a container asynchronously if it does not already exist.

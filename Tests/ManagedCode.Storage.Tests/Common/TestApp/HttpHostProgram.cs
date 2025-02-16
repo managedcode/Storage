@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using ManagedCode.Storage.Azure.Extensions;
+using ManagedCode.Storage.Tests.Common.TestApp.Controllers;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Tests.Common.TestApp;
@@ -13,17 +16,18 @@ public class HttpHostProgram
         builder.Services.AddSignalR();
         builder.Services.AddEndpointsApiExplorer();
 
-        // By default body size 4 mb
-        // Full body is 128MB
-        // builder.Services.Configure<FormOptions>(x =>  {  
-        //     x.ValueLengthLimit = int.MaxValue;
-        //     x.MultipartBodyLengthLimit = int.MaxValue;
-        //     x.MultipartHeadersLengthLimit = int.MaxValue;
-        // });
-
+        // Configure form options for large file uploads
+        builder.Services.Configure<FormOptions>(options =>
+        {
+            options.ValueLengthLimit = int.MaxValue;
+            options.MultipartBodyLengthLimit = long.MaxValue;
+            options.MultipartHeadersLengthLimit = int.MaxValue;
+        });
+        
 
         var app = builder.Build();
 
+        app.UseRouting();
         app.MapControllers();
 
         app.Run();

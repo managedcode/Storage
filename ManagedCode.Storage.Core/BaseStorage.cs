@@ -301,4 +301,10 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         CancellationToken cancellationToken = default);
 
     protected abstract Task<Result<bool>> HasLegalHoldInternalAsync(LegalHoldOptions options, CancellationToken cancellationToken = default);
+
+    public void Dispose()
+    {
+        if(StorageClient is IDisposable disposable)
+            disposable.Dispose();
+    }
 }

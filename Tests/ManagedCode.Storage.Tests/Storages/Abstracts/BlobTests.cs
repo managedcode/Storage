@@ -7,7 +7,7 @@ using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
-namespace ManagedCode.Storage.Tests.Storages;
+namespace ManagedCode.Storage.Tests.Storages.Abstracts;
 
 public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 {
