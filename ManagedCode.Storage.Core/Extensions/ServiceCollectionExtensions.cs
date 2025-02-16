@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using ManagedCode.Storage.Core.Providers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Storage;
 
 namespace ManagedCode.Storage.Core.Extensions;
 

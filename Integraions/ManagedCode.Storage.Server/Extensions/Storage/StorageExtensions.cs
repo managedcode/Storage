@@ -6,7 +6,7 @@ using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Extensions.Storage;
 
 public static class StorageExtensions
 {

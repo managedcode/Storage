@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Extensions.DependencyInjection;
 
 public static class StorageServiceCollectionExtensions
 {

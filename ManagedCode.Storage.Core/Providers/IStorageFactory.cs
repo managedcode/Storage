@@ -1,7 +1,6 @@
 using System;
-using ManagedCode.Storage.Core;
 
-namespace Storage
+namespace ManagedCode.Storage.Core.Providers
 {
     public interface IStorageFactory
     {

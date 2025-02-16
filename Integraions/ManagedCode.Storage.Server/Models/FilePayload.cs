@@ -1,4 +1,4 @@
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Models;
 
 public class FilePayload
 {

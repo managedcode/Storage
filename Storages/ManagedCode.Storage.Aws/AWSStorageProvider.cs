@@ -1,28 +1,28 @@
 using System;
-using ManagedCode.Storage.Azure.Options;
+using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Extensions;
 using ManagedCode.Storage.Core.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace ManagedCode.Storage.Azure
+namespace ManagedCode.Storage.Aws
 {
-    public class AzureStorageProvider(IServiceProvider serviceProvider, AzureStorageOptions defaultOptions) : IStorageProvider
+    public class AWSStorageProvider(IServiceProvider serviceProvider, AWSStorageOptions defaultOptions) : IStorageProvider
     {
-        public Type StorageOptionsType => typeof(IAzureStorageOptions);
+        public Type StorageOptionsType => typeof(AWSStorageOptions);
         
         public TStorage CreateStorage<TStorage, TOptions>(TOptions options) 
             where TStorage : class, IStorage 
             where TOptions : class, IStorageOptions
         {
-            if (options is not IAzureStorageOptions azureOptions)
+            if (options is not AWSStorageOptions azureOptions)
             {
-                throw new ArgumentException($"Options must be of type {typeof(IAzureStorageOptions)}", nameof(options));
+                throw new ArgumentException($"Options must be of type {typeof(AWSStorageOptions)}", nameof(options));
             }
 
-            var logger = serviceProvider.GetService<ILogger<AzureStorage>>();
-            var storage = new AzureStorage(azureOptions, logger);
+            var logger = serviceProvider.GetService<ILogger<AWSStorage>>();
+            var storage = new AWSStorage(azureOptions, logger);
 
             return storage as TStorage 
                    ?? throw new InvalidOperationException($"Cannot create storage of type {typeof(TStorage)}");

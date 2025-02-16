@@ -1,6 +1,6 @@
 using System;
 using ManagedCode.Storage.Azure.Options;
-using Storage;
+using ManagedCode.Storage.Core.Providers;
 
 namespace ManagedCode.Storage.Azure.Extensions;
 

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
-namespace ManagedCode.Storage.Server.Extensions;
+namespace ManagedCode.Storage.Server.Extensions.Controller;
 
 public static class ControllerDownloadExtensions
 {

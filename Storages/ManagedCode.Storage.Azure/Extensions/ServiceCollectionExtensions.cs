@@ -2,10 +2,9 @@
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
+using ManagedCode.Storage.Core.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Storage;
-using Storage.Providers;
 
 namespace ManagedCode.Storage.Azure.Extensions;
 

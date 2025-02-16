@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using ManagedCode.Storage.Server;
+using ManagedCode.Storage.Server.Extensions.File;
 using ManagedCode.Storage.Tests.Common;
 using Microsoft.AspNetCore.Http;
 using Xunit;

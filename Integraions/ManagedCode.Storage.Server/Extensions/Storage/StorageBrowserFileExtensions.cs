@@ -4,9 +4,10 @@ using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.Server.Extensions.File;
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace ManagedCode.Storage.Server;
+namespace ManagedCode.Storage.Server.Extensions.Storage;
 
 public static class StorageBrowserFileExtensions
 {

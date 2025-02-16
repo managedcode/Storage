@@ -1,8 +1,10 @@
 ﻿using System;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
+using ManagedCode.Storage.Core.Providers;
 using ManagedCode.Storage.Google.Options;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ManagedCode.Storage.Google.Extensions;
 
@@ -32,6 +34,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, GCPStorageProvider>();
         return serviceCollection.AddScoped<IGCPStorage, GCPStorage>();
     }
 
@@ -40,6 +43,7 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
 
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, GCPStorageProvider>();
         serviceCollection.AddScoped<IGCPStorage, GCPStorage>();
         return serviceCollection.AddScoped<IStorage, GCPStorage>();
     }

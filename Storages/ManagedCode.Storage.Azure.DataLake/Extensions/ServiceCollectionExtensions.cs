@@ -2,7 +2,9 @@
 using ManagedCode.Storage.Azure.DataLake.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
+using ManagedCode.Storage.Core.Providers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ManagedCode.Storage.Azure.DataLake.Extensions;
 
@@ -33,6 +35,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, AzureDataLakeStorageProvider>();
         return serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
     }
 
@@ -40,6 +43,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, AzureDataLakeStorageProvider>();
         serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
         return serviceCollection.AddScoped<IStorage, AzureDataLakeStorage>();
     }

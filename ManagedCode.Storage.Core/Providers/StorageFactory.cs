@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ManagedCode.Storage.Core;
 
-namespace Storage
+namespace ManagedCode.Storage.Core.Providers
 {
     public class StorageFactory : IStorageFactory
     {

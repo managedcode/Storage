@@ -2,7 +2,9 @@
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
+using ManagedCode.Storage.Core.Providers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ManagedCode.Storage.Aws.Extensions;
 
@@ -32,6 +34,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, AWSStorageProvider>();
         return serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
     }
 
@@ -39,6 +42,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
+        serviceCollection.TryAddSingleton<IStorageProvider, AWSStorageProvider>();
         serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
         return serviceCollection.AddScoped<IStorage, AWSStorage>();
     }

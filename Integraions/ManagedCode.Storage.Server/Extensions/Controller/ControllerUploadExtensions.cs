@@ -1,11 +1,10 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.Server.Extensions.File;
 using ManagedCode.Storage.Server.Helpers;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 
-namespace ManagedCode.Storage.Server.Extensions;
+namespace ManagedCode.Storage.Server.Extensions.Controller;
 
 public static class ControllerUploadExtensions
 {
