@@ -28,7 +28,11 @@ namespace ManagedCode.Storage.FileSystem
 
         public IStorageOptions GetDefaultOptions()
         {
-            return defaultOptions.DeepCopy();
+            return new FileSystemStorageOptions
+            {
+                BaseFolder = defaultOptions.BaseFolder,
+                CreateContainerIfNotExists = defaultOptions.CreateContainerIfNotExists
+            };
         }
     }
 }

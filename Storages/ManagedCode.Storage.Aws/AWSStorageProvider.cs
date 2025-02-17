@@ -30,7 +30,16 @@ namespace ManagedCode.Storage.Aws
 
         public IStorageOptions GetDefaultOptions()
         {
-            return defaultOptions.DeepCopy();
+            return new AWSStorageOptions()
+            {
+                PublicKey = defaultOptions.PublicKey,
+                SecretKey = defaultOptions.SecretKey,
+                RoleName = defaultOptions.RoleName,
+                Bucket = defaultOptions.Bucket,
+                OriginalOptions = defaultOptions.OriginalOptions,
+                CreateContainerIfNotExists = defaultOptions.CreateContainerIfNotExists,
+                UseInstanceProfileCredentials = defaultOptions.UseInstanceProfileCredentials
+            };
         }
     }
 }

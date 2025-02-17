@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Azure
 {
-    public class AzureStorageProvider(IServiceProvider serviceProvider, AzureStorageOptions defaultOptions) : IStorageProvider
+    public class AzureStorageProvider(IServiceProvider serviceProvider, IAzureStorageOptions defaultOptions) : IStorageProvider
     {
         public Type StorageOptionsType => typeof(IAzureStorageOptions);
         
@@ -30,7 +30,28 @@ namespace ManagedCode.Storage.Azure
 
         public IStorageOptions GetDefaultOptions()
         {
-            return defaultOptions.DeepCopy();
+            return defaultOptions switch
+            {
+                AzureStorageCredentialsOptions credentialsOptions => new AzureStorageCredentialsOptions
+                {
+                    AccountName = credentialsOptions.AccountName,
+                    ContainerName = credentialsOptions.ContainerName,
+                    Credentials = credentialsOptions.Credentials,
+                    Container = credentialsOptions.Container,
+                    PublicAccessType = credentialsOptions.PublicAccessType,
+                    OriginalOptions = credentialsOptions.OriginalOptions,
+                    CreateContainerIfNotExists = credentialsOptions.CreateContainerIfNotExists
+                },
+                AzureStorageOptions storageOptions => new AzureStorageOptions
+                {
+                    ConnectionString = storageOptions.ConnectionString,
+                    Container = storageOptions.Container,
+                    PublicAccessType = storageOptions.PublicAccessType,
+                    OriginalOptions = storageOptions.OriginalOptions,
+                    CreateContainerIfNotExists = storageOptions.CreateContainerIfNotExists
+                },
+                _ => throw new ArgumentException($"Unknown options type: {defaultOptions.GetType()}")
+            };
         }
     }
 }

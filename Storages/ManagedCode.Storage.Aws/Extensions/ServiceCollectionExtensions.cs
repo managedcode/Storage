@@ -34,7 +34,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.TryAddSingleton<IStorageProvider, AWSStorageProvider>();
+        serviceCollection.AddSingleton<IStorageProvider, AWSStorageProvider>();
         return serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
     }
 
@@ -42,7 +42,7 @@ public static class ServiceCollectionExtensions
     {
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
-        serviceCollection.TryAddSingleton<IStorageProvider, AWSStorageProvider>();
+        serviceCollection.AddSingleton<IStorageProvider, AWSStorageProvider>();
         serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
         return serviceCollection.AddScoped<IStorage, AWSStorage>();
     }

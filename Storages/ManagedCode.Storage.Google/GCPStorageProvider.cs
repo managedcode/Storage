@@ -30,7 +30,19 @@ namespace ManagedCode.Storage.Google
 
         public IStorageOptions GetDefaultOptions()
         {
-            return defaultOptions.DeepCopy();
+            return new GCPStorageOptions()
+            {
+                AuthFileName = defaultOptions.AuthFileName,
+                BucketOptions = new BucketOptions
+                {
+                    Bucket  = defaultOptions.BucketOptions.Bucket,
+                    ProjectId = defaultOptions.BucketOptions.ProjectId
+                },
+                GoogleCredential = defaultOptions.GoogleCredential,
+                OriginalOptions = defaultOptions.OriginalOptions,
+                StorageClientBuilder = defaultOptions.StorageClientBuilder,
+                CreateContainerIfNotExists = defaultOptions.CreateContainerIfNotExists
+            };
         }
     }
 }

@@ -30,7 +30,13 @@ namespace ManagedCode.Storage.Azure.DataLake
 
         public IStorageOptions GetDefaultOptions()
         {
-            return defaultOptions.DeepCopy();
+            return new AzureDataLakeStorageOptions()
+            {
+                ConnectionString = defaultOptions.ConnectionString,
+                FileSystem = defaultOptions.FileSystem,
+                PublicAccessType = defaultOptions.PublicAccessType,
+                CreateContainerIfNotExists = defaultOptions.CreateContainerIfNotExists
+            };
         }
     }
 }
