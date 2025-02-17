@@ -127,6 +127,13 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         return DownloadInternalAsync(file, options, cancellationToken);
     }
 
+    public Task<Result<LocalFile>> DownloadAsync(BlobMetadata metadata, CancellationToken cancellationToken = default)
+    {
+        var file = new LocalFile();
+        DownloadOptions options = new() { FileName = metadata.FullName };
+        return DownloadInternalAsync(file, options, cancellationToken);
+    }
+
     public Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default)
     {
         var keepAlive = options.LocalPath is not null;
