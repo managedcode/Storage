@@ -13,7 +13,7 @@ public static class MockCollectionExtensions
     public static IServiceCollection ReplaceAWSStorageAsDefault(this IServiceCollection serviceCollection)
     {
         serviceCollection.ReplaceAWSStorage();
-        serviceCollection.AddScoped<IStorage, FakeAWSStorage>();
+        serviceCollection.AddSingleton<IStorage, FakeAWSStorage>();
         return serviceCollection;
     }
 
@@ -21,7 +21,7 @@ public static class MockCollectionExtensions
     {
         serviceCollection.RemoveAll<IAWSStorage>();
         serviceCollection.RemoveAll<AWSStorage>();
-        serviceCollection.AddScoped<IAWSStorage, FakeAWSStorage>();
+        serviceCollection.AddSingleton<IAWSStorage, FakeAWSStorage>();
         return serviceCollection;
     }
 
@@ -29,14 +29,14 @@ public static class MockCollectionExtensions
     {
         serviceCollection.RemoveAll<IAzureDataLakeStorage>();
         serviceCollection.RemoveAll<AzureDataLakeStorage>();
-        serviceCollection.AddScoped<IAzureDataLakeStorage, FakeAzureDataLakeStorage>();
+        serviceCollection.AddSingleton<IAzureDataLakeStorage, FakeAzureDataLakeStorage>();
         return serviceCollection;
     }
 
     public static IServiceCollection ReplaceAzureDataLakeStorageAsDefault(this IServiceCollection serviceCollection)
     {
         serviceCollection.ReplaceAzureDataLakeStorage();
-        serviceCollection.AddScoped<IStorage, FakeAzureDataLakeStorage>();
+        serviceCollection.AddSingleton<IStorage, FakeAzureDataLakeStorage>();
         return serviceCollection;
     }
 
@@ -44,21 +44,21 @@ public static class MockCollectionExtensions
     {
         serviceCollection.RemoveAll<IAzureStorage>();
         serviceCollection.RemoveAll<FakeAzureStorage>();
-        serviceCollection.AddScoped<IAzureStorage, FakeAzureStorage>();
+        serviceCollection.AddSingleton<IAzureStorage, FakeAzureStorage>();
         return serviceCollection;
     }
 
     public static IServiceCollection ReplaceAzureStorageAsDefault(this IServiceCollection serviceCollection)
     {
         serviceCollection.ReplaceAzureStorage();
-        serviceCollection.AddScoped<IStorage, FakeAzureStorage>();
+        serviceCollection.AddSingleton<IStorage, FakeAzureStorage>();
         return serviceCollection;
     }
 
     public static IServiceCollection ReplaceGoogleStorageAsDefault(this IServiceCollection serviceCollection)
     {
         serviceCollection.ReplaceGoogleStorage();
-        serviceCollection.AddScoped<IStorage, FakeAzureStorage>();
+        serviceCollection.AddSingleton<IStorage, FakeAzureStorage>();
         return serviceCollection;
     }
 
@@ -66,7 +66,7 @@ public static class MockCollectionExtensions
     {
         serviceCollection.RemoveAll<IGCPStorage>();
         serviceCollection.RemoveAll<GCPStorage>();
-        serviceCollection.AddScoped<IGCPStorage, FakeGoogleStorage>();
+        serviceCollection.AddSingleton<IGCPStorage, FakeGoogleStorage>();
         return serviceCollection;
     }
 }

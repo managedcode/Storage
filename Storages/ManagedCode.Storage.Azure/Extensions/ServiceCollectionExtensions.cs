@@ -56,7 +56,7 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, AzureStorageProvider>();
-        return serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
+        return serviceCollection.AddSingleton<IAzureStorage, AzureStorage>();
     }
 
     public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection, IAzureStorageOptions options)
@@ -64,8 +64,8 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, AzureStorageProvider>();
-        serviceCollection.AddScoped<IAzureStorage, AzureStorage>();
-        return serviceCollection.AddScoped<IStorage, AzureStorage>();
+        serviceCollection.AddSingleton<IAzureStorage, AzureStorage>();
+        return serviceCollection.AddSingleton<IStorage, AzureStorage>();
     }
 
     public static IServiceCollection AddAzureStorage(this IServiceCollection serviceCollection, string key, Action<AzureStorageOptions> action)

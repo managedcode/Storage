@@ -28,15 +28,15 @@ public static class ServiceCollectionExtensions
     {
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, FileSystemStorageProvider>();
-        return serviceCollection.AddScoped<IFileSystemStorage>(sp => new FileSystemStorage(options));
+        return serviceCollection.AddSingleton<IFileSystemStorage>(sp => new FileSystemStorage(options));
     }
 
     public static IServiceCollection AddFileSystemStorageAsDefault(this IServiceCollection serviceCollection, FileSystemStorageOptions options)
     {
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, FileSystemStorageProvider>();
-        serviceCollection.AddScoped<IFileSystemStorage>(sp => new FileSystemStorage(options));
-        return serviceCollection.AddScoped<IStorage>(sp => new FileSystemStorage(options));
+        serviceCollection.AddSingleton<IFileSystemStorage>(sp => new FileSystemStorage(options));
+        return serviceCollection.AddSingleton<IStorage>(sp => new FileSystemStorage(options));
     }
 
     public static IServiceCollection AddFileSystemStorage(this IServiceCollection serviceCollection, string key, Action<FileSystemStorageOptions> action)
@@ -45,7 +45,7 @@ public static class ServiceCollectionExtensions
         action.Invoke(options);
         
         serviceCollection.AddKeyedSingleton<FileSystemStorageOptions>(key, (_, _) => options);
-        return serviceCollection.AddKeyedScoped<IFileSystemStorage, FileSystemStorage>(key);
+        return serviceCollection.AddKeyedSingleton<IFileSystemStorage, FileSystemStorage>(key);
     }
 
     public static IServiceCollection AddFileSystemStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<FileSystemStorageOptions> action)

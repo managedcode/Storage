@@ -35,7 +35,7 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, AWSStorageProvider>();
-        return serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
+        return serviceCollection.AddSingleton<IAWSStorage, AWSStorage>();
     }
 
     public static IServiceCollection AddAWSStorageAsDefault(this IServiceCollection serviceCollection, AWSStorageOptions options)
@@ -43,8 +43,8 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, AWSStorageProvider>();
-        serviceCollection.AddScoped<IAWSStorage, AWSStorage>();
-        return serviceCollection.AddScoped<IStorage, AWSStorage>();
+        serviceCollection.AddSingleton<IAWSStorage, AWSStorage>();
+        return serviceCollection.AddSingleton<IStorage, AWSStorage>();
     }
 
     public static IServiceCollection AddAWSStorage(this IServiceCollection serviceCollection, string key, Action<AWSStorageOptions> action)
@@ -54,7 +54,7 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
         
         serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, (_, _) => options);
-        return serviceCollection.AddKeyedScoped<IAWSStorage, AWSStorage>(key);
+        return serviceCollection.AddKeyedSingleton<IAWSStorage, AWSStorage>(key);
     }
 
     public static IServiceCollection AddAWSStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<AWSStorageOptions> action)

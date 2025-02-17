@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, AzureDataLakeStorageProvider>();
-        return serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
+        return serviceCollection.AddSingleton<IAzureDataLakeStorage, AzureDataLakeStorage>();
     }
 
     public static IServiceCollection AddAzureDataLakeStorageAsDefault(this IServiceCollection serviceCollection, AzureDataLakeStorageOptions options)
@@ -44,8 +44,8 @@ public static class ServiceCollectionExtensions
         CheckConfiguration(options);
         serviceCollection.AddSingleton(options);
         serviceCollection.AddSingleton<IStorageProvider, AzureDataLakeStorageProvider>();
-        serviceCollection.AddScoped<IAzureDataLakeStorage, AzureDataLakeStorage>();
-        return serviceCollection.AddScoped<IStorage, AzureDataLakeStorage>();
+        serviceCollection.AddSingleton<IAzureDataLakeStorage, AzureDataLakeStorage>();
+        return serviceCollection.AddSingleton<IStorage, AzureDataLakeStorage>();
     }
     
     public static IServiceCollection AddAzureStorage(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
