@@ -41,12 +41,12 @@ public static class StorageFromFileExtensions
         if (formFile.Length > MinLengthForLargeFile)
         {
             var localFile = await formFile.ToLocalFileAsync(cancellationToken);
-            return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
+            return await storage.UploadAsync(localFile.FileInfo, newOptions, cancellationToken);
         }
 
         await using (var stream = formFile.OpenReadStream())
         {
-            return await storage.UploadAsync(stream, options, cancellationToken);
+            return await storage.UploadAsync(stream, newOptions, cancellationToken);
         }
     }
 
