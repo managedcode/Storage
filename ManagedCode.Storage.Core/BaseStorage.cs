@@ -115,8 +115,11 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         if (string.IsNullOrWhiteSpace(options.MimeType))
             options.MimeType = MimeHelper.GetMimeType(fileInfo.Extension);
 
-        options.FileName = fileInfo.Name;
-
+        if (string.IsNullOrEmpty(options.FileName))
+        {
+            options.FileName = fileInfo.Name;
+        }
+        
         return UploadInternalAsync(fileInfo.OpenRead(), SetUploadOptions(options), cancellationToken);
     }
 
