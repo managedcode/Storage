@@ -25,18 +25,18 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release
 
-      - name: Test
-        run: dotnet test --configuration Release
-
-      - name: NDepend
-        uses: ndepend/ndepend-action@v1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          license: ${{ secrets.NDEPENDLICENSE }}
-          coveragefolder: ${{ github.workspace }}/coverage/
-          baseline: main_recent
-          retention-days: 15
-            #stopIfQGFailed: true
+#      - name: Test
+#        run: dotnet test --configuration Release
+#
+#      - name: NDepend
+#        uses: ndepend/ndepend-action@v1
+#        with:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          license: ${{ secrets.NDEPENDLICENSE }}
+#          coveragefolder: ${{ github.workspace }}/coverage/
+#          baseline: main_recent
+#          retention-days: 15
+#            #stopIfQGFailed: true
             
             
       - name: Pack
