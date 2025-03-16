@@ -49,6 +49,16 @@ public sealed class EmptyContainer : IContainer
         throw new NotImplementedException();
     }
 
+    public async Task PauseAsync(CancellationToken ct = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task UnpauseAsync(CancellationToken ct = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
     public Task CopyAsync(byte[] fileContent, string filePath,
         UnixFileModes fileMode = UnixFileModes.None | UnixFileModes.OtherRead | UnixFileModes.GroupRead | UnixFileModes.UserWrite |
                                  UnixFileModes.UserRead, CancellationToken ct = new())
@@ -90,6 +100,8 @@ public sealed class EmptyContainer : IContainer
     public DateTime CreatedTime { get; }
     public DateTime StartedTime { get; }
     public DateTime StoppedTime { get; }
+    public DateTime PausedTime { get; }
+    public DateTime UnpausedTime { get; }
 
     public ILogger Logger { get; } = NullLogger.Instance;
     public string Id { get; } = "none";
@@ -104,7 +116,11 @@ public sealed class EmptyContainer : IContainer
     public event EventHandler? Creating;
     public event EventHandler? Starting;
     public event EventHandler? Stopping;
+    public event EventHandler? Pausing;
+    public event EventHandler? Unpausing;
     public event EventHandler? Created;
     public event EventHandler? Started;
     public event EventHandler? Stopped;
+    public event EventHandler? Paused;
+    public event EventHandler? Unpaused;
 }

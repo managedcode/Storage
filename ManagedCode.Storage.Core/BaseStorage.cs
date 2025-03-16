@@ -15,20 +15,36 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 {
     protected bool IsContainerCreated;
     protected TOptions StorageOptions;
+    private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
 
     protected BaseStorage(TOptions storageOptions)
     {
         Contract.Assert(storageOptions is not null);
         StorageOptions = storageOptions!;
+        // ReSharper disable once VirtualMemberCallInConstructor
         StorageClient = CreateStorageClient();
     }
 
     public async Task<Result> CreateContainerAsync(CancellationToken cancellationToken = default)
     {
-        var result = await CreateContainerInternalAsync(cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
-        IsContainerCreated = result.IsSuccess;
-        return result;
+        try
+        {
+            await _semaphoreSlim.WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            var result = await CreateContainerInternalAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            IsContainerCreated = result.IsSuccess;
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(ex);
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
     }
 
     public abstract Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default);
@@ -89,7 +105,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     public Task<Result<BlobMetadata>> UploadAsync(Stream stream, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
-            options.MimeType = MimeHelper.BIN;
+            options.MimeType = MimeHelper.GetMimeType(options.FileName);
 
         return UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
@@ -97,7 +113,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     public Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
-            options.MimeType = MimeHelper.BIN;
+            options.MimeType = MimeHelper.GetMimeType(options.FileName);
 
         return UploadInternalAsync(new MemoryStream(data), SetUploadOptions(options), cancellationToken);
     }
@@ -269,13 +285,16 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 
     protected abstract T CreateStorageClient();
 
-    protected Task<Result> EnsureContainerExist()
+    protected Task<Result> EnsureContainerExist(CancellationToken cancellationToken = default)
     {
+        if (StorageClient is null)
+            throw new InvalidOperationException("Storage client is not initialized.");
+
         if (IsContainerCreated)
             return Result.Succeed()
                 .AsTask();
 
-        return CreateContainerAsync();
+        return CreateContainerAsync(cancellationToken);
     }
 
     protected UploadOptions SetUploadOptions(UploadOptions options)

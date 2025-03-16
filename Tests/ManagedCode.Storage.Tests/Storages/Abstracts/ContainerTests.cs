@@ -53,7 +53,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
             .ToListAsync();
         files.Count
             .Should()
-            .BeGreaterOrEqualTo(3);
+            .BeGreaterThanOrEqualTo(3);
     }
 
     [Fact]
@@ -71,7 +71,8 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
         // Assert
         result.IsSuccess
             .Should()
-            .BeTrue();
+            .BeTrue(result.GetError().ToString());
+        
         blobs.Count
             .Should()
             .Be(0);

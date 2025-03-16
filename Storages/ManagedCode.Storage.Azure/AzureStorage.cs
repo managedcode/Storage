@@ -39,36 +39,47 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await EnsureContainerExist();
+        await EnsureContainerExist(cancellationToken);
+
         await foreach (var item in StorageClient.GetBlobsAsync(prefix: directory, cancellationToken: cancellationToken)
                            .AsPages()
                            .WithCancellation(cancellationToken))
-        foreach (var blobItem in item.Values)
         {
-            var blobMetadata = new BlobMetadata
+            if(cancellationToken.IsCancellationRequested)
+                yield break;
+            
+            foreach (var blobItem in item.Values)
             {
-                FullName = blobItem.Name,
-                Name = Path.GetFileName(blobItem.Name),
-                Uri = new Uri(StorageClient.Uri, $"{StorageOptions.Container}/{blobItem.Name}"),
-                Container = StorageOptions.Container,
-                Length = blobItem.Properties.ContentLength!.Value,
-                Metadata = blobItem.Metadata.ToDictionary(k => k.Key, v => v.Value),
-                LastModified = blobItem.Properties.LastModified!.Value,
-                CreatedOn = blobItem.Properties.CreatedOn!.Value,
-                MimeType = blobItem.Properties.ContentType
-            };
+                if(cancellationToken.IsCancellationRequested)
+                    yield break;
+                
+                var blobMetadata = new BlobMetadata
+                {
+                    FullName = blobItem.Name,
+                    Name = Path.GetFileName(blobItem.Name),
+                    Uri = new Uri(StorageClient.Uri, $"{StorageOptions.Container}/{blobItem.Name}"),
+                    Container = StorageOptions.Container,
+                    Length = (ulong)blobItem.Properties.ContentLength!.Value,
+                    Metadata = blobItem.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                    LastModified = blobItem.Properties.LastModified!.Value,
+                    CreatedOn = blobItem.Properties.CreatedOn!.Value,
+                    MimeType = blobItem.Properties.ContentType
+                };
 
-            yield return blobMetadata;
+                yield return blobMetadata;
+            }
         }
+
     }
 
     public async Task<Result<Stream>> OpenReadStreamAsync(string fileName, CancellationToken cancellationToken = default)
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetBlobClient(fileName);
             var stream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
@@ -82,9 +93,10 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetBlobClient(fileName);
             var stream = await blobClient.OpenWriteAsync(false, cancellationToken: cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
@@ -167,6 +179,8 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                 }
             }
             
+            cancellationToken.ThrowIfCancellationRequested();
+            
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -213,10 +227,14 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
 
         try
         {
-            await EnsureContainerExist();
-            _ = await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            var blobInfo = await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            var metadataOptions = MetadataOptions.FromBaseOptions(options);
+            metadataOptions.ETag = blobInfo.Value?.ETag.ToString() ?? string.Empty;
 
-            return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
+            return await GetBlobMetadataInternalAsync(metadataOptions, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -232,9 +250,11 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
 
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             var response = await blobClient.DownloadAsync(cancellationToken);
-            await localFile.CopyFromStreamAsync(response.Value.Content);
+            cancellationToken.ThrowIfCancellationRequested();
+            await localFile.CopyFromStreamAsync(response.Value.Content, cancellationToken);
 
             localFile.BlobMetadata = new BlobMetadata
             {
@@ -242,7 +262,7 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                 Name = Path.GetFileName(blobClient.Name),
                 Uri = blobClient.Uri,
                 Container = blobClient.BlobContainerName,
-                Length = response.Value.ContentLength,
+                Length = (ulong)response.Value.ContentLength,
                 CreatedOn = response.Value.Details.LastModified,
                 LastModified = response.Value.Details.LastModified,
                 Metadata = response.Value.Details.Metadata.ToDictionary(k => k.Key, v => v.Value),
@@ -262,9 +282,11 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
             var response = await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.None, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<bool>.Succeed(response);
         }
         catch (RequestFailedException ex) when (ex.Status is 404)
@@ -282,9 +304,11 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
             var response = await blobClient.ExistsAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<bool>.Succeed(response.Value);
         }
         catch (Exception ex)
@@ -299,9 +323,10 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
             var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (properties is null)
                 return Result<BlobMetadata>.Fail("Properties for file not found");
@@ -312,7 +337,7 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                 Name = Path.GetFileName(blobClient.Name),
                 Uri = blobClient.Uri,
                 Container = blobClient.BlobContainerName,
-                Length = properties.Value.ContentLength,
+                Length = (ulong)properties.Value.ContentLength,
                 CreatedOn = properties.Value.CreatedOn,
                 LastModified = properties.Value.LastModified,
                 Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
@@ -331,10 +356,11 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetBlobClient(options.FullPath);
             await blobClient.SetLegalHoldAsync(hasLegalHold, cancellationToken);
 
+            cancellationToken.ThrowIfCancellationRequested();
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -348,9 +374,10 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetPageBlobClient(options.FullPath);
             var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<bool>.Succeed(properties.Value?.HasLegalHold ?? false);
         }
         catch (Exception ex)

@@ -101,10 +101,11 @@ public class StorageExtensionsTests
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         // Act
-        await Storage.UploadAsync(localFile.FileInfo);
+        var uploadResult = await Storage.UploadAsync(localFile.FileInfo);
         var result = await Storage.DownloadAsFileResult(fileName);
 
         // Assert
+        uploadResult.IsSuccess.Should().BeTrue();
         result.IsSuccess.Should().BeTrue();
         result.Value!.ContentType.Should().Be(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         result.Value.FileDownloadName.Should().Be(localFile.Name);

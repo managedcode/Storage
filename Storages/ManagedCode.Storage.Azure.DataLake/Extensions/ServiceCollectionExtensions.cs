@@ -48,25 +48,38 @@ public static class ServiceCollectionExtensions
         return serviceCollection.AddSingleton<IStorage, AzureDataLakeStorage>();
     }
     
-    public static IServiceCollection AddAzureStorage(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
+    public static IServiceCollection AddAzureDataLakeStorage(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
     {
         var options = new AzureDataLakeStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-        
-        serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, (_, _) => options);
-        return serviceCollection.AddKeyedScoped<IAzureDataLakeStorage, AzureDataLakeStorage>(key);
+    
+        serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, options);
+        serviceCollection.AddKeyedSingleton<IAzureDataLakeStorage>(key, (sp, k) =>
+        {
+            var opts = sp.GetKeyedService<AzureDataLakeStorageOptions>(k);
+            return new AzureDataLakeStorage(opts);
+        });
+
+        return serviceCollection;
     }
 
-    public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
+    public static IServiceCollection AddAzureDataLakeStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
     {
         var options = new AzureDataLakeStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-        
-        serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, (_, _) => options);
-        serviceCollection.AddKeyedScoped<IAzureDataLakeStorage, AzureDataLakeStorage>(key);
-        return serviceCollection.AddKeyedScoped<IStorage, AzureDataLakeStorage>(key);
+    
+        serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, options);
+        serviceCollection.AddKeyedSingleton<IAzureDataLakeStorage>(key, (sp, k) =>
+        {
+            var opts = sp.GetKeyedService<AzureDataLakeStorageOptions>(k);
+            return new AzureDataLakeStorage(opts);
+        });
+        serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>
+            sp.GetRequiredKeyedService<IAzureDataLakeStorage>(k));
+
+        return serviceCollection;
     }
 
     private static void CheckConfiguration(AzureDataLakeStorageOptions options)

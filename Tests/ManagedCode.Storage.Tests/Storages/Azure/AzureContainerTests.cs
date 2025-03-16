@@ -11,6 +11,7 @@ public class AzureContainerTests : ContainerTests<AzuriteContainer>
     {
         return new AzuriteBuilder()
             .WithImage(ContainerImages.Azurite)
+            .WithCommand("--skipApiVersionCheck")
             .Build();
     }
 

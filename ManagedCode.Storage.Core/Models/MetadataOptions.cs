@@ -6,4 +6,6 @@ public class MetadataOptions : BaseOptions
     {
         return new MetadataOptions { FileName = options.FileName, Directory = options.Directory };
     }
+    
+    public string ETag { get; set; } = string.Empty;
 }

@@ -86,11 +86,11 @@ public static class FileHelper
         return $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.{randomExtension}";
     }
     
-    public static string GenerateRandomFileContent()
+    public static string GenerateRandomFileContent(int charCount = 250_000)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789_abcdefghijklmnopqrstuvwxyz";
 
-        return new string(Enumerable.Repeat(chars, 250_000)
+        return new string(Enumerable.Repeat(chars, charCount)
             .Select(s => s[Random.Next(s.Length)])
             .ToArray());
     }

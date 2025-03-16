@@ -1,9 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
@@ -170,5 +173,52 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
             .BeTrue();
 
         await Storage.DeleteAsync(fileName);
+    }
+    
+    [Fact]
+    public async Task UploadAsync_WithCancellationToken_ShouldCancel()
+    {
+        // Arrange
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        var stream = new MemoryStream(byteArray);
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await Storage.UploadAsync(stream, cancellationToken: cts.Token);
+
+        // Assert
+        result.IsSuccess
+            .Should()
+            .BeFalse();
+    }
+    
+    
+    [Fact]
+    public async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
+    {
+        // Arrange
+        var uploadContent = FileHelper.GenerateRandomFileContent((Storage is FileSystemStorage) ? 100_0000_000 : 10_0000_000);
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        var stream = new MemoryStream(byteArray);
+        var cts = new CancellationTokenSource();
+
+        // Act
+        var cancellationTask = Task.Run(() =>
+        {
+            Thread.Sleep(50);
+            cts.Cancel();
+        });
+        var uploadTask = Storage.UploadAsync(stream, cancellationToken: cts.Token);
+        
+        await Task.WhenAll(uploadTask, cancellationTask);
+
+        // Assert
+        uploadTask.Result.IsSuccess
+            .Should()
+            .BeFalse();
+    
+     
     }
 }

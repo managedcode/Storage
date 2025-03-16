@@ -4,7 +4,7 @@ namespace ManagedCode.Storage.Core.Models;
 
 public abstract class BaseOptions
 {
-    public string FileName { get; set; } = $"{Guid.NewGuid():N}";
+    public string FileName { get; set; } = string.Empty;
     public string? Directory { get; set; }
 
     // TODO: Check this

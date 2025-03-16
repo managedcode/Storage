@@ -53,9 +53,15 @@ public static class ServiceCollectionExtensions
         var options = new GCPStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-        
-        serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, (_, _) => options);
-        return serviceCollection.AddKeyedSingleton<IGCPStorage, GCPStorage>(key);
+    
+        serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, options);
+        serviceCollection.AddKeyedSingleton<IGCPStorage>(key, (sp, k) =>
+        {
+            var opts = sp.GetKeyedService<GCPStorageOptions>(k);
+            return new GCPStorage(opts);
+        });
+
+        return serviceCollection;
     }
 
     public static IServiceCollection AddGCPStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<GCPStorageOptions> action)
@@ -63,10 +69,17 @@ public static class ServiceCollectionExtensions
         var options = new GCPStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-        
-        serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, (_, _) => options);
-        serviceCollection.AddKeyedScoped<IGCPStorage, GCPStorage>(key);
-        return serviceCollection.AddKeyedScoped<IStorage, GCPStorage>(key);
+    
+        serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, options);
+        serviceCollection.AddKeyedSingleton<IGCPStorage>(key, (sp, k) =>
+        {
+            var opts = sp.GetKeyedService<GCPStorageOptions>(k);
+            return new GCPStorage(opts);
+        });
+        serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>
+            sp.GetRequiredKeyedService<IGCPStorage>(k));
+
+        return serviceCollection;
     }
 
     private static void CheckConfiguration(GCPStorageOptions options)

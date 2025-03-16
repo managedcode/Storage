@@ -52,9 +52,15 @@ public static class ServiceCollectionExtensions
         var options = new AWSStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-        
-        serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, (_, _) => options);
-        return serviceCollection.AddKeyedSingleton<IAWSStorage, AWSStorage>(key);
+    
+        serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, options);
+        serviceCollection.AddKeyedSingleton<IAWSStorage>(key, (sp, k) =>
+        {
+            var opts = sp.GetKeyedService<AWSStorageOptions>(k);
+            return new AWSStorage(opts);
+        });
+
+        return serviceCollection;
     }
 
     public static IServiceCollection AddAWSStorageAsDefault(this IServiceCollection serviceCollection, string key, Action<AWSStorageOptions> action)
@@ -62,10 +68,17 @@ public static class ServiceCollectionExtensions
         var options = new AWSStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-        
-        serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, (_, _) => options);
-        serviceCollection.AddKeyedScoped<IAWSStorage, AWSStorage>(key);
-        return serviceCollection.AddKeyedScoped<IStorage, AWSStorage>(key);
+    
+        serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, options);
+        serviceCollection.AddKeyedSingleton<IAWSStorage>(key, (sp, k) =>
+        {
+            var opts = sp.GetKeyedService<AWSStorageOptions>(k);
+            return new AWSStorage(opts);
+        });
+        serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>
+            sp.GetRequiredKeyedService<IAWSStorage>(k));
+
+        return serviceCollection;
     }
 
     private static void CheckConfiguration(AWSStorageOptions options)

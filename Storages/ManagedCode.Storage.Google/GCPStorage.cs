@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Google;
@@ -21,7 +22,7 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
 {
     private readonly ILogger<GCPStorage>? _logger;
     private readonly UrlSigner urlSigner;
-
+    
     public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage>? logger = null) : base(options)
     {
         _logger = logger;
@@ -34,6 +35,7 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
         try
         {
             await StorageClient.DeleteBucketAsync(StorageOptions.BucketOptions.Bucket, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -43,36 +45,73 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
         }
     }
 
-    public override IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null, CancellationToken cancellationToken = default)
-
+    public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        return StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory, new ListObjectsOptions { Projection = Projection.Full })
-            .Select(x => new BlobMetadata
+        await EnsureContainerExist(cancellationToken);
+
+        var pages = StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, directory,
+            new ListObjectsOptions { Projection = Projection.Full });
+
+        await foreach (var item in pages.WithCancellation(cancellationToken))
+        {
+            if(item is null)
+                continue;
+            
+            if (cancellationToken.IsCancellationRequested)
+                yield break;
+
+            var blobMetadata = new BlobMetadata();
+            try
             {
-                Name = x.Name,
-                FullName = $"{x.Bucket}/{x.Name}",
-                Uri = string.IsNullOrEmpty(x.MediaLink) ? null : new Uri(x.MediaLink),
-                Container = x.Bucket,
-                CreatedOn = x.TimeCreated!.Value,
-                LastModified = x.Updated!.Value,
-                MimeType = x.ContentType,
-                Length = (long)(x.Size ?? 0)
-            });
+                blobMetadata = new BlobMetadata
+                {
+                    Name = Path.GetFileName(item.Name),
+                    FullName = item.Name,
+                    Uri = string.IsNullOrEmpty(item.MediaLink) ? null : new Uri(item.MediaLink),
+                    Container = item.Bucket,
+                    CreatedOn = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => item.TimeCreatedDateTimeOffset, () => item.TimeCreated),
+                    LastModified = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => item.UpdatedDateTimeOffset, () => item.Updated),
+                    MimeType = item.ContentType,
+                    Length = item.Size ?? 0,
+                    Metadata = item.Metadata?.ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, string>()
+                };
+
+            
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+            
+            yield return blobMetadata;
+        }
     }
+    
+    
 
     public override async Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        await EnsureContainerExist();
-
-        if (urlSigner == null)
-            return Result<Stream>.Fail("Google credentials are required to get stream");
-
-        var signedUrl = urlSigner.Sign(StorageOptions.BucketOptions.Bucket, fileName, TimeSpan.FromHours(1), HttpMethod.Get);
-
-        using (var httpClient = new HttpClient())
+        try
         {
+            await EnsureContainerExist(cancellationToken);
+
+            if (urlSigner == null)
+                return Result<Stream>.Fail("Google credentials are required to get stream");
+
+            var signedUrl = urlSigner.Sign(StorageOptions.BucketOptions.Bucket, fileName, TimeSpan.FromHours(1), HttpMethod.Get);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var httpClient = new HttpClient();
             var stream = await httpClient.GetStreamAsync(signedUrl, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<Stream>.Succeed(stream);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return Result.Fail(ex);
         }
     }
 
@@ -106,7 +145,8 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                         cancellationToken: cancellationToken);
             }
 
-
+            cancellationToken.ThrowIfCancellationRequested();
+            
             return Result.Succeed();
         }
         catch (GoogleApiException exception) when (exception.HttpStatusCode is HttpStatusCode.Conflict)
@@ -124,14 +164,22 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            
             var blobs = StorageClient.ListObjectsAsync(StorageOptions.BucketOptions.Bucket, string.Empty,
                     new ListObjectsOptions { Projection = Projection.Full })
                 .Select(x => x);
 
+            cancellationToken.ThrowIfCancellationRequested();
+            
             await foreach (var blob in blobs.WithCancellation(cancellationToken))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 await StorageClient.DeleteObjectAsync(blob, cancellationToken: cancellationToken);
-
+            }
+               
+            cancellationToken.ThrowIfCancellationRequested();
+            
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -146,12 +194,17 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
 
-            await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, options.MimeType, stream, null,
+            var result = await StorageClient.UploadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, options.MimeType, stream, null,
                 cancellationToken);
+            
+            cancellationToken.ThrowIfCancellationRequested();
 
-            return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
+            var metadataOptions = MetadataOptions.FromBaseOptions(options);
+            metadataOptions.ETag = result.ETag;
+            
+            return await GetBlobMetadataInternalAsync(metadataOptions, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -165,9 +218,11 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             await StorageClient.DownloadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, localFile.FileStream, null,
                 cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             return Result<LocalFile>.Succeed(localFile);
         }
@@ -182,8 +237,10 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             await StorageClient.DeleteObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<bool>.Succeed(true);
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode is HttpStatusCode.NotFound)
@@ -201,12 +258,17 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            //TODO: check logic
             return Result<bool>.Succeed(true);
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
         {
+            //TODO: check logic
             return Result<bool>.Succeed(false);
         }
         catch (Exception ex)
@@ -221,18 +283,19 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             var obj = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             return Result<BlobMetadata>.Succeed(new BlobMetadata
             {
                 Name = obj.Name,
                 Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
                 Container = obj.Bucket,
-                CreatedOn = obj.TimeCreated!.Value,
-                LastModified = obj.Updated!.Value,
+                CreatedOn = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => obj.TimeCreatedDateTimeOffset, () => obj.TimeCreated),
+                LastModified = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => obj.UpdatedDateTimeOffset, () => obj.Updated),
                 MimeType = obj.ContentType,
-                Length = (long)(obj.Size ?? 0)
+                Length = obj.Size ?? 0
             });
         }
         catch (Exception ex)
@@ -247,13 +310,14 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
 
-            var storageObject =
-                await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
+            var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             storageObject.TemporaryHold = hasLegalHold;
 
             await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             return Result.Succeed();
         }
@@ -268,10 +332,11 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
 
-            var storageObject =
-                await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
+            var storageObject = await StorageClient.GetObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, cancellationToken: cancellationToken);
+            
+            cancellationToken.ThrowIfCancellationRequested();
 
             return Result<bool>.Succeed(storageObject.TemporaryHold ?? false);
         }
@@ -281,4 +346,26 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
             return Result<bool>.Fail(ex);
         }
     }
+    
+    public static T GetFirstSuccessfulValue<T>(T defaultValue, params Func<T?>[] getters) where T : struct
+    {
+        foreach (var getter in getters)
+        {
+            try
+            {
+                var value = getter();
+                if (value.HasValue)
+                {
+                    return value.Value;
+                }
+            }
+            catch
+            {
+                continue;
+            }
+        }
+    
+        return defaultValue;
+    }
+    
 }

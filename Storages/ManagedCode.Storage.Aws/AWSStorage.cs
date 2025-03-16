@@ -30,6 +30,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         try
         {
             await StorageClient.DeleteBucketAsync(StorageOptions.Bucket, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -49,14 +50,20 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
             MaxKeys = 1_000_000
         };
 
-        await EnsureContainerExist();
+        await EnsureContainerExist(cancellationToken);
 
         do
         {
             var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
 
+            if(cancellationToken.IsCancellationRequested)
+                yield break;
+            
             foreach (var entry in objectsResponse.S3Objects)
             {
+                if(cancellationToken.IsCancellationRequested)
+                    yield break;
+                
                 var objectMetaRequest = new GetObjectMetadataRequest
                 {
                     BucketName = StorageOptions.Bucket,
@@ -74,7 +81,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                     LastModified = objectMetaResponse.LastModified,
                     CreatedOn = objectMetaResponse.LastModified,
                     MimeType = objectMetaResponse.Headers.ContentType,
-                    Length = objectMetaResponse.Headers.ContentLength
+                    Length = (ulong)objectMetaResponse.Headers.ContentLength
                 };
             }
 
@@ -88,8 +95,17 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
     public override async Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        var stream = await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, fileName, null, cancellationToken);
-        return Result<Stream>.Succeed(stream);
+        try
+        {
+            var stream = await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, fileName, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return Result<Stream>.Succeed(stream);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogException(ex);
+            return Result.Fail(ex);
+        }
     }
 
     protected override IAmazonS3 CreateStorageClient()
@@ -113,6 +129,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
             if (StorageOptions.CreateContainerIfNotExists)
                 await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
 
+            cancellationToken.ThrowIfCancellationRequested();
+            
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -128,9 +146,14 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         {
             var items = GetBlobMetadataListAsync(directory, cancellationToken);
 
-            await foreach (var item in items.WithCancellation(cancellationToken))
-                await StorageClient.DeleteAsync(StorageOptions.Bucket, item.Name, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
+            await foreach (var item in items)
+            {
+                await StorageClient.DeleteAsync(StorageOptions.Bucket, item.Name, null, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -155,10 +178,15 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
         try
         {
-            await EnsureContainerExist();
-            await StorageClient.PutObjectAsync(putRequest, cancellationToken);
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            var response = await StorageClient.PutObjectAsync(putRequest, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            return await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
+            var metadataOptions = MetadataOptions.FromBaseOptions(options);
+            metadataOptions.ETag = response.ETag;
+
+            return await GetBlobMetadataInternalAsync(metadataOptions, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -171,9 +199,10 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
-
+            cancellationToken.ThrowIfCancellationRequested();
             localFile.BlobMetadata = new BlobMetadata
             {
                 Name = options.FileName,
@@ -182,12 +211,13 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 LastModified = response.LastModified,
                 CreatedOn = response.LastModified,
                 MimeType = response.Headers.ContentType,
-                Length = response.Headers.ContentLength
+                Length = (ulong)response.Headers.ContentLength
             };
 
             await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, options.FullPath, null,
-                cancellationToken));
-
+                cancellationToken), cancellationToken);
+            
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
@@ -201,7 +231,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
 
             var isExist = await ExistsAsync(ExistOptions.FromBaseOptions(options), cancellationToken);
 
@@ -214,6 +244,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 Key = options.FullPath
             }, cancellationToken);
 
+            cancellationToken.ThrowIfCancellationRequested();
+            
             return Result<bool>.Succeed(true);
         }
         catch (Exception ex)
@@ -227,8 +259,9 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             _ = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<bool>.Succeed(true);
         }
         catch (AmazonS3Exception ex)
@@ -256,8 +289,9 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
             var objectMetaResponse = await StorageClient.GetObjectMetadataAsync(objectMetaRequest, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             var metadata = new BlobMetadata
             {
@@ -267,7 +301,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 LastModified = objectMetaResponse.LastModified,
                 CreatedOn = objectMetaResponse.LastModified,
                 MimeType = objectMetaResponse.Headers.ContentType,
-                Length = objectMetaResponse.Headers.ContentLength
+                Length = (ulong)objectMetaResponse.Headers.ContentLength
             };
 
             return Result<BlobMetadata>.Succeed(metadata);
@@ -284,8 +318,9 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            await EnsureContainerExist();
-
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            
             var status = hasLegalHold ? ObjectLockLegalHoldStatus.On : ObjectLockLegalHoldStatus.Off;
 
             PutObjectLegalHoldRequest request = new()
@@ -299,6 +334,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
             };
 
             await StorageClient.PutObjectLegalHoldAsync(request, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -312,7 +349,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            await EnsureContainerExist();
+            await EnsureContainerExist(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             GetObjectLegalHoldRequest request = new()
             {
                 BucketName = StorageOptions.Bucket,
@@ -320,7 +358,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
             };
 
             var response = await StorageClient.GetObjectLegalHoldAsync(request, cancellationToken);
-
+            cancellationToken.ThrowIfCancellationRequested();
             return Result<bool>.Succeed(response.LegalHold.Status == ObjectLockLegalHoldStatus.On);
         }
         catch (Exception ex)

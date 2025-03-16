@@ -51,7 +51,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
             .BeTrue();
         result.Value!.Length
             .Should()
-            .Be(fileInfo.Length);
+            .Be((ulong)fileInfo.Length);
         result.Value!.Name
             .Should()
             .Be(fileInfo.Name);
