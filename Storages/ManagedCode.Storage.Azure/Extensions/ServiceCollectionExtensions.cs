@@ -40,8 +40,7 @@ public static class ServiceCollectionExtensions
         return serviceCollection.AddAzureStorage(options);
     }
 
-    public static IServiceCollection AddAzureStorageAsDefault(this IServiceCollection serviceCollection,
-        Action<AzureStorageCredentialsOptions> action)
+    public static IServiceCollection AddAzureStorageAsDefaultWithCredential(this IServiceCollection serviceCollection, Action<AzureStorageCredentialsOptions> action)
     {
         var options = new AzureStorageCredentialsOptions();
         action.Invoke(options);
