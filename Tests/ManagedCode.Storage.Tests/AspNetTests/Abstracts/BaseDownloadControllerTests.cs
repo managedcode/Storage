@@ -19,8 +19,8 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
     protected BaseDownloadControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
         _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
-        _downloadEndpoint = string.Format(ApiEndpoints.Base.DownloadFile, ApiEndpoint);
-        _downloadBytesEndpoint = string.Format(ApiEndpoints.Base.DownloadBytes, ApiEndpoint);
+        _downloadEndpoint = $"{ApiEndpoint}/download";
+        _downloadBytesEndpoint = $"{ApiEndpoint}/download-bytes";
     }
 
     [Fact]
@@ -31,9 +31,10 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        FileHelper.GenerateLocalFile(localFile, 1);
-        var fileCRC = Crc32Helper.Calculate(await localFile.ReadAllBytesAsync());
-        var uploadFileBlob = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
+        FileHelper.GenerateLocalFileWithData(localFile, 100); // Generate file with actual data
+        var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
+        await using var uploadStream = localFile.FileStream; // Get stream once
+        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
 
         // Act
         var downloadedFileResult = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, _downloadEndpoint);
@@ -58,9 +59,10 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
-        FileHelper.GenerateLocalFile(localFile, 1);
-        var fileCRC = Crc32Helper.Calculate(await localFile.ReadAllBytesAsync());
-        var uploadFileBlob = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
+        FileHelper.GenerateLocalFileWithData(localFile, 100); // Generate file with actual data
+        var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
+        await using var uploadStream = localFile.FileStream; // Get stream once
+        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
 
         // Act
         var downloadedFileResult = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, _downloadBytesEndpoint);
@@ -68,7 +70,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         // Assert
         downloadedFileResult.IsSuccess.Should().BeTrue();
         downloadedFileResult.Value.Should().NotBeNull();
-        var downloadedFileCRC = Crc32Helper.Calculate(await downloadedFileResult.Value.ReadAllBytesAsync());
+        var downloadedFileCRC = Crc32Helper.CalculateFileCrc(downloadedFileResult.Value.FilePath);
         downloadedFileCRC.Should().Be(fileCRC);
     }
 
@@ -86,10 +88,9 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         downloadedFileResult.IsFailed
             .Should()
             .BeTrue();
-        downloadedFileResult.GetError()
-            .Value
-            .ErrorCode
+        downloadedFileResult.Problem
+            ?.StatusCode
             .Should()
-            .Be(HttpStatusCode.InternalServerError.ToString());
+            .Be((int)HttpStatusCode.InternalServerError);
     }
 }

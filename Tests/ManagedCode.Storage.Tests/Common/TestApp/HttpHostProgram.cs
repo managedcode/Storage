@@ -1,4 +1,5 @@
-﻿using ManagedCode.Storage.Azure.Extensions;
+﻿using System.IO;
+using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Tests.Common.TestApp.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
@@ -10,7 +11,12 @@ public class HttpHostProgram
 {
     public static void Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
+        var options = new WebApplicationOptions
+        {
+            Args = args,
+            ContentRootPath = Directory.GetCurrentDirectory()
+        };
+        var builder = WebApplication.CreateBuilder(options);
 
         builder.Services.AddControllers();
         builder.Services.AddSignalR();

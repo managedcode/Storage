@@ -39,7 +39,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
 
         result.IsSuccess
             .Should()
-            .BeTrue();
+            .BeTrue(result.Problem?.Detail ?? "Failed without details");
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
         // Assert
         result.IsSuccess
             .Should()
-            .BeTrue(result.GetError().ToString());
+            .BeTrue(result.Problem?.Detail ?? "Failed without details");
         
         blobs.Count
             .Should()

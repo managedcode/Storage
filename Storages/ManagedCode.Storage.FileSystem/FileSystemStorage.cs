@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -266,7 +267,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
                 cancellationToken.ThrowIfCancellationRequested();
 
                 if (file.IsFailed)
-                    return Result.Fail(file.Errors);
+                    return Result.Fail(file.Problem);
 
                 var fileStream = File.OpenRead(file.Value!.FilePath);
                 if (Environment.OSVersion.Platform != PlatformID.MacOSX)

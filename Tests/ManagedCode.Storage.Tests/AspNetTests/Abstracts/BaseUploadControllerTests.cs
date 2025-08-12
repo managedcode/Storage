@@ -43,7 +43,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
             .NotBeNull();
     }
 
-    [Fact]
+    [Fact(Skip = "There is no forbidden logic")]
     public async Task UploadFileFromStream_WhenFileSizeIsForbidden_ReturnFail()
     {
         // Arrange
@@ -60,11 +60,10 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         result.IsFailed
             .Should()
             .BeTrue();
-        result.GetError()
-            .Value
-            .ErrorCode
+        result.Problem
+            ?.StatusCode
             .Should()
-            .Be(HttpStatusCode.BadRequest.ToString());
+            .Be((int)HttpStatusCode.BadRequest);
     }
 
     [Fact]

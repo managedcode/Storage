@@ -59,6 +59,9 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
             if(cancellationToken.IsCancellationRequested)
                 yield break;
             
+            if (objectsResponse?.S3Objects == null)
+                yield break;
+                
             foreach (var entry in objectsResponse.S3Objects)
             {
                 if(cancellationToken.IsCancellationRequested)
@@ -78,15 +81,15 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                     FullName = $"{StorageOptions.Bucket}/{entry.Key}",
                     Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
-                    LastModified = objectMetaResponse.LastModified,
-                    CreatedOn = objectMetaResponse.LastModified,
+                    LastModified = objectMetaResponse.LastModified.HasValue ? new DateTimeOffset(objectMetaResponse.LastModified.Value) : DateTimeOffset.MinValue,
+                    CreatedOn = objectMetaResponse.LastModified.HasValue ? new DateTimeOffset(objectMetaResponse.LastModified.Value) : DateTimeOffset.MinValue,
                     MimeType = objectMetaResponse.Headers.ContentType,
                     Length = (ulong)objectMetaResponse.Headers.ContentLength
                 };
             }
 
             // If response is truncated, set the marker to get the next set of keys.
-            if (objectsResponse.IsTruncated)
+            if (objectsResponse.IsTruncated == true)
                 objectsRequest.Marker = objectsResponse.NextMarker;
             else
                 objectsRequest = null;
@@ -208,8 +211,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 Name = options.FileName,
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
-                LastModified = response.LastModified,
-                CreatedOn = response.LastModified,
+                LastModified = response.LastModified.HasValue ? new DateTimeOffset(response.LastModified.Value) : DateTimeOffset.MinValue,
+                CreatedOn = response.LastModified.HasValue ? new DateTimeOffset(response.LastModified.Value) : DateTimeOffset.MinValue,
                 MimeType = response.Headers.ContentType,
                 Length = (ulong)response.Headers.ContentLength
             };
@@ -298,8 +301,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 Name = options.FileName,
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
-                LastModified = objectMetaResponse.LastModified,
-                CreatedOn = objectMetaResponse.LastModified,
+                LastModified = objectMetaResponse.LastModified.HasValue ? new DateTimeOffset(objectMetaResponse.LastModified.Value) : DateTimeOffset.MinValue,
+                CreatedOn = objectMetaResponse.LastModified.HasValue ? new DateTimeOffset(objectMetaResponse.LastModified.Value) : DateTimeOffset.MinValue,
                 MimeType = objectMetaResponse.Headers.ContentType,
                 Length = (ulong)objectMetaResponse.Headers.ContentLength
             };

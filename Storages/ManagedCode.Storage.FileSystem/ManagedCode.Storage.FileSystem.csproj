@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="9.0.0" />
+        <PackageReference Include="ManagedCode.Communication" Version="9.6.0" />
         <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.3" />
     </ItemGroup>
 

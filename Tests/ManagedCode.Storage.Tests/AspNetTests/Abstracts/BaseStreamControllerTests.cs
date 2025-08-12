@@ -18,7 +18,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
 
     protected BaseStreamControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
-        _streamEndpoint = string.Format(ApiEndpoints.Base.StreamFile, ApiEndpoint);
+        _streamEndpoint = $"{ApiEndpoint}/stream";
         _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
     }
 
@@ -30,9 +30,10 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         var contentName = "file";
         var extension = ".txt";
         await using var localFile = LocalFile.FromRandomNameWithExtension(extension);
-        FileHelper.GenerateLocalFile(localFile, 1);
-        var fileCRC = Crc32Helper.Calculate(await localFile.ReadAllBytesAsync());
-        var uploadFileBlob = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
+        FileHelper.GenerateLocalFileWithData(localFile, 100); // Generate file with actual data
+        var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
+        await using var uploadStream = localFile.FileStream; // Get stream once
+        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
 
         // Act
         var streamFileResult = await storageClient.GetFileStream(uploadFileBlob.Value.FullName, _streamEndpoint);
@@ -67,10 +68,9 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         streamFileResult.IsFailed
             .Should()
             .BeTrue();
-        streamFileResult.GetError()
-            .Value
-            .ErrorCode
+        streamFileResult.Problem
+            ?.StatusCode
             .Should()
-            .Be(HttpStatusCode.InternalServerError.ToString());
+            .Be((int)HttpStatusCode.InternalServerError);
     }
 }
