@@ -1,7 +1,7 @@
 <Project>
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+        <TargetFramework>net9.0</TargetFramework>
         <LangVersion>13</LangVersion>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <DebugType>embedded</DebugType>
@@ -26,8 +26,8 @@
         <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
         <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
         <Product>Managed Code - Storage</Product>
-        <Version>9.0.5</Version>
-        <PackageVersion>9.0.5</PackageVersion>
+        <Version>9.1.0</Version>
+        <PackageVersion>9.1.0</PackageVersion>
 
     </PropertyGroup>
 
