@@ -1,0 +1,25 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Integraions/">
+    <Project Path="Integraions/ManagedCode.Storage.Client.SignalR/ManagedCode.Storage.Client.SignalR.csproj" />
+    <Project Path="Integraions/ManagedCode.Storage.Client/ManagedCode.Storage.Client.csproj" />
+    <Project Path="Integraions/ManagedCode.Storage.Server/ManagedCode.Storage.Server.csproj" />
+  </Folder>
+  <Folder Name="/Storages/">
+    <Project Path="Storages/ManagedCode.Storage.Aws/ManagedCode.Storage.Aws.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Azure.DataLake/ManagedCode.Storage.Azure.DataLake.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Azure/ManagedCode.Storage.Azure.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.FileSystem/ManagedCode.Storage.FileSystem.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Ftp/ManagedCode.Storage.Ftp.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Google/ManagedCode.Storage.Google.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj" />
+  </Folder>
+  <Project Path="ManagedCode.Storage.Core/ManagedCode.Storage.Core.csproj" />
+  <Project Path="ManagedCode.Storage.TestFakes/ManagedCode.Storage.TestFakes.csproj" />
+</Solution>

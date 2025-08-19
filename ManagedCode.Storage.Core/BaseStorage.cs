@@ -123,7 +123,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         if (string.IsNullOrWhiteSpace(options.MimeType))
             options.MimeType = MimeHelper.TEXT;
 
-        return UploadInternalAsync(new StringStream(content), SetUploadOptions(options), cancellationToken);
+        return UploadInternalAsync(new Utf8StringStream(content), SetUploadOptions(options), cancellationToken);
     }
 
     public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)

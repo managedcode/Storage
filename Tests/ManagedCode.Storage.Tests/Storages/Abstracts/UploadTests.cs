@@ -196,7 +196,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     
     
     [Fact]
-    public async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
+    public virtual async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
     {
         // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent((Storage is FileSystemStorage) ? 100_0000_000 : 10_0000_000);
