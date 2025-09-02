@@ -40,7 +40,7 @@ public class VirtualFileSystem : IVirtualFileSystem
         _metadataManager = metadataManager ?? throw new ArgumentNullException(nameof(metadataManager));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+        _options = options.Value ?? throw new ArgumentNullException("options.Value");
         
         ContainerName = _options.DefaultContainer;
     }
