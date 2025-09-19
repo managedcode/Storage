@@ -6,6 +6,7 @@
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <DebugType>embedded</DebugType>
         <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <!--NuGet-->

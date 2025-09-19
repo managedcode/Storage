@@ -22,4 +22,5 @@
   </Folder>
   <Project Path="ManagedCode.Storage.Core/ManagedCode.Storage.Core.csproj" />
   <Project Path="ManagedCode.Storage.TestFakes/ManagedCode.Storage.TestFakes.csproj" />
+  <Project Path="ManagedCode.Storage.VirtualFileSystem\ManagedCode.Storage.VirtualFileSystem.csproj" />
 </Solution>

@@ -1,12 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <LangVersion>13</LangVersion>
-    <Nullable>enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <WarningsAsErrors />
-    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
     <PackageId>ManagedCode.Storage.VirtualFileSystem</PackageId>
     <Product>ManagedCode.Storage.VirtualFileSystem</Product>
     <Description>Virtual FileSystem abstraction over ManagedCode.Storage blob providers</Description>
@@ -23,10 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory"  />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options"  />
   </ItemGroup>
 
 </Project>
