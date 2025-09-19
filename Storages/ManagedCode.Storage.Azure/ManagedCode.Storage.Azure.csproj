@@ -17,11 +17,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.15.0" />
-        <PackageReference Include="ManagedCode.Communication" Version="9.6.1" />
+        <PackageReference Include="Azure.Identity" Version="1.16.0" />
+        <PackageReference Include="ManagedCode.Communication" Version="9.6.2" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
         <PackageReference Include="System.Linq.Async" Version="6.0.3" />
     </ItemGroup>
 
