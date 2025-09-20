@@ -85,23 +85,34 @@ public class VirtualFile : IVirtualFile
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Refreshing file metadata: {Path}", _path);
-        
+
         _blobMetadata = await _metadataManager.GetBlobInfoAsync(_path.ToBlobKey(), cancellationToken);
         _vfsMetadata = await _metadataManager.GetVfsMetadataAsync(_path.ToBlobKey(), cancellationToken);
         _metadataLoaded = true;
-        
-        // Update derived properties
+
         if (_blobMetadata != null)
         {
-            ETag = _blobMetadata.Uri?.Query.Contains("sv=") == true ? 
+            ETag = _blobMetadata.Uri?.Query.Contains("sv=") == true ?
                 ExtractETagFromUri(_blobMetadata.Uri) : null;
         }
-        
-        // Invalidate cache
+
         if (_vfs.Options.EnableCache)
         {
-            var cacheKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
-            _cache.Remove(cacheKey);
+            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            var entry = new MetadataCacheEntry
+            {
+                Metadata = _vfsMetadata ?? new VfsMetadata(),
+                CustomMetadata = new Dictionary<string, string>(),
+                CachedAt = DateTimeOffset.UtcNow,
+                ETag = ETag,
+                Size = (long)(_blobMetadata?.Length ?? 0),
+                ContentType = _blobMetadata?.MimeType,
+                BlobMetadata = _blobMetadata
+            };
+            _cache.Set(metadataKey, entry, _vfs.Options.CacheTTL);
+
+            var customKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
+            _cache.Remove(customKey);
         }
     }
 
@@ -256,7 +267,7 @@ public class VirtualFile : IVirtualFile
     public async ValueTask<IReadOnlyDictionary<string, string>> GetMetadataAsync(
         CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+        var cacheKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
         
         if (_vfs.Options.EnableCache && _cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string> cached))
         {
@@ -269,6 +280,12 @@ public class VirtualFile : IVirtualFile
         if (_vfs.Options.EnableCache)
         {
             _cache.Set(cacheKey, metadata, _vfs.Options.CacheTTL);
+            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry entry))
+            {
+                entry.CustomMetadata = metadata;
+                _cache.Set(metadataKey, entry, _vfs.Options.CacheTTL);
+            }
         }
         
         _logger.LogDebug("File metadata: {Path}, count: {Count}", _path, metadata.Count);
@@ -309,8 +326,10 @@ public class VirtualFile : IVirtualFile
         // Invalidate cache
         if (_vfs.Options.EnableCache)
         {
-            var cacheKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
-            _cache.Remove(cacheKey);
+            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            _cache.Remove(metadataKey);
+            var customKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
+            _cache.Remove(customKey);
         }
     }
 
@@ -331,10 +350,25 @@ public class VirtualFile : IVirtualFile
 
     private async Task EnsureMetadataLoadedAsync(CancellationToken cancellationToken)
     {
-        if (!_metadataLoaded)
+        if (_metadataLoaded)
         {
-            await RefreshAsync(cancellationToken);
+            return;
         }
+
+        if (_vfs.Options.EnableCache)
+        {
+            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry entry))
+            {
+                _vfsMetadata = entry.Metadata;
+                _blobMetadata = entry.BlobMetadata;
+                ETag = entry.ETag;
+                _metadataLoaded = true;
+                return;
+            }
+        }
+
+        await RefreshAsync(cancellationToken);
     }
 
     private static string? ExtractETagFromUri(Uri uri)

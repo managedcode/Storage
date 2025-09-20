@@ -14,7 +14,7 @@
     <Project Path="Storages/ManagedCode.Storage.Azure.DataLake/ManagedCode.Storage.Azure.DataLake.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Azure/ManagedCode.Storage.Azure.csproj" />
     <Project Path="Storages/ManagedCode.Storage.FileSystem/ManagedCode.Storage.FileSystem.csproj" />
-    <Project Path="Storages/ManagedCode.Storage.Ftp/ManagedCode.Storage.Ftp.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Sftp/ManagedCode.Storage.Sftp.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Google/ManagedCode.Storage.Google.csproj" />
   </Folder>
   <Folder Name="/Tests/">

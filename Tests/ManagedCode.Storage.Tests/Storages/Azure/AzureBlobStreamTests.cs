@@ -41,8 +41,10 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var localFileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(localFileStream, options);
+        result.IsSuccess.Should().BeTrue();
+        var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
-        await using var blobStream = storage.GetBlobStream(result.Value.FullName);
+        await using var blobStream = storage.GetBlobStream(uploaded.FullName);
 
         // Act
         using var streamReader = new StreamReader(blobStream);
@@ -73,8 +75,10 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var fileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(fileStream, options);
+        result.IsSuccess.Should().BeTrue();
+        var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
-        await using var blobStream = storage.GetBlobStream(result.Value.FullName);
+        await using var blobStream = storage.GetBlobStream(uploaded.FullName);
 
         var chunkSize = (int)blobStream.Length / 2;
         var chunk1 = new byte[chunkSize];
@@ -151,10 +155,8 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         fileResult.IsSuccess
             .Should()
             .BeTrue();
-        fileResult.Value
-            .Should()
-            .NotBeNull();
-        await using var fileStream = fileResult.Value.FileStream;
+        var downloaded = fileResult.Value ?? throw new InvalidOperationException("Download result is null");
+        await using var fileStream = downloaded.FileStream;
         using var streamReader = new StreamReader(fileStream);
         var fileContent = await streamReader.ReadLineAsync();
         fileContent.Should()
@@ -174,8 +176,10 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var localFileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(localFileStream, options);
+        result.IsSuccess.Should().BeTrue();
+        var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
-        await using var blobStream = storage.GetBlobStream(result.Value.FullName);
+        await using var blobStream = storage.GetBlobStream(uploaded.FullName);
 
         // Act
         var seekInPosition = fileSizeInBytes / 2;

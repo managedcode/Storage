@@ -13,7 +13,7 @@ namespace ManagedCode.Storage.Tests.ExtensionsTests;
 public class ReplaceExtensionsTests
 {
     [Fact]
-    public async Task ReplaceAzureStorageAsDefault()
+    public void ReplaceAzureStorageAsDefault()
     {
         var options = new AzureStorageOptions
         {
@@ -35,7 +35,7 @@ public class ReplaceExtensionsTests
     }
 
     [Fact]
-    public async Task ReplaceAzureStorage()
+    public void ReplaceAzureStorage()
     {
         var options = new AzureStorageOptions
         {

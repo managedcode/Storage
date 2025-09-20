@@ -12,7 +12,7 @@ ManagedCode.Storage is a universal storage abstraction library that provides a c
   - `ManagedCode.Storage.Aws`: AWS S3 implementation  
   - `ManagedCode.Storage.Google`: Google Cloud Storage implementation
   - `ManagedCode.Storage.FileSystem`: Local file system implementation
-  - `ManagedCode.Storage.Ftp`: FTP storage implementation
+  - `ManagedCode.Storage.Sftp`: FTP storage implementation
   - `ManagedCode.Storage.Azure.DataLake`: Azure Data Lake implementation
 - **Tests/**: Unit and integration tests
 - **Integrations/**: Additional integrations (SignalR, Client/Server components)

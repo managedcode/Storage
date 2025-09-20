@@ -11,6 +11,7 @@ using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Tests.Common.TestApp;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.Azurite;
 using Testcontainers.LocalStack;
@@ -19,6 +20,7 @@ using ManagedCode.Storage.Google.Extensions;
 using ManagedCode.Storage.Google.Options;
 using Testcontainers.FakeGcsServer;
 using Xunit;
+using ManagedCode.Storage.Server.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Tests.Common;
 
@@ -55,6 +57,7 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
         builder.ConfigureServices(services =>
         {
             services.AddStorageFactory();
+            services.AddChunkUploadHandling();
 
             services.AddFileSystemStorage(new FileSystemStorageOptions
             {
@@ -96,6 +99,13 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
         });
 
         return base.CreateHost(builder);
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Common", "TestApp"));
+        builder.UseEnvironment("Development");
+        builder.UseContentRoot(projectDir);
     }
 
     public override async ValueTask DisposeAsync()

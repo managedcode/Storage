@@ -142,6 +142,7 @@ internal class MetadataCacheEntry
     public string? ETag { get; set; }
     public long Size { get; set; }
     public string? ContentType { get; set; }
+    public BlobMetadata? BlobMetadata { get; set; }
 }
 
 /// <summary>

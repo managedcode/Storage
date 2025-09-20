@@ -71,7 +71,6 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        var fileName = "test.txt";
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
@@ -94,7 +93,6 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        var fileName = "test.txt";
         var contentName = "file";
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
         FileHelper.GenerateLocalFile(localFile, 1);
@@ -118,7 +116,6 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        var fileName = "test.txt";
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");

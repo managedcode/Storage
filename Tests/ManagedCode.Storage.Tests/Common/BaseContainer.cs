@@ -13,10 +13,10 @@ namespace ManagedCode.Storage.Tests.Common;
 
 public abstract class BaseContainer<T> : IAsyncLifetime where T : IContainer
 {
-    protected T Container { get; private set; }
+    protected T Container { get; private set; } = default!;
 
-    protected IStorage Storage { get; private set; }
-    protected ServiceProvider ServiceProvider { get; private set; }
+    protected IStorage Storage { get; private set; } = default!;
+    protected ServiceProvider ServiceProvider { get; private set; } = default!;
 
 
     public async Task InitializeAsync()

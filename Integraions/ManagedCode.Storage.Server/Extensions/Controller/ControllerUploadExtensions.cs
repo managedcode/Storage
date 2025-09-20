@@ -4,8 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Communication;
+using ManagedCode.Storage.Server.ChunkUpload;
 using ManagedCode.Storage.Server.Extensions.File;
 using ManagedCode.Storage.Server.Helpers;
+using ManagedCode.Storage.Server.Models;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -68,6 +71,33 @@ public static async Task<BlobMetadata> UploadFromBrowserFileAsync(
         return result.Value;
     }
 }
+
+    public static async Task<Result> UploadChunkAsync(
+        this ControllerBase controller,
+        ChunkUploadService chunkUploadService,
+        FileUploadPayload payload,
+        CancellationToken cancellationToken = default)
+    {
+        return await chunkUploadService.AppendChunkAsync(payload, cancellationToken);
+    }
+
+    public static async Task<Result<ChunkUploadCompleteResponse>> CompleteChunkUploadAsync(
+        this ControllerBase controller,
+        ChunkUploadService chunkUploadService,
+        IStorage storage,
+        ChunkUploadCompleteRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return await chunkUploadService.CompleteAsync(request, storage, cancellationToken);
+    }
+
+    public static void AbortChunkUpload(
+        this ControllerBase controller,
+        ChunkUploadService chunkUploadService,
+        string uploadId)
+    {
+        chunkUploadService.Abort(uploadId);
+    }
 
 public static async Task<BlobMetadata> UploadFromStreamAsync(
     this ControllerBase controller,

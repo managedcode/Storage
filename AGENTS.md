@@ -14,7 +14,7 @@ TBA
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-ManagedCode.Storage.slnx orchestrates the .NET 9 projects. Core abstractions live in `ManagedCode.Storage.Core/`. Providers sit under `Storages/ManagedCode.Storage.*` with one project per cloud target (Azure, AWS, GCP, FileSystem, Ftp). Integration surfaces, including the ASP.NET server and client SDKs, live in `Integraions/`. Test doubles stay in `ManagedCode.Storage.TestFakes/`, while the suites in `Tests/ManagedCode.Storage.Tests/` are grouped into ASP.NET flows, provider runs, and shared helpers. Keep shared assets such as `logo.png` at the repository root.
+ManagedCode.Storage.slnx orchestrates the .NET 9 projects. Core abstractions live in `ManagedCode.Storage.Core/`. Providers sit under `Storages/ManagedCode.Storage.*` with one project per cloud target (Azure, AWS, GCP, FileSystem, Sftp). Integration surfaces, including the ASP.NET server and client SDKs, live in `Integraions/`. Test doubles stay in `ManagedCode.Storage.TestFakes/`, while the suites in `Tests/ManagedCode.Storage.Tests/` are grouped into ASP.NET flows, provider runs, and shared helpers. Keep shared assets such as `logo.png` at the repository root.
 
 ## Build, Test, and Development Commands
 Run `dotnet restore ManagedCode.Storage.slnx` before compiling. Use `dotnet build ManagedCode.Storage.slnx` to compile every target and surface analyzer warnings. Execute all tests with `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release`. For coverage, run `dotnet test /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`. Use `dotnet format ManagedCode.Storage.slnx` before opening a pull request.

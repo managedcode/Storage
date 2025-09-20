@@ -55,13 +55,13 @@ public class VirtualFileSystem : IVirtualFileSystem
     public VfsOptions Options => _options;
 
     /// <inheritdoc />
-    public async ValueTask<IVirtualFile> GetFileAsync(VfsPath path, CancellationToken cancellationToken = default)
+    public ValueTask<IVirtualFile> GetFileAsync(VfsPath path, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        
+
         _logger.LogDebug("Getting file: {Path}", path);
-        
-        return new VirtualFile(this, _metadataManager, _cache, _logger, path);
+
+        return ValueTask.FromResult<IVirtualFile>(new VirtualFile(this, _metadataManager, _cache, _logger, path));
     }
 
     /// <inheritdoc />
@@ -110,13 +110,16 @@ public class VirtualFileSystem : IVirtualFileSystem
             
             if (result.IsSuccess && result.Value)
             {
-                // Invalidate cache
                 if (_options.EnableCache)
                 {
-                    var cacheKey = $"file_exists:{ContainerName}:{path}";
-                    _cache.Remove(cacheKey);
+                    var existsKey = $"file_exists:{ContainerName}:{path}";
+                    _cache.Remove(existsKey);
+                    var metadataKey = $"file_metadata:{ContainerName}:{path}";
+                    _cache.Remove(metadataKey);
+                    var customKey = $"file_custom_metadata:{ContainerName}:{path}";
+                    _cache.Remove(customKey);
                 }
-                
+
                 _logger.LogDebug("File deleted successfully: {Path}", path);
                 return true;
             }
@@ -132,13 +135,13 @@ public class VirtualFileSystem : IVirtualFileSystem
     }
 
     /// <inheritdoc />
-    public async ValueTask<IVirtualDirectory> GetDirectoryAsync(VfsPath path, CancellationToken cancellationToken = default)
+    public ValueTask<IVirtualDirectory> GetDirectoryAsync(VfsPath path, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        
+
         _logger.LogDebug("Getting directory: {Path}", path);
-        
-        return new VirtualDirectory(this, _metadataManager, _cache, _logger, path);
+
+        return ValueTask.FromResult<IVirtualDirectory>(new VirtualDirectory(this, _metadataManager, _cache, _logger, path));
     }
 
     /// <inheritdoc />
@@ -493,11 +496,12 @@ public class VirtualFileSystem : IVirtualFileSystem
         options ??= new ListOptions();
         
         var directory = await GetDirectoryAsync(path, cancellationToken);
-        
+        var pageSize = options.PageSize > 0 ? options.PageSize : _options.DefaultPageSize;
+
         await foreach (var entry in directory.GetEntriesAsync(
             options.Pattern, 
             options.Recursive, 
-            options.PageSize, 
+            pageSize, 
             cancellationToken))
         {
             if (entry.Type == VfsEntryType.File && !options.IncludeFiles)

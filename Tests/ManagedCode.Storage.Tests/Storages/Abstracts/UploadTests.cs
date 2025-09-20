@@ -211,11 +211,13 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
             cts.Cancel();
         });
         var uploadTask = Storage.UploadAsync(stream, cancellationToken: cts.Token);
-        
+
         await Task.WhenAll(uploadTask, cancellationTask);
 
+        var uploadResult = await uploadTask;
+
         // Assert
-        uploadTask.Result.IsSuccess
+        uploadResult.IsSuccess
             .Should()
             .BeFalse();
     

@@ -28,6 +28,16 @@ public sealed class EmptyContainer : IContainer
         throw new NotImplementedException();
     }
 
+    public ushort GetMappedPublicPort()
+    {
+        return 0;
+    }
+
+    public IReadOnlyDictionary<ushort, ushort> GetMappedPublicPorts()
+    {
+        return new Dictionary<ushort, ushort>();
+    }
+
     public Task<long> GetExitCodeAsync(CancellationToken ct = new())
     {
         throw new NotImplementedException();
@@ -49,14 +59,14 @@ public sealed class EmptyContainer : IContainer
         throw new NotImplementedException();
     }
 
-    public async Task PauseAsync(CancellationToken ct = new CancellationToken())
+    public Task PauseAsync(CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return Task.FromException(new NotImplementedException());
     }
 
-    public async Task UnpauseAsync(CancellationToken ct = new CancellationToken())
+    public Task UnpauseAsync(CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        return Task.FromException(new NotImplementedException());
     }
 
     public Task CopyAsync(byte[] fileContent, string filePath,
@@ -113,6 +123,7 @@ public sealed class EmptyContainer : IContainer
     public TestcontainersStates State { get; } = TestcontainersStates.Running;
     public TestcontainersHealthStatus Health { get; } = TestcontainersHealthStatus.Healthy;
     public long HealthCheckFailingStreak { get; } = 0;
+    #pragma warning disable CS0067
     public event EventHandler? Creating;
     public event EventHandler? Starting;
     public event EventHandler? Stopping;
@@ -123,4 +134,5 @@ public sealed class EmptyContainer : IContainer
     public event EventHandler? Stopped;
     public event EventHandler? Paused;
     public event EventHandler? Unpaused;
+    #pragma warning restore CS0067
 }

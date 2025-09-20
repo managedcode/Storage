@@ -148,6 +148,30 @@ public class VirtualDirectory : IVirtualDirectory
         bool includeDirectories,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        var effectivePageSize = pageSize > 0 ? pageSize : _vfs.Options.DefaultPageSize;
+        if (effectivePageSize <= 0)
+        {
+            effectivePageSize = int.MaxValue;
+        }
+
+        var entriesInPage = 0;
+        var pagingEnabled = effectivePageSize != int.MaxValue;
+
+        async ValueTask OnEntryYieldedAsync()
+        {
+            if (!pagingEnabled)
+            {
+                return;
+            }
+
+            entriesInPage++;
+            if (entriesInPage >= effectivePageSize)
+            {
+                entriesInPage = 0;
+                await Task.Yield();
+            }
+        }
+
         var prefix = _path.ToBlobKey();
         if (!string.IsNullOrEmpty(prefix) && !prefix.EndsWith('/'))
             prefix += "/";
@@ -156,8 +180,18 @@ public class VirtualDirectory : IVirtualDirectory
         
         await foreach (var blob in _vfs.Storage.GetBlobMetadataListAsync(prefix, cancellationToken))
         {
-            var relativePath = blob.FullName.Length > prefix.Length ? 
-                blob.FullName[prefix.Length..] : "";
+            if (blob is null)
+            {
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(blob.FullName))
+            {
+                continue;
+            }
+
+            var relativePath = blob.FullName.Length > prefix.Length ?
+                blob.FullName[prefix.Length..] : blob.FullName;
             
             if (string.IsNullOrEmpty(relativePath))
                 continue;
@@ -176,6 +210,7 @@ public class VirtualDirectory : IVirtualDirectory
                         {
                             var dirPath = _path.Combine(dirName);
                             yield return new VirtualDirectory(_vfs, _metadataManager, _cache, _logger, dirPath);
+                            await OnEntryYieldedAsync();
                         }
                     }
                     continue; // Skip the file itself for non-recursive
@@ -191,6 +226,7 @@ public class VirtualDirectory : IVirtualDirectory
                     var filePath = new VfsPath("/" + blob.FullName);
                     var file = new VirtualFile(_vfs, _metadataManager, _cache, _logger, filePath);
                     yield return file;
+                    await OnEntryYieldedAsync();
                 }
             }
 
@@ -211,6 +247,7 @@ public class VirtualDirectory : IVirtualDirectory
                         {
                             var dirPath = _path.Combine(currentPath);
                             yield return new VirtualDirectory(_vfs, _metadataManager, _cache, _logger, dirPath);
+                            await OnEntryYieldedAsync();
                         }
                     }
                 }

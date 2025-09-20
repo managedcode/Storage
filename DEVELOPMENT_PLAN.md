@@ -7,18 +7,17 @@
 
 ## 🏗️ **Фаза 1: Нові провайдери сховищ**
 
-### **1.1 FTP Provider** 
+### **1.1 SFTP Provider** 
 **Пріоритет: ВИСОКИЙ**
-- Підтримка FTP, SFTP, FTPS
-- Пасивний та активний режими
-- SSL/TLS шифрування 
-- Автентифікація по ключах SSH
-- Тести з Testcontainers FTP сервером
+- Лише безпечні з‑box SFTP операції
+- Парольна та ключова автентифікація
+- Перевірка відбитку host key
+- Тести через Testcontainers.Sftp
 
 **Файли:**
-- `Storages/ManagedCode.Storage.Ftp/`
-- `FtpStorage.cs`, `FtpStorageOptions.cs`
-- `IFtpStorage.cs`, `FtpStorageProvider.cs`
+- `Storages/ManagedCode.Storage.Sftp/`
+- `SftpStorage.cs`, `SftpStorageOptions.cs`
+- `ISftpStorage.cs`, `SftpStorageProvider.cs`
 
 ### **1.2 OneDrive Provider**
 **Пріоритет: ВИСОКИЙ**
@@ -56,7 +55,7 @@
 services.AddStorageRegistry()
     .AddNamedStorage("primary-azure", config => config.UseAzureBlob(...))
     .AddNamedStorage("backup-s3", config => config.UseAwsS3(...))
-    .AddNamedStorage("ftp-server", config => config.UseFtp(...));
+    .AddNamedStorage("ftp-server", config => config.UseSftp(...));
 
 // Використання
 IStorageRegistry registry = ...;

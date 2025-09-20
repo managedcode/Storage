@@ -23,7 +23,7 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         _httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK);
-            if (request.Method == HttpMethod.Get && request.RequestUri.AbsoluteUri.Contains("loader.com"))
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsoluteUri.Contains("loader.com", StringComparison.Ordinal) == true)
             {
                 var contentStream = new MemoryStream();
                 using (var writer = new StreamWriter(contentStream))
@@ -53,8 +53,9 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         result.IsSuccess
             .Should()
             .BeTrue();
-        result.Should()
-            .BeNull();
+        result.Value
+            .Should()
+            .NotBeNull();
     }
 
     [Fact]
@@ -68,9 +69,7 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         result.IsSuccess
             .Should()
             .BeFalse();
-        result.Value
-            .Should()
-            .BeNull();
+        result.Value.Should().BeNull();
     }
 
     [Fact]
@@ -84,9 +83,7 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         result.IsSuccess
             .Should()
             .BeFalse();
-        result.Value
-            .Should()
-            .BeNull();
+        result.Value.Should().BeNull();
     }
 
     private class FakeHttpMessageHandler : HttpMessageHandler

@@ -27,32 +27,30 @@ public static class Crc32Helper
 
     public static uint Calculate(byte[] bytes)
     {
-        var crcValue = 0xffffffff;
-
-        foreach (var by in bytes)
-        {
-            var tableIndex = (byte)((crcValue & 0xff) ^ by);
-            crcValue = Crc32Table[tableIndex] ^ (crcValue >> 8);
-        }
-
-        return ~crcValue;
+        var crcValue = UpdateCrc(bytes);
+        return Complete(crcValue);
     }
 
     public static uint CalculateFileCrc(string filePath)
     {
-        var crcValue = 0xffffffff;
+        var crcValue = Begin();
 
         using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
         {
             var buffer = new byte[4096]; // 4KB buffer
-            while (fs.Read(buffer, 0, buffer.Length) > 0)
-                crcValue = Calculate(buffer, crcValue);
+            int bytesRead;
+            while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                crcValue = Update(buffer.AsSpan(0, bytesRead), crcValue);
+            }
         }
 
-        return ~crcValue; // Return the final CRC value
+        return Complete(crcValue); // Return the final CRC value
     }
 
-    private static uint Calculate(byte[] bytes, uint crcValue = 0xffffffff)
+    public static uint Begin() => 0xffffffff;
+
+    public static uint Update(ReadOnlySpan<byte> bytes, uint crcValue = 0xffffffff)
     {
         foreach (var by in bytes)
         {
@@ -61,5 +59,17 @@ public static class Crc32Helper
         }
 
         return crcValue;
+    }
+
+    public static uint Update(uint current, ReadOnlySpan<byte> bytes)
+    {
+        return Update(bytes, current);
+    }
+
+    public static uint Complete(uint crcValue) => ~crcValue;
+
+    private static uint UpdateCrc(ReadOnlySpan<byte> bytes)
+    {
+        return Update(bytes, Begin());
     }
 }

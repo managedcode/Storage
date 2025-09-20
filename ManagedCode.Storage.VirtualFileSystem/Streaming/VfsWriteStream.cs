@@ -173,10 +173,12 @@ internal class VfsWriteStream : Stream
             // Invalidate cache after successful upload
             if (_vfsOptions.EnableCache)
             {
-                var cacheKey = $"file_exists:{_vfsOptions.DefaultContainer}:{_blobKey}";
-                _cache.Remove(cacheKey);
+                var existsKey = $"file_exists:{_vfsOptions.DefaultContainer}:{_blobKey}";
+                _cache.Remove(existsKey);
                 var metadataCacheKey = $"file_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}";
                 _cache.Remove(metadataCacheKey);
+                var customKey = $"file_custom_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}";
+                _cache.Remove(customKey);
             }
 
             _logger.LogDebug("Successfully uploaded data: {BlobKey}", _blobKey);
