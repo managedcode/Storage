@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
@@ -15,12 +16,22 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Server.Hubs;
 
+/// <summary>
+/// Base SignalR hub exposing upload and download streaming operations backed by an <see cref="IStorage"/> implementation.
+/// </summary>
+/// <typeparam name="TStorage">Concrete storage type.</typeparam>
 public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
 {
     private readonly ILogger _logger;
     private readonly StorageHubOptions _options;
     private readonly ConcurrentDictionary<string, TransferRegistration> _transfers = new();
 
+    /// <summary>
+    /// Initialises a new hub instance.
+    /// </summary>
+    /// <param name="storage">Backing storage provider.</param>
+    /// <param name="options">Runtime options for streaming.</param>
+    /// <param name="logger">Logger used for diagnostic output.</param>
     protected StorageHubBase(TStorage storage, StorageHubOptions options, ILogger logger)
     {
         Storage = storage ?? throw new ArgumentNullException(nameof(storage));
@@ -30,8 +41,12 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         Directory.CreateDirectory(_options.TempPath);
     }
 
+    /// <summary>
+    /// Gets the storage provider backing the hub operations.
+    /// </summary>
     protected TStorage Storage { get; }
 
+    /// <inheritdoc />
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         foreach (var (_, registration) in _transfers)
@@ -45,6 +60,11 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         await base.OnDisconnectedAsync(exception);
     }
 
+    /// <summary>
+    /// Retrieves the status for a known transfer, if present.
+    /// </summary>
+    /// <param name="transferId">Transfer identifier.</param>
+    /// <returns>The latest status or <c>null</c> if unknown.</returns>
     public virtual Task<TransferStatus?> GetStatusAsync(string transferId)
     {
         if (string.IsNullOrWhiteSpace(transferId))
@@ -55,6 +75,11 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         return Task.FromResult(_transfers.TryGetValue(transferId, out var registration) ? registration.Status : null);
     }
 
+    /// <summary>
+    /// Requests cancellation of the specified transfer.
+    /// </summary>
+    /// <param name="transferId">Transfer identifier.</param>
+    /// <returns>A task representing the async operation.</returns>
     public virtual Task CancelTransferAsync(string transferId)
     {
         if (string.IsNullOrWhiteSpace(transferId))
@@ -71,10 +96,19 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         return Task.CompletedTask;
     }
 
-    public virtual async Task<TransferStatus> UploadStreamAsync(UploadStreamDescriptor descriptor, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Streams file content from the caller and commits the result to storage when complete.
+    /// </summary>
+    /// <param name="descriptor">Upload metadata.</param>
+    /// <param name="stream">Chunked byte stream supplied by the caller.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The final transfer status including metadata.</returns>
+    public virtual async Task UploadStreamAsync(UploadStreamDescriptor descriptor, ChannelReader<byte[]> stream, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(descriptor);
         ArgumentException.ThrowIfNullOrWhiteSpace(descriptor.FileName);
+
+        Console.Error.WriteLine($"UploadStreamAsync invoked for {descriptor.FileName}");
 
         var transferId = string.IsNullOrWhiteSpace(descriptor.TransferId) ? Guid.NewGuid().ToString("N") : descriptor.TransferId!;
         var registration = RegisterTransfer(transferId, "upload", descriptor.FileName, descriptor.FileSize, cancellationToken);
@@ -87,20 +121,23 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
 
             await using (var tempStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None, _options.StreamBufferSize, useAsync: true))
             {
-                await foreach (var chunk in stream.WithCancellation(token))
+                while (await stream.WaitToReadAsync(token).ConfigureAwait(false))
                 {
-                    token.ThrowIfCancellationRequested();
-
-                    if (chunk is { Length: > 0 })
+                    while (stream.TryRead(out var chunk))
                     {
-                        await tempStream.WriteAsync(chunk, token);
-                        registration.Status.BytesTransferred += chunk.Length;
-                        registration.Touch();
-                        await Clients.Caller.SendAsync(StorageHubEvents.TransferProgress, registration.Status, token);
+                        token.ThrowIfCancellationRequested();
+
+                        if (chunk is { Length: > 0 })
+                        {
+                            await tempStream.WriteAsync(chunk, token).ConfigureAwait(false);
+                            registration.Status.BytesTransferred += chunk.Length;
+                            registration.Touch();
+                            await Clients.Caller.SendAsync(StorageHubEvents.TransferProgress, registration.Status, token).ConfigureAwait(false);
+                        }
                     }
                 }
 
-                await tempStream.FlushAsync(token);
+                await tempStream.FlushAsync(token).ConfigureAwait(false);
             }
 
             if (registration.Status.IsCanceled)
@@ -117,7 +154,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
             registration.Status.Metadata = result.Value;
             registration.Status.IsCompleted = true;
             await Clients.Caller.SendAsync(StorageHubEvents.TransferCompleted, registration.Status, token);
-            return registration.Status;
+            return;
         }
         catch (OperationCanceledException)
         {
@@ -129,9 +166,10 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         catch (Exception ex)
         {
             _logger.LogError(ex, "UploadStreamAsync failed for {TransferId}", transferId);
-            registration.Status.Error = ex.Message;
+            registration.Status.Error = ex.ToString();
             await Clients.Caller.SendAsync(StorageHubEvents.TransferFaulted, registration.Status, CancellationToken.None);
-            throw new HubException("Upload failed", ex);
+            Console.Error.WriteLine($"UploadStreamAsync server error: {ex}");
+            throw new HubException($"Upload failed: {ex}", ex);
         }
         finally
         {
@@ -140,6 +178,12 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         }
     }
 
+    /// <summary>
+    /// Streams file content from storage back to the connected client.
+    /// </summary>
+    /// <param name="blobName">Name of the blob/file to download.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async byte sequence that yields file chunks.</returns>
     public virtual async IAsyncEnumerable<byte[]> DownloadStreamAsync(string blobName, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
@@ -317,6 +361,9 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
     }
 }
 
+/// <summary>
+/// Event names emitted by <see cref="StorageHubBase{TStorage}"/>.
+/// </summary>
 public static class StorageHubEvents
 {
     public const string TransferProgress = "TransferProgress";

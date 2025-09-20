@@ -13,18 +13,31 @@ using ManagedCode.Storage.Server.Models;
 
 namespace ManagedCode.Storage.Server.ChunkUpload;
 
+/// <summary>
+/// Coordinates multi-part uploads by persisting temporary chunks and merging them on completion.
+/// </summary>
 public sealed class ChunkUploadService
 {
     private const int MergeBufferSize = 81920;
     private readonly ChunkUploadOptions _options;
     private readonly ConcurrentDictionary<string, ChunkUploadSession> _sessions = new();
 
+    /// <summary>
+    /// Initialises the service with the specified options.
+    /// </summary>
+    /// <param name="options">Chunk upload options.</param>
     public ChunkUploadService(ChunkUploadOptions options)
     {
         _options = options;
         Directory.CreateDirectory(_options.TempPath);
     }
 
+    /// <summary>
+    /// Appends a chunk to an upload session, creating the session if necessary.
+    /// </summary>
+    /// <param name="payload">Incoming file payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A result that indicates whether the chunk was accepted.</returns>
     public async Task<Result> AppendChunkAsync(FileUploadPayload payload, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(payload);
@@ -67,6 +80,13 @@ public sealed class ChunkUploadService
         return Result.Succeed();
     }
 
+    /// <summary>
+    /// Merges all chunks for a given upload and optionally commits the result to storage.
+    /// </summary>
+    /// <param name="request">Completion request.</param>
+    /// <param name="storage">Storage abstraction used for committing the merged file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The computed checksum and optional metadata when the file is committed.</returns>
     public async Task<Result<ChunkUploadCompleteResponse>> CompleteAsync(ChunkUploadCompleteRequest request, IStorage storage, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -119,6 +139,10 @@ public sealed class ChunkUploadService
         }
     }
 
+    /// <summary>
+    /// Aborts and cleans up the specified upload session.
+    /// </summary>
+    /// <param name="uploadId">Upload identifier.</param>
     public void Abort(string uploadId)
     {
         if (_sessions.TryRemove(uploadId, out var session))

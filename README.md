@@ -18,6 +18,8 @@
 | [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Aws.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Aws)                           | [ManagedCode.Storage.Aws](https://www.nuget.org/packages/ManagedCode.Storage.Aws)                           | AWS              |
 | [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                           | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                           | GCP              |
 | [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.AspNetExtensions.svg)](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | [ManagedCode.Storage.AspNetExtensions](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | AspNetExtensions |
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Server.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Server) | [ManagedCode.Storage.Server](https://www.nuget.org/packages/ManagedCode.Storage.Server) | ASP.NET Server |
+| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Client.SignalR.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | [ManagedCode.Storage.Client.SignalR](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | SignalR Client |
 
 # Storage
 ---
@@ -62,6 +64,92 @@ and use multiple APIs.
 - Provides a universal interface for accessing and manipulating data in different cloud blob storage providers.
 - Makes it easy to switch between providers or to use multiple providers simultaneously.
 - Supports common operations such as uploading, downloading, and deleting data.
+- Provides first-class ASP.NET controller extensions and a SignalR hub/client pairing for streaming uploads, downloads, and chunk orchestration.
+
+## Virtual File System (VFS)
+
+Need to hydrate storage dependencies without touching disk or the cloud? The <code>ManagedCode.Storage.VirtualFileSystem</code> package keeps everything in memory and makes it trivial to stand up repeatable tests or developer sandboxes:
+
+```csharp
+// Program.cs / Startup.cs
+builder.Services.AddVirtualFileSystemStorageAsDefault(options =>
+{
+    options.StorageName = "vfs";   // optional logical name
+});
+
+// Usage
+public class MyService
+{
+    private readonly IStorage storage;
+
+    public MyService(IStorage storage) => this.storage = storage;
+
+    public Task UploadAsync(Stream stream, string path) => storage.UploadAsync(stream, new UploadOptions(path));
+}
+
+// In tests you can pre-populate the VFS
+await storage.UploadAsync(new FileInfo("fixtures/avatar.png"), new UploadOptions("avatars/user-1.png"));
+```
+
+Because the VFS implements the same abstractions as every other provider, you can swap it for in-memory integration tests while hitting Azure, S3, etc. in production.
+
+## ASP.NET Controllers & SignalR Streaming
+
+The <code>ManagedCode.Storage.Server</code> package exposes ready-to-use controllers plus a SignalR hub that sit on top of any <code>IStorage</code> implementation.
+Pair it with the <code>ManagedCode.Storage.Client.SignalR</code> library to stream files from browsers, desktop or mobile apps:
+
+```csharp
+// Program.cs / Startup.cs
+builder.Services
+    .AddStorageServer()      // registers StorageControllerBase & chunk services
+    .AddStorageSignalR();    // registers StorageHub options
+
+app.MapControllers();
+app.MapStorageHub();        // maps /hubs/storage by default
+
+// Client usage
+var client = new StorageSignalRClient(new StorageSignalRClientOptions
+{
+    HubUrl = new Uri("https://myapi/hubs/storage")
+});
+
+await client.ConnectAsync();
+await client.UploadAsync(fileStream, new StorageUploadStreamDescriptor
+{
+    FileName = "video.mp4",
+    ContentType = "video/mp4"
+});
+
+// Download back into a stream
+await client.DownloadAsync("video.mp4", destinationStream);
+```
+
+Events such as <code>TransferProgress</code> and <code>TransferCompleted</code> fire automatically, enabling live progress UI or resumable workflows. Extending the default controller is a one-liner:
+
+```csharp
+[Route("api/files")]
+public sealed class FilesController : StorageControllerBase<IMyCustomStorage>
+{
+    public FilesController(IMyCustomStorage storage,
+        ChunkUploadService chunks,
+        StorageServerOptions options)
+        : base(storage, chunks, options)
+    {
+    }
+}
+
+// Program.cs
+builder.Services.AddStorageServer(opts =>
+{
+    opts.EnableRangeProcessing = true;
+});
+builder.Services.AddStorageSignalR();
+
+app.MapControllers();
+app.MapStorageHub();
+```
+
+Use the built-in controller extension methods to tailor behaviours (e.g. <code>UploadFormFileAsync</code>, <code>DownloadAsStreamAsync</code>) or override the base actions to add authorization filters, custom routing, or domain-specific validation.
 
 ## Connection modes
 

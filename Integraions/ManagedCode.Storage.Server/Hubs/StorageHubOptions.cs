@@ -2,6 +2,9 @@ using System;
 
 namespace ManagedCode.Storage.Server.Hubs;
 
+/// <summary>
+/// Configures runtime behaviour of the storage SignalR hub.
+/// </summary>
 public class StorageHubOptions
 {
     /// <summary>

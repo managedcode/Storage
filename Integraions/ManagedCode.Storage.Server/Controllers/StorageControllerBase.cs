@@ -48,8 +48,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
     /// </summary>
     protected ChunkUploadService ChunkUploadService { get; }
 
-    [HttpPost("upload"), ProducesResponseType(typeof(Result<BlobMetadata>), StatusCodes.Status200OK)]
     /// <inheritdoc />
+    [HttpPost("upload"), ProducesResponseType(typeof(Result<BlobMetadata>), StatusCodes.Status200OK)]
     public virtual async Task<Result<BlobMetadata>> UploadAsync([FromForm] IFormFile file, CancellationToken cancellationToken)
     {
         if (file is null)
@@ -67,8 +67,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         }
     }
 
-    [HttpPost("upload/stream"), ProducesResponseType(typeof(Result<BlobMetadata>), StatusCodes.Status200OK)]
     /// <inheritdoc />
+    [HttpPost("upload/stream"), ProducesResponseType(typeof(Result<BlobMetadata>), StatusCodes.Status200OK)]
     public virtual async Task<Result<BlobMetadata>> UploadStreamAsync(
         [FromHeader(Name = StorageServerHeaders.FileName)] string fileName,
         [FromHeader(Name = StorageServerHeaders.ContentType)] string? contentType,
@@ -94,8 +94,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         }
     }
 
-    [HttpGet("download/{*path}")]
     /// <inheritdoc />
+    [HttpGet("download/{*path}")]
     public virtual async Task<ActionResult> DownloadAsync([FromRoute] string path, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -112,8 +112,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         return File(result.Value, MimeHelper.GetMimeType(path), path, enableRangeProcessing: _options.EnableRangeProcessing);
     }
 
-    [HttpGet("stream/{*path}")]
     /// <inheritdoc />
+    [HttpGet("stream/{*path}")]
     public virtual async Task<IActionResult> StreamAsync([FromRoute] string path, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -130,8 +130,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         return File(streamResult.Value, MimeHelper.GetMimeType(path), fileDownloadName: null, enableRangeProcessing: _options.EnableRangeProcessing);
     }
 
-    [HttpGet("download-bytes/{*path}")]
     /// <inheritdoc />
+    [HttpGet("download-bytes/{*path}")]
     public virtual async Task<ActionResult> DownloadBytesAsync([FromRoute] string path, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -150,8 +150,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         return File(tempStream.ToArray(), MimeHelper.GetMimeType(path), path);
     }
 
-    [HttpPost("upload-chunks/upload"), ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
     /// <inheritdoc />
+    [HttpPost("upload-chunks/upload"), ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
     public virtual async Task<Result> UploadChunkAsync([FromForm] FileUploadPayload payload, CancellationToken cancellationToken)
     {
         if (payload?.File is null)
@@ -167,8 +167,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         return await ChunkUploadService.AppendChunkAsync(payload, cancellationToken);
     }
 
-    [HttpPost("upload-chunks/complete"), ProducesResponseType(typeof(Result<ChunkUploadCompleteResponse>), StatusCodes.Status200OK)]
     /// <inheritdoc />
+    [HttpPost("upload-chunks/complete"), ProducesResponseType(typeof(Result<ChunkUploadCompleteResponse>), StatusCodes.Status200OK)]
     public virtual async Task<Result<ChunkUploadCompleteResponse>> CompleteChunksAsync([FromBody] ChunkUploadCompleteRequest request, CancellationToken cancellationToken)
     {
         if (request is null)
@@ -178,8 +178,8 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         return await ChunkUploadService.CompleteAsync(request, Storage, cancellationToken);
     }
 
-    [HttpDelete("upload-chunks/{uploadId}")]
     /// <inheritdoc />
+    [HttpDelete("upload-chunks/{uploadId}")]
     public virtual IActionResult AbortChunks([FromRoute] string uploadId)
     {
         if (string.IsNullOrWhiteSpace(uploadId))
@@ -192,6 +192,9 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
     }
 }
 
+/// <summary>
+/// Provides the header constants used by the storage server endpoints.
+/// </summary>
 public static class StorageServerHeaders
 {
     /// <summary>
@@ -210,6 +213,9 @@ public static class StorageServerHeaders
     public const string Directory = "X-Directory";
 }
 
+/// <summary>
+/// Configurable options influencing storage controller behaviour.
+/// </summary>
 public class StorageServerOptions
 {
     /// <summary>

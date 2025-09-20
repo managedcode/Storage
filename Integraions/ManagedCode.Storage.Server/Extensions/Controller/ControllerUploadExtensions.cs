@@ -17,11 +17,17 @@ using Microsoft.Net.Http.Headers;
 
 namespace ManagedCode.Storage.Server.Extensions.Controller;
 
+/// <summary>
+/// Provides controller helpers for uploading content into storage.
+/// </summary>
 public static class ControllerUploadExtensions
 {
     private const int DefaultMultipartBoundaryLengthLimit = 70;
     private const int MinLengthForLargeFile = 256 * 1024;
 
+   /// <summary>
+   /// Uploads a form file to storage and returns blob metadata.
+   /// </summary>
    public static async Task<BlobMetadata> UploadFormFileAsync(
     this ControllerBase controller,
     IStorage storage,
@@ -31,22 +37,23 @@ public static class ControllerUploadExtensions
 {
     options ??= new UploadOptions(file.FileName, mimeType: file.ContentType);
 
-    if (file.Length > MinLengthForLargeFile)
-    {
-        var localFile = await file.ToLocalFileAsync(cancellationToken);
-        var result = await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
-        result.ThrowIfFail();
-        return result.Value;
-    }
-    else
-    {
+        if (file.Length > MinLengthForLargeFile)
+        {
+            var localFile = await file.ToLocalFileAsync(cancellationToken);
+            var result = await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
+            result.ThrowIfFail();
+            return result.Value!;
+        }
+
         await using var stream = file.OpenReadStream();
-        var result = await storage.UploadAsync(stream, options, cancellationToken);
-        result.ThrowIfFail();
-        return result.Value;
-    }
+        var uploadResult = await storage.UploadAsync(stream, options, cancellationToken);
+        uploadResult.ThrowIfFail();
+        return uploadResult.Value!;
 }
 
+/// <summary>
+/// Uploads a browser file (Blazor) to storage.
+/// </summary>
 public static async Task<BlobMetadata> UploadFromBrowserFileAsync(
     this ControllerBase controller,
     IStorage storage,
@@ -61,17 +68,18 @@ public static async Task<BlobMetadata> UploadFromBrowserFileAsync(
         var localFile = await file.ToLocalFileAsync(cancellationToken);
         var result = await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         result.ThrowIfFail();
-        return result.Value;
+        return result.Value!;
     }
-    else
-    {
-        await using var stream = file.OpenReadStream();
-        var result =  await storage.UploadAsync(stream, options, cancellationToken);
-        result.ThrowIfFail();
-        return result.Value;
-    }
+
+    await using var stream = file.OpenReadStream();
+    var uploadResult =  await storage.UploadAsync(stream, options, cancellationToken);
+    uploadResult.ThrowIfFail();
+    return uploadResult.Value!;
 }
 
+    /// <summary>
+    /// Appends a chunk to the current upload session.
+    /// </summary>
     public static async Task<Result> UploadChunkAsync(
         this ControllerBase controller,
         ChunkUploadService chunkUploadService,
@@ -81,6 +89,9 @@ public static async Task<BlobMetadata> UploadFromBrowserFileAsync(
         return await chunkUploadService.AppendChunkAsync(payload, cancellationToken);
     }
 
+    /// <summary>
+    /// Completes the chunk upload session by merging stored chunks.
+    /// </summary>
     public static async Task<Result<ChunkUploadCompleteResponse>> CompleteChunkUploadAsync(
         this ControllerBase controller,
         ChunkUploadService chunkUploadService,
@@ -91,6 +102,9 @@ public static async Task<BlobMetadata> UploadFromBrowserFileAsync(
         return await chunkUploadService.CompleteAsync(request, storage, cancellationToken);
     }
 
+    /// <summary>
+    /// Aborts an active chunk upload session.
+    /// </summary>
     public static void AbortChunkUpload(
         this ControllerBase controller,
         ChunkUploadService chunkUploadService,
@@ -99,6 +113,9 @@ public static async Task<BlobMetadata> UploadFromBrowserFileAsync(
         chunkUploadService.Abort(uploadId);
     }
 
+/// <summary>
+/// Uploads content from the raw request stream.
+/// </summary>
 public static async Task<BlobMetadata> UploadFromStreamAsync(
     this ControllerBase controller,
     IStorage storage,
@@ -134,7 +151,7 @@ public static async Task<BlobMetadata> UploadFromStreamAsync(
 
             var result = await storage.UploadAsync(memoryStream, options, cancellationToken);
             result.ThrowIfFail();
-            return result.Value;
+            return result.Value!;
         }
 
         section = await multipartReader.ReadNextSectionAsync(cancellationToken);
