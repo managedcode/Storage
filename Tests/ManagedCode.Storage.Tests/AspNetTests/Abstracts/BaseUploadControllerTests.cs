@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
@@ -36,11 +36,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact(Skip = "There is no forbidden logic")]
@@ -58,12 +56,10 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsFailed
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Problem
             ?.StatusCode
-            .Should()
-            .Be((int)HttpStatusCode.BadRequest);
+            .ShouldBe((int)HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -81,11 +77,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -104,11 +98,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -129,11 +121,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -152,10 +142,8 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .Be(crc32);
+            .ShouldBe(crc32);
     }
 }

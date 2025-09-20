@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
 using ManagedCode.Storage.Sftp;
@@ -26,7 +26,7 @@ public class SftpConfigTests
             options.Password = "password";
         });
 
-        act.Should().NotThrow();
+        Should.NotThrow(act);
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class SftpConfigTests
             options.PrivateKeyContent = "fake-key";
         });
 
-        act.Should().NotThrow();
+        Should.NotThrow(act);
     }
 
     [Theory]
@@ -60,7 +60,8 @@ public class SftpConfigTests
             options.Password = "password";
         });
 
-        act.Should().Throw<BadConfigurationException>().WithMessage("*host*");
+        var hostException = Should.Throw<BadConfigurationException>(act);
+        hostException.Message.ShouldContain("host");
     }
 
     [Fact]
@@ -76,7 +77,8 @@ public class SftpConfigTests
             options.Password = "password";
         });
 
-        act.Should().Throw<BadConfigurationException>().WithMessage("*port*");
+        var portException = Should.Throw<BadConfigurationException>(act);
+        portException.Message.ShouldContain("port");
     }
 
     [Fact]
@@ -91,7 +93,8 @@ public class SftpConfigTests
             options.Username = "tester";
         });
 
-        act.Should().Throw<BadConfigurationException>().WithMessage("*credentials*");
+        var exception = Should.Throw<BadConfigurationException>(act);
+        exception.Message.ShouldContain("credentials");
     }
 
     [Fact]
@@ -110,8 +113,8 @@ public class SftpConfigTests
 
         var provider = services.BuildServiceProvider();
 
-        provider.GetRequiredService<ISftpStorage>().Should().NotBeNull();
-        provider.GetRequiredService<IStorage>().Should().BeAssignableTo<ISftpStorage>();
+        provider.GetRequiredService<ISftpStorage>().ShouldNotBeNull();
+        provider.GetRequiredService<IStorage>().ShouldBeAssignableTo<ISftpStorage>();
     }
 
     [Fact]
@@ -126,11 +129,11 @@ public class SftpConfigTests
 
         using var storage = new SftpStorage(options, NullLogger<SftpStorage>.Instance);
 
-        options.Port.Should().Be(22);
-        options.RemoteDirectory.Should().Be("/");
-        options.ConnectTimeout.Should().Be(15000);
-        options.OperationTimeout.Should().Be(15000);
-        options.CreateContainerIfNotExists.Should().BeTrue();
-        options.CreateDirectoryIfNotExists.Should().BeTrue();
+        options.Port.ShouldBe(22);
+        options.RemoteDirectory.ShouldBe("/");
+        options.ConnectTimeout.ShouldBe(15000);
+        options.OperationTimeout.ShouldBe(15000);
+        options.CreateContainerIfNotExists.ShouldBeTrue();
+        options.CreateDirectoryIfNotExists.ShouldBeTrue();
     }
 }

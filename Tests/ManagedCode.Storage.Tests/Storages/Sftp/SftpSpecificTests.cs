@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Sftp;
 using ManagedCode.Storage.Tests.Common;
@@ -35,8 +35,8 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
     {
         var storage = ServiceProvider.GetRequiredService<ISftpStorage>();
         var result = await storage.TestConnectionAsync();
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBeTrue();
     }
 
     [Fact]
@@ -44,8 +44,8 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
     {
         var storage = ServiceProvider.GetRequiredService<ISftpStorage>();
         var result = await storage.GetWorkingDirectoryAsync();
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNullOrEmpty();
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
     {
         var storage = ServiceProvider.GetRequiredService<ISftpStorage>();
         var result = await storage.ChangeWorkingDirectoryAsync(SftpContainerFactory.RemoteDirectory);
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
 
         await using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
         var writeResult = await storage.OpenWriteStreamAsync(fileName);
-        writeResult.IsSuccess.Should().BeTrue();
+        writeResult.IsSuccess.ShouldBeTrue();
         var destinationStream = writeResult.Value ?? throw new InvalidOperationException("Write stream is null");
 
         await using (destinationStream)
@@ -74,12 +74,12 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         }
 
         var readResult = await storage.OpenReadStreamAsync(fileName);
-        readResult.IsSuccess.Should().BeTrue();
+        readResult.IsSuccess.ShouldBeTrue();
         var sourceStream = readResult.Value ?? throw new InvalidOperationException("Read stream is null");
         using var reader = new StreamReader(sourceStream);
         var downloadedContent = await reader.ReadToEndAsync();
 
-        downloadedContent.Should().Be(content);
+        downloadedContent.ShouldBe(content);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         var fileName = "list-test.txt";
 
         var uploadResult = await storage.UploadAsync("List test", options => options.FileName = fileName);
-        uploadResult.IsSuccess.Should().BeTrue();
+        uploadResult.IsSuccess.ShouldBeTrue();
 
         var found = false;
         await foreach (var item in storage.GetBlobMetadataListAsync())
@@ -101,7 +101,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
             }
         }
 
-        found.Should().BeTrue();
+        found.ShouldBeTrue();
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         });
 
         var deleteResult = await storage.DeleteDirectoryAsync(directory);
-        deleteResult.IsSuccess.Should().BeTrue();
+        deleteResult.IsSuccess.ShouldBeTrue();
 
         var existsResult = await storage.ExistsAsync(new ExistOptions
         {
@@ -126,8 +126,8 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
             FileName = fileName
         });
 
-        existsResult.IsSuccess.Should().BeTrue();
-        existsResult.Value.Should().BeFalse();
+        existsResult.IsSuccess.ShouldBeTrue();
+        existsResult.Value.ShouldBeFalse();
     }
 
     [Fact]
@@ -139,6 +139,6 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         new Random().NextBytes(bytes);
 
         var result = await storage.UploadAsync(bytes, options => options.FileName = fileName);
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
     }
 }

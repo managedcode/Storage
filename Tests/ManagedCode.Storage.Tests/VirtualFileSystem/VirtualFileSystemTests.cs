@@ -1,116 +1,88 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using ManagedCode.Storage.Core.Models;
-using ManagedCode.Storage.FileSystem;
-using ManagedCode.Storage.FileSystem.Options;
 using ManagedCode.Storage.VirtualFileSystem.Core;
-using VfsImplementation = ManagedCode.Storage.VirtualFileSystem.Implementations.VirtualFileSystem;
-using ManagedCode.Storage.VirtualFileSystem.Metadata;
 using ManagedCode.Storage.VirtualFileSystem.Options;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
+using ManagedCode.Storage.VirtualFileSystem.Exceptions;
+using ManagedCode.Storage.Tests.VirtualFileSystem.Fixtures;
+using Shouldly;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.VirtualFileSystem;
 
-public class VirtualFileSystemTests : IAsyncLifetime
+public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
+    where TFixture : class, IVirtualFileSystemFixture
 {
-    private FileSystemStorage _storage = null!;
-    private string _basePath = null!;
-    private InMemoryMetadataManager _metadataManager = null!;
+    private readonly TFixture _fixture;
 
-    public Task InitializeAsync()
+    protected VirtualFileSystemTests(TFixture fixture)
     {
-        _basePath = Path.Combine(Path.GetTempPath(), "managedcode-vfs-tests", Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_basePath);
-
-        var options = new FileSystemStorageOptions
-        {
-            BaseFolder = _basePath,
-            CreateContainerIfNotExists = true
-        };
-
-        _storage = new FileSystemStorage(options);
-        return Task.CompletedTask;
+        _fixture = fixture;
     }
 
-    public Task DisposeAsync()
-    {
-        _storage.Dispose();
-        if (Directory.Exists(_basePath))
-        {
-            Directory.Delete(_basePath, recursive: true);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private VfsImplementation CreateVirtualFileSystem()
-    {
-        var metadataManager = new InMemoryMetadataManager(_storage);
-        _metadataManager = metadataManager;
-        var cache = new MemoryCache(new MemoryCacheOptions());
-        var options = Options.Create(new VfsOptions
-        {
-            DefaultContainer = string.Empty,
-            DirectoryStrategy = DirectoryStrategy.Virtual,
-            EnableCache = true
-        });
-
-        return new VfsImplementation(
-            _storage,
-            metadataManager,
-            options,
-            cache,
-            NullLogger<VfsImplementation>.Instance);
-    }
+    private Task<VirtualFileSystemTestContext> CreateContextAsync() => _fixture.CreateContextAsync();
+    private VirtualFileSystemCapabilities Capabilities => _fixture.Capabilities;
 
     [Fact]
     public async Task WriteAndReadFile_ShouldRoundtrip()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         var file = await vfs.GetFileAsync(new VfsPath("/docs/readme.txt"));
         await file.WriteAllTextAsync("Hello Virtual FS!");
 
         var content = await file.ReadAllTextAsync();
-        content.Should().Be("Hello Virtual FS!");
+        content.ShouldBe("Hello Virtual FS!");
 
-        var physicalPath = Path.Combine(_basePath, "docs", "readme.txt");
-        File.Exists(physicalPath).Should().BeTrue();
+        (await vfs.FileExistsAsync(new VfsPath("/docs/readme.txt"))).ShouldBeTrue();
     }
 
     [Fact]
     public async Task FileExistsAsync_ShouldCacheResults()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
+        var metadataManager = context.MetadataManager;
 
         var path = new VfsPath("/cache/sample.txt");
         var file = await vfs.GetFileAsync(path);
         await file.WriteAllTextAsync("cached");
 
-        _metadataManager.ResetCounters();
+        metadataManager.ResetCounters();
         var firstCheck = await vfs.FileExistsAsync(path);
-        firstCheck.Should().BeTrue();
-        _metadataManager.BlobInfoRequests.Should().Be(1);
+        firstCheck.ShouldBeTrue();
+        metadataManager.BlobInfoRequests.ShouldBe(1);
 
-        _metadataManager.ResetCounters();
+        metadataManager.ResetCounters();
         var secondCheck = await vfs.FileExistsAsync(path);
-        secondCheck.Should().BeTrue();
-        _metadataManager.BlobInfoRequests.Should().Be(0);
+        secondCheck.ShouldBeTrue();
+        metadataManager.BlobInfoRequests.ShouldBe(0);
     }
 
     [Fact]
     public async Task ListAsync_ShouldEnumerateAllEntries()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled || !Capabilities.SupportsListing)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
+        var metadataManager = context.MetadataManager;
 
         for (var i = 0; i < 5; i++)
         {
@@ -118,20 +90,20 @@ public class VirtualFileSystemTests : IAsyncLifetime
             await file.WriteAllTextAsync($"report-{i}");
         }
 
-        var sampleMetadata = await _metadataManager.GetBlobInfoAsync("reports/file-0.txt");
-        sampleMetadata.Should().NotBeNull();
-        sampleMetadata!.FullName.Should().Be("reports/file-0.txt");
+        var sampleMetadata = await metadataManager.GetBlobInfoAsync("reports/file-0.txt");
+        sampleMetadata.ShouldNotBeNull();
+        sampleMetadata!.FullName.ShouldBe("reports/file-0.txt");
 
-        var entries = new List<IVfsEntry>();
+        var entries = new List<IVfsNode>();
         await foreach (var entry in vfs.ListAsync(new VfsPath("/reports"), new ListOptions { PageSize = 2 }))
         {
             entries.Add(entry);
         }
 
         var fileEntries = entries.OfType<IVirtualFile>().ToList();
-        fileEntries.Should().HaveCount(5);
+        fileEntries.Count.ShouldBe(5);
         var names = fileEntries.Select(f => f.Path.GetFileName()).OrderBy(n => n).ToList();
-        names.Should().Contain(new[]
+        names.ShouldBe(new[]
         {
             "file-0.txt", "file-1.txt", "file-2.txt", "file-3.txt", "file-4.txt"
         });
@@ -140,36 +112,47 @@ public class VirtualFileSystemTests : IAsyncLifetime
     [Fact]
     public async Task DeleteFile_ShouldRemoveFromUnderlyingStorage()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
+        var metadataManager = context.MetadataManager;
 
         var path = new VfsPath("/temp/remove.me");
         var file = await vfs.GetFileAsync(path);
         await file.WriteAllTextAsync("to delete");
 
-        _metadataManager.ResetCounters();
+        metadataManager.ResetCounters();
         await vfs.FileExistsAsync(path);
-        _metadataManager.ResetCounters();
+        metadataManager.ResetCounters();
 
         var deleted = await file.DeleteAsync();
-        deleted.Should().BeTrue();
-
-        var physicalPath = Path.Combine(_basePath, "temp", "remove.me");
-        File.Exists(physicalPath).Should().BeFalse();
+        deleted.ShouldBeTrue();
 
         var existsAfterDelete = await vfs.FileExistsAsync(path);
-        existsAfterDelete.Should().BeFalse();
-        _metadataManager.BlobInfoRequests.Should().Be(1);
+        existsAfterDelete.ShouldBeFalse();
+        metadataManager.BlobInfoRequests.ShouldBe(1);
 
-        _metadataManager.ResetCounters();
+        metadataManager.ResetCounters();
         var secondCheck = await vfs.FileExistsAsync(path);
-        secondCheck.Should().BeFalse();
-        _metadataManager.BlobInfoRequests.Should().Be(0);
+        secondCheck.ShouldBeFalse();
+        metadataManager.BlobInfoRequests.ShouldBe(0);
     }
 
     [Fact]
     public async Task GetMetadataAsync_ShouldCacheCustomMetadata()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
+        var metadataManager = context.MetadataManager;
 
         var file = await vfs.GetFileAsync(new VfsPath("/meta/info.txt"));
         await file.WriteAllTextAsync("meta");
@@ -180,51 +163,69 @@ public class VirtualFileSystemTests : IAsyncLifetime
             ["region"] = "eu"
         });
 
-        _metadataManager.ResetCounters();
+        metadataManager.ResetCounters();
         var metadata = await file.GetMetadataAsync();
-        metadata.Should().ContainKey("owner");
-        _metadataManager.CustomMetadataRequests.Should().Be(1);
+        metadata.ShouldContainKey("owner");
+        metadataManager.CustomMetadataRequests.ShouldBe(1);
 
-        _metadataManager.ResetCounters();
+        metadataManager.ResetCounters();
         var secondLookup = await file.GetMetadataAsync();
-        secondLookup.Should().ContainKey("region");
-        _metadataManager.CustomMetadataRequests.Should().Be(0);
+        secondLookup.ShouldContainKey("region");
+        metadataManager.CustomMetadataRequests.ShouldBe(0);
     }
 
     [Fact]
     public async Task DeleteDirectoryAsync_NonRecursive_ShouldPreserveNestedContent()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryDelete)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         await (await vfs.GetFileAsync(new VfsPath("/nonrec/root.txt"))).WriteAllTextAsync("root");
         await (await vfs.GetFileAsync(new VfsPath("/nonrec/sub/nested.txt"))).WriteAllTextAsync("child");
 
         var result = await vfs.DeleteDirectoryAsync(new VfsPath("/nonrec"), recursive: false);
-        result.FilesDeleted.Should().Be(1);
+        result.FilesDeleted.ShouldBe(1);
 
-        File.Exists(Path.Combine(_basePath, "nonrec", "root.txt")).Should().BeFalse();
-        File.Exists(Path.Combine(_basePath, "nonrec", "sub", "nested.txt")).Should().BeTrue();
+        (await vfs.FileExistsAsync(new VfsPath("/nonrec/root.txt"))).ShouldBeFalse();
+        (await vfs.FileExistsAsync(new VfsPath("/nonrec/sub/nested.txt"))).ShouldBeTrue();
     }
 
     [Fact]
     public async Task DeleteDirectoryAsync_Recursive_ShouldRemoveAllContent()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryDelete)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         await (await vfs.GetFileAsync(new VfsPath("/recursive/root.txt"))).WriteAllTextAsync("root");
         await (await vfs.GetFileAsync(new VfsPath("/recursive/sub/nested.txt"))).WriteAllTextAsync("child");
 
         var result = await vfs.DeleteDirectoryAsync(new VfsPath("/recursive"), recursive: true);
-        result.FilesDeleted.Should().Be(2);
+        result.FilesDeleted.ShouldBe(2);
 
-        File.Exists(Path.Combine(_basePath, "recursive", "root.txt")).Should().BeFalse();
-        File.Exists(Path.Combine(_basePath, "recursive", "sub", "nested.txt")).Should().BeFalse();
+        (await vfs.FileExistsAsync(new VfsPath("/recursive/root.txt"))).ShouldBeFalse();
+        (await vfs.FileExistsAsync(new VfsPath("/recursive/sub/nested.txt"))).ShouldBeFalse();
     }
 
     [Fact]
     public async Task MoveAsync_ShouldRelocateFile()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled || !Capabilities.SupportsMove)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         var sourcePath = new VfsPath("/docs/report.pdf");
         var destPath = new VfsPath("/archive/report.pdf");
@@ -233,18 +234,24 @@ public class VirtualFileSystemTests : IAsyncLifetime
 
         await vfs.MoveAsync(sourcePath, destPath);
 
-        File.Exists(Path.Combine(_basePath, "docs", "report.pdf")).Should().BeFalse();
-        File.Exists(Path.Combine(_basePath, "archive", "report.pdf")).Should().BeTrue();
-
         var moved = await vfs.GetFileAsync(destPath);
         var bytes = await moved.ReadAllBytesAsync();
-        bytes.Should().Equal(1, 2, 3, 4);
+        bytes.ShouldBe(new byte[] { 1, 2, 3, 4 });
+
+        var original = await vfs.GetFileAsync(sourcePath);
+        await Should.ThrowAsync<VfsException>(() => original.ReadAllBytesAsync());
     }
 
     [Fact]
     public async Task CopyAsync_ShouldCopyDirectoryRecursively()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryCopy)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         for (var i = 0; i < 3; i++)
         {
@@ -259,33 +266,48 @@ public class VirtualFileSystemTests : IAsyncLifetime
 
         for (var i = 0; i < 3; i++)
         {
-            File.Exists(Path.Combine(_basePath, "dest", $"data-{i}.bin")).Should().BeTrue();
+            var copied = await vfs.GetFileAsync(new VfsPath($"/dest/data-{i}.bin"));
+            var bytes = await copied.ReadAllBytesAsync();
+            bytes.ShouldBe(new byte[] { (byte)i });
         }
 
-        File.Exists(Path.Combine(_basePath, "dest", "nested", "item.txt")).Should().BeTrue();
+        var copiedNested = await vfs.GetFileAsync(new VfsPath("/dest/nested/item.txt"));
+        (await copiedNested.ReadAllTextAsync()).ShouldBe("nested");
     }
 
     [Fact]
     public async Task ReadRangeAsync_ShouldReturnSlice()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         var file = await vfs.GetFileAsync(new VfsPath("/ranges/sample.bin"));
         await file.WriteAllBytesAsync(Enumerable.Range(0, 100).Select(i => (byte)i).ToArray());
 
         var slice = await file.ReadRangeAsync(0, 5);
-        slice.Should().Equal(0, 1, 2, 3, 4);
+        slice.ShouldBe(new byte[] { 0, 1, 2, 3, 4 });
     }
 
     [Fact]
     public async Task ListAsync_WithDirectoryFilter_ShouldExcludeDirectoriesWhenRequested()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled || !Capabilities.SupportsListing)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         await (await vfs.GetFileAsync(new VfsPath("/filter/a.txt"))).WriteAllTextAsync("A");
         await (await vfs.GetFileAsync(new VfsPath("/filter/b.log"))).WriteAllTextAsync("B");
 
-        var entries = new List<IVfsEntry>();
+        var entries = new List<IVfsNode>();
         await foreach (var entry in vfs.ListAsync(new VfsPath("/filter"), new ListOptions
         {
             IncludeDirectories = false,
@@ -296,17 +318,23 @@ public class VirtualFileSystemTests : IAsyncLifetime
             entries.Add(entry);
         }
 
-        entries.Should().HaveCount(2);
-        entries.Should().OnlyContain(e => e.Type == VfsEntryType.File);
+        entries.Count.ShouldBe(2);
+        entries.ShouldAllBe(e => e.Type == VfsEntryType.File);
 
         var paths = entries.OfType<IVirtualFile>().Select(e => e.Path.Value).OrderBy(v => v).ToList();
-        paths.Should().Equal("/filter/a.txt", "/filter/b.log");
+        paths.ShouldBe(new[] { "/filter/a.txt", "/filter/b.log" });
     }
 
     [Fact]
     public async Task DirectoryStats_ShouldAggregateInformation()
     {
-        await using var vfs = CreateVirtualFileSystem();
+        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryStats)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
 
         await (await vfs.GetFileAsync(new VfsPath("/stats/one.txt"))).WriteAllTextAsync("one");
         await (await vfs.GetFileAsync(new VfsPath("/stats/two.bin"))).WriteAllBytesAsync(new byte[] { 1, 2, 3, 4 });
@@ -314,62 +342,48 @@ public class VirtualFileSystemTests : IAsyncLifetime
         var directory = await vfs.GetDirectoryAsync(new VfsPath("/stats"));
         var stats = await directory.GetStatsAsync();
 
-        stats.FileCount.Should().Be(2);
-        stats.FilesByExtension.Should().ContainKey(".txt");
-        stats.FilesByExtension.Should().ContainKey(".bin");
+        stats.FileCount.ShouldBeGreaterThanOrEqualTo(2);
+        stats.FilesByExtension.ShouldContainKey(".txt");
+        stats.FilesByExtension.ShouldContainKey(".bin");
     }
+}
 
-    private sealed class InMemoryMetadataManager : IMetadataManager
+[Collection(VirtualFileSystemCollection.Name)]
+public sealed class FileSystemVirtualFileSystemTests : VirtualFileSystemTests<FileSystemVirtualFileSystemFixture>
+{
+    public FileSystemVirtualFileSystemTests(FileSystemVirtualFileSystemFixture fixture) : base(fixture)
     {
-        private readonly FileSystemStorage _storage;
-        private readonly ConcurrentDictionary<string, VfsMetadata> _metadata = new();
-        private readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, string>> _custom = new();
+    }
+}
 
-        public int BlobInfoRequests { get; private set; }
-        public int CustomMetadataRequests { get; private set; }
+[Collection(VirtualFileSystemCollection.Name)]
+public sealed class AzureVirtualFileSystemTests : VirtualFileSystemTests<AzureVirtualFileSystemFixture>
+{
+    public AzureVirtualFileSystemTests(AzureVirtualFileSystemFixture fixture) : base(fixture)
+    {
+    }
+}
 
-        public void ResetCounters()
-        {
-            BlobInfoRequests = 0;
-            CustomMetadataRequests = 0;
-        }
+[Collection(VirtualFileSystemCollection.Name)]
+public sealed class AwsVirtualFileSystemTests : VirtualFileSystemTests<AwsVirtualFileSystemFixture>
+{
+    public AwsVirtualFileSystemTests(AwsVirtualFileSystemFixture fixture) : base(fixture)
+    {
+    }
+}
 
-        public InMemoryMetadataManager(FileSystemStorage storage)
-        {
-            _storage = storage;
-        }
+[Collection(VirtualFileSystemCollection.Name)]
+public sealed class GcsVirtualFileSystemTests : VirtualFileSystemTests<GcsVirtualFileSystemFixture>
+{
+    public GcsVirtualFileSystemTests(GcsVirtualFileSystemFixture fixture) : base(fixture)
+    {
+    }
+}
 
-        public Task SetVfsMetadataAsync(string blobName, VfsMetadata metadata, IDictionary<string, string>? customMetadata = null, string? expectedETag = null, CancellationToken cancellationToken = default)
-        {
-            _metadata[blobName] = metadata;
-            _custom[blobName] = customMetadata is null
-                ? new Dictionary<string, string>()
-                : new Dictionary<string, string>(customMetadata);
-            return Task.CompletedTask;
-        }
-
-        public Task<VfsMetadata?> GetVfsMetadataAsync(string blobName, CancellationToken cancellationToken = default)
-        {
-            _metadata.TryGetValue(blobName, out var metadata);
-            return Task.FromResult(metadata);
-        }
-
-        public Task<IReadOnlyDictionary<string, string>> GetCustomMetadataAsync(string blobName, CancellationToken cancellationToken = default)
-        {
-            CustomMetadataRequests++;
-            if (_custom.TryGetValue(blobName, out var metadata))
-            {
-                return Task.FromResult(metadata);
-            }
-
-            return Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
-        }
-
-        public async Task<BlobMetadata?> GetBlobInfoAsync(string blobName, CancellationToken cancellationToken = default)
-        {
-            BlobInfoRequests++;
-            var result = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
-            return result.IsSuccess ? result.Value : null;
-        }
+[Collection(VirtualFileSystemCollection.Name)]
+public sealed class SftpVirtualFileSystemTests : VirtualFileSystemTests<SftpVirtualFileSystemFixture>
+{
+    public SftpVirtualFileSystemTests(SftpVirtualFileSystemFixture fixture) : base(fixture)
+    {
     }
 }

@@ -7,51 +7,51 @@ using ManagedCode.Storage.VirtualFileSystem.Core;
 namespace ManagedCode.Storage.VirtualFileSystem.Core;
 
 /// <summary>
-/// Base interface for virtual file system entries
+/// Base interface for virtual file system nodes
 /// </summary>
-public interface IVfsEntry
+public interface IVfsNode
 {
     /// <summary>
-    /// Gets the path of this entry
+    /// Gets the path of this node
     /// </summary>
     VfsPath Path { get; }
 
     /// <summary>
-    /// Gets the name of this entry
+    /// Gets the name of this node
     /// </summary>
     string Name { get; }
 
     /// <summary>
-    /// Gets the type of this entry
+    /// Gets the type of this node
     /// </summary>
     VfsEntryType Type { get; }
 
     /// <summary>
-    /// Gets when this entry was created
+    /// Gets when this node was created
     /// </summary>
     DateTimeOffset CreatedOn { get; }
 
     /// <summary>
-    /// Gets when this entry was last modified
+    /// Gets when this node was last modified
     /// </summary>
     DateTimeOffset LastModified { get; }
 
     /// <summary>
-    /// Checks if this entry exists
+    /// Checks if this node exists
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if the entry exists</returns>
     ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Refreshes the entry information from storage
+    /// Refreshes the node information from storage
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task representing the async operation</returns>
     Task RefreshAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the parent directory of this entry
+    /// Gets the parent directory of this node
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The parent directory</returns>

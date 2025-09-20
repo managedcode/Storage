@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Client;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
@@ -64,11 +64,11 @@ public class StorageClientChunkTests
             finalProgress = progress;
         });
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(expectedChecksum);
-        handler.Requests.Should().HaveCount(4); // 3 chunks + completion.
-        finalProgress.Should().Be(100d);
-        progressEvents.Should().NotBeEmpty();
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBe(expectedChecksum);
+        handler.Requests.Count.ShouldBe(4); // 3 chunks + completion.
+        finalProgress.ShouldBe(100d);
+        progressEvents.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -104,8 +104,8 @@ public class StorageClientChunkTests
 
         var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(expectedChecksum);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBe(expectedChecksum);
     }
 
     [Fact]
@@ -142,8 +142,8 @@ public class StorageClientChunkTests
         };
 
         var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(expectedChecksum);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBe(expectedChecksum);
     }
 
     [Fact]
@@ -174,18 +174,18 @@ public class StorageClientChunkTests
         };
 
         var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess.ShouldBeFalse();
     }
 
     [Fact]
-    public void UploadLargeFile_WhenChunkSizeMissing_ShouldThrow()
+    public async Task UploadLargeFile_WhenChunkSizeMissing_ShouldThrow()
     {
         using var httpClient = new HttpClient(new RecordingHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK))));
         var client = new StorageClient(httpClient);
 
         Func<Task> act = () => client.UploadLargeFile(new MemoryStream(new byte[1]), UploadUrl, CompleteUrl, null);
 
-        act.Should().ThrowAsync<InvalidOperationException>();
+        await Should.ThrowAsync<InvalidOperationException>(act);
     }
 
     [Fact]
@@ -217,8 +217,8 @@ public class StorageClientChunkTests
         };
 
         var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(expectedChecksum);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBe(expectedChecksum);
     }
 
     private static byte[] CreatePayload(int sizeInBytes)

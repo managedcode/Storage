@@ -11,7 +11,7 @@ namespace ManagedCode.Storage.VirtualFileSystem.Core;
 /// <summary>
 /// Represents a file in the virtual filesystem
 /// </summary>
-public interface IVirtualFile : IVfsEntry
+public interface IVirtualFile : IVfsNode
 {
     /// <summary>
     /// Gets the file size in bytes

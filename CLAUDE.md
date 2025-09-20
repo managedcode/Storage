@@ -57,7 +57,7 @@ The library supports two connection modes:
 - Extension methods for DI registration (e.g., `AddAzureStorage`, `AddAWSStorageAsDefault`)
 
 ## Testing
-- Uses xUnit with FluentAssertions
+- Uses xUnit with Shouldly
 - Testcontainers for integration testing (Azurite, LocalStack, FakeGcsServer)
 - Test projects follow pattern: `Tests/ManagedCode.Storage.Tests/`
 - Includes test fakes in `ManagedCode.Storage.TestFakes`

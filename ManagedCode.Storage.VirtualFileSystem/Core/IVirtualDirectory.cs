@@ -9,7 +9,7 @@ namespace ManagedCode.Storage.VirtualFileSystem.Core;
 /// <summary>
 /// Represents a directory in the virtual filesystem
 /// </summary>
-public interface IVirtualDirectory : IVfsEntry
+public interface IVirtualDirectory : IVfsNode
 {
     /// <summary>
     /// Lists files in this directory with pagination and pattern matching
@@ -47,7 +47,7 @@ public interface IVirtualDirectory : IVfsEntry
     /// <param name="pageSize">Page size for pagination</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Async enumerable of entries</returns>
-    IAsyncEnumerable<IVfsEntry> GetEntriesAsync(
+    IAsyncEnumerable<IVfsNode> GetEntriesAsync(
         SearchPattern? pattern = null,
         bool recursive = false,
         int pageSize = 100,

@@ -1,5 +1,5 @@
 ﻿using System;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Aws.Options;
@@ -23,8 +23,7 @@ public class AwsConfigTests
             opt.Bucket = "managed-code-bucket";
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -38,8 +37,7 @@ public class AwsConfigTests
             opt.Bucket = "managed-code-bucket";
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -53,8 +51,7 @@ public class AwsConfigTests
             SecretKey = "localsecret"
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -68,8 +65,7 @@ public class AwsConfigTests
             UseInstanceProfileCredentials = true
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -84,8 +80,7 @@ public class AwsConfigTests
             UseInstanceProfileCredentials = true
         });
 
-        action.Should()
-            .NotThrow<Exception>();
+        Should.NotThrow(action);
     }
 
     [Fact]
@@ -99,8 +94,7 @@ public class AwsConfigTests
             UseInstanceProfileCredentials = true
         });
 
-        action.Should()
-            .NotThrow<Exception>();
+        Should.NotThrow(action);
     }
 
     [Fact]
@@ -112,8 +106,7 @@ public class AwsConfigTests
             .GetService<IStorage>();
         storage?.GetType()
             .FullName
-            .Should()
-            .Be(defaultStorage?.GetType()
+            .ShouldBe(defaultStorage?.GetType()
                 .FullName);
     }
 }

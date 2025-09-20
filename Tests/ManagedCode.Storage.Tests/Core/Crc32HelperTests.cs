@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core.Helpers;
 using Xunit;
@@ -22,7 +22,7 @@ public class Crc32HelperTests
             var fileCrc = Crc32Helper.CalculateFileCrc(tempPath);
             var inMemory = Crc32Helper.Calculate(payload);
 
-            fileCrc.Should().Be(inMemory);
+            fileCrc.ShouldBe(inMemory);
         }
         finally
         {
@@ -39,15 +39,15 @@ public class Crc32HelperTests
         using var localFile = ManagedCode.Storage.Core.Models.LocalFile.FromRandomNameWithExtension(".bin");
         ManagedCode.Storage.Tests.Common.FileHelper.GenerateLocalFile(localFile, 50);
         var crc = Crc32Helper.CalculateFileCrc(localFile.FilePath);
-        crc.Should().BeGreaterThan(0U);
+        crc.ShouldBeGreaterThan(0U);
     }
 
     [Fact]
     public void ResultSucceed_ShouldCarryValue()
     {
         var result = ManagedCode.Communication.Result<uint>.Succeed(123u);
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(123u);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.ShouldBe(123u);
     }
 
     [Fact]
@@ -55,6 +55,6 @@ public class Crc32HelperTests
     {
         var bytes = new byte[51];
         var crc = Crc32Helper.Calculate(bytes);
-        crc.Should().NotBe(0u);
+        crc.ShouldNotBe(0u);
     }
 }

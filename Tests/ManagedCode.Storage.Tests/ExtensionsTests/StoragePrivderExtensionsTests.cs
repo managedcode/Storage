@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Amazon.S3;
-using FluentAssertions;
+using Shouldly;
 using Google.Cloud.Storage.V1;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Aws;
@@ -95,7 +95,7 @@ public class StorageFactoryTests
             Container = "managed-code-bucket",
             ConnectionString = "UseDevelopmentStorage=true"
         });
-        storage.GetType().Should().Be(typeof(AzureStorage));
+        storage.GetType().ShouldBe(typeof(AzureStorage));
     }
     
     [Fact]
@@ -111,7 +111,7 @@ public class StorageFactoryTests
             Bucket = "managed-code-bucket",
             OriginalOptions = config
         });
-        storage.GetType().Should().Be(typeof(AWSStorage));
+        storage.GetType().ShouldBe(typeof(AWSStorage));
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public class StorageFactoryTests
                 BaseUri = "http://localhost:4443"
             }
         });
-        storage.GetType().Should().Be(typeof(GCPStorage));
+        storage.GetType().ShouldBe(typeof(GCPStorage));
     }
     
     [Fact]
@@ -141,11 +141,9 @@ public class StorageFactoryTests
         var factory = ServiceProvider.GetRequiredService<IStorageFactory>();
         var storage = factory.CreateAzureStorage(containerName);
         storage.StorageClient
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
         storage.StorageClient.Name
-            .Should()
-            .Be(containerName);
+            .ShouldBe(containerName);
 
     }
     
@@ -156,8 +154,7 @@ public class StorageFactoryTests
         var factory = ServiceProvider.GetRequiredService<IStorageFactory>();
         var storage = factory.CreateAWSStorage(containerName);
         storage.StorageClient
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
     
     [Fact]
@@ -167,8 +164,7 @@ public class StorageFactoryTests
         var factory = ServiceProvider.GetRequiredService<IStorageFactory>();
         var storage = factory.CreateGCPStorage(containerName);
         storage.StorageClient
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
  
 }

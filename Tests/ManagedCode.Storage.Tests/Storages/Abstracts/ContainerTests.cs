@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
@@ -15,16 +15,13 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
     {
         var container = await Storage.CreateContainerAsync();
         container.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
     public async Task CreateContainerAsync()
     {
-        await FluentActions.Awaiting(() => Storage.CreateContainerAsync())
-            .Should()
-            .NotThrowAsync<Exception>();
+        await Should.NotThrowAsync(() => Storage.CreateContainerAsync());
     }
 
     [Fact]
@@ -32,14 +29,12 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
     {
         var createResult = await Storage.CreateContainerAsync();
         createResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         var result = await Storage.RemoveContainerAsync();
 
         result.IsSuccess
-            .Should()
-            .BeTrue(result.Problem?.Detail ?? "Failed without details");
+            .ShouldBeTrue(result.Problem?.Detail ?? "Failed without details");
     }
 
     [Fact]
@@ -52,8 +47,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
         var files = await Storage.GetBlobMetadataListAsync()
             .ToListAsync();
         files.Count
-            .Should()
-            .BeGreaterThanOrEqualTo(3);
+            .ShouldBeGreaterThanOrEqualTo(3);
     }
 
     [Fact]
@@ -70,11 +64,9 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue(result.Problem?.Detail ?? "Failed without details");
+            .ShouldBeTrue(result.Problem?.Detail ?? "Failed without details");
         
         blobs.Count
-            .Should()
-            .Be(0);
+            .ShouldBe(0);
     }
 }

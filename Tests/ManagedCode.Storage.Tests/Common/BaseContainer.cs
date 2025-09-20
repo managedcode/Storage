@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,8 +43,7 @@ public abstract class BaseContainer<T> : IAsyncLifetime where T : IContainer
         UploadOptions options = new() { FileName = file.Name, Directory = directory };
         var result = await Storage.UploadAsync(file.OpenRead(), options);
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         return file;
     }

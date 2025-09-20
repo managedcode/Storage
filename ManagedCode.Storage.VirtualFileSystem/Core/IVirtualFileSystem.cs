@@ -121,7 +121,7 @@ public interface IVirtualFileSystem : IAsyncDisposable
     /// <param name="path">Entry path</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Entry information or null if not found</returns>
-    ValueTask<IVfsEntry?> GetEntryAsync(VfsPath path, CancellationToken cancellationToken = default);
+    ValueTask<IVfsNode?> GetEntryAsync(VfsPath path, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Lists directory contents with pagination
@@ -130,7 +130,7 @@ public interface IVirtualFileSystem : IAsyncDisposable
     /// <param name="options">Listing options</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Async enumerable of entries</returns>
-    IAsyncEnumerable<IVfsEntry> ListAsync(
+    IAsyncEnumerable<IVfsNode> ListAsync(
         VfsPath path,
         ListOptions? options = null,
         CancellationToken cancellationToken = default);

@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
@@ -23,14 +23,12 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.Count
-            .Should()
-            .Be(fileList.Count);
+            .ShouldBe(fileList.Count);
 
         foreach (var item in fileList)
         {
             var file = result.FirstOrDefault(f => f.Name == item.Name);
-            file.Should()
-                .NotBeNull();
+            file.ShouldNotBeNull();
 
             await Storage.DeleteAsync(item.Name);
         }
@@ -47,14 +45,11 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value!.Length
-            .Should()
-            .Be((ulong)fileInfo.Length);
+            .ShouldBe((ulong)fileInfo.Length);
         result.Value!.Name
-            .Should()
-            .Be(fileInfo.Name);
+            .ShouldBe(fileInfo.Name);
 
         await Storage.DeleteAsync(fileInfo.Name);
     }
@@ -70,11 +65,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -89,11 +82,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeFalse();
+            .ShouldBeFalse();
     }
 
     [Fact]
@@ -109,11 +100,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -133,11 +122,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeFalse();
+            .ShouldBeFalse();
     }
 
     [Fact]
@@ -151,11 +138,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         await Storage.DeleteAsync(fileInfo.Name);
     }
@@ -173,11 +158,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         await Storage.DeleteAsync(fileInfo.Name);
     }
@@ -191,11 +174,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeFalse();
+            .ShouldBeFalse();
     }
 
     [Fact]
@@ -211,11 +192,9 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .BeFalse();
+            .ShouldBeFalse();
 
         await Storage.DeleteAsync(fileInfo.Name);
     }

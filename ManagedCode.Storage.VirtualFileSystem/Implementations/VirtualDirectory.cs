@@ -126,7 +126,7 @@ public class VirtualDirectory : IVirtualDirectory
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<IVfsEntry> GetEntriesAsync(
+    public async IAsyncEnumerable<IVfsNode> GetEntriesAsync(
         SearchPattern? pattern = null,
         bool recursive = false,
         int pageSize = 100,
@@ -140,7 +140,7 @@ public class VirtualDirectory : IVirtualDirectory
         }
     }
 
-    private async IAsyncEnumerable<IVfsEntry> GetEntriesInternalAsync(
+    private async IAsyncEnumerable<IVfsNode> GetEntriesInternalAsync(
         SearchPattern? pattern,
         bool recursive,
         int pageSize,

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core;
 using Xunit;
 
@@ -23,11 +23,11 @@ public class StringStreamTests
         using var stream = new StringStream(input);
         
         // Assert
-        stream.CanRead.Should().BeTrue();
-        stream.CanSeek.Should().BeTrue();
-        stream.CanWrite.Should().BeFalse();
-        stream.Length.Should().Be(0);
-        stream.Position.Should().Be(0);
+        stream.CanRead.ShouldBeTrue();
+        stream.CanSeek.ShouldBeTrue();
+        stream.CanWrite.ShouldBeFalse();
+        stream.Length.ShouldBe(0);
+        stream.Position.ShouldBe(0);
     }
 
     [Fact]
@@ -40,8 +40,8 @@ public class StringStreamTests
         using var stream = new StringStream(input);
         
         // Assert
-        stream.Length.Should().Be(10); // 5 chars * 2 bytes each in old implementation
-        stream.ToString().Should().Be(input);
+        stream.Length.ShouldBe(10); // 5 chars * 2 bytes each in old implementation
+        stream.ToString().ShouldBe(input);
     }
 
     [Fact]
@@ -57,9 +57,9 @@ public class StringStreamTests
         var thirdByte = stream.ReadByte(); // Should be EOF
         
         // Assert
-        firstByte.Should().NotBe(-1);
-        secondByte.Should().NotBe(-1); 
-        thirdByte.Should().Be(-1); // EOF
+        firstByte.ShouldNotBe(-1);
+        secondByte.ShouldNotBe(-1); 
+        thirdByte.ShouldBe(-1); // EOF
     }
 
     [Fact]
@@ -72,11 +72,11 @@ public class StringStreamTests
         using var stream = new Utf8StringStream(input);
         
         // Assert
-        stream.CanRead.Should().BeTrue();
-        stream.CanSeek.Should().BeTrue();
-        stream.CanWrite.Should().BeFalse();
-        stream.Length.Should().Be(0);
-        stream.Position.Should().Be(0);
+        stream.CanRead.ShouldBeTrue();
+        stream.CanSeek.ShouldBeTrue();
+        stream.CanWrite.ShouldBeFalse();
+        stream.Length.ShouldBe(0);
+        stream.Position.ShouldBe(0);
     }
 
     [Fact]
@@ -89,8 +89,8 @@ public class StringStreamTests
         using var stream = new Utf8StringStream(input);
         
         // Assert
-        stream.Length.Should().Be(5); // 5 ASCII chars = 5 bytes in UTF-8
-        stream.ToString().Should().Be(input);
+        stream.Length.ShouldBe(5); // 5 ASCII chars = 5 bytes in UTF-8
+        stream.ToString().ShouldBe(input);
     }
 
     [Fact]
@@ -103,8 +103,8 @@ public class StringStreamTests
         using var stream = new Utf8StringStream(input);
         
         // Assert
-        stream.Length.Should().Be(4); // Emoji = 4 bytes in UTF-8
-        stream.ToString().Should().Be(input);
+        stream.Length.ShouldBe(4); // Emoji = 4 bytes in UTF-8
+        stream.ToString().ShouldBe(input);
     }
 
     [Fact]
@@ -120,8 +120,8 @@ public class StringStreamTests
         var bytesRead = stream.Read(buffer, 0, buffer.Length);
         
         // Assert
-        bytesRead.Should().Be(expectedBytes.Length);
-        buffer.Should().BeEquivalentTo(expectedBytes);
+        bytesRead.ShouldBe(expectedBytes.Length);
+        buffer.ShouldBe(expectedBytes);
     }
 
     [Fact]
@@ -137,8 +137,8 @@ public class StringStreamTests
         var bytesRead = await stream.ReadAsync(buffer);
         
         // Assert
-        bytesRead.Should().Be(expectedBytes.Length);
-        buffer.Should().BeEquivalentTo(expectedBytes);
+        bytesRead.ShouldBe(expectedBytes.Length);
+        buffer.ShouldBe(expectedBytes);
     }
 
     [Fact]
@@ -149,14 +149,14 @@ public class StringStreamTests
         using var stream = new Utf8StringStream(input);
         
         // Act & Assert
-        stream.Seek(0, SeekOrigin.Begin).Should().Be(0);
-        stream.Position.Should().Be(0);
+        stream.Seek(0, SeekOrigin.Begin).ShouldBe(0);
+        stream.Position.ShouldBe(0);
         
-        stream.Seek(5, SeekOrigin.Begin).Should().Be(5);
-        stream.Position.Should().Be(5);
+        stream.Seek(5, SeekOrigin.Begin).ShouldBe(5);
+        stream.Position.ShouldBe(5);
         
-        stream.Seek(0, SeekOrigin.End).Should().Be(stream.Length);
-        stream.Position.Should().Be(stream.Length);
+        stream.Seek(0, SeekOrigin.End).ShouldBe(stream.Length);
+        stream.Position.ShouldBe(stream.Length);
     }
 
     [Fact]
@@ -168,10 +168,10 @@ public class StringStreamTests
         
         // Act & Assert
         var act1 = () => stream.Write(buffer, 0, buffer.Length);
-        act1.Should().Throw<NotSupportedException>();
-        
+        Should.Throw<NotSupportedException>(act1);
+
         var act2 = () => stream.SetLength(100);
-        act2.Should().Throw<NotSupportedException>();
+        Should.Throw<NotSupportedException>(act2);
     }
 
     [Fact]
@@ -185,8 +185,8 @@ public class StringStreamTests
         using var stream2 = Encoding.UTF8.GetBytes(input).ToUtf8Stream();
         
         // Assert
-        stream1.ToString().Should().Be(input);
-        stream2.ToString().Should().Be(input);
+        stream1.ToString().ShouldBe(input);
+        stream2.ToString().ShouldBe(input);
     }
 
     [Theory]
@@ -201,8 +201,8 @@ public class StringStreamTests
         using var stream = new Utf8StringStream(input);
         
         // Assert
-        stream.ToString().Should().Be(input);
-        stream.Length.Should().Be(Encoding.UTF8.GetByteCount(input));
+        stream.ToString().ShouldBe(input);
+        stream.Length.ShouldBe(Encoding.UTF8.GetByteCount(input));
     }
 
     [Fact]
@@ -216,7 +216,7 @@ public class StringStreamTests
         using var newStream = new Utf8StringStream(input);
         
         // Assert
-        newStream.Length.Should().BeLessOrEqualTo(oldStream.Length);
-        oldStream.ToString().Should().Be(newStream.ToString());
+        newStream.Length.ShouldBeLessThanOrEqualTo(oldStream.Length);
+        oldStream.ToString().ShouldBe(newStream.ToString());
     }
 }

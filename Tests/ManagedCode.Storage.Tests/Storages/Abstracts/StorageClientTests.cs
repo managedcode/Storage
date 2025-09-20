@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Client;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
@@ -51,11 +51,9 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var result = await _storageClient.DownloadFile(fileName, apiUrl);
 
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -67,9 +65,8 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var result = await _storageClient.DownloadFile(fileName, apiUrl);
 
         result.IsSuccess
-            .Should()
-            .BeFalse();
-        result.Value.Should().BeNull();
+            .ShouldBeFalse();
+        result.Value.ShouldBeNull();
     }
 
     [Fact]
@@ -81,9 +78,8 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var result = await _storageClient.DownloadFile(fileName, apiUrl + "/invalid-endpoint");
 
         result.IsSuccess
-            .Should()
-            .BeFalse();
-        result.Value.Should().BeNull();
+            .ShouldBeFalse();
+        result.Value.ShouldBeNull();
     }
 
     private class FakeHttpMessageHandler : HttpMessageHandler

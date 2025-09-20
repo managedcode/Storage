@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.Tests.Common;
@@ -28,11 +28,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -49,11 +47,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -62,8 +58,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var file = await GetTestFileAsync();
         var uploadResult = await Storage.UploadAsync(file.OpenRead());
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -73,8 +68,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var bytes = await File.ReadAllBytesAsync(file.FullName);
         var uploadResult = await Storage.UploadAsync(bytes);
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -84,8 +78,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var text = await File.ReadAllTextAsync(file.FullName);
         var uploadResult = await Storage.UploadAsync(text);
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -94,13 +87,11 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var file = await GetTestFileAsync();
         var uploadResult = await Storage.UploadAsync(file);
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         var downloadResult = await Storage.DownloadAsync(uploadResult.Value!.Name);
         downloadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -120,11 +111,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -143,11 +132,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         await Storage.DeleteAsync(fileName);
     }
@@ -166,11 +153,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         await Storage.DeleteAsync(fileName);
     }
@@ -190,8 +175,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeFalse();
+            .ShouldBeFalse();
     }
     
     
@@ -218,8 +202,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         uploadResult.IsSuccess
-            .Should()
-            .BeFalse();
+            .ShouldBeFalse();
     
      
     }

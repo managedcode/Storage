@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.FileSystem.Options;
@@ -80,7 +80,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
                 }
             }, default);
 
-            appendResult.IsSuccess.Should().BeTrue();
+            appendResult.IsSuccess.ShouldBeTrue();
         }
 
         var completeResult = await service.CompleteAsync(new ChunkUploadCompleteRequest
@@ -90,24 +90,24 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             CommitToStorage = true
         }, storage, default);
 
-        completeResult.IsSuccess.Should().BeTrue();
+        completeResult.IsSuccess.ShouldBeTrue();
         var completion = completeResult.Value ?? throw new InvalidOperationException("Completion result is null");
-        completion.Checksum.Should().Be(checksum);
-        completion.Metadata.Should().NotBeNull();
+        completion.Checksum.ShouldBe(checksum);
+        completion.Metadata.ShouldNotBeNull();
 
         var metadata = await storage.GetBlobMetadataAsync(fileName);
-        metadata.IsSuccess.Should().BeTrue();
-        (metadata.Value ?? throw new InvalidOperationException("Metadata value is null")).Length.Should().Be((ulong)payload.Length);
+        metadata.IsSuccess.ShouldBeTrue();
+        (metadata.Value ?? throw new InvalidOperationException("Metadata value is null")).Length.ShouldBe((ulong)payload.Length);
 
         var download = await storage.DownloadAsync(fileName);
-        download.IsSuccess.Should().BeTrue();
+        download.IsSuccess.ShouldBeTrue();
         var downloadedFile = download.Value ?? throw new InvalidOperationException("Download returned null file");
         using var ms = new MemoryStream();
         await downloadedFile.FileStream.CopyToAsync(ms);
-        ms.ToArray().Should().Equal(payload);
+        ms.ToArray().ShouldBe(payload);
 
         var repeat = await service.CompleteAsync(new ChunkUploadCompleteRequest { UploadId = uploadId }, storage, default);
-        repeat.IsSuccess.Should().BeFalse();
+        repeat.IsSuccess.ShouldBeFalse();
     }
 
     [Fact]
@@ -132,12 +132,12 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             }
         }, default);
 
-        append.IsSuccess.Should().BeTrue();
+        append.IsSuccess.ShouldBeTrue();
         var workingDirectory = Path.Combine(_options.TempPath, uploadId);
-        Directory.Exists(workingDirectory).Should().BeTrue();
+        Directory.Exists(workingDirectory).ShouldBeTrue();
 
         service.Abort(uploadId);
-        Directory.Exists(workingDirectory).Should().BeFalse();
+        Directory.Exists(workingDirectory).ShouldBeFalse();
     }
 
     [Fact]
@@ -171,8 +171,8 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             return result.IsSuccess;
         }
 
-        (await Append("upload-a")).Should().BeTrue();
-        (await Append("upload-b")).Should().BeFalse();
+        (await Append("upload-a")).ShouldBeTrue();
+        (await Append("upload-b")).ShouldBeFalse();
 
         service.Abort("upload-a");
         service.Abort("upload-b");
@@ -209,7 +209,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             }
         }, default);
 
-        appendResult.IsSuccess.Should().BeTrue();
+        appendResult.IsSuccess.ShouldBeTrue();
 
         var complete = await service.CompleteAsync(new ChunkUploadCompleteRequest
         {
@@ -218,8 +218,8 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             CommitToStorage = true
         }, storage, default);
 
-        complete.IsSuccess.Should().BeTrue();
-        (complete.Value ?? throw new InvalidOperationException("Completion result is null")).Checksum.Should().Be(checksum);
+        complete.IsSuccess.ShouldBeTrue();
+        (complete.Value ?? throw new InvalidOperationException("Completion result is null")).Checksum.ShouldBe(checksum);
     }
 
     private FileSystemStorage CreateStorage()

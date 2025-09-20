@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.FileSystem.Options;
@@ -69,17 +69,17 @@ public class VirtualFileSystemManagerTests : IAsyncLifetime
         await file.WriteAllTextAsync("manager-test");
 
         var (mountPoint, relativePath) = manager.ResolvePath("/fs/sample.txt");
-        mountPoint.Should().Be("/fs");
-        relativePath.Value.Should().Be("/sample.txt");
+        mountPoint.ShouldBe("/fs");
+        relativePath.Value.ShouldBe("/sample.txt");
 
         var mounts = manager.GetMounts();
-        mounts.Should().ContainKey("/fs");
+        mounts.ShouldContainKey("/fs");
 
         await manager.UnmountAsync("/fs");
         mounts = manager.GetMounts();
-        mounts.Should().BeEmpty();
+        mounts.ShouldBeEmpty();
 
         Func<IVirtualFileSystem> action = () => manager.GetMount("/fs");
-        action.Should().Throw<ArgumentException>();
+        Should.Throw<ArgumentException>(action);
     }
 }

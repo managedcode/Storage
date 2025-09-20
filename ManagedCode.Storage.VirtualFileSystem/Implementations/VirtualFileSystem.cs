@@ -469,7 +469,7 @@ public class VirtualFileSystem : IVirtualFileSystem
     }
 
     /// <inheritdoc />
-    public async ValueTask<IVfsEntry?> GetEntryAsync(VfsPath path, CancellationToken cancellationToken = default)
+    public async ValueTask<IVfsNode?> GetEntryAsync(VfsPath path, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
         
@@ -487,7 +487,7 @@ public class VirtualFileSystem : IVirtualFileSystem
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<IVfsEntry> ListAsync(
+    public async IAsyncEnumerable<IVfsNode> ListAsync(
         VfsPath path, 
         ListOptions? options = null, 
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

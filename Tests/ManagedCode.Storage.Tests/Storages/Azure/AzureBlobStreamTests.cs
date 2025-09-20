@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
@@ -41,7 +41,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var localFileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(localFileStream, options);
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         await using var blobStream = storage.GetBlobStream(uploaded.FullName);
@@ -54,12 +54,9 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         await using var fileStream = localFile.FileInfo.OpenRead();
         using var fileReader = new StreamReader(fileStream);
         var fileContent = await fileReader.ReadToEndAsync();
-        content.Should()
-            .NotBeNullOrEmpty();
-        fileContent.Should()
-            .NotBeNullOrEmpty();
-        content.Should()
-            .Be(fileContent);
+        content.ShouldNotBeNullOrEmpty();
+        fileContent.ShouldNotBeNullOrEmpty();
+        content.ShouldBe(fileContent);
     }
 
     [Fact]
@@ -75,7 +72,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var fileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(fileStream, options);
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         await using var blobStream = storage.GetBlobStream(uploaded.FullName);
@@ -89,18 +86,14 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         var bytesReadForChunk2 = await blobStream.ReadAsync(chunk2, 0, chunkSize);
 
         // Assert
-        bytesReadForChunk1.Should()
-            .Be(chunkSize);
-        bytesReadForChunk2.Should()
-            .Be(chunkSize);
-        chunk1.Should()
-            .NotBeNullOrEmpty()
-            .And
-            .HaveCount(chunkSize);
-        chunk2.Should()
-            .NotBeNullOrEmpty()
-            .And
-            .HaveCount(chunkSize);
+        bytesReadForChunk1.ShouldBe(chunkSize);
+        bytesReadForChunk2.ShouldBe(chunkSize);
+        chunk1.ShouldNotBeNull();
+        chunk1.ShouldNotBeEmpty();
+        chunk1.Length.ShouldBe(chunkSize);
+        chunk2.ShouldNotBeNull();
+        chunk2.ShouldNotBeEmpty();
+        chunk2.Length.ShouldBe(chunkSize);
     }
 
     [Fact]
@@ -119,12 +112,10 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         var bytesRead = await blobStream.ReadAsync(chunk, 0, 4);
 
         // Assert
-        bytesRead.Should()
-            .Be(0);
-        chunk.Should()
-            .NotBeNullOrEmpty();
-        chunk.Should()
-            .AllBeEquivalentTo(0);
+        bytesRead.ShouldBe(0);
+        chunk.ShouldNotBeNull();
+        chunk.ShouldNotBeEmpty();
+        chunk.ShouldAllBe(b => b == 0);
     }
 
     [Fact]
@@ -153,14 +144,12 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         // Assert
         var fileResult = await storage.DownloadAsync(fullFileName);
         fileResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         var downloaded = fileResult.Value ?? throw new InvalidOperationException("Download result is null");
         await using var fileStream = downloaded.FileStream;
         using var streamReader = new StreamReader(fileStream);
         var fileContent = await streamReader.ReadLineAsync();
-        fileContent.Should()
-            .NotBeNullOrEmpty();
+        fileContent.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
@@ -176,7 +165,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var localFileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(localFileStream, options);
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess.ShouldBeTrue();
         var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         await using var blobStream = storage.GetBlobStream(uploaded.FullName);
@@ -188,16 +177,13 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         var bytesRead = await blobStream.ReadAsync(buffer);
 
         // Assert
-        bytesRead.Should()
-            .Be(seekInPosition);
+        bytesRead.ShouldBe(seekInPosition);
         await using var fileStream = localFile.FileInfo.OpenRead();
         using var fileReader = new StreamReader(fileStream);
         var fileContent = await fileReader.ReadToEndAsync();
         var content = Encoding.UTF8.GetString(buffer);
-        content.Should()
-            .NotBeNullOrEmpty();
+        content.ShouldNotBeNullOrEmpty();
         var trimmedFileContent = fileContent.Remove(0, seekInPosition);
-        content.Should()
-            .Be(trimmedFileContent);
+        content.ShouldBe(trimmedFileContent);
     }
 }
