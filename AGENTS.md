@@ -9,7 +9,10 @@ If I tell you to remember something, you do the same, update
 
 
 ## Rules to follow
-TBA
+- Ensure storage-related changes keep broad automated coverage around 85-90% using generic, provider-agnostic tests across file systems, storages, and integrations.
+- Deliver ASP.NET integrations that expose upload/download controllers, SignalR streaming, and matching HTTP and SignalR clients built on the storage layer for files, streams, and chunked transfers.
+- Provide base ASP.NET controllers with minimal routing so consumers can inherit and customize routes, authorization, and behaviors without rigid defaults.
+- Favor controller extension patterns and optionally expose interfaces to guide consumers on recommended actions so they can implement custom endpoints easily.
 
 # Repository Guidelines
 

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using ManagedCode.Storage.Azure.Extensions;
+using ManagedCode.Storage.Server.Extensions;
 using ManagedCode.Storage.Tests.Common.TestApp.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
@@ -35,6 +36,7 @@ public class HttpHostProgram
 
         app.UseRouting();
         app.MapControllers();
+        app.MapStorageHub();
 
         app.Run();
     }

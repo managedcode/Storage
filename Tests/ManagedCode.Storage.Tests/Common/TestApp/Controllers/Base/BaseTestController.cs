@@ -1,17 +1,13 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.Runtime.Internal;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Server.ChunkUpload;
-using ManagedCode.Storage.Server;
-using ManagedCode.Storage.Server.Extensions;
 using ManagedCode.Storage.Server.Extensions.Controller;
 using ManagedCode.Storage.Server.Models;
 using Microsoft.AspNetCore.Http;
@@ -38,9 +34,11 @@ public abstract class BaseTestController<TStorage> : ControllerBase where TStora
     public async Task<Result<BlobMetadata>> UploadFileAsync([FromForm] IFormFile file, CancellationToken cancellationToken)
     {
         if (Request.HasFormContentType is false)
+        {
             return Result<BlobMetadata>.Fail("invalid body");
-        
-        return await Result.From(() => this.UploadFormFileAsync(Storage, file, cancellationToken:cancellationToken), cancellationToken);
+        }
+
+        return await Result.From(() => this.UploadFormFileAsync(Storage, file, cancellationToken: cancellationToken), cancellationToken);
     }
 
     [HttpGet("download/{fileName}")]

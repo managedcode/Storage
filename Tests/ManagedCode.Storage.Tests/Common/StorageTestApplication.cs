@@ -57,7 +57,8 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
         builder.ConfigureServices(services =>
         {
             services.AddStorageFactory();
-            services.AddChunkUploadHandling();
+            services.AddStorageServer();
+            services.AddStorageSignalR();
 
             services.AddFileSystemStorage(new FileSystemStorageOptions
             {
