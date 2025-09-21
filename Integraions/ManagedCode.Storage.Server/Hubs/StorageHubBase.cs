@@ -24,7 +24,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
 {
     private readonly ILogger _logger;
     private readonly StorageHubOptions _options;
-    private readonly ConcurrentDictionary<string, TransferRegistration> _transfers = new();
+    private static readonly ConcurrentDictionary<string, TransferRegistration> Transfers = new();
 
     /// <summary>
     /// Initialises a new hub instance.
@@ -49,7 +49,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
     /// <inheritdoc />
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        foreach (var (_, registration) in _transfers)
+        foreach (var (_, registration) in Transfers)
         {
             if (registration.ConnectionId == Context.ConnectionId)
             {
@@ -57,7 +57,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
             }
         }
 
-        await base.OnDisconnectedAsync(exception);
+        await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -72,7 +72,9 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
             return Task.FromResult<TransferStatus?>(null);
         }
 
-        return Task.FromResult(_transfers.TryGetValue(transferId, out var registration) ? registration.Status : null);
+        return Task.FromResult(Transfers.TryGetValue(transferId, out var registration)
+            ? CreateStatusSnapshot(registration.Status)
+            : null);
     }
 
     /// <summary>
@@ -87,7 +89,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
             return Task.CompletedTask;
         }
 
-        if (_transfers.TryGetValue(transferId, out var registration))
+        if (Transfers.TryGetValue(transferId, out var registration))
         {
             registration.Status.IsCanceled = true;
             registration.Cancellation.Cancel();
@@ -97,44 +99,86 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
     }
 
     /// <summary>
-    /// Streams file content from the caller and commits the result to storage when complete.
+    /// Begins an upload by registering metadata and reserving a transfer identifier.
     /// </summary>
     /// <param name="descriptor">Upload metadata.</param>
-    /// <param name="stream">Chunked byte stream supplied by the caller.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The final transfer status including metadata.</returns>
-    public virtual async Task UploadStreamAsync(UploadStreamDescriptor descriptor, ChannelReader<byte[]> stream, CancellationToken cancellationToken = default)
+    /// <returns>The transfer identifier that must be used for the content stream.</returns>
+    public virtual Task<string> BeginUploadStreamAsync(UploadStreamDescriptor descriptor)
     {
         ArgumentNullException.ThrowIfNull(descriptor);
         ArgumentException.ThrowIfNullOrWhiteSpace(descriptor.FileName);
 
-        Console.Error.WriteLine($"UploadStreamAsync invoked for {descriptor.FileName}");
+        var transferId = string.IsNullOrWhiteSpace(descriptor.TransferId)
+            ? Guid.NewGuid().ToString("N")
+            : descriptor.TransferId!;
 
-        var transferId = string.IsNullOrWhiteSpace(descriptor.TransferId) ? Guid.NewGuid().ToString("N") : descriptor.TransferId!;
-        var registration = RegisterTransfer(transferId, "upload", descriptor.FileName, descriptor.FileSize, cancellationToken);
+        var registration = RegisterTransfer(transferId, "upload", descriptor.FileName, descriptor.FileSize, CancellationToken.None);
+        registration.UploadDescriptor = descriptor;
+        registration.Status.TotalBytes = descriptor.FileSize;
+
+        _logger.LogInformation("BeginUploadStreamAsync registered {FileName} with TransferId {TransferId}", descriptor.FileName, transferId);
+
+        return Task.FromResult(transferId);
+    }
+
+    /// <summary>
+    /// Streams file content from the caller and commits the result to storage when complete.
+    /// </summary>
+    /// <param name="transferId">The transfer identifier previously returned by <see cref="BeginUploadStreamAsync"/>.</param>
+    /// <param name="stream">Chunked byte stream supplied by the caller.</param>
+    /// <returns>A channel producing transfer status updates as the upload progresses.</returns>
+    public virtual async IAsyncEnumerable<TransferStatus> UploadStreamContentAsync(
+        string transferId,
+        IAsyncEnumerable<byte[]> stream,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(transferId))
+        {
+            throw new HubException("Transfer identifier is required");
+        }
+
+        if (!Transfers.TryGetValue(transferId, out var registration))
+        {
+            throw new HubException($"Unknown transfer id '{transferId}'");
+        }
+
+        if (!string.Equals(registration.Status.Operation, "upload", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new HubException($"Transfer '{transferId}' is not registered for upload.");
+        }
+
+        if (!registration.TryStartUpload())
+        {
+            throw new HubException($"Upload for transfer '{transferId}' has already started.");
+        }
+
+        var descriptor = registration.UploadDescriptor ?? throw new HubException($"Transfer '{registration.Status.TransferId}' is missing an upload descriptor.");
+        var transferIdValue = registration.Status.TransferId;
+        var tempFilePath = Path.Combine(_options.TempPath, transferIdValue + ".upload");
+        registration.TempFilePath = tempFilePath;
+
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(registration.Cancellation.Token, cancellationToken);
+        var token = linkedCts.Token;
+        var completionEmitted = false;
 
         try
         {
-            using var uploadCts = registration.Cancellation;
-            var token = uploadCts.Token;
-            var tempFilePath = Path.Combine(_options.TempPath, transferId + ".upload");
-
             await using (var tempStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None, _options.StreamBufferSize, useAsync: true))
             {
-                while (await stream.WaitToReadAsync(token).ConfigureAwait(false))
+                await foreach (var chunk in stream.WithCancellation(token).ConfigureAwait(false))
                 {
-                    while (stream.TryRead(out var chunk))
+                    if (chunk is not { Length: > 0 })
                     {
-                        token.ThrowIfCancellationRequested();
-
-                        if (chunk is { Length: > 0 })
-                        {
-                            await tempStream.WriteAsync(chunk, token).ConfigureAwait(false);
-                            registration.Status.BytesTransferred += chunk.Length;
-                            registration.Touch();
-                            await Clients.Caller.SendAsync(StorageHubEvents.TransferProgress, registration.Status, token).ConfigureAwait(false);
-                        }
+                        continue;
                     }
+
+                    await tempStream.WriteAsync(chunk, token).ConfigureAwait(false);
+                    registration.Status.BytesTransferred += chunk.Length;
+                    registration.Touch();
+
+                    var progressSnapshot = CreateStatusSnapshot(registration.Status);
+                    await NotifyClientAsync(StorageHubEvents.TransferProgress, progressSnapshot, token).ConfigureAwait(false);
+                    yield return progressSnapshot;
                 }
 
                 await tempStream.FlushAsync(token).ConfigureAwait(false);
@@ -142,48 +186,62 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
 
             if (registration.Status.IsCanceled)
             {
-                throw new OperationCanceledException("Upload was canceled");
+                registration.Status.Error ??= "Transfer canceled";
+                var canceledSnapshot = CreateStatusSnapshot(registration.Status);
+                await NotifyClientAsync(StorageHubEvents.TransferCanceled, canceledSnapshot, CancellationToken.None).ConfigureAwait(false);
+                yield break;
             }
 
-            var uploadOptions = new UploadOptions(descriptor.FileName, descriptor.Directory, descriptor.ContentType, descriptor.Metadata);
+            await using (var sourceStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, _options.StreamBufferSize, useAsync: true))
+            {
+                var uploadOptions = new UploadOptions(descriptor.FileName, descriptor.Directory, descriptor.ContentType, descriptor.Metadata);
+                var result = await Storage.UploadAsync(sourceStream, uploadOptions, token).ConfigureAwait(false);
+                result.ThrowIfFail();
+                registration.Status.Metadata = result.Value;
+            }
 
-            await using var sourceStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, _options.StreamBufferSize, useAsync: true);
-            var result = await Storage.UploadAsync(sourceStream, uploadOptions, token);
-            result.ThrowIfFail();
-
-            registration.Status.Metadata = result.Value;
             registration.Status.IsCompleted = true;
-            await Clients.Caller.SendAsync(StorageHubEvents.TransferCompleted, registration.Status, token);
-            return;
-        }
-        catch (OperationCanceledException)
-        {
-            registration.Status.IsCanceled = true;
-            registration.Status.Error ??= "Transfer canceled";
-            await Clients.Caller.SendAsync(StorageHubEvents.TransferCanceled, registration.Status, CancellationToken.None);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "UploadStreamAsync failed for {TransferId}", transferId);
-            registration.Status.Error = ex.ToString();
-            await Clients.Caller.SendAsync(StorageHubEvents.TransferFaulted, registration.Status, CancellationToken.None);
-            Console.Error.WriteLine($"UploadStreamAsync server error: {ex}");
-            throw new HubException($"Upload failed: {ex}", ex);
+            var completionSnapshot = CreateStatusSnapshot(registration.Status);
+            await NotifyClientAsync(StorageHubEvents.TransferCompleted, completionSnapshot, token).ConfigureAwait(false);
+            completionEmitted = true;
+            yield return completionSnapshot;
         }
         finally
         {
-            CleanupTransferFile(transferId);
-            _transfers.TryRemove(transferId, out _);
+            CleanupTransferFile(transferIdValue);
+            Transfers.TryRemove(transferIdValue, out _);
+
+            if (!completionEmitted)
+            {
+                if (registration.Status.IsCanceled)
+                {
+                    registration.Status.Error ??= "Transfer canceled";
+                    _ = NotifyClientAsync(StorageHubEvents.TransferCanceled, CreateStatusSnapshot(registration.Status), CancellationToken.None);
+                }
+                else if (registration.Status.Error is not null)
+                {
+                    _ = NotifyClientAsync(StorageHubEvents.TransferFaulted, CreateStatusSnapshot(registration.Status), CancellationToken.None);
+                }
+            }
         }
     }
 
-    /// <summary>
-    /// Streams file content from storage back to the connected client.
-    /// </summary>
-    /// <param name="blobName">Name of the blob/file to download.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>An async byte sequence that yields file chunks.</returns>
+    private async Task NotifyClientAsync(string eventName, TransferStatus snapshot, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Clients.Caller.SendAsync(eventName, snapshot, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Caller disconnected or canceled. Nothing else to do.
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to emit {EventName} for transfer {TransferId}", eventName, snapshot.TransferId);
+        }
+    }
+
     public virtual async IAsyncEnumerable<byte[]> DownloadStreamAsync(string blobName, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
@@ -197,7 +255,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         using var downloadCts = registration.Cancellation;
         var token = downloadCts.Token;
 
-        var downloadResult = await Storage.GetStreamAsync(blobName, token);
+        var downloadResult = await Storage.GetStreamAsync(blobName, token).ConfigureAwait(false);
         downloadResult.ThrowIfFail();
 
         var sourceStreamResult = downloadResult.Value ?? throw new HubException("Download failed", new InvalidOperationException("Storage returned empty stream."));
@@ -212,7 +270,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                 int read;
                 try
                 {
-                    read = await sourceStream.ReadAsync(buffer.AsMemory(0, _options.StreamBufferSize), token);
+                    read = await sourceStream.ReadAsync(buffer.AsMemory(0, _options.StreamBufferSize), token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException oce)
                 {
@@ -237,9 +295,10 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                 registration.Status.BytesTransferred += read;
                 registration.Touch();
 
+                var progressSnapshot = CreateStatusSnapshot(registration.Status);
                 try
                 {
-                    await Clients.Caller.SendAsync(StorageHubEvents.TransferProgress, registration.Status, token);
+                    await NotifyClientAsync(StorageHubEvents.TransferProgress, progressSnapshot, token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException oce)
                 {
@@ -247,20 +306,18 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                     wasCanceled = true;
                     throw;
                 }
-                catch (Exception ex)
+                catch (HubException)
                 {
-                    _logger.LogError(ex, "DownloadStreamAsync failed while reporting progress for {TransferId}", transferId);
-                    failure = ex;
-                    throw new HubException("Download failed", ex);
+                    throw;
                 }
-
                 yield return chunk;
             }
 
             registration.Status.IsCompleted = true;
+            var completionSnapshot = CreateStatusSnapshot(registration.Status);
             try
             {
-                await Clients.Caller.SendAsync(StorageHubEvents.TransferCompleted, registration.Status, token);
+                await NotifyClientAsync(StorageHubEvents.TransferCompleted, completionSnapshot, token).ConfigureAwait(false);
             }
             catch (OperationCanceledException oce)
             {
@@ -268,17 +325,11 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                 wasCanceled = true;
                 throw;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "DownloadStreamAsync failed while sending completion for {TransferId}", transferId);
-                failure = ex;
-                throw new HubException("Download failed", ex);
-            }
         }
         finally
         {
             ArrayPool<byte>.Shared.Return(buffer);
-            _transfers.TryRemove(transferId, out _);
+            Transfers.TryRemove(transferId, out _);
 
             if (failure is not null)
             {
@@ -286,12 +337,12 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                 {
                     registration.Status.IsCanceled = true;
                     registration.Status.Error ??= "Transfer canceled";
-                    _ = Clients.Caller.SendAsync(StorageHubEvents.TransferCanceled, registration.Status, CancellationToken.None);
+                    _ = NotifyClientAsync(StorageHubEvents.TransferCanceled, CreateStatusSnapshot(registration.Status), CancellationToken.None);
                 }
                 else
                 {
                     registration.Status.Error = failure.Message;
-                    _ = Clients.Caller.SendAsync(StorageHubEvents.TransferFaulted, registration.Status, CancellationToken.None);
+                    _ = NotifyClientAsync(StorageHubEvents.TransferFaulted, CreateStatusSnapshot(registration.Status), CancellationToken.None);
                 }
             }
         }
@@ -299,7 +350,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
 
     private TransferRegistration RegisterTransfer(string transferId, string operation, string resourceName, long? totalBytes, CancellationToken cancellationToken)
     {
-        if (_options.MaxConcurrentTransfers > 0 && _transfers.Count >= _options.MaxConcurrentTransfers)
+        if (_options.MaxConcurrentTransfers > 0 && Transfers.Count >= _options.MaxConcurrentTransfers)
         {
             throw new HubException("Too many concurrent transfers");
         }
@@ -312,15 +363,31 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
             TotalBytes = totalBytes
         };
 
-        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(Context.ConnectionAborted, cancellationToken);
         var registration = new TransferRegistration(status, cts, Context.ConnectionId);
 
-        if (!_transfers.TryAdd(transferId, registration))
+        if (!Transfers.TryAdd(transferId, registration))
         {
             throw new HubException("Transfer identifier already exists");
         }
 
         return registration;
+    }
+
+    private static TransferStatus CreateStatusSnapshot(TransferStatus status)
+    {
+        return new TransferStatus
+        {
+            TransferId = status.TransferId,
+            Operation = status.Operation,
+            ResourceName = status.ResourceName,
+            BytesTransferred = status.BytesTransferred,
+            TotalBytes = status.TotalBytes,
+            IsCompleted = status.IsCompleted,
+            IsCanceled = status.IsCanceled,
+            Error = status.Error,
+            Metadata = status.Metadata
+        };
     }
 
     private void CleanupTransferFile(string transferId)
@@ -341,6 +408,8 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
 
     private sealed class TransferRegistration
     {
+        private int _uploadStarted;
+
         public TransferRegistration(TransferStatus status, CancellationTokenSource cancellation, string connectionId)
         {
             Status = status;
@@ -352,7 +421,14 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
         public TransferStatus Status { get; }
         public CancellationTokenSource Cancellation { get; }
         public string ConnectionId { get; }
+        public UploadStreamDescriptor? UploadDescriptor { get; set; }
+        public string? TempFilePath { get; set; }
         public DateTimeOffset LastTouchedUtc { get; private set; }
+
+        public bool TryStartUpload()
+        {
+            return Interlocked.Exchange(ref _uploadStarted, 1) == 0;
+        }
 
         public void Touch()
         {

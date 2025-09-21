@@ -63,8 +63,10 @@ and use multiple APIs.
 
 - Provides a universal interface for accessing and manipulating data in different cloud blob storage providers.
 - Makes it easy to switch between providers or to use multiple providers simultaneously.
-- Supports common operations such as uploading, downloading, and deleting data.
-- Provides first-class ASP.NET controller extensions and a SignalR hub/client pairing for streaming uploads, downloads, and chunk orchestration.
+- Supports common operations such as uploading, downloading, and deleting data, plus optional in-memory Virtual File System (VFS) storage for fast testing.
+- Provides first-class ASP.NET controller extensions and a SignalR hub/client pairing (two-step streaming handshake) for uploads, downloads, and chunk orchestration.
+- Ships keyed dependency-injection helpers so you can register multiple named providers and mirror assets across regions or vendors.
+- Exposes configurable server options for large-file thresholds, multipart parsing limits, and range streaming.
 
 ## Virtual File System (VFS)
 
@@ -93,6 +95,91 @@ await storage.UploadAsync(new FileInfo("fixtures/avatar.png"), new UploadOptions
 
 Because the VFS implements the same abstractions as every other provider, you can swap it for in-memory integration tests while hitting Azure, S3, etc. in production.
 
+## Dependency Injection & Keyed Registrations
+
+Every provider ships with default and provider-specific registrations, but you can also assign multiple named instances using .NET's keyed services. This makes it easy to route traffic to different containers/buckets (e.g. <code>azure-primary</code> vs. <code>azure-dr</code>) or to fan out a file to several backends:
+
+```csharp
+using Amazon;
+using Amazon.S3;
+using ManagedCode.MimeTypes;
+using Microsoft.Extensions.DependencyInjection;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+builder.Services
+    .AddAzureStorage("azure-primary", options =>
+    {
+        options.ConnectionString = configuration["Storage:Azure:Primary:ConnectionString"]!;
+        options.Container = "assets";
+    })
+    .AddAzureStorage("azure-dr", options =>
+    {
+        options.ConnectionString = configuration["Storage:Azure:Dr:ConnectionString"]!;
+        options.Container = "assets-dr";
+    })
+    .AddAWSStorage("aws-backup", options =>
+    {
+        options.PublicKey = configuration["Storage:Aws:AccessKey"]!;
+        options.SecretKey = configuration["Storage:Aws:SecretKey"]!;
+        options.Bucket = "assets-backup";
+        options.OriginalOptions = new AmazonS3Config
+        {
+            RegionEndpoint = RegionEndpoint.USEast1
+        };
+    });
+
+public sealed class AssetReplicator
+{
+    private readonly IAzureStorage _primary;
+    private readonly IAzureStorage _disasterRecovery;
+    private readonly IAWSStorage _backup;
+
+    public AssetReplicator(
+        [FromKeyedServices("azure-primary")] IAzureStorage primary,
+        [FromKeyedServices("azure-dr")] IAzureStorage secondary,
+        [FromKeyedServices("aws-backup")] IAWSStorage backup)
+    {
+        _primary = primary;
+        _disasterRecovery = secondary;
+        _backup = backup;
+    }
+
+    public async Task MirrorAsync(Stream content, string fileName, CancellationToken cancellationToken = default)
+    {
+        await using var buffer = new MemoryStream();
+        await content.CopyToAsync(buffer, cancellationToken);
+
+        buffer.Position = 0;
+        var uploadOptions = new UploadOptions(fileName, mimeType: MimeHelper.GetMimeType(fileName));
+
+        await _primary.UploadAsync(buffer, uploadOptions, cancellationToken);
+
+        buffer.Position = 0;
+        await _disasterRecovery.UploadAsync(buffer, uploadOptions, cancellationToken);
+
+        buffer.Position = 0;
+        await _backup.UploadAsync(buffer, uploadOptions, cancellationToken);
+    }
+}
+```
+
+Keyed services can also be resolved via <code>IServiceProvider.GetRequiredKeyedService&lt;T&gt;("key")</code> when manual dispatching is required.
+
+Want to double-check data fidelity after copying? Pair uploads with <code>Crc32Helper</code>:
+
+```csharp
+var download = await _backup.DownloadAsync(fileName, cancellationToken);
+download.IsSuccess.ShouldBeTrue();
+
+await using var local = download.Value;
+var crc = Crc32Helper.CalculateFileCrc(local.FilePath);
+logger.LogInformation("Backup CRC for {File} is {Crc}", fileName, crc);
+```
+
+The test suite includes end-to-end scenarios that mirror payloads between Azure, AWS, the local file system, and virtual file systems; multi-gigabyte flows execute by default across every provider using 64 MB units per "GB" to keep runs fast while still exercising streaming paths.
+
 ## ASP.NET Controllers & SignalR Streaming
 
 The <code>ManagedCode.Storage.Server</code> package exposes ready-to-use controllers plus a SignalR hub that sit on top of any <code>IStorage</code> implementation.
@@ -101,7 +188,11 @@ Pair it with the <code>ManagedCode.Storage.Client.SignalR</code> library to stre
 ```csharp
 // Program.cs / Startup.cs
 builder.Services
-    .AddStorageServer()      // registers StorageControllerBase & chunk services
+    .AddStorageServer(options =>
+    {
+        options.InMemoryUploadThresholdBytes = 512 * 1024; // spill to disk after 512 KB
+        options.MultipartBoundaryLengthLimit = 128;        // relax multipart parsing limit
+    })
     .AddStorageSignalR();    // registers StorageHub options
 
 app.MapControllers();
@@ -142,6 +233,7 @@ public sealed class FilesController : StorageControllerBase<IMyCustomStorage>
 builder.Services.AddStorageServer(opts =>
 {
     opts.EnableRangeProcessing = true;
+    opts.InMemoryUploadThresholdBytes = 1 * 1024 * 1024; // 1 MB
 });
 builder.Services.AddStorageSignalR();
 
@@ -150,6 +242,8 @@ app.MapStorageHub();
 ```
 
 Use the built-in controller extension methods to tailor behaviours (e.g. <code>UploadFormFileAsync</code>, <code>DownloadAsStreamAsync</code>) or override the base actions to add authorization filters, custom routing, or domain-specific validation.
+
+> SignalR uploads follow a two-phase handshake: the client calls <code>BeginUploadStreamAsync</code> to reserve an identifier, then streams payloads through <code>UploadStreamContentAsync</code> while consuming the server-generated status channel. The <code>StorageSignalRClient</code> handles this workflow automatically.
 
 ## Connection modes
 
@@ -211,6 +305,8 @@ public class MyService
 }
 ```
 
+> Need multiple Azure accounts or containers? Call <code>services.AddAzureStorage("azure-primary", ...)</code> and decorate constructor parameters with <code>[FromKeyedServices("azure-primary")]</code>.
+
 <details>
   <summary>Google Cloud (Click here to expand)</summary>
 
@@ -270,10 +366,12 @@ public class MyService
     private readonly IGCPStorage _gcpStorage;
     public MyService(IGCPStorage gcpStorage)
     {
-        _gcpStorage = gcpStorage;
+    _gcpStorage = gcpStorage;
     }
 }
 ```
+
+> Need parallel S3 buckets? Register them with <code>AddAWSStorage("aws-backup", ...)</code> and inject via <code>[FromKeyedServices("aws-backup")]</code>.
 
 </details>
 
@@ -336,13 +434,15 @@ Using in provider-specific mode
 // MyService.cs
 public class MyService
 {
-    private readonly IAWSStorage _gcpStorage;
-    public MyService(IAWSStorage gcpStorage)
+    private readonly IAWSStorage _storage;
+    public MyService(IAWSStorage storage)
     {
-        _gcpStorage = gcpStorage;
+        _storage = storage;
     }
 }
 ```
+
+> Need parallel S3 buckets? Register them with <code>AddAWSStorage("aws-backup", ...)</code> and inject via <code>[FromKeyedServices("aws-backup")]</code>.
 
 </details>
 
@@ -400,6 +500,8 @@ public class MyService
 }
 ```
 
+> Mirror to multiple folders? Use <code>AddFileSystemStorage("archive", options => options.BaseFolder = ...)</code> and resolve them via <code>[FromKeyedServices("archive")]</code>.
+
 </details>
 
 ## How to use
@@ -454,7 +556,8 @@ _storage.StorageClient
 ## Conclusion
 
 In summary, Storage library provides a universal interface for accessing and manipulating data in different cloud blob
-storage providers.
+storage providers, plus ready-to-host ASP.NET controllers, SignalR streaming endpoints, keyed dependency injection, and
+a memory-backed VFS.
 It makes it easy to switch between providers or to use multiple providers simultaneously, without having to learn and
-use multiple APIs.
+use multiple APIs, while staying in full control of routing, thresholds, and mirroring.
 We hope you find it useful in your own projects!

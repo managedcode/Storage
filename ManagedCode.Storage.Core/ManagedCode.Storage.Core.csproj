@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="9.6.2" />
+        <PackageReference Include="ManagedCode.Communication" Version="9.6.4" />
         <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.3" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Client.SignalR.Models;
 using Microsoft.AspNetCore.SignalR;
@@ -158,16 +158,10 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
             throw new ArgumentException("The upload descriptor must contain a file name.", nameof(descriptor));
         }
 
-        descriptor.TransferId = string.IsNullOrWhiteSpace(descriptor.TransferId)
-            ? Guid.NewGuid().ToString("N")
-            : descriptor.TransferId;
-
         if (stream.CanSeek)
         {
             stream.Seek(0, SeekOrigin.Begin);
         }
-
-        var handler = CreateProgressRelay(descriptor.TransferId, progress);
 
         var bufferSize = _options?.StreamBufferSize ?? 64 * 1024;
         if (bufferSize <= 0)
@@ -181,57 +175,32 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
             throw new InvalidOperationException("UploadChannelCapacity must be greater than zero.");
         }
 
-        var channel = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(channelCapacity)
-        {
-            SingleReader = true,
-            SingleWriter = true,
-            FullMode = BoundedChannelFullMode.Wait
-        });
+        var transferId = await connection.InvokeAsync<string>("BeginUploadStreamAsync", descriptor, cancellationToken).ConfigureAwait(false);
+        descriptor.TransferId = transferId;
 
-        Task producerTask = ProduceChunksAsync(stream, channel.Writer, bufferSize, cancellationToken);
-        var completionSource = new TaskCompletionSource<StorageTransferStatus>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var handler = CreateProgressRelay(transferId, progress);
 
-        void OnCompleted(object? _, StorageTransferStatus status)
-        {
-            if (string.Equals(status.TransferId, descriptor.TransferId, StringComparison.OrdinalIgnoreCase))
-            {
-                completionSource.TrySetResult(status);
-            }
-        }
+        var statusStream = connection.StreamAsync<StorageTransferStatus>(
+            "UploadStreamContentAsync",
+            transferId,
+            ReadChunksAsync(stream, bufferSize, cancellationToken),
+            cancellationToken);
 
-        void OnFaulted(object? _, StorageTransferStatus status)
-        {
-            if (string.Equals(status.TransferId, descriptor.TransferId, StringComparison.OrdinalIgnoreCase))
-            {
-                completionSource.TrySetException(new HubException(status.Error ?? "Upload failed."));
-            }
-        }
-
-        void OnCanceled(object? _, StorageTransferStatus status)
-        {
-            if (string.Equals(status.TransferId, descriptor.TransferId, StringComparison.OrdinalIgnoreCase))
-            {
-                completionSource.TrySetCanceled(cancellationToken);
-            }
-        }
-
-        TransferCompleted += OnCompleted;
-        TransferFaulted += OnFaulted;
-        TransferCanceled += OnCanceled;
+        StorageTransferStatus? lastStatus = null;
 
         try
         {
-            await connection.SendAsync("UploadStreamAsync", descriptor, channel.Reader, cancellationToken).ConfigureAwait(false);
-            await producerTask.ConfigureAwait(false);
-            return await completionSource.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            await foreach (var status in statusStream.WithCancellation(cancellationToken).ConfigureAwait(false))
+            {
+                lastStatus = status;
+            }
         }
         finally
         {
-            TransferCompleted -= OnCompleted;
-            TransferFaulted -= OnFaulted;
-            TransferCanceled -= OnCanceled;
             handler?.Dispose();
         }
+
+        return lastStatus ?? throw new HubException($"Upload stream for transfer '{transferId}' completed without status.");
     }
 
     /// <inheritdoc />
@@ -261,14 +230,35 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
 
         destination.Flush();
 
-        return lastStatus ?? new StorageTransferStatus
+        if (lastStatus is null)
         {
-            Operation = "download",
-            ResourceName = blobName,
-            BytesTransferred = totalBytes,
-            TotalBytes = totalBytes,
-            IsCompleted = true
-        };
+            return new StorageTransferStatus
+            {
+                Operation = "download",
+                ResourceName = blobName,
+                BytesTransferred = totalBytes,
+                TotalBytes = totalBytes,
+                IsCompleted = true
+            };
+        }
+
+        if (!lastStatus.IsCompleted)
+        {
+            lastStatus = new StorageTransferStatus
+            {
+                TransferId = lastStatus.TransferId,
+                Operation = lastStatus.Operation,
+                ResourceName = lastStatus.ResourceName,
+                BytesTransferred = lastStatus.BytesTransferred > 0 ? lastStatus.BytesTransferred : totalBytes,
+                TotalBytes = lastStatus.TotalBytes ?? totalBytes,
+                IsCompleted = true,
+                IsCanceled = lastStatus.IsCanceled,
+                Error = lastStatus.Error,
+                Metadata = lastStatus.Metadata
+            };
+        }
+
+        return lastStatus;
     }
 
     /// <inheritdoc />
@@ -444,27 +434,22 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
         });
     }
 
-    private static async Task ProduceChunksAsync(Stream source, ChannelWriter<byte[]> writer, int bufferSize, CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<byte[]> ReadChunksAsync(
+        Stream source,
+        int bufferSize,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var buffer = new byte[bufferSize];
-
-        try
+        while (true)
         {
-            while (true)
+            int read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
+            if (read <= 0)
             {
-                var read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
-                if (read <= 0)
-                {
-                    break;
-                }
-
-                var chunk = buffer.Take(read).ToArray();
-                await writer.WriteAsync(chunk, cancellationToken).ConfigureAwait(false);
+                yield break;
             }
-        }
-        finally
-        {
-            writer.TryComplete();
+
+            var chunk = buffer.AsSpan(0, read).ToArray();
+            yield return chunk;
         }
     }
 

@@ -20,7 +20,11 @@ public class HttpHostProgram
         var builder = WebApplication.CreateBuilder(options);
 
         builder.Services.AddControllers();
-        builder.Services.AddSignalR();
+        builder.Services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true;
+            options.MaximumReceiveMessageSize = 8L * 1024 * 1024; // 8 MB
+        });
         builder.Services.AddEndpointsApiExplorer();
 
         // Configure form options for large file uploads

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 
 namespace ManagedCode.Storage.Core.Helpers;
@@ -37,12 +38,7 @@ public static class Crc32Helper
 
         using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
         {
-            var buffer = new byte[4096]; // 4KB buffer
-            int bytesRead;
-            while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                crcValue = Update(buffer.AsSpan(0, bytesRead), crcValue);
-            }
+            crcValue = ContinueStreamCrc(fs, crcValue);
         }
 
         return Complete(crcValue); // Return the final CRC value
@@ -67,6 +63,33 @@ public static class Crc32Helper
     }
 
     public static uint Complete(uint crcValue) => ~crcValue;
+
+    public static uint CalculateStreamCrc(Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        var crcValue = Begin();
+        crcValue = ContinueStreamCrc(stream, crcValue);
+        return Complete(crcValue);
+    }
+
+    private static uint ContinueStreamCrc(Stream stream, uint crcValue)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(64 * 1024);
+        try
+        {
+            int bytesRead;
+            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                crcValue = Update(buffer.AsSpan(0, bytesRead), crcValue);
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return crcValue;
+    }
 
     private static uint UpdateCrc(ReadOnlySpan<byte> bytes)
     {

@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.VirtualFileSystem.Core;
 using ManagedCode.Storage.VirtualFileSystem.Options;
 using ManagedCode.Storage.VirtualFileSystem.Exceptions;
 using ManagedCode.Storage.Tests.VirtualFileSystem.Fixtures;
+using ManagedCode.Storage.Tests.Common;
 using Shouldly;
 using Xunit;
 
@@ -345,6 +349,44 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         stats.FileCount.ShouldBeGreaterThanOrEqualTo(2);
         stats.FilesByExtension.ShouldContainKey(".txt");
         stats.FilesByExtension.ShouldContainKey(".bin");
+    }
+
+    [Theory]
+    [Trait("Category", "LargeFile")]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public async Task LargeFile_ShouldRoundTripViaStreams(int gigabytes)
+    {
+        if (!Capabilities.Enabled)
+        {
+            return;
+        }
+
+        var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
+
+        await using var sourceFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        var expectedCrc = LargeFileTestHelper.CalculateFileCrc(sourceFile.FilePath);
+
+        var path = new VfsPath($"/large/{Guid.NewGuid():N}.bin");
+        var file = await vfs.GetFileAsync(path);
+
+        await using (var writeStream = await file.OpenWriteAsync(cancellationToken: CancellationToken.None))
+        await using (var readSource = File.OpenRead(sourceFile.FilePath))
+        {
+            await readSource.CopyToAsync(writeStream, cancellationToken: CancellationToken.None);
+        }
+
+        await using (var readBack = await file.OpenReadAsync(cancellationToken: CancellationToken.None))
+        {
+            var actualCrc = Crc32Helper.CalculateStreamCrc(readBack);
+            actualCrc.ShouldBe(expectedCrc);
+        }
+
+        (await file.DeleteAsync()).ShouldBeTrue();
     }
 }
 

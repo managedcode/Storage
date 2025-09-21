@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
-using ManagedCode.Communication;
+using ManagedCode.Storage.Server.Controllers;
 using ManagedCode.Storage.Server.ChunkUpload;
 using ManagedCode.Storage.Server.Extensions.File;
 using ManagedCode.Storage.Server.Helpers;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Server.Extensions.Controller;
 
@@ -22,8 +24,11 @@ namespace ManagedCode.Storage.Server.Extensions.Controller;
 /// </summary>
 public static class ControllerUploadExtensions
 {
-    private const int DefaultMultipartBoundaryLengthLimit = 70;
-    private const int MinLengthForLargeFile = 256 * 1024;
+    private static StorageServerOptions ResolveServerOptions(ControllerBase controller)
+    {
+        var services = controller.HttpContext?.RequestServices;
+        return services?.GetService<StorageServerOptions>() ?? new StorageServerOptions();
+    }
 
    /// <summary>
    /// Uploads a form file to storage and returns blob metadata.
@@ -32,21 +37,22 @@ public static class ControllerUploadExtensions
     this ControllerBase controller,
     IStorage storage,
     IFormFile file,
-    UploadOptions? options = null,
+    UploadOptions? uploadOptions = null,
     CancellationToken cancellationToken = default)
 {
-    options ??= new UploadOptions(file.FileName, mimeType: file.ContentType);
+    uploadOptions ??= new UploadOptions(file.FileName, mimeType: file.ContentType);
 
-        if (file.Length > MinLengthForLargeFile)
+        var serverOptions = ResolveServerOptions(controller);
+        if (file.Length > serverOptions.InMemoryUploadThresholdBytes)
         {
             var localFile = await file.ToLocalFileAsync(cancellationToken);
-            var result = await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
+            var result = await storage.UploadAsync(localFile.FileInfo, uploadOptions, cancellationToken);
             result.ThrowIfFail();
             return result.Value!;
         }
 
         await using var stream = file.OpenReadStream();
-        var uploadResult = await storage.UploadAsync(stream, options, cancellationToken);
+        var uploadResult = await storage.UploadAsync(stream, uploadOptions, cancellationToken);
         uploadResult.ThrowIfFail();
         return uploadResult.Value!;
 }
@@ -58,21 +64,23 @@ public static async Task<BlobMetadata> UploadFromBrowserFileAsync(
     this ControllerBase controller,
     IStorage storage,
     IBrowserFile file,
-    UploadOptions? options = null,
+    UploadOptions? uploadOptions = null,
     CancellationToken cancellationToken = default)
 {
-    options ??= new UploadOptions(file.Name, mimeType: file.ContentType);
+    uploadOptions ??= new UploadOptions(file.Name, mimeType: file.ContentType);
 
-    if (file.Size > MinLengthForLargeFile)
+    var serverOptions = ResolveServerOptions(controller);
+
+    if (file.Size > serverOptions.InMemoryUploadThresholdBytes)
     {
         var localFile = await file.ToLocalFileAsync(cancellationToken);
-        var result = await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
+        var result = await storage.UploadAsync(localFile.FileInfo, uploadOptions, cancellationToken);
         result.ThrowIfFail();
         return result.Value!;
     }
 
     await using var stream = file.OpenReadStream();
-    var uploadResult =  await storage.UploadAsync(stream, options, cancellationToken);
+    var uploadResult =  await storage.UploadAsync(stream, uploadOptions, cancellationToken);
     uploadResult.ThrowIfFail();
     return uploadResult.Value!;
 }
@@ -120,7 +128,7 @@ public static async Task<BlobMetadata> UploadFromStreamAsync(
     this ControllerBase controller,
     IStorage storage,
     HttpRequest request,
-    UploadOptions? options = null,
+    UploadOptions? uploadOptions = null,
     CancellationToken cancellationToken = default)
 {
     if (!StreamHelper.IsMultipartContentType(request.ContentType))
@@ -128,9 +136,11 @@ public static async Task<BlobMetadata> UploadFromStreamAsync(
         throw new InvalidOperationException("Not a multipart request");
     }
 
+    var serverOptions = ResolveServerOptions(controller);
+
     var boundary = StreamHelper.GetBoundary(
         MediaTypeHeaderValue.Parse(request.ContentType),
-        DefaultMultipartBoundaryLengthLimit);
+        serverOptions.MultipartBoundaryLengthLimit);
 
     var multipartReader = new MultipartReader(boundary, request.Body);
     var section = await multipartReader.ReadNextSectionAsync(cancellationToken);
@@ -143,13 +153,13 @@ public static async Task<BlobMetadata> UploadFromStreamAsync(
             var fileName = contentDisposition.FileName.Value;
             var contentType = section.ContentType;
 
-            options ??= new UploadOptions(fileName, mimeType: contentType);
+            uploadOptions ??= new UploadOptions(fileName, mimeType: contentType);
 
             using var memoryStream = new MemoryStream();
             await section.Body.CopyToAsync(memoryStream, cancellationToken);
             memoryStream.Position = 0;
 
-            var result = await storage.UploadAsync(memoryStream, options, cancellationToken);
+            var result = await storage.UploadAsync(memoryStream, uploadOptions, cancellationToken);
             result.ThrowIfFail();
             return result.Value!;
         }

@@ -13,6 +13,8 @@ If I tell you to remember something, you do the same, update
 - Deliver ASP.NET integrations that expose upload/download controllers, SignalR streaming, and matching HTTP and SignalR clients built on the storage layer for files, streams, and chunked transfers.
 - Provide base ASP.NET controllers with minimal routing so consumers can inherit and customize routes, authorization, and behaviors without rigid defaults.
 - Favor controller extension patterns and optionally expose interfaces to guide consumers on recommended actions so they can implement custom endpoints easily.
+- For comprehensive storage platform upgrades, follow the nine-step flow: solidify SignalR streaming hub/client with logging and tests, harden controller upload paths (standard/stream/chunked) with large-file coverage, add keyed DI registrations and cross-provider sync fixtures, extend VFS with keyed support and >1 GB trials, create streamed large-file/CRC helpers, run end-to-end suites (controllers, SignalR, VFS, cross-provider), verify Blazor upload extensions, expand docs with VFS + provider identity guidance + keyed samples, and finish by running the full preview-enabled test suite addressing warnings.
+- Normalise MIME lookups through `MimeHelper`; avoid ad-hoc MIME resolution helpers so all content-type logic flows through its APIs.
 
 # Repository Guidelines
 

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
 using Shouldly;
+using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.Tests.Common;
@@ -159,7 +160,56 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         await Storage.DeleteAsync(fileName);
     }
-    
+
+    [Theory]
+    [Trait("Category", "LargeFile")]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public async Task UploadAsync_LargeStream_ShouldRoundTrip(int gigabytes)
+    {
+        var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
+        var directory = "large-files";
+
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
+        var fileName = Path.GetFileName(localFile.FilePath);
+
+        var uploadOptions = new UploadOptions
+        {
+            FileName = fileName,
+            Directory = directory,
+            MimeType = MimeHelper.GetMimeType(fileName)
+        };
+
+        string storedPath = uploadOptions.FullPath;
+
+        await using (var uploadStream = File.OpenRead(localFile.FilePath))
+        {
+            var uploadResult = await Storage.UploadAsync(uploadStream, uploadOptions, CancellationToken.None);
+            uploadResult.IsSuccess.ShouldBeTrue();
+            uploadResult.Value.ShouldNotBeNull();
+
+            storedPath = uploadResult.Value!.FullName ??
+                         (!string.IsNullOrWhiteSpace(uploadResult.Value.Name)
+                             ? new UploadOptions(uploadResult.Value.Name!, uploadOptions.Directory).FullPath
+                             : uploadOptions.FullPath);
+        }
+
+        var downloadResult = await Storage.DownloadAsync(storedPath, CancellationToken.None);
+
+        downloadResult.IsSuccess.ShouldBeTrue();
+        downloadResult.Value.ShouldNotBeNull();
+
+        await using var downloaded = downloadResult.Value!;
+        var actualCrc = LargeFileTestHelper.CalculateFileCrc(downloaded.FilePath);
+        actualCrc.ShouldBe(expectedCrc);
+
+        var deleteResult = await Storage.DeleteAsync(storedPath, CancellationToken.None);
+
+        deleteResult.IsSuccess.ShouldBeTrue();
+    }
+
     [Fact]
     public async Task UploadAsync_WithCancellationToken_ShouldCancel()
     {

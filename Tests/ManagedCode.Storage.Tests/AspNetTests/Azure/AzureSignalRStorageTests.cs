@@ -13,14 +13,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Microsoft.AspNetCore.SignalR;
+using Xunit.Abstractions;
 
 namespace ManagedCode.Storage.Tests.AspNetTests.Azure;
 
 public class AzureSignalRStorageTests : BaseSignalRStorageTests
 {
-    public AzureSignalRStorageTests(StorageTestApplication testApplication)
+    private readonly ITestOutputHelper _output;
+
+    public AzureSignalRStorageTests(StorageTestApplication testApplication, ITestOutputHelper output)
         : base(testApplication, ApiEndpoints.Azure)
     {
+        _output = output;
     }
 
     [Fact]
@@ -30,7 +34,7 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         FileHelper.GenerateLocalFile(localFile, 1);
 
         await using var uploadStream = File.OpenRead(localFile.FilePath);
-        var descriptor = CreateDescriptor(Path.GetFileName(localFile.FilePath), "text/plain", uploadStream.Length);
+        var descriptor = CreateDescriptor(Path.GetFileName(localFile.FilePath), MimeTypes.MimeHelper.TEXT, uploadStream.Length);
 
         await using var scope = TestApplication.Services.CreateAsyncScope();
         var storage = scope.ServiceProvider.GetRequiredService<IAzureStorage>();
@@ -50,6 +54,14 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
             }
         };
 
+        client.TransferCompleted += (_, status) =>
+        {
+            if (status.TransferId == descriptor.TransferId)
+            {
+                lastProgress = status;
+            }
+        };
+
         client.TransferFaulted += (_, status) => faultStatus = status;
 
         StorageTransferStatus status;
@@ -59,9 +71,13 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         }
         catch (HubException ex)
         {
-            Console.WriteLine(ex);
-            Console.WriteLine($"Inner: {ex.InnerException}");
-            throw new Xunit.Sdk.XunitException($"SignalR upload failed: {ex.Message}; fault status: {faultStatus?.Error}; detail: {ex}; inner: {ex.InnerException}");
+            _output.WriteLine(ex.ToString());
+            if (ex.InnerException is not null)
+            {
+                _output.WriteLine($"Inner: {ex.InnerException}");
+            }
+            var message = $"SignalR upload failed: {ex.Message}; fault status: {faultStatus?.Error}; detail: {ex}; inner: {ex.InnerException}";
+            throw new Xunit.Sdk.XunitException(message);
         }
 
         status.ShouldNotBeNull();
@@ -109,6 +125,55 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         downloadedCrc.ShouldBe(expectedCrc);
 
         await storage.DeleteAsync(localFile.FileInfo.Name);
+        await client.DisconnectAsync();
+    }
+
+    [Theory]
+    [Trait("Category", "LargeFile")]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public async Task UploadStreamAsync_WhenFileIsLarge_ShouldRoundTrip(int gigabytes)
+    {
+        var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
+
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
+
+        var descriptor = CreateDescriptor(Path.GetFileName(localFile.FilePath), "application/octet-stream", sizeBytes);
+
+        await using var scope = TestApplication.Services.CreateAsyncScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IAzureStorage>();
+        await storage.CreateContainerAsync(CancellationToken.None);
+
+        await using var client = CreateClient();
+        await client.ConnectAsync(CancellationToken.None);
+
+        StorageTransferStatus status;
+        await using (var readStream = File.OpenRead(localFile.FilePath))
+        {
+            status = await client.UploadAsync(readStream, descriptor, cancellationToken: CancellationToken.None);
+        }
+
+        status.IsCompleted.ShouldBeTrue();
+        status.Metadata.ShouldNotBeNull();
+
+        var remoteName = status.Metadata!.FullName ?? status.Metadata.Name ?? descriptor.FileName;
+
+        var downloadPath = Path.Combine(Environment.CurrentDirectory, "large-file-tests", $"download-{Guid.NewGuid():N}.bin");
+        await using var downloadedFile = new LocalFile(downloadPath);
+        await using (var destination = File.Open(downloadedFile.FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+        {
+            destination.SetLength(0);
+            destination.Position = 0;
+            var downloadStatus = await client.DownloadAsync(remoteName, destination, cancellationToken: CancellationToken.None);
+            downloadStatus.IsCompleted.ShouldBeTrue();
+        }
+
+        var downloadedCrc = LargeFileTestHelper.CalculateFileCrc(downloadedFile.FilePath);
+        downloadedCrc.ShouldBe(expectedCrc);
+
+        await storage.DeleteAsync(remoteName, CancellationToken.None);
         await client.DisconnectAsync();
     }
 }

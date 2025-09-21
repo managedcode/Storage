@@ -219,7 +219,27 @@ public static class StorageServerHeaders
 public class StorageServerOptions
 {
     /// <summary>
+    /// Default threshold in bytes after which uploads are buffered to disk instead of kept in memory.
+    /// </summary>
+    public const int DefaultInMemoryUploadThresholdBytes = 256 * 1024;
+
+    /// <summary>
+    /// Default boundary length limit applied to multipart requests.
+    /// </summary>
+    public const int DefaultMultipartBoundaryLengthLimit = 70;
+
+    /// <summary>
     /// Gets or sets a value indicating whether range processing is enabled for streaming responses.
     /// </summary>
     public bool EnableRangeProcessing { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the maximum payload size (in bytes) that will be buffered in memory before switching to a file-backed upload path.
+    /// </summary>
+    public int InMemoryUploadThresholdBytes { get; set; } = DefaultInMemoryUploadThresholdBytes;
+
+    /// <summary>
+    /// Gets or sets the maximum allowed length for multipart boundaries when parsing raw upload streams.
+    /// </summary>
+    public int MultipartBoundaryLengthLimit { get; set; } = DefaultMultipartBoundaryLengthLimit;
 }
