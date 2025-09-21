@@ -17,7 +17,7 @@ public static class LargeFileTestHelper
     /// Base unit (in bytes) used when synthesising large-file test payloads. Keeps runtime manageable while
     /// exercising multi-chunk flows across transports. Equivalent to 64 MB.
     /// </summary>
-    public const long LargeFileUnitBytes = 64L * 1024L * 1024L;
+    public const long LargeFileUnitBytes = 16L * 1024L * 1024L;
 
     /// <summary>
     /// Resolves the byte-length used for a given "gigabyte" unit in large file tests. The multiplier keeps

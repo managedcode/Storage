@@ -166,10 +166,13 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     [InlineData(1)]
     [InlineData(3)]
     [InlineData(5)]
-    public async Task UploadAsync_LargeStream_ShouldRoundTrip(int gigabytes)
+    public virtual async Task UploadAsync_LargeStream_ShouldRoundTrip(int gigabytes)
     {
         var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
         var directory = "large-files";
+
+        var containerResult = await Storage.CreateContainerAsync(CancellationToken.None);
+        containerResult.IsSuccess.ShouldBeTrue();
 
         await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
         var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
@@ -182,7 +185,8 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
             MimeType = MimeHelper.GetMimeType(fileName)
         };
 
-        string storedPath = uploadOptions.FullPath;
+        string directoryPath = uploadOptions.Directory ?? string.Empty;
+        string storedName = uploadOptions.FileName;
 
         await using (var uploadStream = File.OpenRead(localFile.FilePath))
         {
@@ -190,13 +194,32 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
             uploadResult.IsSuccess.ShouldBeTrue();
             uploadResult.Value.ShouldNotBeNull();
 
-            storedPath = uploadResult.Value!.FullName ??
-                         (!string.IsNullOrWhiteSpace(uploadResult.Value.Name)
-                             ? new UploadOptions(uploadResult.Value.Name!, uploadOptions.Directory).FullPath
-                             : uploadOptions.FullPath);
+            if (!string.IsNullOrWhiteSpace(uploadResult.Value!.FullName))
+            {
+                var full = uploadResult.Value.FullName!;
+                var slashIndex = full.LastIndexOf('/');
+                if (slashIndex >= 0)
+                {
+                    directoryPath = full[..slashIndex];
+                    storedName = full[(slashIndex + 1)..];
+                }
+                else
+                {
+                    directoryPath = string.Empty;
+                    storedName = full;
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(uploadResult.Value.Name))
+            {
+                storedName = uploadResult.Value.Name!;
+            }
         }
 
-        var downloadResult = await Storage.DownloadAsync(storedPath, CancellationToken.None);
+        var downloadResult = await Storage.DownloadAsync(new DownloadOptions
+        {
+            FileName = storedName,
+            Directory = string.IsNullOrWhiteSpace(directoryPath) ? null : directoryPath
+        }, CancellationToken.None);
 
         downloadResult.IsSuccess.ShouldBeTrue();
         downloadResult.Value.ShouldNotBeNull();
@@ -205,7 +228,11 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var actualCrc = LargeFileTestHelper.CalculateFileCrc(downloaded.FilePath);
         actualCrc.ShouldBe(expectedCrc);
 
-        var deleteResult = await Storage.DeleteAsync(storedPath, CancellationToken.None);
+        var deleteResult = await Storage.DeleteAsync(new DeleteOptions
+        {
+            FileName = storedName,
+            Directory = string.IsNullOrWhiteSpace(directoryPath) ? null : directoryPath
+        }, CancellationToken.None);
 
         deleteResult.IsSuccess.ShouldBeTrue();
     }
