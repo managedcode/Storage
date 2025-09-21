@@ -178,7 +178,7 @@ var crc = Crc32Helper.CalculateFileCrc(local.FilePath);
 logger.LogInformation("Backup CRC for {File} is {Crc}", fileName, crc);
 ```
 
-The test suite includes end-to-end scenarios that mirror payloads between Azure, AWS, the local file system, and virtual file systems; multi-gigabyte flows execute by default across every provider using 64 MB units per "GB" to keep runs fast while still exercising streaming paths.
+The test suite includes end-to-end scenarios that mirror payloads between Azure, AWS, the local file system, and virtual file systems; multi-gigabyte flows execute by default across every provider using 4 MB units per "GB" to keep runs fast while still exercising streaming paths.
 
 ## ASP.NET Controllers & SignalR Streaming
 
