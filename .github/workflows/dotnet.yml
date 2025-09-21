@@ -25,13 +25,13 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Restore dependencies
-        run: dotnet restore ManagedCode.Storage.slnx
+        run: dotnet restore 
 
       - name: Build
-        run: dotnet build ManagedCode.Storage.slnx --no-restore
+        run: dotnet build --no-restore
 
       - name: Test
-        run: dotnet test ManagedCode.Storage.slnx --no-build /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover
+        run: dotnet test --no-build /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover
 
       - name: Copy coverage files
         run: |
