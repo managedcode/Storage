@@ -35,6 +35,8 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
     private readonly LocalStackContainer _localStackContainer;
     private readonly FakeGcsServerContainer _gcpContainer;
 
+    private static readonly string ContentRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Common", "TestApp"));
+
     public StorageTestApplication()
     {
         _azuriteContainer = new AzuriteBuilder()
@@ -116,9 +118,8 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Common", "TestApp"));
         builder.UseEnvironment("Development");
-        builder.UseContentRoot(projectDir);
+        builder.UseContentRoot(ContentRoot);
     }
 
     public override async ValueTask DisposeAsync()
