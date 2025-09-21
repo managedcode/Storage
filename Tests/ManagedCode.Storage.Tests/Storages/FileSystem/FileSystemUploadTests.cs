@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Tests.Common;
 using ManagedCode.Storage.Tests.Storages.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,7 +47,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
             options.Directory = temporaryDirectory;
         });
 
-        firstResult.IsSuccess.Should().BeTrue();
+        firstResult.IsSuccess.ShouldBeTrue();
 
         // let's download it
         var downloadedResult = await Storage.DownloadAsync(options =>
@@ -55,9 +55,9 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
             options.FileName = filenameToUse;
             options.Directory = temporaryDirectory;
         });
-        downloadedResult.IsSuccess.Should().BeTrue();
+        downloadedResult.IsSuccess.ShouldBeTrue();
         // size
-        downloadedResult.Value!.FileInfo.Length.Should().Be(90*1024);
+        downloadedResult.Value!.FileInfo.Length.ShouldBe(90*1024);
 
 
         var secondResult = await Storage.UploadAsync(uploadStream2, options =>
@@ -66,7 +66,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
             options.Directory = temporaryDirectory;
         });
 
-        secondResult.IsSuccess.Should().BeTrue();
+        secondResult.IsSuccess.ShouldBeTrue();
 
         // let's download it
         downloadedResult = await Storage.DownloadAsync(options =>
@@ -74,13 +74,13 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
             options.FileName = filenameToUse;
             options.Directory = temporaryDirectory;
         });
-        downloadedResult.IsSuccess.Should().BeTrue();
+        downloadedResult.IsSuccess.ShouldBeTrue();
         // size
-        downloadedResult.Value!.FileInfo.Length.Should().Be(512);
+        downloadedResult.Value!.FileInfo.Length.ShouldBe(512);
 
         // content
         using var ms = new MemoryStream();
         await downloadedResult.Value!.FileStream.CopyToAsync(ms);
-        ms.ToArray().Should().BeEquivalentTo(zeroByteBuffer);
+        ms.ToArray().ShouldBe(zeroByteBuffer);
     }
 }

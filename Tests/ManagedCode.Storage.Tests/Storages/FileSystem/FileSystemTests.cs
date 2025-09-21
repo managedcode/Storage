@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using Shouldly;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.FileSystem;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,8 +17,7 @@ public class FileSystemTests
             .GetService<IStorage>();
         storage?.GetType()
             .FullName
-            .Should()
-            .Be(defaultStorage?.GetType()
+            .ShouldBe(defaultStorage?.GetType()
                 .FullName);
     }
 }

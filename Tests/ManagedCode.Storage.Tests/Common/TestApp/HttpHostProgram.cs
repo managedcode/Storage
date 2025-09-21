@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using ManagedCode.Storage.Azure.Extensions;
+using ManagedCode.Storage.Server.Extensions;
 using ManagedCode.Storage.Tests.Common.TestApp.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
@@ -19,7 +20,11 @@ public class HttpHostProgram
         var builder = WebApplication.CreateBuilder(options);
 
         builder.Services.AddControllers();
-        builder.Services.AddSignalR();
+        builder.Services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true;
+            options.MaximumReceiveMessageSize = 8L * 1024 * 1024; // 8 MB
+        });
         builder.Services.AddEndpointsApiExplorer();
 
         // Configure form options for large file uploads
@@ -35,6 +40,7 @@ public class HttpHostProgram
 
         app.UseRouting();
         app.MapControllers();
+        app.MapStorageHub();
 
         app.Run();
     }

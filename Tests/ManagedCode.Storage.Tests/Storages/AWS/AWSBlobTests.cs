@@ -9,8 +9,7 @@ public class AWSBlobTests : BlobTests<LocalStackContainer>
 {
     protected override LocalStackContainer Build()
     {
-        return new LocalStackBuilder().WithImage(ContainerImages.LocalStack)
-            .Build();
+        return AwsContainerFactory.Create();
     }
 
     protected override ServiceProvider ConfigureServices()

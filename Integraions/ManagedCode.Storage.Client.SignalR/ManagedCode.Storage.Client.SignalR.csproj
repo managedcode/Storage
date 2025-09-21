@@ -1,16 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <!--NuGet-->
     <PropertyGroup>
         <Title>ManagedCode.Storage.Client.SignalR</Title>
-        <PackageId>MManagedCode.Storage.Client.SignalR</PackageId>
-        <Description>Extensions for ASP.NET for Storage</Description>
-        <PackageTags>managedcode, aws, gcp, azure storage, cloud, asp.net, file, upload, download</PackageTags>
+        <PackageId>ManagedCode.Storage.Client.SignalR</PackageId>
+        <Description>SignalR client for ManagedCode.Storage streaming and transfer operations.</Description>
+        <PackageTags>managedcode, storage, signalr, streaming, upload, download</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,7 +22,12 @@
 
     <ItemGroup>
         <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.3" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Connections.Client" Version="9.0.9" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
 </Project>

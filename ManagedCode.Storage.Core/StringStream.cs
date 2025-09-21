@@ -3,7 +3,7 @@ using System.IO;
 
 namespace ManagedCode.Storage.Core
 {
-    internal class StringStream(string str) : Stream
+    public class StringStream(string str) : Stream
     {
         private readonly string _string = str ?? throw new ArgumentNullException(nameof(str));
 
@@ -21,7 +21,7 @@ namespace ManagedCode.Storage.Core
             {
                 SeekOrigin.Begin => offset,
                 SeekOrigin.Current => Position + offset,
-                SeekOrigin.End => Length - offset,
+                SeekOrigin.End => Length + offset,
                 _ => throw new ArgumentOutOfRangeException(nameof(origin), origin, null)
             };
 

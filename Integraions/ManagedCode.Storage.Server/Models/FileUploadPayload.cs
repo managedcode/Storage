@@ -4,6 +4,6 @@ namespace ManagedCode.Storage.Server.Models;
 
 public class FileUploadPayload
 {
-    public IFormFile File { get; set; }
-    public FilePayload Payload { get; set; }
+    public IFormFile File { get; set; } = default!;
+    public FilePayload Payload { get; set; } = new();
 }

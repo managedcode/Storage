@@ -1,11 +1,15 @@
 ﻿using System;
+using System.IO;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
 using ManagedCode.Storage.Tests.Constants;
+using ManagedCode.Storage.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ManagedCode.Storage.Tests.AspNetTests.Abstracts;
@@ -36,11 +40,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact(Skip = "There is no forbidden logic")]
@@ -58,12 +60,10 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsFailed
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Problem
             ?.StatusCode
-            .Should()
-            .Be((int)HttpStatusCode.BadRequest);
+            .ShouldBe((int)HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -71,7 +71,6 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        var fileName = "test.txt";
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
@@ -82,11 +81,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -94,7 +91,6 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        var fileName = "test.txt";
         var contentName = "file";
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
         FileHelper.GenerateLocalFile(localFile, 1);
@@ -106,11 +102,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -118,7 +112,6 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
     {
         // Arrange
         var storageClient = GetStorageClient();
-        var fileName = "test.txt";
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
@@ -132,11 +125,9 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .NotBeNull();
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -155,10 +146,81 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value
-            .Should()
-            .Be(crc32);
+            .ShouldBe(crc32);
+    }
+
+    [Theory]
+    [Trait("Category", "LargeFile")]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public async Task UploadFileFromStream_WhenFileIsLarge_ShouldRoundTrip(int gigabytes)
+    {
+        var storageClient = GetStorageClient();
+        var downloadEndpoint = $"{ApiEndpoint}/download";
+        var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
+
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
+
+        await using (var readStream = File.OpenRead(localFile.FilePath))
+        {
+            var uploadResult = await storageClient.UploadFile(readStream, _uploadEndpoint, "file", CancellationToken.None);
+            uploadResult.IsSuccess.ShouldBeTrue();
+            var metadata = uploadResult.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+
+            var downloadResult = await storageClient.DownloadFile(
+                metadata.FullName ?? metadata.Name ?? localFile.Name,
+                downloadEndpoint,
+                cancellationToken: CancellationToken.None);
+            downloadResult.IsSuccess.ShouldBeTrue();
+
+            await using var downloaded = downloadResult.Value;
+            var downloadedCrc = LargeFileTestHelper.CalculateFileCrc(downloaded.FilePath);
+            downloadedCrc.ShouldBe(expectedCrc);
+
+            await using var scope = TestApplication.Services.CreateAsyncScope();
+            var storage = scope.ServiceProvider.GetRequiredService<IStorage>();
+            await storage.DeleteAsync(metadata.FullName ?? metadata.Name ?? localFile.Name, CancellationToken.None);
+        }
+    }
+
+    [Theory]
+    [Trait("Category", "LargeFile")]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public async Task UploadLargeFile_WhenFileIsLarge_ReturnsExpectedChecksum(int gigabytes)
+    {
+        var storageClient = GetStorageClient();
+        storageClient.SetChunkSize(8 * 1024 * 1024); // 8 MB chunks
+
+        var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
+
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
+
+        var fileName = Path.GetFileName(localFile.FilePath);
+
+        await using (var readStream = File.OpenRead(localFile.FilePath))
+        {
+            var result = await storageClient.UploadLargeFile(
+                readStream,
+                _uploadLargeFile + "/upload",
+                _uploadLargeFile + "/complete",
+                null,
+                CancellationToken.None);
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Value.ShouldBe(expectedCrc);
+        }
+
+        await using (var scope = TestApplication.Services.CreateAsyncScope())
+        {
+            var storage = scope.ServiceProvider.GetRequiredService<IStorage>();
+            await storage.DeleteAsync(fileName, CancellationToken.None);
+        }
     }
 }

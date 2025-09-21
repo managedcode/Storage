@@ -5,13 +5,18 @@ using Amazon.S3;
 using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core.Extensions;
+using ManagedCode.Storage.Client.SignalR;
+using ManagedCode.Storage.Client.SignalR.Models;
 using ManagedCode.Storage.FileSystem.Extensions;
 using ManagedCode.Storage.FileSystem.Options;
 using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Tests.Common.TestApp;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http.Connections;
 using Testcontainers.Azurite;
 using Testcontainers.LocalStack;
 using Google.Cloud.Storage.V1;
@@ -19,6 +24,7 @@ using ManagedCode.Storage.Google.Extensions;
 using ManagedCode.Storage.Google.Options;
 using Testcontainers.FakeGcsServer;
 using Xunit;
+using ManagedCode.Storage.Server.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Tests.Common;
 
@@ -28,6 +34,8 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
     private readonly AzuriteContainer _azuriteContainer;
     private readonly LocalStackContainer _localStackContainer;
     private readonly FakeGcsServerContainer _gcpContainer;
+
+    private static readonly string ContentRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Common", "TestApp"));
 
     public StorageTestApplication()
     {
@@ -52,16 +60,25 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
+        builder.ConfigureLogging(logging =>
+        {
+            logging.AddConsole();
+            logging.SetMinimumLevel(LogLevel.Debug);
+        });
+
         builder.ConfigureServices(services =>
         {
             services.AddStorageFactory();
+            services.AddStorageServer();
+            services.AddStorageSignalR();
+            services.AddStorageSetupService();
 
             services.AddFileSystemStorage(new FileSystemStorageOptions
             {
                 BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket")
             });
 
-            services.AddAzureStorage(new AzureStorageOptions
+            services.AddAzureStorageAsDefault(new AzureStorageOptions
             {
                 Container = "managed-code-bucket",
                 ConnectionString = _azuriteContainer.GetConnectionString()
@@ -98,6 +115,13 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
         return base.CreateHost(builder);
     }
 
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+        builder.UseContentRoot(ContentRoot);
+    }
+
     public override async ValueTask DisposeAsync()
     {
         await Task.WhenAll(
@@ -105,5 +129,20 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
             _localStackContainer.DisposeAsync().AsTask(),
             _gcpContainer.DisposeAsync().AsTask()
         );
+    }
+
+    public StorageSignalRClient CreateSignalRClient(Action<StorageSignalRClientOptions>? configure = null)
+    {
+        var options = new StorageSignalRClientOptions
+        {
+            HubUrl = new Uri(Server.BaseAddress, "/hubs/storage"),
+            KeepAliveInterval = TimeSpan.FromSeconds(15),
+            ServerTimeout = TimeSpan.FromSeconds(60),
+            HttpMessageHandlerFactory = () => Server.CreateHandler(),
+            TransportType = HttpTransportType.LongPolling
+        };
+
+        configure?.Invoke(options);
+        return new StorageSignalRClient(options);
     }
 }

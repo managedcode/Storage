@@ -1,5 +1,5 @@
 ﻿using System;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Core;
@@ -18,8 +18,7 @@ public class AzureConfigTests
 
         Action action = () => services.AddAzureStorage(opt => { opt.ConnectionString = "test"; });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -33,8 +32,7 @@ public class AzureConfigTests
             options.ConnectionString = null;
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -47,8 +45,7 @@ public class AzureConfigTests
             .GetService<IStorage>();
         storage?.GetType()
             .FullName
-            .Should()
-            .Be(defaultStorage?.GetType()
+            .ShouldBe(defaultStorage?.GetType()
                 .FullName);
     }
 }

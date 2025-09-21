@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Azure.Options;
@@ -13,7 +13,7 @@ namespace ManagedCode.Storage.Tests.ExtensionsTests;
 public class ReplaceExtensionsTests
 {
     [Fact]
-    public async Task ReplaceAzureStorageAsDefault()
+    public void ReplaceAzureStorageAsDefault()
     {
         var options = new AzureStorageOptions
         {
@@ -30,12 +30,11 @@ public class ReplaceExtensionsTests
         var build = services.BuildServiceProvider();
         build.GetService<IStorage>()
             !.GetType()
-            .Should()
-            .Be(typeof(FakeAzureStorage));
+            .ShouldBe(typeof(FakeAzureStorage));
     }
 
     [Fact]
-    public async Task ReplaceAzureStorage()
+    public void ReplaceAzureStorage()
     {
         var options = new AzureStorageOptions
         {
@@ -52,7 +51,6 @@ public class ReplaceExtensionsTests
         var build = services.BuildServiceProvider();
         build.GetService<IAzureStorage>()
             !.GetType()
-            .Should()
-            .Be(typeof(FakeAzureStorage));
+            .ShouldBe(typeof(FakeAzureStorage));
     }
 }

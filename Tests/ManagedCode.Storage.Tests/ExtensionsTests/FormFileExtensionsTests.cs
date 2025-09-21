@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Server;
 using ManagedCode.Storage.Server.Extensions.File;
 using ManagedCode.Storage.Tests.Common;
@@ -25,8 +25,8 @@ public class FormFileExtensionsTests
         var localFile = await formFile.ToLocalFileAsync();
 
         // Assert
-        localFile.FileStream.Length.Should().Be(formFile.Length);
-        Path.GetExtension(localFile.Name).Should().Be(Path.GetExtension(formFile.FileName));
+        localFile.FileStream.Length.ShouldBe(formFile.Length);
+        Path.GetExtension(localFile.Name).ShouldBe(Path.GetExtension(formFile.FileName));
     }
 
     [Fact]
@@ -41,8 +41,8 @@ public class FormFileExtensionsTests
         var localFile = await formFile.ToLocalFileAsync();
 
         // Assert
-        localFile.FileStream.Length.Should().Be(formFile.Length);
-        Path.GetExtension(localFile.Name).Should().Be(Path.GetExtension(formFile.FileName));
+        localFile.FileStream.Length.ShouldBe(formFile.Length);
+        Path.GetExtension(localFile.Name).ShouldBe(Path.GetExtension(formFile.FileName));
     }
     
     [Fact]
@@ -64,12 +64,12 @@ public class FormFileExtensionsTests
         var localFiles = await collection.ToLocalFilesAsync().ToListAsync();
 
         // Assert
-        localFiles.Count.Should().Be(filesCount);
+        localFiles.Count.ShouldBe(filesCount);
 
         for (var i = 0; i < filesCount; i++)
         {
-            localFiles[i].FileStream.Length.Should().Be(collection[i].Length);
-            Path.GetExtension(localFiles[i].Name).Should().Be(Path.GetExtension(collection[i].FileName));
+            localFiles[i].FileStream.Length.ShouldBe(collection[i].Length);
+            Path.GetExtension(localFiles[i].Name).ShouldBe(Path.GetExtension(collection[i].FileName));
         }
     }
 }

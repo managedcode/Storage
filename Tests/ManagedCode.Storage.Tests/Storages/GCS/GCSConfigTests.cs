@@ -1,5 +1,5 @@
 using System;
-using FluentAssertions;
+using Shouldly;
 using Google.Cloud.Storage.V1;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
@@ -31,8 +31,7 @@ public class GCSConfigTests
             };
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -53,8 +52,7 @@ public class GCSConfigTests
             };
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -71,8 +69,7 @@ public class GCSConfigTests
             };
         });
 
-        action.Should()
-            .Throw<BadConfigurationException>();
+        Should.Throw<BadConfigurationException>(action);
     }
 
     [Fact]
@@ -84,8 +81,7 @@ public class GCSConfigTests
             .GetService<IStorage>();
         storage?.GetType()
             .FullName
-            .Should()
-            .Be(defaultStorage?.GetType()
+            .ShouldBe(defaultStorage?.GetType()
                 .FullName);
     }
 }

@@ -4,7 +4,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
+using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.FileSystem;
 using ManagedCode.Storage.Tests.Common;
@@ -28,11 +29,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -49,11 +48,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -62,8 +59,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var file = await GetTestFileAsync();
         var uploadResult = await Storage.UploadAsync(file.OpenRead());
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -73,8 +69,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var bytes = await File.ReadAllBytesAsync(file.FullName);
         var uploadResult = await Storage.UploadAsync(bytes);
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -84,8 +79,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var text = await File.ReadAllTextAsync(file.FullName);
         var uploadResult = await Storage.UploadAsync(text);
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -94,13 +88,11 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var file = await GetTestFileAsync();
         var uploadResult = await Storage.UploadAsync(file);
         uploadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         var downloadResult = await Storage.DownloadAsync(uploadResult.Value!.Name);
         downloadResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -120,11 +112,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -143,11 +133,9 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         await Storage.DeleteAsync(fileName);
     }
@@ -166,15 +154,89 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedResult.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
 
         await Storage.DeleteAsync(fileName);
     }
-    
+
+    [Theory]
+    [Trait("Category", "LargeFile")]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public virtual async Task UploadAsync_LargeStream_ShouldRoundTrip(int gigabytes)
+    {
+        var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
+        var directory = "large-files";
+
+        var containerResult = await Storage.CreateContainerAsync(CancellationToken.None);
+        containerResult.IsSuccess.ShouldBeTrue();
+
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
+        var fileName = Path.GetFileName(localFile.FilePath);
+
+        var uploadOptions = new UploadOptions
+        {
+            FileName = fileName,
+            Directory = directory,
+            MimeType = MimeHelper.GetMimeType(fileName)
+        };
+
+        string directoryPath = uploadOptions.Directory ?? string.Empty;
+        string storedName = uploadOptions.FileName;
+
+        await using (var uploadStream = File.OpenRead(localFile.FilePath))
+        {
+            var uploadResult = await Storage.UploadAsync(uploadStream, uploadOptions, CancellationToken.None);
+            uploadResult.IsSuccess.ShouldBeTrue();
+            uploadResult.Value.ShouldNotBeNull();
+
+            if (!string.IsNullOrWhiteSpace(uploadResult.Value!.FullName))
+            {
+                var full = uploadResult.Value.FullName!;
+                var slashIndex = full.LastIndexOf('/');
+                if (slashIndex >= 0)
+                {
+                    directoryPath = full[..slashIndex];
+                    storedName = full[(slashIndex + 1)..];
+                }
+                else
+                {
+                    directoryPath = string.Empty;
+                    storedName = full;
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(uploadResult.Value.Name))
+            {
+                storedName = uploadResult.Value.Name!;
+            }
+        }
+
+        var downloadResult = await Storage.DownloadAsync(new DownloadOptions
+        {
+            FileName = storedName,
+            Directory = string.IsNullOrWhiteSpace(directoryPath) ? null : directoryPath
+        }, CancellationToken.None);
+
+        downloadResult.IsSuccess.ShouldBeTrue();
+        downloadResult.Value.ShouldNotBeNull();
+
+        await using var downloaded = downloadResult.Value!;
+        var actualCrc = LargeFileTestHelper.CalculateFileCrc(downloaded.FilePath);
+        actualCrc.ShouldBe(expectedCrc);
+
+        var deleteResult = await Storage.DeleteAsync(new DeleteOptions
+        {
+            FileName = storedName,
+            Directory = string.IsNullOrWhiteSpace(directoryPath) ? null : directoryPath
+        }, CancellationToken.None);
+
+        deleteResult.IsSuccess.ShouldBeTrue();
+    }
+
     [Fact]
     public async Task UploadAsync_WithCancellationToken_ShouldCancel()
     {
@@ -190,13 +252,12 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeFalse();
+            .ShouldBeFalse();
     }
     
     
     [Fact]
-    public async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
+    public virtual async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
     {
         // Arrange
         var uploadContent = FileHelper.GenerateRandomFileContent((Storage is FileSystemStorage) ? 100_0000_000 : 10_0000_000);
@@ -211,13 +272,14 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
             cts.Cancel();
         });
         var uploadTask = Storage.UploadAsync(stream, cancellationToken: cts.Token);
-        
+
         await Task.WhenAll(uploadTask, cancellationTask);
 
+        var uploadResult = await uploadTask;
+
         // Assert
-        uploadTask.Result.IsSuccess
-            .Should()
-            .BeFalse();
+        uploadResult.IsSuccess
+            .ShouldBeFalse();
     
      
     }

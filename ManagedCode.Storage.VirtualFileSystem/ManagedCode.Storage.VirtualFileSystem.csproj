@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>ManagedCode.Storage.VirtualFileSystem</PackageId>
+    <Product>ManagedCode.Storage.VirtualFileSystem</Product>
+    <Description>Virtual FileSystem abstraction over ManagedCode.Storage blob providers</Description>
+    <Copyright>ManagedCode</Copyright>
+    <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>storage;blob;azure;aws;s3;gcp;filesystem;virtual;vfs</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+  </ItemGroup>
+
+</Project>

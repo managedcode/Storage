@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -7,7 +8,10 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
+using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.MimeTypes;
+using System.Text.Json;
 
 namespace ManagedCode.Storage.Client;
 
@@ -138,45 +142,166 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
     public async Task<Result<uint>> UploadLargeFile(Stream file, string uploadApiUrl, string completeApiUrl, Action<double>? onProgressChanged,
         CancellationToken cancellationToken = default)
     {
-        var bufferSize = ChunkSize;
-        var buffer = new byte[bufferSize];
-        var chunkIndex = 1;
-        var partOfProgress = file.Length / bufferSize;
-        var fileName = "file" + Guid.NewGuid();
-
-        var semaphore = new SemaphoreSlim(0, 4);
-        var tasks = new List<Task>();
-        int bytesRead;
-        while ((bytesRead = await file.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+        if (ChunkSize <= 0)
         {
-            var task = Task.Run(async () =>
+            throw new InvalidOperationException("Chunk size must be configured via SetChunkSize before uploading large files.");
+        }
+
+        var uploadId = Guid.NewGuid().ToString("N");
+        var resolvedFileName = file is FileStream fs ? Path.GetFileName(fs.Name) : $"upload-{uploadId}";
+        var contentType = MimeHelper.GetMimeType(resolvedFileName);
+
+        var chunkSize = (int)Math.Min(ChunkSize, int.MaxValue);
+        var totalBytes = file.CanSeek ? file.Length : -1;
+        var totalChunks = totalBytes > 0 ? (int)Math.Ceiling(totalBytes / (double)ChunkSize) : 0;
+
+        var buffer = new byte[chunkSize];
+        var chunkIndex = 1;
+        long transmitted = 0;
+        var started = Stopwatch.StartNew();
+
+        if (file.CanSeek)
+        {
+            file.Seek(0, SeekOrigin.Begin);
+        }
+
+        var crcState = Crc32Helper.Begin();
+
+        int bytesRead;
+        while ((bytesRead = await file.ReadAsync(buffer.AsMemory(0, chunkSize), cancellationToken)) > 0)
+        {
+            var chunkBytes = new byte[bytesRead];
+            Buffer.BlockCopy(buffer, 0, chunkBytes, 0, bytesRead);
+
+            crcState = Crc32Helper.Update(crcState, chunkBytes);
+
+            using var memoryStream = new MemoryStream(chunkBytes, writable: false);
+            using var content = new StreamContent(memoryStream);
+            using var formData = new MultipartFormDataContent();
+
+            formData.Add(content, "File", resolvedFileName);
+            formData.Add(new StringContent(uploadId), "Payload.UploadId");
+            formData.Add(new StringContent(resolvedFileName), "Payload.FileName");
+            formData.Add(new StringContent(contentType), "Payload.ContentType");
+            formData.Add(new StringContent((totalBytes > 0 ? totalBytes : 0).ToString()), "Payload.FileSize");
+            formData.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
+            formData.Add(new StringContent(bytesRead.ToString()), "Payload.ChunkSize");
+            formData.Add(new StringContent(totalChunks.ToString()), "Payload.TotalChunks");
+
+            var response = await httpClient.PostAsync(uploadApiUrl, formData, cancellationToken);
+            if (!response.IsSuccessStatusCode)
             {
-                using (var memoryStream = new MemoryStream(buffer, 0, bytesRead))
-                {
-                    var content = new StreamContent(memoryStream);
-                    using (var formData = new MultipartFormDataContent())
-                    {
-                        formData.Add(content, "File", fileName);
-                        formData.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
-                        formData.Add(new StringContent(bufferSize.ToString()), "Payload.ChunkSize");
-                        await httpClient.PostAsync(uploadApiUrl, formData, cancellationToken);
-                    }
-                }
+                var message = await response.Content.ReadAsStringAsync(cancellationToken);
+                return Result<uint>.Fail(response.StatusCode, message);
+            }
 
-                semaphore.Release();
-            }, cancellationToken);
+            transmitted += bytesRead;
+            var progressFraction = totalBytes > 0
+                ? Math.Min((double)transmitted / totalBytes, 1d)
+                : 0d;
+            onProgressChanged?.Invoke(progressFraction * 100d);
 
-            await semaphore.WaitAsync(cancellationToken);
-            tasks.Add(task);
-            onProgressChanged?.Invoke(partOfProgress * chunkIndex);
+            var elapsed = started.Elapsed;
+            var speed = elapsed.TotalSeconds > 0 ? transmitted / elapsed.TotalSeconds : transmitted;
+            var remaining = progressFraction > 0 && totalBytes > 0
+                ? TimeSpan.FromSeconds((totalBytes - transmitted) / speed)
+                : TimeSpan.Zero;
+
+            OnProgressStatusChanged?.Invoke(this, new ProgressStatus(
+                resolvedFileName,
+                (float)progressFraction,
+                totalBytes,
+                transmitted,
+                elapsed,
+                remaining,
+                $"{speed:F2} B/s"));
+
             chunkIndex++;
         }
 
-        await Task.WhenAll(tasks.ToArray());
+        var completePayload = new ChunkUploadCompleteRequestDto
+        {
+            UploadId = uploadId,
+            FileName = resolvedFileName,
+            ContentType = contentType,
+            Directory = null,
+            Metadata = null,
+            CommitToStorage = true,
+            KeepMergedFile = false
+        };
 
-        var mergeResult = await httpClient.PostAsync(completeApiUrl, JsonContent.Create(fileName), cancellationToken);
+        var mergeResult = await httpClient.PostAsJsonAsync(completeApiUrl, completePayload, cancellationToken);
+        if (!mergeResult.IsSuccessStatusCode)
+        {
+            var message = await mergeResult.Content.ReadAsStringAsync(cancellationToken);
+            return Result<uint>.Fail(mergeResult.StatusCode, message);
+        }
 
-        return await mergeResult.Content.ReadFromJsonAsync<Result<uint>>(cancellationToken: cancellationToken);
+        var completionJson = await mergeResult.Content.ReadAsStringAsync(cancellationToken);
+        using var jsonDocument = JsonDocument.Parse(completionJson);
+        var root = jsonDocument.RootElement;
+
+        if (!root.TryGetProperty("isSuccess", out var successElement) || !successElement.GetBoolean())
+        {
+            if (root.TryGetProperty("problem", out var problemElement))
+            {
+                var title = problemElement.TryGetProperty("title", out var titleElement) ? titleElement.GetString() : "Chunk upload completion failed";
+                return Result<uint>.Fail(title ?? "Chunk upload completion failed");
+            }
+
+            return Result<uint>.Fail("Chunk upload completion failed");
+        }
+
+        if (!root.TryGetProperty("value", out var valueElement))
+        {
+            return Result<uint>.Fail("Chunk upload completion response is missing the value payload");
+        }
+
+        uint checksum;
+
+        switch (valueElement.ValueKind)
+        {
+            case JsonValueKind.Number:
+                checksum = valueElement.GetUInt32();
+                break;
+            case JsonValueKind.Object:
+            {
+                try
+                {
+                    var dto = JsonSerializer.Deserialize<ChunkUploadCompleteResponseDto>(valueElement.GetRawText());
+                    if (dto == null)
+                    {
+                        return Result<uint>.Fail("Chunk upload completion response is empty");
+                    }
+
+                    checksum = dto.Checksum;
+                    break;
+                }
+                catch (JsonException ex)
+                {
+                    return Result<uint>.Fail(ex);
+                }
+            }
+            case JsonValueKind.String when uint.TryParse(valueElement.GetString(), out var parsed):
+                checksum = parsed;
+                break;
+            default:
+                return Result<uint>.Fail("Chunk upload completion response could not be parsed");
+        }
+
+        var computedChecksum = Crc32Helper.Complete(crcState);
+        var finalChecksum = checksum;
+
+        if (checksum == 0 && computedChecksum != 0)
+        {
+            finalChecksum = computedChecksum;
+        }
+        else if (checksum != 0 && checksum != computedChecksum)
+        {
+            finalChecksum = computedChecksum;
+        }
+
+        return Result<uint>.Succeed(finalChecksum);
     }
 
     public async Task<Result<Stream>> GetFileStream(string fileName, string apiUrl, CancellationToken cancellationToken = default)
@@ -201,4 +326,21 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
             return Result<Stream>.Fail(HttpStatusCode.InternalServerError);
         }
     }
+}
+
+file class ChunkUploadCompleteRequestDto
+{
+    public string UploadId { get; set; } = string.Empty;
+    public string? FileName { get; set; }
+    public string? Directory { get; set; }
+    public string? ContentType { get; set; }
+    public Dictionary<string, string>? Metadata { get; set; }
+    public bool CommitToStorage { get; set; }
+    public bool KeepMergedFile { get; set; }
+}
+
+file class ChunkUploadCompleteResponseDto
+{
+    public uint Checksum { get; set; }
+    public BlobMetadata? Metadata { get; set; }
 }

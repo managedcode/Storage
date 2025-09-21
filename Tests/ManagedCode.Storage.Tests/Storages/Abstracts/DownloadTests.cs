@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
 
@@ -19,12 +19,10 @@ public abstract class DownloadTests<T> : BaseContainer<T> where T : IContainer
 
         // Assert
         result.IsSuccess
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         result.Value!.FileInfo
             .Length
-            .Should()
-            .Be(fileInfo.Length);
+            .ShouldBe(fileInfo.Length);
 
         await Storage.DeleteAsync(fileInfo.Name);
     }

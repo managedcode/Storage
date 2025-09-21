@@ -43,11 +43,14 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
         if (cancellationToken.IsCancellationRequested)
             yield break;
 
-        var path = directory is null ? StorageClient : Path.Combine(StorageClient, directory);
-        if (!Directory.Exists(path))
+        var searchRoot = string.IsNullOrEmpty(directory)
+            ? StorageClient
+            : Path.Combine(StorageClient, directory!);
+
+        if (!Directory.Exists(searchRoot))
             yield break;
 
-        foreach (var file in Directory.EnumerateFiles(path))
+        foreach (var file in Directory.EnumerateFiles(searchRoot, "*", SearchOption.AllDirectories))
         {
             if (cancellationToken.IsCancellationRequested)
                 yield break;
@@ -234,8 +237,12 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             if (!fileInfo.Exists)
                 return Result<BlobMetadata>.Fail("File not found");
 
+            var relativePath = Path.GetRelativePath(StorageClient, filePath)
+                .Replace('\\', '/');
+
             var result = new BlobMetadata
             {
+                FullName = relativePath,
                 Name = fileInfo.Name,
                 Uri = new Uri(Path.Combine(StorageClient, filePath)),
                 MimeType = MimeHelper.GetMimeType(fileInfo.Extension),

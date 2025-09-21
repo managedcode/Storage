@@ -6,7 +6,9 @@
     <PropertyGroup>
         <VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
         <VSTestResultsDirectory>$(MSBuildThisFileDirectory)</VSTestResultsDirectory>
+        <NoWarn>1591</NoWarn>
     </PropertyGroup>
+    
     <ItemGroup>
         <None Update="xunit.runner.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -17,22 +19,23 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="FluentAssertions" Version="7.2.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.8" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.8" />
-        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="9.0.8" />
+        <PackageReference Include="Shouldly" Version="4.3.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="9.0.9" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
         <PackageReference Include="CsvHelper" Version="33.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.9" />
         <PackageReference Include="System.Linq.Async" Version="6.0.3" />
-        <PackageReference Include="Testcontainers" Version="4.6.0" />
-        <PackageReference Include="Testcontainers.Azurite" Version="4.6.0" />
-        <PackageReference Include="Testcontainers.FakeGcsServer" Version="4.6.0" />
-        <PackageReference Include="Testcontainers.LocalStack" Version="4.6.0" />
+        <PackageReference Include="Testcontainers" Version="4.7.0" />
+        <PackageReference Include="Testcontainers.Azurite" Version="4.7.0" />
+        <PackageReference Include="Testcontainers.FakeGcsServer" Version="4.7.0" />
+        <PackageReference Include="Testcontainers.LocalStack" Version="4.7.0" />
+        <PackageReference Include="Testcontainers.Sftp" Version="4.7.0" />
         <PackageReference Include="xunit" Version="2.9.3" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.3">
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
@@ -42,14 +45,15 @@
         </PackageReference>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\Integraions\ManagedCode.Storage.Client.SignalR\ManagedCode.Storage.Client.SignalR.csproj"/>
-        <ProjectReference Include="..\..\Integraions\ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj"/>
-        <ProjectReference Include="..\..\Integraions\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj"/>
-        <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
-        <ProjectReference Include="..\..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj"/>
-        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj"/>
+        <ProjectReference Include="..\..\Integraions\ManagedCode.Storage.Client.SignalR\ManagedCode.Storage.Client.SignalR.csproj" />
+        <ProjectReference Include="..\..\Integraions\ManagedCode.Storage.Client\ManagedCode.Storage.Client.csproj" />
+        <ProjectReference Include="..\..\Integraions\ManagedCode.Storage.Server\ManagedCode.Storage.Server.csproj" />
+        <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+        <ProjectReference Include="..\..\ManagedCode.Storage.VirtualFileSystem\ManagedCode.Storage.VirtualFileSystem.csproj" />
+        <ProjectReference Include="..\..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Sftp\ManagedCode.Storage.Sftp.csproj" />
     </ItemGroup>
 
 
 </Project>
-

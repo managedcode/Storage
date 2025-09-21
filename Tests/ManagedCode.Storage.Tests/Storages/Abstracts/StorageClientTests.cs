@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Client;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;
@@ -23,7 +23,7 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         _httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK);
-            if (request.Method == HttpMethod.Get && request.RequestUri.AbsoluteUri.Contains("loader.com"))
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsoluteUri.Contains("loader.com", StringComparison.Ordinal) == true)
             {
                 var contentStream = new MemoryStream();
                 using (var writer = new StreamWriter(contentStream))
@@ -51,10 +51,9 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var result = await _storageClient.DownloadFile(fileName, apiUrl);
 
         result.IsSuccess
-            .Should()
-            .BeTrue();
-        result.Should()
-            .BeNull();
+            .ShouldBeTrue();
+        result.Value
+            .ShouldNotBeNull();
     }
 
     [Fact]
@@ -66,11 +65,8 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var result = await _storageClient.DownloadFile(fileName, apiUrl);
 
         result.IsSuccess
-            .Should()
-            .BeFalse();
-        result.Value
-            .Should()
-            .BeNull();
+            .ShouldBeFalse();
+        result.Value.ShouldBeNull();
     }
 
     [Fact]
@@ -82,11 +78,8 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var result = await _storageClient.DownloadFile(fileName, apiUrl + "/invalid-endpoint");
 
         result.IsSuccess
-            .Should()
-            .BeFalse();
-        result.Value
-            .Should()
-            .BeNull();
+            .ShouldBeFalse();
+        result.Value.ShouldBeNull();
     }
 
     private class FakeHttpMessageHandler : HttpMessageHandler

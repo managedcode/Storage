@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
@@ -35,20 +35,18 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
         await using var uploadStream = localFile.FileStream; // Get stream once
         var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
+        uploadFileBlob.IsSuccess.ShouldBeTrue();
+        var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         // Act
-        var downloadedFileResult = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, _downloadEndpoint);
+        var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadEndpoint);
 
         // Assert
         downloadedFileResult.IsSuccess
-            .Should()
-            .BeTrue();
-        downloadedFileResult.Value
-            .Should()
-            .NotBeNull();
-        var downloadedFileCRC = Crc32Helper.CalculateFileCrc(downloadedFileResult.Value.FilePath);
-        downloadedFileCRC.Should()
-            .Be(fileCRC);
+            .ShouldBeTrue();
+        var downloadedLocal = downloadedFileResult.Value ?? throw new InvalidOperationException("Download result does not contain a file");
+        var downloadedFileCRC = Crc32Helper.CalculateFileCrc(downloadedLocal.FilePath);
+        downloadedFileCRC.ShouldBe(fileCRC);
     }
 
     [Fact]
@@ -63,15 +61,17 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
         await using var uploadStream = localFile.FileStream; // Get stream once
         var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
+        uploadFileBlob.IsSuccess.ShouldBeTrue();
+        var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         // Act
-        var downloadedFileResult = await storageClient.DownloadFile(uploadFileBlob.Value.FullName, _downloadBytesEndpoint);
+        var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadBytesEndpoint);
 
         // Assert
-        downloadedFileResult.IsSuccess.Should().BeTrue();
-        downloadedFileResult.Value.Should().NotBeNull();
-        var downloadedFileCRC = Crc32Helper.CalculateFileCrc(downloadedFileResult.Value.FilePath);
-        downloadedFileCRC.Should().Be(fileCRC);
+        downloadedFileResult.IsSuccess.ShouldBeTrue();
+        var downloadedLocal = downloadedFileResult.Value ?? throw new InvalidOperationException("Download result does not contain a file");
+        var downloadedFileCRC = Crc32Helper.CalculateFileCrc(downloadedLocal.FilePath);
+        downloadedFileCRC.ShouldBe(fileCRC);
     }
 
     [Fact]
@@ -86,11 +86,9 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
 
         // Assert
         downloadedFileResult.IsFailed
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         downloadedFileResult.Problem
             ?.StatusCode
-            .Should()
-            .Be((int)HttpStatusCode.InternalServerError);
+            .ShouldBe((int)HttpStatusCode.InternalServerError);
     }
 }

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Tests.Common;
@@ -34,24 +34,23 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
         await using var uploadStream = localFile.FileStream; // Get stream once
         var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
+        uploadFileBlob.IsSuccess.ShouldBeTrue();
+        var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         // Act
-        var streamFileResult = await storageClient.GetFileStream(uploadFileBlob.Value.FullName, _streamEndpoint);
+        var streamFileResult = await storageClient.GetFileStream(uploadedMetadata.FullName, _streamEndpoint);
 
         // Assert
         streamFileResult.IsSuccess
-            .Should()
-            .BeTrue();
-        streamFileResult.Should()
-            .NotBeNull();
+            .ShouldBeTrue();
+        var streamedValue = streamFileResult.Value ?? throw new InvalidOperationException("Stream result does not contain a stream");
 
-        await using var stream = streamFileResult.Value;
+        await using var stream = streamedValue;
         await using var newLocalFile = await LocalFile.FromStreamAsync(stream, Path.GetTempPath(), Guid.NewGuid()
             .ToString("N") + extension);
 
         var streamedFileCRC = Crc32Helper.CalculateFileCrc(newLocalFile.FilePath);
-        streamedFileCRC.Should()
-            .Be(fileCRC);
+        streamedFileCRC.ShouldBe(fileCRC);
     }
 
     [Fact]
@@ -66,11 +65,9 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
 
         // Assert
         streamFileResult.IsFailed
-            .Should()
-            .BeTrue();
+            .ShouldBeTrue();
         streamFileResult.Problem
             ?.StatusCode
-            .Should()
-            .Be((int)HttpStatusCode.InternalServerError);
+            .ShouldBe((int)HttpStatusCode.InternalServerError);
     }
 }
