@@ -1,4 +1,5 @@
 using Azure.Core;
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -14,6 +15,7 @@ public class AzureStorageCredentialsOptions : IAzureStorageOptions
     public string? Container { get; set; }
     public PublicAccessType PublicAccessType { get; set; }
     public BlobClientOptions? OriginalOptions { get; set; }
+    public StorageTransferOptions? UploadTransferOptions { get; set; }
 
     public bool CreateContainerIfNotExists { get; set; } = true;
 }

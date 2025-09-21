@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
@@ -21,6 +22,13 @@ namespace ManagedCode.Storage.Azure;
 public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? logger = default)
     : BaseStorage<BlobContainerClient, IAzureStorageOptions>(options), IAzureStorage
 {
+    private static readonly StorageTransferOptions DefaultUploadTransferOptions = new()
+    {
+        MaximumConcurrency = 1,
+        InitialTransferSize = 4 * 1024 * 1024,
+        MaximumTransferSize = 4 * 1024 * 1024
+    };
+
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -225,6 +233,8 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
             }
         };
 
+        uploadOptions.TransferOptions = ResolveUploadTransferOptions();
+
         try
         {
             await EnsureContainerExist(cancellationToken);
@@ -241,6 +251,11 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
             logger.LogException(ex);
             return Result<BlobMetadata>.Fail(ex);
         }
+    }
+
+    private StorageTransferOptions ResolveUploadTransferOptions()
+    {
+        return StorageOptions.UploadTransferOptions ?? DefaultUploadTransferOptions;
     }
 
     protected override async Task<Result<LocalFile>> DownloadInternalAsync(LocalFile localFile, DownloadOptions options,
