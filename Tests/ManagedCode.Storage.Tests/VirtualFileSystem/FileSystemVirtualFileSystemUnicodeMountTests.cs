@@ -22,7 +22,7 @@ public sealed class FileSystemVirtualFileSystemUnicodeMountTests
         string fileName,
         string content)
     {
-        var rootFolder = Path.Combine(Path.GetTempPath(), "managedcode-vfs-existing", Guid.NewGuid().ToString("N"));
+        var rootFolder = Path.Combine(Directory.GetCurrentDirectory(), "managedcode-vfs-existing", Guid.NewGuid().ToString("N"));
         var internationalFolder = Path.Combine(rootFolder, "international", directoryName);
         Directory.CreateDirectory(internationalFolder);
 

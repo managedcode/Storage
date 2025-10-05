@@ -15,7 +15,7 @@ namespace ManagedCode.Storage.Tests.VirtualFileSystem;
 
 public class VirtualFileSystemManagerTests : IAsyncLifetime
 {
-    private readonly string _basePath = Path.Combine(Path.GetTempPath(), "managedcode-vfs-manager", Guid.NewGuid().ToString());
+    private readonly string _basePath = Path.Combine(Directory.GetCurrentDirectory(), "managedcode-vfs-manager", Guid.NewGuid().ToString());
     private ServiceProvider _serviceProvider = null!;
     private IStorage _storage = null!;
 
