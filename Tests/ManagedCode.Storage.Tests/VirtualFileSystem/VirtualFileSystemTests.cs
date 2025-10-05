@@ -29,15 +29,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     private Task<VirtualFileSystemTestContext> CreateContextAsync() => _fixture.CreateContextAsync();
     private VirtualFileSystemCapabilities Capabilities => _fixture.Capabilities;
 
-    public static IEnumerable<object[]> UnicodeFolderTestCases => new[]
-    {
-        new object[] { "Українська-папка", "лист-привіт", "Привіт з Києва!" },
-        new object[] { "中文目錄", "測試文件", "雲端中的內容" },
-        new object[] { "日本語ディレクトリ", "テストファイル", "東京からこんにちは" },
-        new object[] { "한국어_폴더", "테스트-파일", "부산에서 안녕하세요" },
-        new object[] { "emoji📁", "😀-файл", "multi🌐lingual content" }
-    };
-
     [Fact]
     public async Task WriteAndReadFile_ShouldRoundtrip()
     {
@@ -188,7 +179,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     }
 
     [Theory]
-    [MemberData(nameof(UnicodeFolderTestCases))]
+    [MemberData(nameof(UnicodeVfsTestCases.FolderScenarios), MemberType = typeof(UnicodeVfsTestCases))]
     public async Task WriteAndReadFile_WithUnicodeDirectories_ShouldRoundtrip(
         string directoryName,
         string fileName,
