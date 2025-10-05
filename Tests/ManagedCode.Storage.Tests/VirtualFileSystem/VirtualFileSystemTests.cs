@@ -32,11 +32,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task WriteAndReadFile_ShouldRoundtrip()
     {
-        if (!Capabilities.Enabled)
-        {
-            return;
-        }
-
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
@@ -52,11 +47,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task FileExistsAsync_ShouldCacheResults()
     {
-        if (!Capabilities.Enabled)
-        {
-            return;
-        }
-
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
         var metadataManager = context.MetadataManager;
@@ -79,7 +69,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task ListAsync_ShouldEnumerateAllEntries()
     {
-        if (!Capabilities.Enabled || !Capabilities.SupportsListing)
+        if (!Capabilities.SupportsListing)
         {
             return;
         }
@@ -116,11 +106,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task DeleteFile_ShouldRemoveFromUnderlyingStorage()
     {
-        if (!Capabilities.Enabled)
-        {
-            return;
-        }
-
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
         var metadataManager = context.MetadataManager;
@@ -149,11 +134,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task GetMetadataAsync_ShouldCacheCustomMetadata()
     {
-        if (!Capabilities.Enabled)
-        {
-            return;
-        }
-
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
         var metadataManager = context.MetadataManager;
@@ -185,11 +165,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         string fileName,
         string content)
     {
-        if (!Capabilities.Enabled)
-        {
-            return;
-        }
-
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
@@ -230,7 +205,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task DeleteDirectoryAsync_NonRecursive_ShouldPreserveNestedContent()
     {
-        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryDelete)
+        if (!Capabilities.SupportsDirectoryDelete)
         {
             return;
         }
@@ -251,7 +226,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task DeleteDirectoryAsync_Recursive_ShouldRemoveAllContent()
     {
-        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryDelete)
+        if (!Capabilities.SupportsDirectoryDelete)
         {
             return;
         }
@@ -272,7 +247,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task MoveAsync_ShouldRelocateFile()
     {
-        if (!Capabilities.Enabled || !Capabilities.SupportsMove)
+        if (!Capabilities.SupportsMove)
         {
             return;
         }
@@ -298,7 +273,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task CopyAsync_ShouldCopyDirectoryRecursively()
     {
-        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryCopy)
+        if (!Capabilities.SupportsDirectoryCopy)
         {
             return;
         }
@@ -331,11 +306,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task ReadRangeAsync_ShouldReturnSlice()
     {
-        if (!Capabilities.Enabled)
-        {
-            return;
-        }
-
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
@@ -349,7 +319,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task ListAsync_WithDirectoryFilter_ShouldExcludeDirectoriesWhenRequested()
     {
-        if (!Capabilities.Enabled || !Capabilities.SupportsListing)
+        if (!Capabilities.SupportsListing)
         {
             return;
         }
@@ -381,7 +351,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [Fact]
     public async Task DirectoryStats_ShouldAggregateInformation()
     {
-        if (!Capabilities.Enabled || !Capabilities.SupportsDirectoryStats)
+        if (!Capabilities.SupportsDirectoryStats)
         {
             return;
         }
@@ -407,11 +377,6 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     [InlineData(5)]
     public async Task LargeFile_ShouldRoundTripViaStreams(int gigabytes)
     {
-        if (!Capabilities.Enabled)
-        {
-            return;
-        }
-
         var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
 
         await using var context = await CreateContextAsync();
