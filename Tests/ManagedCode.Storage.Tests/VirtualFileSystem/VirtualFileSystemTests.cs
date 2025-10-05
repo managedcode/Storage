@@ -29,6 +29,15 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     private Task<VirtualFileSystemTestContext> CreateContextAsync() => _fixture.CreateContextAsync();
     private VirtualFileSystemCapabilities Capabilities => _fixture.Capabilities;
 
+    public static IEnumerable<object[]> UnicodeFolderTestCases => new[]
+    {
+        new object[] { "Українська-папка", "лист-привіт", "Привіт з Києва!" },
+        new object[] { "中文目錄", "測試文件", "雲端中的內容" },
+        new object[] { "日本語ディレクトリ", "テストファイル", "東京からこんにちは" },
+        new object[] { "한국어_폴더", "테스트-파일", "부산에서 안녕하세요" },
+        new object[] { "emoji📁", "😀-файл", "multi🌐lingual content" }
+    };
+
     [Fact]
     public async Task WriteAndReadFile_ShouldRoundtrip()
     {
@@ -176,6 +185,55 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         var secondLookup = await file.GetMetadataAsync();
         secondLookup.ShouldContainKey("region");
         metadataManager.CustomMetadataRequests.ShouldBe(0);
+    }
+
+    [Theory]
+    [MemberData(nameof(UnicodeFolderTestCases))]
+    public async Task WriteAndReadFile_WithUnicodeDirectories_ShouldRoundtrip(
+        string directoryName,
+        string fileName,
+        string content)
+    {
+        if (!Capabilities.Enabled)
+        {
+            return;
+        }
+
+        await using var context = await CreateContextAsync();
+        var vfs = context.FileSystem;
+
+        var path = new VfsPath($"/international/{directoryName}/{fileName}.txt");
+        var file = await vfs.GetFileAsync(path);
+
+        await file.WriteAllTextAsync(content);
+
+        (await file.ReadAllTextAsync()).ShouldBe(content);
+        file.Path.GetFileName().ShouldBe($"{fileName}.txt");
+        file.Path.GetFileNameWithoutExtension().ShouldBe(fileName);
+        file.Path.GetExtension().ShouldBe(".txt");
+        file.Path.GetParent().Value.ShouldBe($"/international/{directoryName}");
+        file.Path.ToBlobKey().ShouldBe($"international/{directoryName}/{fileName}.txt");
+
+        (await vfs.FileExistsAsync(path)).ShouldBeTrue();
+
+        if (Capabilities.SupportsListing)
+        {
+            var entries = new List<IVfsNode>();
+            await foreach (var entry in vfs.ListAsync(new VfsPath($"/international/{directoryName}"), new ListOptions
+            {
+                IncludeFiles = true,
+                IncludeDirectories = false,
+                Recursive = false
+            }))
+            {
+                entries.Add(entry);
+            }
+
+            entries.ShouldContain(e => e.Path.Value == path.Value);
+        }
+
+        (await file.DeleteAsync()).ShouldBeTrue();
+        (await vfs.FileExistsAsync(path)).ShouldBeFalse();
     }
 
     [Fact]
