@@ -38,7 +38,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
         uploadStream2.Write(zeroByteBuffer);
         var filenameToUse = "UploadAsync_AsStream_CorrectlyOverwritesFiles.bin";
 
-        var temporaryDirectory = Path.GetTempPath();
+        var temporaryDirectory = Environment.CurrentDirectory;
 
         // Act
         var firstResult = await Storage.UploadAsync(uploadStream1, options =>

@@ -68,9 +68,11 @@ public class SftpStorageOptions : IStorageOptions
     public string? PrivateKeyContent { get; set; }
 
     /// <summary>
-    /// Accept any host key presented by the server (not recommended for production).
+    /// Accept any host key presented by the server.
+    /// WARNING: Setting this to true is INSECURE and should only be used for development/testing.
+    /// In production, always set this to false and provide a valid HostKeyFingerprint.
     /// </summary>
-    public bool AcceptAnyHostKey { get; set; } = true;
+    public bool AcceptAnyHostKey { get; set; } = false;
 
     /// <summary>
     /// Expected host key fingerprint when <see cref="AcceptAnyHostKey"/> is <c>false</c>.

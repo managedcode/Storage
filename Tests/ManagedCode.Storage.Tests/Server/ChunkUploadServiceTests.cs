@@ -15,7 +15,7 @@ namespace ManagedCode.Storage.Tests.Server;
 
 public class ChunkUploadServiceTests : IAsyncLifetime
 {
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "managedcode-chunk-tests", Guid.NewGuid().ToString());
+    private readonly string _root = Path.Combine(Environment.CurrentDirectory, "managedcode-chunk-tests", Guid.NewGuid().ToString());
     private ChunkUploadOptions _options = null!;
 
     public Task InitializeAsync()

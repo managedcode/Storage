@@ -9,7 +9,7 @@ namespace ManagedCode.Storage.Tests.VirtualFileSystem.Fixtures;
 
 public sealed class FileSystemVirtualFileSystemFixture : IVirtualFileSystemFixture, IAsyncLifetime
 {
-    private readonly string _rootPath = Path.Combine(Path.GetTempPath(), "managedcode-vfs-matrix", Guid.NewGuid().ToString("N"));
+    private readonly string _rootPath = Path.Combine(Directory.GetCurrentDirectory(), "managedcode-vfs-matrix", Guid.NewGuid().ToString("N"));
 
     public VirtualFileSystemCapabilities Capabilities { get; } = new();
 
