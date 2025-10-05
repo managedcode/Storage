@@ -55,12 +55,48 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             if (cancellationToken.IsCancellationRequested)
                 yield break;
 
-            var blobMetadata = await GetBlobMetadataAsync(file, cancellationToken);
+            var relativePath = Path.GetRelativePath(StorageClient, file)
+                .Replace('\\', '/');
+
+            var (relativeDirectory, relativeFileName) = SplitRelativePath(relativePath);
+            MetadataOptions options = new()
+            {
+                FileName = relativeFileName,
+                Directory = relativeDirectory
+            };
+
+            var blobMetadata = await GetBlobMetadataAsync(options, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             if (blobMetadata.IsSuccess)
+            {
                 yield return blobMetadata.Value;
+                continue;
+            }
         }
+    }
+
+    private static (string? Directory, string FileName) SplitRelativePath(string relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath))
+            throw new ArgumentException("Relative path cannot be null or empty", nameof(relativePath));
+
+        var normalizedPath = relativePath.Replace('\\', '/');
+        var separatorIndex = normalizedPath.LastIndexOf('/');
+
+        if (separatorIndex < 0)
+            return (null, normalizedPath);
+
+        var directory = separatorIndex == 0
+            ? null
+            : normalizedPath[..separatorIndex];
+
+        var fileName = normalizedPath[(separatorIndex + 1)..];
+
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new InvalidOperationException($"Invalid relative path: '{relativePath}'");
+
+        return (string.IsNullOrWhiteSpace(directory) ? null : directory, fileName);
     }
 
     public override async Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
@@ -315,19 +351,147 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
 
     private string GetPathFromOptions(BaseOptions options)
     {
-        string filePath;
-        if (options.Directory is not null)
+        if (string.IsNullOrWhiteSpace(options.FileName))
+            throw new ArgumentException("File name cannot be null or empty", nameof(options.FileName));
+
+        var (directoryFromFileName, fileNameOnly) = SplitDirectoryFromFileName(options.FileName);
+
+        // Sanitize and validate components
+        var sanitizedFileName = SanitizeFileName(fileNameOnly);
+
+        var combinedDirectory = CombineDirectoryParts(options.Directory, directoryFromFileName);
+        var sanitizedDirectory = combinedDirectory is not null
+            ? SanitizeDirectory(combinedDirectory)
+            : null;
+
+        if (sanitizedDirectory is not null)
         {
-            EnsureDirectoryExist(options.Directory);
-            filePath = Path.Combine(StorageClient, options.Directory, options.FileName);
-        }
-        else
-        {
-            filePath = Path.Combine(StorageClient, options.FileName);
+            EnsureDirectoryExist(sanitizedDirectory);
         }
 
-        EnsureDirectoryExist(Path.GetDirectoryName(filePath)!);
-        return filePath;
+        string filePath = sanitizedDirectory is not null
+            ? Path.Combine(StorageClient, sanitizedDirectory, sanitizedFileName)
+            : Path.Combine(StorageClient, sanitizedFileName);
+
+        // Get full paths for comparison
+        var fullPath = Path.GetFullPath(filePath);
+        var baseFullPath = Path.GetFullPath(StorageClient);
+
+        // Verify the final path is within StorageClient directory
+        if (!fullPath.StartsWith(baseFullPath, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new UnauthorizedAccessException($"Access to path '{options.FileName}' is denied. Path traversal detected.");
+        }
+
+        EnsureDirectoryExist(Path.GetDirectoryName(fullPath)!);
+        return fullPath;
+    }
+
+    private static (string? Directory, string FileName) SplitDirectoryFromFileName(string fileName)
+    {
+        var normalized = fileName.Replace('\\', '/');
+        var lastSlash = normalized.LastIndexOf('/');
+
+        if (lastSlash < 0)
+            return (null, normalized);
+
+        var directory = normalized[..lastSlash];
+        var name = normalized[(lastSlash + 1)..];
+        return (directory, name);
+    }
+
+    private static string? CombineDirectoryParts(string? primary, string? secondary)
+    {
+        var parts = new List<string>();
+
+        void AddPart(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return;
+
+            var normalized = value.Replace('\\', '/');
+            foreach (var segment in normalized.Split('/', StringSplitOptions.RemoveEmptyEntries))
+            {
+                parts.Add(segment);
+            }
+        }
+
+        AddPart(primary);
+        AddPart(secondary);
+
+        if (parts.Count == 0)
+            return null;
+
+        return string.Join('/', parts);
+    }
+
+    private static string SanitizeFileName(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new ArgumentException("File name cannot be null or empty", nameof(fileName));
+
+        var originalFileName = fileName;
+
+        // Check for path traversal attempts - throw exception if detected
+        if (fileName.Contains("..", StringComparison.Ordinal))
+            throw new UnauthorizedAccessException($"Access to path '{originalFileName}' is denied. Path traversal detected.");
+
+        // If there are path separators, extract only the filename part
+        // This handles cases like /tmp/file.txt -> file.txt
+        if (fileName.Contains('/') || fileName.Contains('\\'))
+        {
+            fileName = Path.GetFileName(fileName);
+        }
+
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new ArgumentException("Invalid file name", nameof(fileName));
+
+        // Remove any invalid filename characters
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = fileName;
+        foreach (var c in invalidChars)
+        {
+            sanitized = sanitized.Replace(c.ToString(), string.Empty);
+        }
+
+        if (string.IsNullOrWhiteSpace(sanitized))
+            throw new ArgumentException("File name contains only invalid characters", nameof(fileName));
+
+        return sanitized;
+    }
+
+    private static string SanitizeDirectory(string directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory))
+            return string.Empty;
+
+        var originalDirectory = directory;
+
+        // Check for path traversal attempts - throw exception if detected
+        if (directory.Contains("..", StringComparison.Ordinal))
+            throw new UnauthorizedAccessException($"Access to path '{originalDirectory}' is denied. Path traversal detected.");
+
+        // Normalize path separators
+        directory = directory.Replace('\\', '/');
+
+        // Remove leading and trailing slashes
+        directory = directory.Trim('/');
+
+        // Validate each directory segment
+        var segments = directory.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var invalidChars = Path.GetInvalidFileNameChars();
+
+        foreach (var segment in segments)
+        {
+            if (segment.IndexOfAny(invalidChars) >= 0)
+                throw new ArgumentException($"Directory path contains invalid characters: {segment}", nameof(directory));
+
+            // Additional check for suspicious segments
+            if (segment == ".." || segment == ".")
+                throw new UnauthorizedAccessException($"Access to path '{originalDirectory}' is denied. Path traversal detected.");
+        }
+
+        return string.Join(Path.DirectorySeparatorChar, segments);
     }
 
     private void EnsureDirectoryExist(string directory)

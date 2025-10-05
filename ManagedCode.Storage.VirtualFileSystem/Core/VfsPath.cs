@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace ManagedCode.Storage.VirtualFileSystem.Core;
 
@@ -95,6 +96,14 @@ public readonly struct VfsPath : IEquatable<VfsPath>
     /// </summary>
     private static string NormalizePath(string path)
     {
+        // Security: Check for null bytes (potential security issue)
+        if (path.Contains('\0'))
+            throw new ArgumentException("Path contains null bytes", nameof(path));
+
+        // Security: Check for control characters
+        if (path.Any(c => char.IsControl(c) && c != '\t' && c != '\r' && c != '\n'))
+            throw new ArgumentException("Path contains control characters", nameof(path));
+
         // 1. Replace backslashes with forward slashes
         path = path.Replace('\\', '/');
 

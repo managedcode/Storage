@@ -47,7 +47,10 @@ public sealed class ChunkUploadService
         var descriptor = payload.Payload;
         var uploadId = ChunkUploadDescriptor.ResolveUploadId(descriptor);
 
-        var session = _sessions.GetOrAdd(uploadId, static (key, state) =>
+        // Sanitize upload ID to prevent path traversal
+        var sanitizedUploadId = SanitizeUploadId(uploadId);
+
+        var session = _sessions.GetOrAdd(sanitizedUploadId, static (key, state) =>
         {
             var descriptor = state.Payload;
             var workingDirectory = Path.Combine(state.Options.TempPath, key);
@@ -149,6 +152,29 @@ public sealed class ChunkUploadService
         {
             session.Cleanup();
         }
+    }
+
+    private static string SanitizeUploadId(string uploadId)
+    {
+        if (string.IsNullOrWhiteSpace(uploadId))
+            throw new ArgumentException("Upload ID cannot be null or empty", nameof(uploadId));
+
+        // Remove any path traversal sequences
+        uploadId = uploadId.Replace("..", string.Empty, StringComparison.Ordinal);
+        uploadId = uploadId.Replace("/", string.Empty, StringComparison.Ordinal);
+        uploadId = uploadId.Replace("\\", string.Empty, StringComparison.Ordinal);
+
+        // Only allow alphanumeric characters, hyphens, and underscores
+        var allowedChars = uploadId.Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_').ToArray();
+        var sanitized = new string(allowedChars);
+
+        if (string.IsNullOrWhiteSpace(sanitized))
+            throw new ArgumentException("Upload ID contains only invalid characters", nameof(uploadId));
+
+        if (sanitized.Length > 128)
+            throw new ArgumentException("Upload ID is too long", nameof(uploadId));
+
+        return sanitized;
     }
 
     private static async Task MergeChunksAsync(string destinationFile, IReadOnlyCollection<string> chunkFiles, CancellationToken cancellationToken)

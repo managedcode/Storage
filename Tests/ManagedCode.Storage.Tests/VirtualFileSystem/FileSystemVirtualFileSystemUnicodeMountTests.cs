@@ -79,6 +79,7 @@ public sealed class FileSystemVirtualFileSystemUnicodeMountTests
             entries.Add(entry);
         }
 
-        entries.ShouldContain(e => e.Path.Value == expectedPath.Value);
+        var entryPaths = entries.ConvertAll(e => e.Path.Value);
+        entries.ShouldContain(e => e.Path.Value == expectedPath.Value, $"Entries: {string.Join(", ", entryPaths)}");
     }
 }
