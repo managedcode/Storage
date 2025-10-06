@@ -57,6 +57,13 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
             return Result<BlobMetadata>.Fail(HttpStatusCode.BadRequest, "File payload is missing");
         }
 
+        // Validate file size if enabled
+        if (_options.EnableFileSizeValidation && _options.MaxFileSize > 0 && file.Length > _options.MaxFileSize)
+        {
+            return Result<BlobMetadata>.Fail(HttpStatusCode.RequestEntityTooLarge,
+                $"File size {file.Length} bytes exceeds maximum allowed size of {_options.MaxFileSize} bytes");
+        }
+
         try
         {
             return await Result.From(() => this.UploadFormFileAsync(Storage, file, cancellationToken: cancellationToken), cancellationToken);
@@ -164,6 +171,13 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
             return Result.Fail(HttpStatusCode.BadRequest, "UploadId is required");
         }
 
+        // Validate chunk size if enabled
+        if (_options.EnableFileSizeValidation && _options.MaxChunkSize > 0 && payload.File.Length > _options.MaxChunkSize)
+        {
+            return Result.Fail(HttpStatusCode.RequestEntityTooLarge,
+                $"Chunk size {payload.File.Length} bytes exceeds maximum allowed chunk size of {_options.MaxChunkSize} bytes");
+        }
+
         return await ChunkUploadService.AppendChunkAsync(payload, cancellationToken);
     }
 
@@ -229,6 +243,16 @@ public class StorageServerOptions
     public const int DefaultMultipartBoundaryLengthLimit = 70;
 
     /// <summary>
+    /// Default maximum file size: 100 MB.
+    /// </summary>
+    public const long DefaultMaxFileSize = 100 * 1024 * 1024;
+
+    /// <summary>
+    /// Default maximum chunk size: 10 MB.
+    /// </summary>
+    public const long DefaultMaxChunkSize = 10 * 1024 * 1024;
+
+    /// <summary>
     /// Gets or sets a value indicating whether range processing is enabled for streaming responses.
     /// </summary>
     public bool EnableRangeProcessing { get; set; } = true;
@@ -242,4 +266,22 @@ public class StorageServerOptions
     /// Gets or sets the maximum allowed length for multipart boundaries when parsing raw upload streams.
     /// </summary>
     public int MultipartBoundaryLengthLimit { get; set; } = DefaultMultipartBoundaryLengthLimit;
+
+    /// <summary>
+    /// Gets or sets the maximum file size in bytes that can be uploaded. Set to 0 to disable the limit.
+    /// Default is 100 MB.
+    /// </summary>
+    public long MaxFileSize { get; set; } = DefaultMaxFileSize;
+
+    /// <summary>
+    /// Gets or sets the maximum chunk size in bytes for chunk uploads. Set to 0 to disable the limit.
+    /// Default is 10 MB.
+    /// </summary>
+    public long MaxChunkSize { get; set; } = DefaultMaxChunkSize;
+
+    /// <summary>
+    /// Gets or sets whether file size validation is enabled.
+    /// Default is true.
+    /// </summary>
+    public bool EnableFileSizeValidation { get; set; } = true;
 }

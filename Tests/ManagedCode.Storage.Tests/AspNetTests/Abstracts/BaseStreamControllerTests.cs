@@ -46,7 +46,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         var streamedValue = streamFileResult.Value ?? throw new InvalidOperationException("Stream result does not contain a stream");
 
         await using var stream = streamedValue;
-        await using var newLocalFile = await LocalFile.FromStreamAsync(stream, Path.GetTempPath(), Guid.NewGuid()
+        await using var newLocalFile = await LocalFile.FromStreamAsync(stream, Environment.CurrentDirectory, Guid.NewGuid()
             .ToString("N") + extension);
 
         var streamedFileCRC = Crc32Helper.CalculateFileCrc(newLocalFile.FilePath);

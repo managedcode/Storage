@@ -98,7 +98,33 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
             await EnsureContainerExist(cancellationToken);
 
             if (urlSigner == null)
-                return Result<Stream>.Fail("Google credentials are required to get stream");
+            {
+                var tempFile = LocalFile.FromTempFile();
+
+                try
+                {
+                    await using (var writableStream = tempFile.FileStream)
+                    {
+                        writableStream.SetLength(0);
+
+                        await StorageClient.DownloadObjectAsync(
+                            StorageOptions.BucketOptions.Bucket,
+                            fileName,
+                            writableStream,
+                            cancellationToken: cancellationToken);
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    var downloadStream = tempFile.OpenReadStream();
+                    return Result<Stream>.Succeed(downloadStream);
+                }
+                catch
+                {
+                    await tempFile.DisposeAsync();
+                    throw;
+                }
+            }
 
             var signedUrl = urlSigner.Sign(StorageOptions.BucketOptions.Bucket, fileName, TimeSpan.FromHours(1), HttpMethod.Get);
             cancellationToken.ThrowIfCancellationRequested();
@@ -289,7 +315,8 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
 
             return Result<BlobMetadata>.Succeed(new BlobMetadata
             {
-                Name = obj.Name,
+                FullName = obj.Name,
+                Name = Path.GetFileName(obj.Name),
                 Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
                 Container = obj.Bucket,
                 CreatedOn = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => obj.TimeCreatedDateTimeOffset, () => obj.TimeCreated),
@@ -364,8 +391,7 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                 continue;
             }
         }
-    
+
         return defaultValue;
     }
-    
 }

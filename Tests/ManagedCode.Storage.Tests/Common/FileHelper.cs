@@ -24,7 +24,7 @@ public static class FileHelper
 
     public static LocalFile GenerateLocalFile(string fileName, int byteSize)
     {
-        var path = Path.Combine(Path.GetTempPath(), fileName);
+        var path = Path.Combine(Environment.CurrentDirectory, fileName);
         var localFile = new LocalFile(path);
 
         var fs = localFile.FileStream;

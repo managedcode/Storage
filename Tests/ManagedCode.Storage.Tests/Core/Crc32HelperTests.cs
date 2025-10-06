@@ -12,7 +12,7 @@ public class Crc32HelperTests
     [Fact]
     public void CalculateFileCrc_ShouldMatchInMemoryCalculation()
     {
-        var tempPath = Path.Combine(Path.GetTempPath(), $"crc-test-{Guid.NewGuid():N}.bin");
+        var tempPath = Path.Combine(Environment.CurrentDirectory, $"crc-test-{Guid.NewGuid():N}.bin");
         try
         {
             var payload = new byte[4096 + 123];

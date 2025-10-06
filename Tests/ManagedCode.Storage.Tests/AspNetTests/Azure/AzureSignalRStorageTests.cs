@@ -120,7 +120,7 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
 
         var expectedCrc = Crc32Helper.CalculateFileCrc(localFile.FilePath);
         memory.Position = 0;
-        await using var downloadedFile = await LocalFile.FromStreamAsync(memory, Path.GetTempPath(), Guid.NewGuid().ToString("N") + localFile.FileInfo.Extension);
+        await using var downloadedFile = await LocalFile.FromStreamAsync(memory, Environment.CurrentDirectory, Guid.NewGuid().ToString("N") + localFile.FileInfo.Extension);
         var downloadedCrc = Crc32Helper.CalculateFileCrc(downloadedFile.FilePath);
         downloadedCrc.ShouldBe(expectedCrc);
 
