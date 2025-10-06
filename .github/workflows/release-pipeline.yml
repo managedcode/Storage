@@ -1,0 +1,116 @@
+name: release-pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build_and_test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore ManagedCode.Storage.slnx
+
+      - name: Build
+        run: dotnet build ManagedCode.Storage.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build
+
+  publish_nuget:
+    name: Pack & Publish
+    if: github.ref == 'refs/heads/main'
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      package-version: ${{ steps.package_version.outputs.package_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Determine package version
+        id: package_version
+        shell: pwsh
+        run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $group = $props.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1
+          if (-not $group) {
+            Write-Error "Could not locate <Version> element in Directory.Build.props."
+          }
+          $version = $group.Version.Trim()
+          if (-not $version) {
+            Write-Error "Version property is empty in Directory.Build.props."
+          }
+          "package_version=$version" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Restore
+        run: dotnet restore ManagedCode.Storage.slnx
+
+      - name: Pack
+        run: dotnet pack ManagedCode.Storage.slnx --configuration Release --no-build -p:IncludeSymbols=false -p:SymbolPackageFormat=snupkg -o "packages"
+
+      - name: List packaged artifacts
+        run: ls -R "packages"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: packages
+
+      - name: Push packages to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "packages/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key $NUGET_API_KEY --skip-duplicate
+
+  create_release:
+    name: Tag & Release
+    needs: publish_nuget
+    if: needs.publish_nuget.result == 'success' && needs.publish_nuget.outputs.package-version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: packages
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.publish_nuget.outputs.package-version }}
+          name: ManagedCode.Storage v${{ needs.publish_nuget.outputs.package-version }}
+          artifacts: packages/*.nupkg,packages/*.snupkg
+          allowUpdates: true
+          makeLatest: true
+          generateReleaseNotes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
