@@ -2,74 +2,133 @@
 
 # ManagedCode.Storage
 
-[![.NET](https://github.com/managedcode/Storage/actions/workflows/dotnet.yml/badge.svg)](https://github.com/managedcode/Storage/actions/workflows/dotnet.yml)
-[![codecov](https://codecov.io/gh/managedcode/Storage/graph/badge.svg?token=OMKP91GPVD)](https://codecov.io/gh/managedcode/Storage)
-[![nuget](https://github.com/managedcode/Storage/actions/workflows/nuget.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/nuget.yml)
+[![CI](https://github.com/managedcode/Storage/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/ci.yml)
+[![Release](https://github.com/managedcode/Storage/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/release.yml)
 [![CodeQL](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml)
-
-[![Alert Status](https://sonarcloud.io/api/project_badges/measure?project=managedcode_Storage&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=managedcode_Storage)
+[![Codecov](https://codecov.io/gh/managedcode/Storage/graph/badge.svg?token=OMKP91GPVD)](https://codecov.io/gh/managedcode/Storage)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=managedcode_Storage&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=managedcode_Storage)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=managedcode_Storage&metric=coverage)](https://sonarcloud.io/summary/new_code?id=managedcode_Storage)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Core.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Core)
 
-| Version                                                                                                                                                          | Package                                                                                                     | Description      |
-|------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|------------------|
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Core.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Core)                         | [ManagedCode.Storage.Core](https://www.nuget.org/packages/ManagedCode.Storage.Core)                         | Core             |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem)             | [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem)             | FileSystem       |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Azure.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Azure)                       | [ManagedCode.Storage.Azure](https://www.nuget.org/packages/ManagedCode.Storage.Azure)                       | Azure            |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Aws.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Aws)                           | [ManagedCode.Storage.Aws](https://www.nuget.org/packages/ManagedCode.Storage.Aws)                           | AWS              |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                           | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp)                           | GCP              |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Sftp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Sftp)                         | [ManagedCode.Storage.Sftp](https://www.nuget.org/packages/ManagedCode.Storage.Sftp)                         | SFTP             |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.VirtualFileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.VirtualFileSystem) | [ManagedCode.Storage.VirtualFileSystem](https://www.nuget.org/packages/ManagedCode.Storage.VirtualFileSystem) | Virtual FS       |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Client.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Client)                   | [ManagedCode.Storage.Client](https://www.nuget.org/packages/ManagedCode.Storage.Client)                   | .NET Client      |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.AspNetExtensions.svg)](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | [ManagedCode.Storage.AspNetExtensions](https://www.nuget.org/packages/ManagedCode.Storage.AspNetExtensions) | AspNetExtensions |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Server.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Server) | [ManagedCode.Storage.Server](https://www.nuget.org/packages/ManagedCode.Storage.Server) | ASP.NET Server |
-| [![NuGet Package](https://img.shields.io/nuget/v/ManagedCode.Storage.Client.SignalR.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | [ManagedCode.Storage.Client.SignalR](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | SignalR Client |
+Cross-provider blob storage toolkit for .NET and ASP.NET streaming scenarios.
 
-# Storage
----
-
-## General concept
-
-One of the key benefits of using a universal wrapper for cloud blob storages is that it provides a consistent,
-easy-to-use interface for working with different types of blob storage. This can make it much easier for developers to
-switch between different storage providers, or to use multiple providers in the same project.
-
-A universal wrapper can also simplify the development process by providing a single set of methods for working with blob
-storage, rather than requiring developers to learn and use the different APIs provided by each storage provider. This
-can save time and reduce the complexity of the code, making it easier to write, maintain, and debug.
-
-In addition, a universal wrapper can provide additional functionality that is not available through the individual
-storage providers, such as support for common patterns like asynchronous programming and error handling. This can make
-it easier to write high-quality, reliable code that is robust and resilient to errors.
-
-Overall, using a universal wrapper for cloud blob storages can provide many benefits, including improved flexibility,
-simplicity, and reliability in your application.
-A universal storage for working with multiple storage providers:
-
-- Azure
-- Google Cloud
-- Amazon
-- FileSystem
+ManagedCode.Storage wraps vendor SDKs behind a single `IStorage` abstraction so uploads, downloads, metadata, streaming, and retention behave the same regardless of provider. Swap between Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, SFTP, a local file system, or the in-memory Virtual File System without rewriting application code. Pair it with our ASP.NET controllers and SignalR client to deliver chunked uploads, ranged downloads, and progress notifications end to end.
 
 ## Motivation
 
-Cloud storage is a popular and convenient way to store and access data in the cloud.
-However, different cloud storage providers often have their own unique APIs and interfaces for accessing and
-manipulating data.
-This can make it difficult to switch between different providers or to use multiple providers simultaneously.
-
-Our library, provides a universal interface for accessing and manipulating data in different cloud blob storage
-providers.
-This makes it easy to switch between providers or to use multiple providers at the same time, without having to learn
-and use multiple APIs.
+Cloud storage vendors expose distinct SDKs, option models, and authentication patterns. That makes it painful to change providers, run multi-region replication, or stand up hermetic tests. ManagedCode.Storage gives you a universal surface, consistent `Result<T>` handling, and DI-aware registration helpers so you can plug in any provider, test locally, and keep the same code paths in production.
 
 ## Features
 
-- Provides a universal interface for accessing and manipulating data in different cloud blob storage providers.
-- Makes it easy to switch between providers or to use multiple providers simultaneously.
-- Supports common operations such as uploading, downloading, and deleting data, plus optional in-memory Virtual File System (VFS) storage for fast testing.
-- Provides first-class ASP.NET controller extensions and a SignalR hub/client pairing (two-step streaming handshake) for uploads, downloads, and chunk orchestration.
-- Ships keyed dependency-injection helpers so you can register multiple named providers and mirror assets across regions or vendors.
-- Exposes configurable server options for large-file thresholds, multipart parsing limits, and range streaming.
+- Unified `IStorage` abstraction covering upload, download, streaming, metadata, deletion, container management, and legal hold operations backed by `Result<T>` responses.
+- Provider coverage across Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, SFTP, local file system, and the in-memory Virtual File System (VFS).
+- Keyed dependency-injection registrations plus default provider helpers to fan out files per tenant, region, or workload without manual service plumbing.
+- ASP.NET storage controllers, chunk orchestration services, and a SignalR hub/client pair that deliver resumable uploads, ranged downloads, CRC32 validation, and real-time progress.
+- `ManagedCode.Storage.Client` brings streaming uploads/downloads, CRC32 helpers, and MIME discovery via `MimeHelper` to any .NET app.
+- Strongly typed option objects (`UploadOptions`, `DownloadOptions`, `DeleteOptions`, `MetadataOptions`, `LegalHoldOptions`, etc.) let you configure directories, metadata, and legal holds in one place.
+- Virtual File System package keeps everything in memory for lightning-fast tests, developer sandboxes, and local demos while still exercising the same abstractions.
+- Comprehensive automated test suite with cross-provider sync fixtures, multi-gigabyte streaming simulations (4 MB units per "GB"), ASP.NET controller harnesses, and SFTP/local filesystem coverage.
+- ManagedCode.Storage.TestFakes package plus Testcontainers-based fixtures make it easy to run offline or CI tests without touching real cloud accounts.
+
+## Packages
+
+### Core & Utilities
+
+| Package | Latest | Description |
+| --- | --- | --- |
+| [ManagedCode.Storage.Core](https://www.nuget.org/packages/ManagedCode.Storage.Core) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Core.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Core) | Core abstractions, option models, CRC32/MIME helpers, and DI extensions. |
+| [ManagedCode.Storage.VirtualFileSystem](https://www.nuget.org/packages/ManagedCode.Storage.VirtualFileSystem) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.VirtualFileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.VirtualFileSystem) | In-memory storage built on the `IStorage` surface for tests and sandboxes. |
+| [ManagedCode.Storage.TestFakes](https://www.nuget.org/packages/ManagedCode.Storage.TestFakes) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.TestFakes.svg)](https://www.nuget.org/packages/ManagedCode.Storage.TestFakes) | Provider doubles for unit/integration tests without hitting cloud services. |
+
+### Providers
+
+| Package | Latest | Description |
+| --- | --- | --- |
+| [ManagedCode.Storage.Azure](https://www.nuget.org/packages/ManagedCode.Storage.Azure) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Azure.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Azure) | Azure Blob Storage implementation with metadata, streaming, and legal hold support. |
+| [ManagedCode.Storage.Azure.DataLake](https://www.nuget.org/packages/ManagedCode.Storage.Azure.DataLake) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Azure.DataLake.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Azure.DataLake) | Azure Data Lake Gen2 provider on top of the unified abstraction. |
+| [ManagedCode.Storage.Aws](https://www.nuget.org/packages/ManagedCode.Storage.Aws) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Aws.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Aws) | Amazon S3 provider with Object Lock and legal hold operations. |
+| [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | Google Cloud Storage integration built on official SDKs. |
+| [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | Local file system implementation for hybrid or on-premises workloads. |
+| [ManagedCode.Storage.Sftp](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Sftp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | SFTP provider powered by SSH.NET for legacy and air-gapped environments. |
+
+### ASP.NET & Clients
+
+| Package | Latest | Description |
+| --- | --- | --- |
+| [ManagedCode.Storage.Server](https://www.nuget.org/packages/ManagedCode.Storage.Server) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Server.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Server) | ASP.NET controllers, chunk orchestration services, and the SignalR storage hub. |
+| [ManagedCode.Storage.Client](https://www.nuget.org/packages/ManagedCode.Storage.Client) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Client.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Client) | .NET client SDK for uploads, downloads, metadata, and SignalR negotiations. |
+| [ManagedCode.Storage.Client.SignalR](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Client.SignalR.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | SignalR streaming client for browsers and native applications. |
+
+## Architecture
+
+### Storage Topology
+
+The topology below shows how applications talk to the shared `IStorage` surface, optional Virtual File System, and keyed provider factories before landing on the concrete backends.
+
+```mermaid
+flowchart LR
+    subgraph Applications
+        API["ASP.NET Controllers"]
+        SignalRClient["SignalR Client"]
+        Workers["Background Services"]
+    end
+
+    subgraph Abstraction
+        Core["IStorage Abstractions"]
+        VFS["Virtual File System"]
+        Factories["Keyed Provider Factories"]
+    end
+
+    subgraph Providers
+        Azure["Azure Blob"]
+        AzureDL["Azure Data Lake"]
+        Aws["Amazon S3"]
+        Gcp["Google Cloud Storage"]
+        Fs["File System"]
+        Sftp["SFTP"]
+    end
+
+    Applications --> Core
+    Core --> VFS
+    Core --> Factories
+    Factories --> Azure
+    Factories --> AzureDL
+    Factories --> Aws
+    Factories --> Gcp
+    Factories --> Fs
+    Factories --> Sftp
+```
+
+Keyed provider registrations let you resolve multiple named instances from dependency injection while reusing the same abstraction across Azure, AWS, GCP, SFTP, and local file system storage.
+
+### ASP.NET Streaming Controllers
+
+Controllers in `ManagedCode.Storage.Server` expose minimal routes that stream directly between HTTP clients and blob providers. Uploads arrive as multipart forms or raw streams, flow through the unified `IStorage` abstraction, and land in whichever provider is registered. Downloads return `FileStreamResult` responses so browsers, SDKs, or background jobs can read blobs without buffering the whole payload in memory.
+
+```mermaid
+sequenceDiagram
+    participant Client as Client App
+    participant Controller as StorageController
+    participant Storage as IStorage
+    participant Provider as IStorage Provider
+
+    Client->>Controller: POST /storage/upload (stream)
+    Controller->>Storage: UploadAsync(stream, UploadOptions)
+    Storage->>Provider: Push stream to backend
+    Provider-->>Storage: Result<BlobMetadata>
+    Storage-->>Controller: Upload response
+    Controller-->>Client: 200 OK + metadata
+
+    Client->>Controller: GET /storage/download?file=video.mp4
+    Controller->>Storage: DownloadAsync(file)
+    Storage->>Provider: Open download stream
+    Provider-->>Storage: Result<Stream>
+    Storage-->>Controller: Stream payload
+    Controller-->>Client: Chunked response
+```
+
+Controllers remain thin: consumers can inherit and override actions to add custom routing, authorization, or telemetry while leaving the streaming plumbing intact.
 
 ## Virtual File System (VFS)
 
@@ -183,48 +242,29 @@ logger.LogInformation("Backup CRC for {File} is {Crc}", fileName, crc);
 
 The test suite includes end-to-end scenarios that mirror payloads between Azure, AWS, the local file system, and virtual file systems; multi-gigabyte flows execute by default across every provider using 4 MB units per "GB" to keep runs fast while still exercising streaming paths.
 
-## ASP.NET Controllers & SignalR Streaming
+## ASP.NET Controllers & Streaming
 
-The <code>ManagedCode.Storage.Server</code> package exposes ready-to-use controllers plus a SignalR hub that sit on top of any <code>IStorage</code> implementation.
-Pair it with the <code>ManagedCode.Storage.Client.SignalR</code> library to stream files from browsers, desktop or mobile apps:
+The <code>ManagedCode.Storage.Server</code> package surfaces upload/download controllers that pipe HTTP streams straight into the storage abstraction. Files can be sent as multipart forms or raw streams, while downloads return <code>FileStreamResult</code> so large assets flow back to the caller without buffering in memory.
 
 ```csharp
 // Program.cs / Startup.cs
-builder.Services
-    .AddStorageServer(options =>
-    {
-        options.InMemoryUploadThresholdBytes = 512 * 1024; // spill to disk after 512 KB
-        options.MultipartBoundaryLengthLimit = 128;        // relax multipart parsing limit
-    })
-    .AddStorageSignalR();    // registers StorageHub options
-
-app.MapControllers();
-app.MapStorageHub();        // maps /hubs/storage by default
-
-// Client usage
-var client = new StorageSignalRClient(new StorageSignalRClientOptions
+builder.Services.AddStorageServer(options =>
 {
-    HubUrl = new Uri("https://myapi/hubs/storage")
+    options.EnableRangeProcessing = true;              // support range/seek operations
+    options.InMemoryUploadThresholdBytes = 512 * 1024;  // spill to disk after 512 KB
 });
 
-await client.ConnectAsync();
-await client.UploadAsync(fileStream, new StorageUploadStreamDescriptor
-{
-    FileName = "video.mp4",
-    ContentType = "video/mp4"
-});
-
-// Download back into a stream
-await client.DownloadAsync("video.mp4", destinationStream);
+app.MapControllers(); // exposes /storage endpoints
 ```
 
-Events such as <code>TransferProgress</code> and <code>TransferCompleted</code> fire automatically, enabling live progress UI or resumable workflows. Extending the default controller is a one-liner:
+When you need custom routes, validation, or policies, inherit from the base controller and reuse the same streaming helpers:
 
 ```csharp
 [Route("api/files")]
 public sealed class FilesController : StorageControllerBase<IMyCustomStorage>
 {
-    public FilesController(IMyCustomStorage storage,
+    public FilesController(
+        IMyCustomStorage storage,
         ChunkUploadService chunks,
         StorageServerOptions options)
         : base(storage, chunks, options)
@@ -232,21 +272,16 @@ public sealed class FilesController : StorageControllerBase<IMyCustomStorage>
     }
 }
 
-// Program.cs
-builder.Services.AddStorageServer(opts =>
-{
-    opts.EnableRangeProcessing = true;
-    opts.InMemoryUploadThresholdBytes = 1 * 1024 * 1024; // 1 MB
-});
-builder.Services.AddStorageSignalR();
+// Upload a form file directly into storage
+public Task<IActionResult> Upload(IFormFile file, CancellationToken ct) =>
+    UploadFormFileAsync(file, ct);
 
-app.MapControllers();
-app.MapStorageHub();
+// Stream a blob to the client in real time
+public Task<IActionResult> Download(string fileName, CancellationToken ct) =>
+    DownloadAsStreamAsync(fileName, ct);
 ```
 
-Use the built-in controller extension methods to tailor behaviours (e.g. <code>UploadFormFileAsync</code>, <code>DownloadAsStreamAsync</code>) or override the base actions to add authorization filters, custom routing, or domain-specific validation.
-
-> SignalR uploads follow a two-phase handshake: the client calls <code>BeginUploadStreamAsync</code> to reserve an identifier, then streams payloads through <code>UploadStreamContentAsync</code> while consuming the server-generated status channel. The <code>StorageSignalRClient</code> handles this workflow automatically.
+Need resumable uploads or live progress UI? Call <code>AddStorageSignalR()</code> to enable the optional hub and connect with the <code>ManagedCode.Storage.Client.SignalR</code> package; otherwise, the controllers alone cover straight HTTP streaming scenarios.
 
 ## Connection modes
 
