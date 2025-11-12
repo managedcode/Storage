@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
         <IsPackable>true</IsPackable>
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>
@@ -21,9 +20,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.3" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
-        <PackageReference Include="Microsoft.AspNetCore.Http.Connections.Client" Version="9.0.9" />
+        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.7" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Connections.Client" Version="10.0.0" />
     </ItemGroup>
 
     <ItemGroup>

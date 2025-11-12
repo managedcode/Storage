@@ -69,6 +69,30 @@ public sealed class EmptyContainer : IContainer
         return Task.FromException(new NotImplementedException());
     }
 
+    public async Task CopyAsync(byte[] fileContent, string filePath, uint uid = 0, uint gid = 0,
+        UnixFileModes fileMode = UnixFileModes.None | UnixFileModes.OtherRead | UnixFileModes.GroupRead | UnixFileModes.UserWrite | UnixFileModes.UserRead, CancellationToken ct = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task CopyAsync(string source, string target, uint uid = 0, uint gid = 0, UnixFileModes fileMode = UnixFileModes.None | UnixFileModes.OtherRead | UnixFileModes.GroupRead | UnixFileModes.UserWrite | UnixFileModes.UserRead,
+        CancellationToken ct = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task CopyAsync(DirectoryInfo source, string target, uint uid = 0, uint gid = 0,
+        UnixFileModes fileMode = UnixFileModes.None | UnixFileModes.OtherRead | UnixFileModes.GroupRead | UnixFileModes.UserWrite | UnixFileModes.UserRead, CancellationToken ct = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task CopyAsync(FileInfo source, string target, uint uid = 0, uint gid = 0,
+        UnixFileModes fileMode = UnixFileModes.None | UnixFileModes.OtherRead | UnixFileModes.GroupRead | UnixFileModes.UserWrite | UnixFileModes.UserRead, CancellationToken ct = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
     public Task CopyAsync(byte[] fileContent, string filePath,
         UnixFileModes fileMode = UnixFileModes.None | UnixFileModes.OtherRead | UnixFileModes.GroupRead | UnixFileModes.UserWrite |
                                  UnixFileModes.UserRead, CancellationToken ct = new())
