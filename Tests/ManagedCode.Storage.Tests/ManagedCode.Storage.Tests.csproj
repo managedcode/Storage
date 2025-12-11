@@ -52,6 +52,7 @@
         <ProjectReference Include="..\..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Sftp\ManagedCode.Storage.Sftp.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.GoogleDrive\ManagedCode.Storage.GoogleDrive.csproj" />
     </ItemGroup>
 
 

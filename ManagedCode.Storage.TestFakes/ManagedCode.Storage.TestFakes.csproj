@@ -18,6 +18,7 @@
         <ProjectReference Include="..\Storages\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj"/>
         <ProjectReference Include="..\Storages\ManagedCode.Storage.FileSystem\ManagedCode.Storage.FileSystem.csproj"/>
         <ProjectReference Include="..\Storages\ManagedCode.Storage.Google\ManagedCode.Storage.Google.csproj"/>
+        <ProjectReference Include="..\Storages\ManagedCode.Storage.GoogleDrive\ManagedCode.Storage.GoogleDrive.csproj"/>
     </ItemGroup>
 
 </Project>

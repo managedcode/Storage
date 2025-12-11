@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <!--NuGet-->
+    <PropertyGroup>
+        <Title>ManagedCode.Storage.GoogleDrive</Title>
+        <PackageId>ManagedCode.Storage.GoogleDrive</PackageId>
+        <Description>Storage for Google Drive</Description>
+        <PackageTags>managedcode, googledrive, storage, cloud, blob</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3674" />
+        <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    </ItemGroup>
+</Project>
+
+
