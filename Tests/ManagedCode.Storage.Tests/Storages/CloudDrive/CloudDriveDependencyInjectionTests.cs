@@ -69,6 +69,47 @@ public class CloudDriveDependencyInjectionTests
     }
 
     [Fact]
+    public void Dropbox_WhenAccessTokenConfigured_ShouldResolve()
+    {
+        var services = new ServiceCollection();
+        services.AddDropboxStorage(options =>
+        {
+            options.RootPath = "/apps/demo";
+            options.AccessToken = "test-token";
+        });
+
+        using var provider = services.BuildServiceProvider();
+        provider.GetRequiredService<IDropboxStorage>().ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Dropbox_WhenRefreshTokenMissingAppKey_ShouldThrow()
+    {
+        var services = new ServiceCollection();
+        Should.Throw<BadConfigurationException>(() =>
+            services.AddDropboxStorage(options =>
+            {
+                options.RootPath = "/apps/demo";
+                options.RefreshToken = "refresh-token";
+            }));
+    }
+
+    [Fact]
+    public void Dropbox_WhenRefreshTokenConfigured_ShouldResolve()
+    {
+        var services = new ServiceCollection();
+        services.AddDropboxStorage(options =>
+        {
+            options.RootPath = "/apps/demo";
+            options.RefreshToken = "refresh-token";
+            options.AppKey = "app-key";
+        });
+
+        using var provider = services.BuildServiceProvider();
+        provider.GetRequiredService<IDropboxStorage>().ShouldNotBeNull();
+    }
+
+    [Fact]
     public void GoogleDrive_AddAsDefault_ShouldResolveIStorage()
     {
         var services = new ServiceCollection();

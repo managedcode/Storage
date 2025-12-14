@@ -10,13 +10,18 @@ using Dropbox.Api.Files;
 
 namespace ManagedCode.Storage.Dropbox.Clients;
 
-public class DropboxClientWrapper : IDropboxClientWrapper
+public class DropboxClientWrapper : IDropboxClientWrapper, IDisposable
 {
     private readonly DropboxClient _client;
 
     public DropboxClientWrapper(DropboxClient client)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
     }
 
     public async Task EnsureRootAsync(string rootPath, bool createIfNotExists, CancellationToken cancellationToken)

@@ -36,7 +36,45 @@ public class DropboxStorage : BaseStorage<IDropboxClientWrapper, DropboxStorageO
             return new DropboxClientWrapper(StorageOptions.DropboxClient);
         }
 
+        if (!string.IsNullOrWhiteSpace(StorageOptions.AccessToken))
+        {
+            var client = StorageOptions.DropboxClientConfig == null
+                ? new global::Dropbox.Api.DropboxClient(StorageOptions.AccessToken)
+                : new global::Dropbox.Api.DropboxClient(StorageOptions.AccessToken, StorageOptions.DropboxClientConfig);
+
+            return new DropboxClientWrapper(client);
+        }
+
+        if (!string.IsNullOrWhiteSpace(StorageOptions.RefreshToken))
+        {
+            if (string.IsNullOrWhiteSpace(StorageOptions.AppKey))
+            {
+                throw new InvalidOperationException("Dropbox AppKey is required when configuring the storage with a refresh token.");
+            }
+
+            var client = CreateDropboxClientFromRefreshToken(StorageOptions.RefreshToken, StorageOptions.AppKey, StorageOptions.AppSecret, StorageOptions.DropboxClientConfig);
+            return new DropboxClientWrapper(client);
+        }
+
         throw new InvalidOperationException("Dropbox client is not configured for storage.");
+    }
+
+    private static global::Dropbox.Api.DropboxClient CreateDropboxClientFromRefreshToken(
+        string refreshToken,
+        string appKey,
+        string? appSecret,
+        global::Dropbox.Api.DropboxClientConfig? config)
+    {
+        if (!string.IsNullOrWhiteSpace(appSecret))
+        {
+            return config == null
+                ? new global::Dropbox.Api.DropboxClient(refreshToken, appKey, appSecret)
+                : new global::Dropbox.Api.DropboxClient(refreshToken, appKey, appSecret, config);
+        }
+
+        return config == null
+            ? new global::Dropbox.Api.DropboxClient(refreshToken, appKey)
+            : new global::Dropbox.Api.DropboxClient(refreshToken, appKey, config);
     }
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)

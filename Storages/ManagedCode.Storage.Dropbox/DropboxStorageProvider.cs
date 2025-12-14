@@ -32,6 +32,11 @@ public class DropboxStorageProvider(IServiceProvider serviceProvider, DropboxSto
             RootPath = defaultOptions.RootPath,
             DropboxClient = defaultOptions.DropboxClient,
             Client = defaultOptions.Client,
+            AccessToken = defaultOptions.AccessToken,
+            RefreshToken = defaultOptions.RefreshToken,
+            AppKey = defaultOptions.AppKey,
+            AppSecret = defaultOptions.AppSecret,
+            DropboxClientConfig = defaultOptions.DropboxClientConfig,
             CreateContainerIfNotExists = defaultOptions.CreateContainerIfNotExists
         };
     }

@@ -85,9 +85,17 @@ public static class ServiceCollectionExtensions
 
     private static void CheckConfiguration(DropboxStorageOptions options)
     {
-        if (options.Client == null && options.DropboxClient == null)
+        if (!string.IsNullOrWhiteSpace(options.RefreshToken) && string.IsNullOrWhiteSpace(options.AppKey))
         {
-            throw new BadConfigurationException("Dropbox storage requires either a configured DropboxClient or a custom IDropboxClientWrapper.");
+            throw new BadConfigurationException("Dropbox storage configuration with a refresh token requires AppKey (and optionally AppSecret).");
+        }
+
+        if (options.Client == null
+            && options.DropboxClient == null
+            && string.IsNullOrWhiteSpace(options.AccessToken)
+            && string.IsNullOrWhiteSpace(options.RefreshToken))
+        {
+            throw new BadConfigurationException("Dropbox storage requires either a configured DropboxClient, a custom IDropboxClientWrapper, or credentials (AccessToken / RefreshToken + AppKey).");
         }
     }
 }

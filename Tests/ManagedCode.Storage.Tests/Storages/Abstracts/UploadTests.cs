@@ -25,11 +25,12 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Act
         var result = await Storage.UploadAsync(uploadContent);
-        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
 
         // Assert
         result.IsSuccess
             .ShouldBeTrue();
+
+        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
         downloadedResult.IsSuccess
             .ShouldBeTrue();
     }
@@ -44,11 +45,12 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
 
         // Act
         var result = await Storage.UploadAsync(stream);
-        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
 
         // Assert
         result.IsSuccess
             .ShouldBeTrue();
+
+        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
         downloadedResult.IsSuccess
             .ShouldBeTrue();
     }

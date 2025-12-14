@@ -9,7 +9,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Dropbox.Api;
+using ManagedCode.Storage.Dropbox;
 using ManagedCode.Storage.Dropbox.Clients;
+using ManagedCode.Storage.Dropbox.Options;
 using Shouldly;
 using Xunit;
 
@@ -24,7 +26,8 @@ public class DropboxClientWrapperHttpTests
         var httpClient = new HttpClient(handler);
         var config = new DropboxClientConfig("ManagedCode.Storage.Tests")
         {
-            HttpClient = httpClient
+            HttpClient = httpClient,
+            LongPollHttpClient = httpClient
         };
 
         using var dropboxClient = new DropboxClient("test-token", config);
@@ -57,6 +60,39 @@ public class DropboxClientWrapperHttpTests
 
         (await wrapper.DeleteAsync("/apps/demo", "file.json", CancellationToken.None)).ShouldBeTrue();
         (await wrapper.DeleteAsync("/apps/demo", "file.json", CancellationToken.None)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DropboxStorage_WithAccessTokenAndHttpHandler_RoundTrip()
+    {
+        var handler = new FakeDropboxHttpHandler();
+        var httpClient = new HttpClient(handler);
+        var config = new DropboxClientConfig("ManagedCode.Storage.Tests")
+        {
+            HttpClient = httpClient,
+            LongPollHttpClient = httpClient
+        };
+
+        using var storage = new DropboxStorage(new DropboxStorageOptions
+        {
+            RootPath = "/apps/demo",
+            AccessToken = "test-token",
+            DropboxClientConfig = config,
+            CreateContainerIfNotExists = true
+        });
+
+        (await storage.UploadAsync("dropbox payload", options => options.FileName = "file.json")).IsSuccess.ShouldBeTrue();
+
+        var exists = await storage.ExistsAsync("file.json");
+        exists.IsSuccess.ShouldBeTrue();
+        exists.Value.ShouldBeTrue();
+
+        var download = await storage.DownloadAsync("file.json");
+        download.IsSuccess.ShouldBeTrue();
+        using (var reader = new StreamReader(download.Value.FileStream, Encoding.UTF8))
+        {
+            (await reader.ReadToEndAsync()).ShouldBe("dropbox payload");
+        }
     }
 
     private sealed class FakeDropboxHttpHandler : HttpMessageHandler

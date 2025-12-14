@@ -225,16 +225,27 @@ var tenantStorage = app.Services.GetRequiredKeyedService<IStorage>("tenant-a");
    var refreshToken = auth.RefreshToken; // store securely if you requested offline access
    ```
 
-5. Create the Dropbox client and register Dropbox storage with a root path (use `/` for full access apps or `/Apps/<your-app>` for app folders):
+5. Register Dropbox storage with a root path (use `/` for full access apps or `/Apps/<your-app>` for app folders). You can let the provider create the SDK client from credentials:
 
    ```csharp
-   using Dropbox.Api;
    builder.Services.AddDropboxStorageAsDefault(options =>
    {
        var accessToken = configuration["Dropbox:AccessToken"]!;
-       options.DropboxClient = new DropboxClient(accessToken);
+       options.AccessToken = accessToken;
        options.RootPath = "/apps/my-app";
        options.CreateContainerIfNotExists = true;
+   });
+   ```
+
+   Or, for production, prefer refresh tokens (offline access):
+
+   ```csharp
+   builder.Services.AddDropboxStorageAsDefault(options =>
+   {
+       options.RefreshToken = configuration["Dropbox:RefreshToken"]!;
+       options.AppKey = configuration["Dropbox:AppKey"]!;
+       options.AppSecret = configuration["Dropbox:AppSecret"]; // optional when using PKCE
+       options.RootPath = "/apps/my-app";
    });
    ```
 
