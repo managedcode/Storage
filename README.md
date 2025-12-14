@@ -52,6 +52,66 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 | [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | Local file system implementation for hybrid or on-premises workloads. |
 | [ManagedCode.Storage.Sftp](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Sftp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | SFTP provider powered by SSH.NET for legacy and air-gapped environments. |
 
+### Configuring OneDrive, Google Drive, and Dropbox
+
+> iCloud does not expose a public file API suitable for server-side integrations, so only Microsoft, Google, and Dropbox cloud drives are covered here.
+
+**OneDrive / Microsoft Graph**
+
+1. Create an app registration in Azure Active Directory (Entra ID) and record the **Application (client) ID**, **Directory (tenant) ID**, and a **client secret**.
+2. Add the Microsoft Graph **Files.ReadWrite.All** delegated permission (or **Sites.ReadWrite.All** if you target SharePoint drives) and grant admin consent.
+3. In your ASP.NET app, acquire a token via `ClientSecretCredential` or another `TokenCredential` and pass it to `new GraphServiceClient(credential, new[] { "https://graph.microsoft.com/.default" })`.
+4. Register OneDrive storage with the Graph client and the drive/root you want to scope to:
+
+   ```csharp
+   builder.Services.AddOneDriveStorageAsDefault(options =>
+   {
+       options.GraphClient = graphClient;        // from step 3
+       options.DriveId = "me";                   // or a specific drive ID
+       options.RootPath = "app-data";            // folder will be created when CreateContainerIfNotExists is true
+       options.CreateContainerIfNotExists = true;
+   });
+   ```
+
+5. If you need to impersonate a specific drive item, swap `DriveId` for the drive GUID returned by Graph.
+
+**Google Drive**
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the **Google Drive API**.
+2. Configure an OAuth consent screen and create an **OAuth 2.0 Client ID** (Desktop or Web). Record the client ID and secret.
+3. Exchange the OAuth code for a refresh token with the `https://www.googleapis.com/auth/drive.file` scope (or broader if necessary).
+4. Add the Google Drive provider and feed the credentials to the options:
+
+   ```csharp
+   builder.Services.AddGoogleDriveStorage(options =>
+   {
+       options.ClientId = configuration["GoogleDrive:ClientId"]!;
+       options.ClientSecret = configuration["GoogleDrive:ClientSecret"]!;
+       options.RefreshToken = configuration["GoogleDrive:RefreshToken"]!;
+       options.RootFolderId = "root"; // or a shared drive folder id
+   });
+   ```
+
+5. Store tokens in user secrets or environment variables; never commit them to source control.
+
+**Dropbox**
+
+1. Create an app in the [Dropbox App Console](https://www.dropbox.com/developers/apps) and choose **Scoped access** with the **Full Dropbox** or **App folder** type.
+2. Under **Permissions**, enable `files.content.write`, `files.content.read`, and `files.metadata.write` and generate a refresh token via OAuth.
+3. Register Dropbox storage with the access credentials and a root path (use `/` for full access apps or `/Apps/<your-app>` for app folders):
+
+   ```csharp
+   builder.Services.AddDropboxStorage(options =>
+   {
+       options.AppKey = configuration["Dropbox:AppKey"]!;
+       options.AppSecret = configuration["Dropbox:AppSecret"]!;
+       options.RefreshToken = configuration["Dropbox:RefreshToken"]!;
+       options.RootPath = "/apps/my-app";
+   });
+   ```
+
+4. Dropbox issues short-lived access tokens from refresh tokens; the SDK handles the exchange automatically once configured.
+
 ### ASP.NET & Clients
 
 | Package | Latest | Description |

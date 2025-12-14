@@ -57,7 +57,7 @@ public class OneDriveStorage : BaseStorage<IOneDriveClient, OneDriveStorageOptio
     public override Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
         // OneDrive containers map to drives or root folders that are typically managed by the account owner.
-        return Task.FromResult(Result.Succeed());
+        return Task.FromResult(Result.Fail(new NotSupportedException("Deleting a OneDrive container is not supported.")));
     }
 
     protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)

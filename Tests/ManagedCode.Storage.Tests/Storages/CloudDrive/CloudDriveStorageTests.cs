@@ -58,6 +58,21 @@ public class CloudDriveStorageTests
     }
 
     [Fact]
+    public async Task OneDrive_RemoveContainer_NotSupported()
+    {
+        var fakeClient = new FakeOneDriveClient();
+        var storage = new OneDriveStorage(new OneDriveStorageOptions
+        {
+            Client = fakeClient,
+            DriveId = "drive",
+            RootPath = "root"
+        });
+
+        var result = await storage.RemoveContainerAsync();
+        result.IsSuccess.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task GoogleDrive_FakeClient_RoundTrip()
     {
         var fakeClient = new FakeGoogleDriveClient();
