@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Title>ManagedCode.Storage.Dropbox</Title>
+    <PackageId>ManagedCode.Storage.Dropbox</PackageId>
+    <Description>Dropbox provider for ManagedCode.Storage.</Description>
+    <PackageTags>managedcode, storage, dropbox</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
+    <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.7" />
+    <PackageReference Include="Dropbox.Api" Version="6.50.0" />
+  </ItemGroup>
+</Project>
