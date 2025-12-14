@@ -27,17 +27,24 @@ public class DropboxClientWrapper : IDropboxClientWrapper
         }
 
         var normalized = Normalize(rootPath);
+        if (normalized == "/")
+        {
+            return;
+        }
+
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await _client.Files.GetMetadataAsync(normalized);
         }
         catch (ApiException<GetMetadataError> ex) when (ex.ErrorResponse.IsPath && ex.ErrorResponse.AsPath.Value.IsNotFound)
         {
             if (!createIfNotExists)
             {
-                return;
+                throw new DirectoryNotFoundException($"Dropbox folder '{normalized}' is missing.");
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             await _client.Files.CreateFolderV2Async(normalized, autorename: false);
         }
     }
@@ -45,23 +52,33 @@ public class DropboxClientWrapper : IDropboxClientWrapper
     public async Task<DropboxItemMetadata> UploadAsync(string rootPath, string path, Stream content, string? contentType, CancellationToken cancellationToken)
     {
         var fullPath = Combine(rootPath, path);
+        cancellationToken.ThrowIfCancellationRequested();
         var uploaded = await _client.Files.UploadAsync(fullPath, WriteMode.Overwrite.Instance, body: content);
-        var metadata = (await _client.Files.GetMetadataAsync(uploaded.PathLower)).AsFile;
-        return ToItem(metadata);
+        return ToItem(uploaded);
     }
 
     public async Task<Stream> DownloadAsync(string rootPath, string path, CancellationToken cancellationToken)
     {
         var fullPath = Combine(rootPath, path);
+        cancellationToken.ThrowIfCancellationRequested();
         var response = await _client.Files.DownloadAsync(fullPath);
+        cancellationToken.ThrowIfCancellationRequested();
         return await response.GetContentAsStreamAsync();
     }
 
     public async Task<bool> DeleteAsync(string rootPath, string path, CancellationToken cancellationToken)
     {
         var fullPath = Combine(rootPath, path);
-        await _client.Files.DeleteV2Async(fullPath);
-        return true;
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await _client.Files.DeleteV2Async(fullPath);
+            return true;
+        }
+        catch (ApiException<DeleteError> ex) when (ex.ErrorResponse.IsPathLookup && ex.ErrorResponse.AsPathLookup.Value.IsNotFound)
+        {
+            return false;
+        }
     }
 
     public async Task<bool> ExistsAsync(string rootPath, string path, CancellationToken cancellationToken)
@@ -69,6 +86,7 @@ public class DropboxClientWrapper : IDropboxClientWrapper
         var fullPath = Combine(rootPath, path);
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await _client.Files.GetMetadataAsync(fullPath);
             return true;
         }
@@ -83,6 +101,7 @@ public class DropboxClientWrapper : IDropboxClientWrapper
         var fullPath = Combine(rootPath, path);
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var metadata = await _client.Files.GetMetadataAsync(fullPath);
             return metadata.IsFile ? ToItem(metadata.AsFile) : null;
         }
@@ -95,24 +114,22 @@ public class DropboxClientWrapper : IDropboxClientWrapper
     public async IAsyncEnumerable<DropboxItemMetadata> ListAsync(string rootPath, string? directory, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var fullPath = Combine(rootPath, directory ?? string.Empty);
+        cancellationToken.ThrowIfCancellationRequested();
         var list = await _client.Files.ListFolderAsync(fullPath);
-        foreach (var item in list.Entries)
+        foreach (var item in list.Entries.Where(item => item.IsFile))
         {
-            if (item.IsFile)
-            {
-                yield return ToItem(item.AsFile);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return ToItem(item.AsFile);
         }
 
         while (list.HasMore)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             list = await _client.Files.ListFolderContinueAsync(list.Cursor);
-            foreach (var item in list.Entries)
+            foreach (var item in list.Entries.Where(item => item.IsFile))
             {
-                if (item.IsFile)
-                {
-                    yield return ToItem(item.AsFile);
-                }
+                cancellationToken.ThrowIfCancellationRequested();
+                yield return ToItem(item.AsFile);
             }
         }
     }

@@ -13,7 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
-    <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.7" />
-    <PackageReference Include="Microsoft.Graph" Version="5.50.0" />
+    <PackageReference Include="ManagedCode.MimeTypes" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Graph" Version="5.98.0" />
   </ItemGroup>
 </Project>

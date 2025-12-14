@@ -67,15 +67,20 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
             await EnsureContainerExist(cancellationToken);
             var normalizedDirectory = NormalizeRelativePath(directory);
 
-            await foreach (var item in StorageClient.ListAsync(StorageOptions.RootFolderId, normalizedDirectory, cancellationToken))
+            if (!string.IsNullOrWhiteSpace(normalizedDirectory))
             {
-                if (item.MimeType == "application/vnd.google-apps.folder")
+                _ = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, normalizedDirectory, cancellationToken);
+                return Result.Succeed();
+            }
+
+            await foreach (var item in StorageClient.ListAsync(StorageOptions.RootFolderId, null, cancellationToken))
+            {
+                if (string.IsNullOrWhiteSpace(item.Name))
                 {
                     continue;
                 }
 
-                var path = string.IsNullOrWhiteSpace(normalizedDirectory) ? item.Name : $"{normalizedDirectory}/{item.Name}";
-                await StorageClient.DeleteAsync(StorageOptions.RootFolderId, path!, cancellationToken);
+                _ = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, item.Name, cancellationToken);
             }
 
             return Result.Succeed();

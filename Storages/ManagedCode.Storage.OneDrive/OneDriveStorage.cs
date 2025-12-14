@@ -67,15 +67,23 @@ public class OneDriveStorage : BaseStorage<IOneDriveClient, OneDriveStorageOptio
             await EnsureContainerExist(cancellationToken);
             var normalizedDirectory = NormalizeRelativePath(directory);
 
-            await foreach (var item in StorageClient.ListAsync(StorageOptions.DriveId, normalizedDirectory, cancellationToken))
+            if (!string.IsNullOrWhiteSpace(normalizedDirectory))
             {
-                if (item?.Folder != null)
+                _ = await StorageClient.DeleteAsync(StorageOptions.DriveId, BuildFullPath(normalizedDirectory), cancellationToken);
+                return Result.Succeed();
+            }
+
+            var rootPath = BuildFullPath(string.Empty);
+            var listPath = string.IsNullOrWhiteSpace(rootPath) ? null : rootPath;
+            await foreach (var item in StorageClient.ListAsync(StorageOptions.DriveId, listPath, cancellationToken))
+            {
+                if (item?.Name == null)
                 {
                     continue;
                 }
 
-                var path = $"{normalizedDirectory}/{item!.Name}".Trim('/');
-                await StorageClient.DeleteAsync(StorageOptions.DriveId, path, cancellationToken);
+                var childPath = string.IsNullOrWhiteSpace(rootPath) ? item.Name : $"{rootPath}/{item.Name}".Trim('/');
+                _ = await StorageClient.DeleteAsync(StorageOptions.DriveId, childPath, cancellationToken);
             }
 
             return Result.Succeed();
@@ -92,9 +100,10 @@ public class OneDriveStorage : BaseStorage<IOneDriveClient, OneDriveStorageOptio
         try
         {
             await EnsureContainerExist(cancellationToken);
-            var path = BuildFullPath(options.FullPath);
+            var fullName = NormalizeRelativePath(options.FullPath);
+            var path = BuildFullPath(fullName);
             var uploaded = await StorageClient.UploadAsync(StorageOptions.DriveId, path, stream, options.MimeType, cancellationToken);
-            return Result<BlobMetadata>.Succeed(ToBlobMetadata(uploaded, path));
+            return Result<BlobMetadata>.Succeed(ToBlobMetadata(uploaded, fullName));
         }
         catch (Exception ex)
         {
@@ -165,11 +174,12 @@ public class OneDriveStorage : BaseStorage<IOneDriveClient, OneDriveStorageOptio
         try
         {
             await EnsureContainerExist(cancellationToken);
-            var path = BuildFullPath(options.FullPath);
+            var fullName = NormalizeRelativePath(options.FullPath);
+            var path = BuildFullPath(fullName);
             var item = await StorageClient.GetMetadataAsync(StorageOptions.DriveId, path, cancellationToken);
             return item == null
                 ? Result<BlobMetadata>.Fail(new FileNotFoundException($"File '{path}' not found in OneDrive."))
-                : Result<BlobMetadata>.Succeed(ToBlobMetadata(item, path));
+                : Result<BlobMetadata>.Succeed(ToBlobMetadata(item, fullName));
         }
         catch (Exception ex)
         {
@@ -183,7 +193,9 @@ public class OneDriveStorage : BaseStorage<IOneDriveClient, OneDriveStorageOptio
         await EnsureContainerExist(cancellationToken);
 
         var normalizedDirectory = string.IsNullOrWhiteSpace(directory) ? null : NormalizeRelativePath(directory!);
-        await foreach (var item in StorageClient.ListAsync(StorageOptions.DriveId, normalizedDirectory, cancellationToken))
+        var directoryPath = normalizedDirectory == null ? BuildFullPath(string.Empty) : BuildFullPath(normalizedDirectory);
+        var listPath = string.IsNullOrWhiteSpace(directoryPath) ? null : directoryPath;
+        await foreach (var item in StorageClient.ListAsync(StorageOptions.DriveId, listPath, cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (item == null || item.Folder != null)

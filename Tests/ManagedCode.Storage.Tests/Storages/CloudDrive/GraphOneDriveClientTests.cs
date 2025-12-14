@@ -21,6 +21,7 @@ namespace ManagedCode.Storage.Tests.Storages.CloudDrive;
 public class GraphOneDriveClientTests
 {
     private const string RootKey = "root";
+    private const string DriveKey = "drive";
 
     [Fact]
     public async Task GraphClient_EndToEnd()
@@ -30,6 +31,14 @@ public class GraphOneDriveClientTests
         var storageClient = new GraphOneDriveClient(client);
 
         await storageClient.EnsureRootAsync("me", "work", true, CancellationToken.None);
+
+        var rootItems = new List<DriveItem>();
+        await foreach (var item in storageClient.ListAsync("me", null, CancellationToken.None))
+        {
+            rootItems.Add(item);
+        }
+
+        rootItems.ShouldContain(i => i.Name == "work");
 
         await using (var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes("graph payload")))
         {
@@ -59,6 +68,18 @@ public class GraphOneDriveClientTests
 
         (await storageClient.DeleteAsync("me", "work/doc.txt", CancellationToken.None)).ShouldBeTrue();
         (await storageClient.ExistsAsync("me", "work/doc.txt", CancellationToken.None)).ShouldBeFalse();
+        (await storageClient.DeleteAsync("me", "work/doc.txt", CancellationToken.None)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task EnsureRootAsync_WhenFolderMissing_AndCreateIfNotExistsFalse_ShouldThrow()
+    {
+        var handler = new FakeGraphHandler();
+        var client = CreateGraphClient(handler);
+        var storageClient = new GraphOneDriveClient(client);
+
+        await Should.ThrowAsync<DirectoryNotFoundException>(() =>
+            storageClient.EnsureRootAsync("me", "missing", false, CancellationToken.None));
     }
 
     private static GraphServiceClient CreateGraphClient(HttpMessageHandler handler)
@@ -97,9 +118,14 @@ public class GraphOneDriveClientTests
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            if (IsMeDriveRequest(request.RequestUri))
+            {
+                return Task.FromResult(JsonResponse(new Microsoft.Graph.Models.Drive { Id = DriveKey }));
+            }
+
             if (IsRootRequest(request.RequestUri))
             {
-                return Task.FromResult(JsonResponse(_entries[RootKey]));
+                return Task.FromResult(JsonResponse(GraphEntry.ToDriveItem(_entries[RootKey])));
             }
 
             if (TryHandleChildrenRequest(request, out var childrenResponse))
@@ -112,29 +138,7 @@ public class GraphOneDriveClientTests
                 return Task.FromResult(itemResponse);
             }
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
-        }
-
-        private bool TryHandleItemRequest(HttpRequestMessage request, out HttpResponseMessage response)
-        {
-            response = new HttpResponseMessage(HttpStatusCode.NotFound);
-            var segments = request.RequestUri!.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var contentSegment = segments.FirstOrDefault(s => s.EndsWith(":content", StringComparison.OrdinalIgnoreCase));
-
-            if (contentSegment != null)
-            {
-                var path = DecodePath(contentSegment.Replace(":content", string.Empty, StringComparison.OrdinalIgnoreCase));
-                return HandleContentRequest(request, path, ref response);
-            }
-
-            var itemWithPath = segments.FirstOrDefault(s => s.Contains(':'));
-            if (itemWithPath != null)
-            {
-                var path = DecodePath(itemWithPath.Trim(':'));
-                return HandleMetadataRequest(request.Method, path, ref response);
-            }
-
-            return false;
+            return Task.FromResult(NotFoundResponse($"Unhandled Graph request: {request.Method} {request.RequestUri}"));
         }
 
         private bool HandleMetadataRequest(HttpMethod method, string path, ref HttpResponseMessage response)
@@ -144,7 +148,7 @@ public class GraphOneDriveClientTests
             {
                 if (entry == null)
                 {
-                    response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                    response = NotFoundResponse();
                     return true;
                 }
 
@@ -155,11 +159,11 @@ public class GraphOneDriveClientTests
 
             if (entry == null)
             {
-                response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                response = NotFoundResponse();
                 return true;
             }
 
-            response = JsonResponse(entry);
+            response = JsonResponse(GraphEntry.ToDriveItem(entry));
             return true;
         }
 
@@ -175,14 +179,14 @@ public class GraphOneDriveClientTests
                 buffer.CopyTo(memory);
                 var entry = GraphEntry.File(Path.GetFileName(path), parentPath, memory.ToArray());
                 _entries[entry.Id] = entry;
-                response = JsonResponse(entry);
+                response = JsonResponse(GraphEntry.ToDriveItem(entry));
                 return true;
             }
 
             var existing = _entries.Values.FirstOrDefault(v => string.Equals(v.Path, path, StringComparison.OrdinalIgnoreCase));
             if (existing == null)
             {
-                response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                response = NotFoundResponse();
                 return true;
             }
 
@@ -192,6 +196,18 @@ public class GraphOneDriveClientTests
             };
 
             return true;
+        }
+
+        private HttpResponseMessage NotFoundResponse(string? message = null)
+        {
+            return JsonResponse(new
+            {
+                error = new
+                {
+                    code = "itemNotFound",
+                    message = message ?? "Item not found."
+                }
+            }, HttpStatusCode.NotFound);
         }
 
         private bool TryHandleChildrenRequest(HttpRequestMessage request, out HttpResponseMessage response)
@@ -217,7 +233,7 @@ public class GraphOneDriveClientTests
 
                 var created = GraphEntry.Folder(item!.Name!, parentPath: _entries[idSegment ?? RootKey].Path);
                 _entries[created.Id] = created;
-                response = JsonResponse(created, HttpStatusCode.Created);
+                response = JsonResponse(GraphEntry.ToDriveItem(created), HttpStatusCode.Created);
                 return true;
             }
 
@@ -232,7 +248,19 @@ public class GraphOneDriveClientTests
 
         private static bool IsRootRequest(Uri? requestUri)
         {
-            return requestUri != null && requestUri.AbsolutePath.TrimEnd('/').EndsWith("me/drive/root", StringComparison.OrdinalIgnoreCase);
+            if (requestUri == null)
+            {
+                return false;
+            }
+
+            var path = requestUri.AbsolutePath.TrimEnd('/');
+            return path.EndsWith("/me/drive/root", StringComparison.OrdinalIgnoreCase)
+                   || path.EndsWith($"/drives/{DriveKey}/root", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsMeDriveRequest(Uri? requestUri)
+        {
+            return requestUri != null && requestUri.AbsolutePath.TrimEnd('/').EndsWith("/me/drive", StringComparison.OrdinalIgnoreCase);
         }
 
         private void EnsureFolder(string path)
@@ -255,20 +283,53 @@ public class GraphOneDriveClientTests
             _entries[folder.Id] = folder;
         }
 
-        private static string DecodePath(string segment)
+        private static bool TryGetItemPath(Uri requestUri, out string path, out bool isContent)
         {
-            return Uri.UnescapeDataString(segment.Replace("root:", string.Empty, StringComparison.OrdinalIgnoreCase)).Trim('/');
+            path = string.Empty;
+            isContent = false;
+
+            var requestPath = Uri.UnescapeDataString(requestUri.AbsolutePath);
+            var markerIndex = requestPath.IndexOf("/root:", StringComparison.OrdinalIgnoreCase);
+            if (markerIndex < 0)
+            {
+                return false;
+            }
+
+            var itemPath = requestPath[(markerIndex + "/root:".Length)..];
+            if (itemPath.EndsWith(":/content", StringComparison.OrdinalIgnoreCase))
+            {
+                isContent = true;
+                itemPath = itemPath[..^":/content".Length];
+            }
+
+            itemPath = itemPath.TrimEnd(':');
+            path = itemPath.Trim('/');
+            return true;
         }
 
         private static HttpResponseMessage JsonResponse(object content, HttpStatusCode status = HttpStatusCode.OK)
         {
             var response = new HttpResponseMessage(status)
             {
-                Content = new StringContent(JsonSerializer.Serialize(content))
+                Content = new StringContent(JsonSerializer.Serialize(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))
             };
 
             response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
             return response;
+        }
+
+        private bool TryHandleItemRequest(HttpRequestMessage request, out HttpResponseMessage response)
+        {
+            response = new HttpResponseMessage(HttpStatusCode.NotFound);
+
+            if (!TryGetItemPath(request.RequestUri!, out var path, out var isContent))
+            {
+                return false;
+            }
+
+            return isContent
+                ? HandleContentRequest(request, path, ref response)
+                : HandleMetadataRequest(request.Method, path, ref response);
         }
     }
 

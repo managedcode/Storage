@@ -13,7 +13,7 @@
 
 Cross-provider blob storage toolkit for .NET and ASP.NET streaming scenarios.
 
-ManagedCode.Storage wraps vendor SDKs behind a single `IStorage` abstraction so uploads, downloads, metadata, streaming, and retention behave the same regardless of provider. Swap between Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, SFTP, a local file system, or the in-memory Virtual File System without rewriting application code. Pair it with our ASP.NET controllers and SignalR client to deliver chunked uploads, ranged downloads, and progress notifications end to end.
+ManagedCode.Storage wraps vendor SDKs behind a single `IStorage` abstraction so uploads, downloads, metadata, streaming, and retention behave the same regardless of provider. Swap between Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, a local file system, or the in-memory Virtual File System without rewriting application code. Pair it with our ASP.NET controllers and SignalR client to deliver chunked uploads, ranged downloads, and progress notifications end to end.
 
 ## Motivation
 
@@ -22,7 +22,7 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 ## Features
 
 - Unified `IStorage` abstraction covering upload, download, streaming, metadata, deletion, container management, and legal hold operations backed by `Result<T>` responses.
-- Provider coverage across Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, SFTP, local file system, and the in-memory Virtual File System (VFS).
+- Provider coverage across Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive (Microsoft Graph), Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, local file system, and the in-memory Virtual File System (VFS).
 - Keyed dependency-injection registrations plus default provider helpers to fan out files per tenant, region, or workload without manual service plumbing.
 - ASP.NET storage controllers, chunk orchestration services, and a SignalR hub/client pair that deliver resumable uploads, ranged downloads, CRC32 validation, and real-time progress.
 - `ManagedCode.Storage.Client` brings streaming uploads/downloads, CRC32 helpers, and MIME discovery via `MimeHelper` to any .NET app.
@@ -51,44 +51,138 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | Google Cloud Storage integration built on official SDKs. |
 | [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | Local file system implementation for hybrid or on-premises workloads. |
 | [ManagedCode.Storage.Sftp](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Sftp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | SFTP provider powered by SSH.NET for legacy and air-gapped environments. |
+| [ManagedCode.Storage.OneDrive](https://www.nuget.org/packages/ManagedCode.Storage.OneDrive) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.OneDrive.svg)](https://www.nuget.org/packages/ManagedCode.Storage.OneDrive) | OneDrive provider built on Microsoft Graph. |
+| [ManagedCode.Storage.GoogleDrive](https://www.nuget.org/packages/ManagedCode.Storage.GoogleDrive) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.GoogleDrive.svg)](https://www.nuget.org/packages/ManagedCode.Storage.GoogleDrive) | Google Drive provider built on the Google Drive API. |
+| [ManagedCode.Storage.Dropbox](https://www.nuget.org/packages/ManagedCode.Storage.Dropbox) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Dropbox.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Dropbox) | Dropbox provider built on the Dropbox API. |
+| [ManagedCode.Storage.CloudKit](https://www.nuget.org/packages/ManagedCode.Storage.CloudKit) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.CloudKit.svg)](https://www.nuget.org/packages/ManagedCode.Storage.CloudKit) | CloudKit (iCloud app data) provider built on CloudKit Web Services. |
 
-### Configuring OneDrive, Google Drive, and Dropbox
+### Configuring OneDrive, Google Drive, Dropbox, and CloudKit
 
-> iCloud does not expose a public file API suitable for server-side integrations, so only Microsoft, Google, and Dropbox cloud drives are covered here.
+> iCloud Drive does not expose a public server-side file API. `ManagedCode.Storage.CloudKit` targets CloudKit Web Services (iCloud app data), not iCloud Drive.
+
+These providers follow the same DI patterns as the other backends: use `Add*StorageAsDefault(...)` to bind `IStorage`, or `Add*Storage(...)` to inject the provider interface (`IOneDriveStorage`, `IGoogleDriveStorage`, `IDropboxStorage`, `ICloudKitStorage`).
+
+Most cloud-drive providers expect you to create the official SDK client (Graph/Drive/Dropbox) with your preferred auth flow and pass it into the storage options. ManagedCode.Storage does not run OAuth flows automatically.
+
+Keyed registrations are available as well (useful for multi-tenant apps):
+
+```csharp
+using Dropbox.Api;
+using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Dropbox.Extensions;
+
+var accessToken = configuration["Dropbox:AccessToken"]; // obtained via OAuth (see Dropbox section below)
+var dropboxClient = new DropboxClient(accessToken);
+
+builder.Services.AddDropboxStorageAsDefault("tenant-a", options =>
+{
+    options.DropboxClient = dropboxClient;
+    options.RootPath = "/apps/my-app";
+});
+
+var tenantStorage = app.Services.GetRequiredKeyedService<IStorage>("tenant-a");
+```
 
 **OneDrive / Microsoft Graph**
 
+0. Install the provider package and import DI extensions:
+
+   ```bash
+   dotnet add package ManagedCode.Storage.OneDrive
+   dotnet add package Azure.Identity
+   ```
+
+   ```csharp
+   using ManagedCode.Storage.OneDrive.Extensions;
+   ```
+
+   Docs: [Register an app](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app), [Microsoft Graph auth](https://learn.microsoft.com/en-us/graph/auth/).
+
 1. Create an app registration in Azure Active Directory (Entra ID) and record the **Application (client) ID**, **Directory (tenant) ID**, and a **client secret**.
-2. Add the Microsoft Graph **Files.ReadWrite.All** delegated permission (or **Sites.ReadWrite.All** if you target SharePoint drives) and grant admin consent.
-3. In your ASP.NET app, acquire a token via `ClientSecretCredential` or another `TokenCredential` and pass it to `new GraphServiceClient(credential, new[] { "https://graph.microsoft.com/.default" })`.
+2. In **API permissions**, add Microsoft Graph permissions:
+   - For server-to-server apps: **Application** → `Files.ReadWrite.All` (or `Sites.ReadWrite.All` for SharePoint drives), then **Grant admin consent**.
+   - For user flows: **Delegated** permissions are also possible, but you must supply a Graph client that authenticates as the user.
+3. Create the Graph client (example uses client credentials):
+
+   ```csharp
+   using Azure.Identity;
+   using Microsoft.Graph;
+
+   var tenantId = configuration["OneDrive:TenantId"]!;
+   var clientId = configuration["OneDrive:ClientId"]!;
+   var clientSecret = configuration["OneDrive:ClientSecret"]!;
+
+   var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+   var graphClient = new GraphServiceClient(credential, new[] { "https://graph.microsoft.com/.default" });
+   ```
+
 4. Register OneDrive storage with the Graph client and the drive/root you want to scope to:
 
    ```csharp
    builder.Services.AddOneDriveStorageAsDefault(options =>
    {
-       options.GraphClient = graphClient;        // from step 3
+       options.GraphClient = graphClient;
        options.DriveId = "me";                   // or a specific drive ID
        options.RootPath = "app-data";            // folder will be created when CreateContainerIfNotExists is true
        options.CreateContainerIfNotExists = true;
    });
    ```
 
-5. If you need to impersonate a specific drive item, swap `DriveId` for the drive GUID returned by Graph.
+5. If you need a concrete drive id, fetch it via Graph (example):
+
+   ```csharp
+   var drive = await graphClient.Me.Drive.GetAsync();
+   var driveId = drive?.Id;
+   ```
 
 **Google Drive**
 
-1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the **Google Drive API**.
-2. Configure an OAuth consent screen and create an **OAuth 2.0 Client ID** (Desktop or Web). Record the client ID and secret.
-3. Exchange the OAuth code for a refresh token with the `https://www.googleapis.com/auth/drive.file` scope (or broader if necessary).
-4. Add the Google Drive provider and feed the credentials to the options:
+0. Install the provider package and import DI extensions:
+
+   ```bash
+   dotnet add package ManagedCode.Storage.GoogleDrive
+   ```
 
    ```csharp
-   builder.Services.AddGoogleDriveStorage(options =>
+   using ManagedCode.Storage.GoogleDrive.Extensions;
+   ```
+
+   Docs: [Drive API overview](https://developers.google.com/drive/api/guides/about-sdk), [OAuth 2.0](https://developers.google.com/identity/protocols/oauth2).
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the **Google Drive API**.
+2. Create credentials:
+   - **Service account** (recommended for server apps): create a service account and download a JSON key.
+   - **OAuth client** (interactive user auth): configure OAuth consent screen and create an OAuth client id/secret.
+3. Create a `DriveService`.
+
+   **Service account example:**
+
+   ```csharp
+   using Google.Apis.Auth.OAuth2;
+   using Google.Apis.Drive.v3;
+   using Google.Apis.Services;
+
+   var credential = GoogleCredential
+       .FromFile("service-account.json")
+       .CreateScoped(DriveService.Scope.Drive);
+
+   var driveService = new DriveService(new BaseClientService.Initializer
    {
-       options.ClientId = configuration["GoogleDrive:ClientId"]!;
-       options.ClientSecret = configuration["GoogleDrive:ClientSecret"]!;
-       options.RefreshToken = configuration["GoogleDrive:RefreshToken"]!;
-       options.RootFolderId = "root"; // or a shared drive folder id
+       HttpClientInitializer = credential,
+       ApplicationName = "MyApp"
+   });
+   ```
+
+   If you use a service account, share the target folder/drive with the service account email (or use a Shared Drive) so it can see your files.
+
+4. Register the Google Drive provider with the configured `DriveService` and a root folder id:
+
+   ```csharp
+   builder.Services.AddGoogleDriveStorageAsDefault(options =>
+   {
+       options.DriveService = driveService;
+       options.RootFolderId = "root"; // or a specific folder id you control
+       options.CreateContainerIfNotExists = true;
    });
    ```
 
@@ -96,21 +190,99 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 
 **Dropbox**
 
-1. Create an app in the [Dropbox App Console](https://www.dropbox.com/developers/apps) and choose **Scoped access** with the **Full Dropbox** or **App folder** type.
-2. Under **Permissions**, enable `files.content.write`, `files.content.read`, and `files.metadata.write` and generate a refresh token via OAuth.
-3. Register Dropbox storage with the access credentials and a root path (use `/` for full access apps or `/Apps/<your-app>` for app folders):
+0. Install the provider package and import DI extensions:
+
+   ```bash
+   dotnet add package ManagedCode.Storage.Dropbox
+   ```
 
    ```csharp
-   builder.Services.AddDropboxStorage(options =>
+   using ManagedCode.Storage.Dropbox.Extensions;
+   ```
+
+   Docs: [Dropbox App Console](https://www.dropbox.com/developers/apps), [OAuth guide](https://www.dropbox.com/developers/documentation/http/documentation#oauth2).
+
+1. Create an app in the [Dropbox App Console](https://www.dropbox.com/developers/apps) and choose **Scoped access** with the **Full Dropbox** or **App folder** type.
+2. Record the **App key** and **App secret** (Settings tab).
+3. Under **Permissions**, enable `files.content.write`, `files.content.read`, `files.metadata.read`, and `files.metadata.write` (plus any additional scopes you need) and save changes.
+4. Obtain an access token:
+   - For quick local testing, you can generate a token in the app console.
+   - For production, use OAuth code flow (example):
+
+   ```csharp
+   using Dropbox.Api;
+
+   var appKey = configuration["Dropbox:AppKey"]!;
+   var appSecret = configuration["Dropbox:AppSecret"]!;
+   var redirectUri = configuration["Dropbox:RedirectUri"]!; // must be registered in Dropbox app console
+
+   // 1) Redirect user to:
+   // var authorizeUri = DropboxOAuth2Helper.GetAuthorizeUri(OAuthResponseType.Code, appKey, redirectUri, tokenAccessType: TokenAccessType.Offline);
+   //
+   // 2) Receive the 'code' on your redirect endpoint, then exchange it:
+   var auth = await DropboxOAuth2Helper.ProcessCodeFlowAsync(code, appKey, appSecret, redirectUri);
+   var accessToken = auth.AccessToken;
+   var refreshToken = auth.RefreshToken; // store securely if you requested offline access
+   ```
+
+5. Create the Dropbox client and register Dropbox storage with a root path (use `/` for full access apps or `/Apps/<your-app>` for app folders):
+
+   ```csharp
+   using Dropbox.Api;
+   builder.Services.AddDropboxStorageAsDefault(options =>
    {
-       options.AppKey = configuration["Dropbox:AppKey"]!;
-       options.AppSecret = configuration["Dropbox:AppSecret"]!;
-       options.RefreshToken = configuration["Dropbox:RefreshToken"]!;
+       var accessToken = configuration["Dropbox:AccessToken"]!;
+       options.DropboxClient = new DropboxClient(accessToken);
        options.RootPath = "/apps/my-app";
+       options.CreateContainerIfNotExists = true;
    });
    ```
 
-4. Dropbox issues short-lived access tokens from refresh tokens; the SDK handles the exchange automatically once configured.
+6. Store tokens in user secrets or environment variables; never commit them to source control.
+
+**CloudKit (iCloud app data)**
+
+0. Install the provider package and import DI extensions:
+
+   ```bash
+   dotnet add package ManagedCode.Storage.CloudKit
+   ```
+
+   ```csharp
+   using ManagedCode.Storage.CloudKit.Extensions;
+   using ManagedCode.Storage.CloudKit.Options;
+   ```
+
+   Docs: [CloudKit Web Services Reference](https://developer.apple.com/library/archive/documentation/DataManagement/Conceptual/CloudKitWebServicesReference/index.html).
+
+1. In Apple Developer / CloudKit Dashboard, configure the container you want to use and note its container id (example: `iCloud.com.company.app`).
+2. Ensure the file record type exists (default `MCStorageFile`).
+3. Add these fields to the record type:
+   - `path` (String) — must be queryable/indexed for prefix listing.
+   - `contentType` (String) — optional but recommended.
+   - `file` (Asset) — stores the binary content.
+4. Configure authentication:
+   - **API token** (`ckAPIToken`): create an API token for your container in CloudKit Dashboard and store it as a secret.
+   - **Server-to-server key** (public DB only): create a CloudKit key in Apple Developer (download the `.p8` private key, keep the key id).
+5. Register CloudKit storage:
+
+   ```csharp
+   builder.Services.AddCloudKitStorageAsDefault(options =>
+   {
+       options.ContainerId = "iCloud.com.company.app";
+       options.Environment = CloudKitEnvironment.Production;
+       options.Database = CloudKitDatabase.Public;
+       options.RootPath = "app-data";
+
+       // Choose ONE auth mode:
+       options.ApiToken = configuration["CloudKit:ApiToken"];
+       // OR:
+       // options.ServerToServerKeyId = configuration["CloudKit:KeyId"];
+       // options.ServerToServerPrivateKeyPem = configuration["CloudKit:PrivateKeyPem"]; // paste PEM (.p8) contents
+   });
+   ```
+
+6. CloudKit Web Services impose size limits; keep files reasonably small and validate against your current CloudKit quotas.
 
 ### ASP.NET & Clients
 
@@ -145,6 +317,10 @@ flowchart LR
         AzureDL["Azure Data Lake"]
         Aws["Amazon S3"]
         Gcp["Google Cloud Storage"]
+        OneDrive["OneDrive (Graph)"]
+        GoogleDrive["Google Drive"]
+        Dropbox["Dropbox"]
+        CloudKit["CloudKit (iCloud app data)"]
         Fs["File System"]
         Sftp["SFTP"]
     end
@@ -156,11 +332,15 @@ flowchart LR
     Factories --> AzureDL
     Factories --> Aws
     Factories --> Gcp
+    Factories --> OneDrive
+    Factories --> GoogleDrive
+    Factories --> Dropbox
+    Factories --> CloudKit
     Factories --> Fs
     Factories --> Sftp
 ```
 
-Keyed provider registrations let you resolve multiple named instances from dependency injection while reusing the same abstraction across Azure, AWS, GCP, SFTP, and local file system storage.
+Keyed provider registrations let you resolve multiple named instances from dependency injection while reusing the same abstraction across Azure, AWS, Google Cloud Storage, Google Drive, OneDrive, Dropbox, CloudKit, SFTP, and local file system storage.
 
 ### ASP.NET Streaming Controllers
 
@@ -347,6 +527,8 @@ Need resumable uploads or live progress UI? Call <code>AddStorageSignalR()</code
 
 You can connect storage interface in two modes provider-specific and default. In case of default you are restricted with
 one storage type
+
+Cloud-drive providers (OneDrive, Google Drive, Dropbox) and CloudKit are configured in [Configuring OneDrive, Google Drive, Dropbox, and CloudKit](#configuring-onedrive-google-drive-dropbox-and-cloudkit); the same default/provider-specific rules apply.
 
 ### Azure
 

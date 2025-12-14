@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO.Pipelines;
 using Google.Apis.Drive.v3;
 using DriveFile = Google.Apis.Drive.v3.Data.File;
 
@@ -12,6 +13,7 @@ namespace ManagedCode.Storage.GoogleDrive.Clients;
 
 public class GoogleDriveClient : IGoogleDriveClient
 {
+    private const string FolderMimeType = "application/vnd.google-apps.folder";
     private readonly DriveService _driveService;
 
     public GoogleDriveClient(DriveService driveService)
@@ -37,16 +39,29 @@ public class GoogleDriveClient : IGoogleDriveClient
 
         var request = _driveService.Files.Create(fileMetadata, content, contentType ?? "application/octet-stream");
         request.Fields = "id,name,parents,createdTime,modifiedTime,md5Checksum,size";
-        return await request.UploadAsync(cancellationToken).ContinueWith(async _ => await _driveService.Files.Get(request.ResponseBody.Id).ExecuteAsync(cancellationToken)).Unwrap();
+        await request.UploadAsync(cancellationToken);
+        return request.ResponseBody ?? throw new InvalidOperationException("Google Drive upload returned no metadata.");
     }
 
     public async Task<Stream> DownloadAsync(string rootFolderId, string path, CancellationToken cancellationToken)
     {
         var file = await FindFileByPathAsync(rootFolderId, path, cancellationToken) ?? throw new FileNotFoundException(path);
-        var stream = new MemoryStream();
-        await _driveService.Files.Get(file.Id).DownloadAsync(stream, cancellationToken);
-        stream.Position = 0;
-        return stream;
+        var pipe = new Pipe();
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await using var destination = pipe.Writer.AsStream(leaveOpen: true);
+                await _driveService.Files.Get(file.Id).DownloadAsync(destination, cancellationToken);
+                pipe.Writer.Complete();
+            }
+            catch (Exception ex)
+            {
+                pipe.Writer.Complete(ex);
+            }
+        }, cancellationToken);
+
+        return pipe.Reader.AsStream();
     }
 
     public async Task<bool> DeleteAsync(string rootFolderId, string path, CancellationToken cancellationToken)
@@ -57,7 +72,7 @@ public class GoogleDriveClient : IGoogleDriveClient
             return false;
         }
 
-        await _driveService.Files.Delete(file.Id).ExecuteAsync(cancellationToken);
+        await DeleteRecursiveAsync(file.Id, file.MimeType, cancellationToken);
         return true;
     }
 
@@ -73,24 +88,35 @@ public class GoogleDriveClient : IGoogleDriveClient
 
     public async IAsyncEnumerable<DriveFile> ListAsync(string rootFolderId, string? directory, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var parentId = string.IsNullOrWhiteSpace(directory)
-            ? rootFolderId
-            : await EnsureFolderPathAsync(rootFolderId, directory!, false, cancellationToken) ?? rootFolderId;
+        string parentId;
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            parentId = rootFolderId;
+        }
+        else
+        {
+            parentId = await EnsureFolderPathAsync(rootFolderId, directory!, false, cancellationToken) ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(parentId))
+            {
+                yield break;
+            }
+        }
 
         var request = _driveService.Files.List();
         request.Q = $"'{parentId}' in parents and trashed=false";
-        request.Fields = "files(id,name,parents,createdTime,modifiedTime,md5Checksum,size,mimeType)";
+        request.Fields = "nextPageToken,files(id,name,parents,createdTime,modifiedTime,md5Checksum,size,mimeType)";
 
         do
         {
             var response = await request.ExecuteAsync(cancellationToken);
             foreach (var file in response.Files ?? Enumerable.Empty<DriveFile>())
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 yield return file;
             }
 
             request.PageToken = response.NextPageToken;
-        } while (!string.IsNullOrEmpty(request.PageToken) && !cancellationToken.IsCancellationRequested);
+        } while (!string.IsNullOrEmpty(request.PageToken));
     }
 
     private async Task<(string ParentId, string Name)> EnsureParentFolderAsync(string rootFolderId, string fullPath, CancellationToken cancellationToken)
@@ -137,6 +163,42 @@ public class GoogleDriveClient : IGoogleDriveClient
         request.Fields = "files(id,name,parents,createdTime,modifiedTime,md5Checksum,size,mimeType)";
         var response = await request.ExecuteAsync(cancellationToken);
         return response.Files?.FirstOrDefault();
+    }
+
+    private async Task DeleteRecursiveAsync(string fileId, string? mimeType, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.Equals(mimeType, FolderMimeType, StringComparison.OrdinalIgnoreCase))
+        {
+            await DeleteFolderChildrenAsync(fileId, cancellationToken);
+        }
+
+        await _driveService.Files.Delete(fileId).ExecuteAsync(cancellationToken);
+    }
+
+    private async Task DeleteFolderChildrenAsync(string folderId, CancellationToken cancellationToken)
+    {
+        var request = _driveService.Files.List();
+        request.Q = $"'{folderId}' in parents and trashed=false";
+        request.Fields = "nextPageToken,files(id,mimeType)";
+
+        do
+        {
+            var response = await request.ExecuteAsync(cancellationToken);
+            foreach (var entry in response.Files ?? Enumerable.Empty<DriveFile>())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (string.IsNullOrWhiteSpace(entry.Id))
+                {
+                    continue;
+                }
+
+                await DeleteRecursiveAsync(entry.Id, entry.MimeType, cancellationToken);
+            }
+
+            request.PageToken = response.NextPageToken;
+        } while (!string.IsNullOrWhiteSpace(request.PageToken));
     }
 
     private async Task<DriveFile?> FindFileByPathAsync(string rootFolderId, string path, CancellationToken cancellationToken)

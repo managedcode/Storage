@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
+using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Dropbox.Clients;
@@ -66,10 +67,15 @@ public class DropboxStorage : BaseStorage<IDropboxClientWrapper, DropboxStorageO
             await EnsureContainerExist(cancellationToken);
             var normalizedDirectory = NormalizeRelativePath(directory);
 
-            await foreach (var item in StorageClient.ListAsync(StorageOptions.RootPath, normalizedDirectory, cancellationToken))
+            if (!string.IsNullOrWhiteSpace(normalizedDirectory))
             {
-                var path = string.IsNullOrWhiteSpace(normalizedDirectory) ? item.Name : $"{normalizedDirectory}/{item.Name}";
-                await StorageClient.DeleteAsync(StorageOptions.RootPath, path!, cancellationToken);
+                _ = await StorageClient.DeleteAsync(StorageOptions.RootPath, normalizedDirectory, cancellationToken);
+                return Result.Succeed();
+            }
+
+            await foreach (var item in StorageClient.ListAsync(StorageOptions.RootPath, null, cancellationToken))
+            {
+                _ = await StorageClient.DeleteAsync(StorageOptions.RootPath, item.Name, cancellationToken);
             }
 
             return Result.Succeed();
@@ -214,10 +220,7 @@ public class DropboxStorage : BaseStorage<IDropboxClientWrapper, DropboxStorageO
 
     private string BuildFullPath(string? relativePath)
     {
-        var normalized = NormalizeRelativePath(relativePath ?? string.Empty);
-        return string.IsNullOrWhiteSpace(StorageOptions.RootPath)
-            ? normalized
-            : string.IsNullOrWhiteSpace(normalized) ? StorageOptions.RootPath.Trim('/') : $"{StorageOptions.RootPath.Trim('/')}/{normalized}";
+        return NormalizeRelativePath(relativePath ?? string.Empty);
     }
 
     private static string NormalizeRelativePath(string path)
@@ -236,7 +239,7 @@ public class DropboxStorage : BaseStorage<IDropboxClientWrapper, DropboxStorageO
             CreatedOn = file.ClientModified,
             LastModified = file.ServerModified,
             Length = file.Size,
-            MimeType = file.Name
+            MimeType = MimeHelper.GetMimeType(file.Name)
         };
     }
 }
