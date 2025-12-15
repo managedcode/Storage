@@ -45,7 +45,7 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
         using var formData = new MultipartFormDataContent();
         formData.Add(streamContent, contentName, contentName);
 
-        var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
+        using var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
         if (response.IsSuccessStatusCode)
             return await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
@@ -63,7 +63,7 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
         {
             formData.Add(streamContent, contentName, contentName);
 
-            var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
+            using var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -77,27 +77,21 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
 
     public async Task<Result<BlobMetadata>> UploadFile(byte[] bytes, string apiUrl, string contentName, CancellationToken cancellationToken = default)
     {
-        using (var stream = new MemoryStream())
+        using var stream = new MemoryStream(bytes, writable: false);
+        using var streamContent = new StreamContent(stream);
+        using var formData = new MultipartFormDataContent();
+
+        formData.Add(streamContent, contentName, contentName);
+
+        using var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
         {
-            stream.Write(bytes, 0, bytes.Length);
-
-            using var streamContent = new StreamContent(stream);
-
-            using (var formData = new MultipartFormDataContent())
-            {
-                formData.Add(streamContent, contentName, contentName);
-
-                var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
-                    return result;
-                }
-
-                return Result<BlobMetadata>.Fail(response.StatusCode);
-            }
+            var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
+            return result;
         }
+
+        return Result<BlobMetadata>.Fail(response.StatusCode);
     }
 
     public async Task<Result<BlobMetadata>> UploadFile(string base64, string apiUrl, string contentName,
@@ -110,7 +104,7 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
 
         formData.Add(fileContent, contentName, contentName);
 
-        var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
+        using var response = await httpClient.PostAsync(apiUrl, formData, cancellationToken);
 
         if (response.IsSuccessStatusCode)
             return await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: cancellationToken);
@@ -188,11 +182,13 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
             formData.Add(new StringContent(bytesRead.ToString()), "Payload.ChunkSize");
             formData.Add(new StringContent(totalChunks.ToString()), "Payload.TotalChunks");
 
-            var response = await httpClient.PostAsync(uploadApiUrl, formData, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            using (var response = await httpClient.PostAsync(uploadApiUrl, formData, cancellationToken))
             {
-                var message = await response.Content.ReadAsStringAsync(cancellationToken);
-                return Result<uint>.Fail(response.StatusCode, message);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var message = await response.Content.ReadAsStringAsync(cancellationToken);
+                    return Result<uint>.Fail(response.StatusCode, message);
+                }
             }
 
             transmitted += bytesRead;
@@ -230,7 +226,7 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
             KeepMergedFile = false
         };
 
-        var mergeResult = await httpClient.PostAsJsonAsync(completeApiUrl, completePayload, cancellationToken);
+        using var mergeResult = await httpClient.PostAsJsonAsync(completeApiUrl, completePayload, cancellationToken);
         if (!mergeResult.IsSuccessStatusCode)
         {
             var message = await mergeResult.Content.ReadAsStringAsync(cancellationToken);
@@ -308,14 +304,25 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
     {
         try
         {
-            var response = await httpClient.GetAsync($"{apiUrl}/{fileName}");
-            if (response.IsSuccessStatusCode)
+            var response = await httpClient.GetAsync($"{apiUrl}/{fileName}", HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
             {
-                var stream = await response.Content.ReadAsStreamAsync();
-                return Result<Stream>.Succeed(stream);
+                response.Dispose();
+                return Result<Stream>.Fail(response.StatusCode);
             }
 
-            return Result<Stream>.Fail(response.StatusCode);
+            Stream contentStream;
+            try
+            {
+                contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            }
+            catch
+            {
+                response.Dispose();
+                throw;
+            }
+
+            return Result<Stream>.Succeed(new HttpResponseMessageStream(contentStream, response));
         }
         catch (HttpRequestException e) when (e.StatusCode != null)
         {
@@ -325,6 +332,82 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
         {
             return Result<Stream>.Fail(HttpStatusCode.InternalServerError);
         }
+    }
+}
+
+file sealed class HttpResponseMessageStream(Stream innerStream, HttpResponseMessage response) : Stream
+{
+    private readonly Stream _innerStream = innerStream ?? throw new ArgumentNullException(nameof(innerStream));
+    private readonly HttpResponseMessage _response = response ?? throw new ArgumentNullException(nameof(response));
+
+    public override bool CanRead => _innerStream.CanRead;
+    public override bool CanSeek => _innerStream.CanSeek;
+    public override bool CanWrite => _innerStream.CanWrite;
+    public override long Length => _innerStream.Length;
+
+    public override long Position
+    {
+        get => _innerStream.Position;
+        set => _innerStream.Position = value;
+    }
+
+    public override void Flush() => _innerStream.Flush();
+
+    public override Task FlushAsync(CancellationToken cancellationToken) => _innerStream.FlushAsync(cancellationToken);
+
+    public override int Read(byte[] buffer, int offset, int count) => _innerStream.Read(buffer, offset, count);
+
+    public override int Read(Span<byte> buffer) => _innerStream.Read(buffer);
+
+    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+        _innerStream.ReadAsync(buffer, offset, count, cancellationToken);
+
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+        _innerStream.ReadAsync(buffer, cancellationToken);
+
+    public override long Seek(long offset, SeekOrigin origin) => _innerStream.Seek(offset, origin);
+
+    public override void SetLength(long value) => _innerStream.SetLength(value);
+
+    public override void Write(byte[] buffer, int offset, int count) => _innerStream.Write(buffer, offset, count);
+
+    public override void Write(ReadOnlySpan<byte> buffer) => _innerStream.Write(buffer);
+
+    public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+        _innerStream.WriteAsync(buffer, offset, count, cancellationToken);
+
+    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default) =>
+        _innerStream.WriteAsync(buffer, cancellationToken);
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            try
+            {
+                _innerStream.Dispose();
+            }
+            finally
+            {
+                _response.Dispose();
+            }
+        }
+
+        base.Dispose(disposing);
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await _innerStream.DisposeAsync();
+        }
+        finally
+        {
+            _response.Dispose();
+        }
+
+        await base.DisposeAsync();
     }
 }
 

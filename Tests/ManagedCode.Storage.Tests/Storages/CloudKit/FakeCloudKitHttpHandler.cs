@@ -259,13 +259,10 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
     private static HttpResponseMessage JsonResponse(object payload, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        var bytes = Encoding.UTF8.GetBytes(json);
-        var response = new HttpResponseMessage(statusCode)
+        return new HttpResponseMessage(statusCode)
         {
-            Content = new ByteArrayContent(bytes)
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
-        response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-        return response;
     }
 
     private static HttpResponseMessage JsonResponseWithToken(Dictionary<string, object?> payload, string? webAuthToken, HttpStatusCode statusCode = HttpStatusCode.OK)

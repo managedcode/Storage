@@ -142,6 +142,7 @@ If no new rule is detected → do not update the file.
 - Nullability is enabled: annotate optional members; avoid `!` unless justified
 - Suffix async APIs with `Async`; keep test names aligned with existing patterns (e.g., `DownloadFile_WhenFileExists_ReturnsSuccess`)
 - Remove unused usings and let analyzers guide layout
+- When a `foreach` loop’s first step is just transforming the iteration variable (e.g., `var y = Map(x)`), prefer mapping the sequence explicitly with `.Select(...)` so intent is clearer and analyzers stay quiet
 - No magic literals — extract to constants, enums, or config when it improves clarity
 
 ### Git & PRs
@@ -150,6 +151,7 @@ If no new rule is detected → do not update the file.
 - Group related edits in one commit and avoid WIP spam
 - PRs should summarize impact, list touched projects, reference issues, and note new configuration or secrets
 - Include the `dotnet` commands you ran and add logs when CI needs context
+- Keep a required CI check named `build-and-test` running on every PR and push to `main` so branch protection always receives a status (it’s worse for merges if the check is missing/never reported than if it runs and fails)
 
 ### Critical (NEVER violate)
 

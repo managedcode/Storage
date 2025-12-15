@@ -307,16 +307,14 @@ public class GraphOneDriveClientTests
             return true;
         }
 
-        private static HttpResponseMessage JsonResponse(object content, HttpStatusCode status = HttpStatusCode.OK)
-        {
-            var response = new HttpResponseMessage(status)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))
-            };
-
-            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            return response;
-        }
+	        private static HttpResponseMessage JsonResponse(object content, HttpStatusCode status = HttpStatusCode.OK)
+	        {
+	            var json = JsonSerializer.Serialize(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+	            return new HttpResponseMessage(status)
+	            {
+	                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+	            };
+	        }
 
         private bool TryHandleItemRequest(HttpRequestMessage request, out HttpResponseMessage response)
         {

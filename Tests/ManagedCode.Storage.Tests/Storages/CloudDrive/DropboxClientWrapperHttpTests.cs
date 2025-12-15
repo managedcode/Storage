@@ -225,22 +225,22 @@ public class DropboxClientWrapperHttpTests
                 return JsonResponse(ToMetadata(entry));
             }
 
-            if (path.Equals("/2/files/download", StringComparison.OrdinalIgnoreCase))
-            {
-                if (!_entries.TryGetValue(normalizedLower, out var entry) || entry.IsFolder)
-                {
-                    return PathNotFoundError();
-                }
+	            if (path.Equals("/2/files/download", StringComparison.OrdinalIgnoreCase))
+	            {
+	                if (!_entries.TryGetValue(normalizedLower, out var entry) || entry.IsFolder)
+	                {
+	                    return PathNotFoundError();
+	                }
 
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new ByteArrayContent(entry.Content)
-                };
-
-                response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                response.Headers.Add("Dropbox-API-Result", JsonSerializer.Serialize(ToMetadata(entry)));
-                return response;
-            }
+	                return new HttpResponseMessage(HttpStatusCode.OK)
+	                {
+	                    Content = new ByteArrayContent(entry.Content)
+	                    {
+	                        Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream") }
+	                    },
+	                    Headers = { { "Dropbox-API-Result", JsonSerializer.Serialize(ToMetadata(entry)) } }
+	                };
+	            }
 
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
@@ -379,15 +379,14 @@ public class DropboxClientWrapperHttpTests
             };
         }
 
-        private static HttpResponseMessage JsonResponse(object payload, HttpStatusCode statusCode = HttpStatusCode.OK)
-        {
-            var response = new HttpResponseMessage(statusCode)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(payload))
-            };
-            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            return response;
-        }
+	        private static HttpResponseMessage JsonResponse(object payload, HttpStatusCode statusCode = HttpStatusCode.OK)
+	        {
+	            var json = JsonSerializer.Serialize(payload);
+	            return new HttpResponseMessage(statusCode)
+	            {
+	                Content = new StringContent(json, Encoding.UTF8, "application/json")
+	            };
+	        }
 
         private static HttpResponseMessage PathNotFoundError()
         {

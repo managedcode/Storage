@@ -204,9 +204,8 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
         {
             var blobs = StorageClient.GetBlobs(prefix: directory, cancellationToken: cancellationToken);
 
-            foreach (var blob in blobs)
+            foreach (var blobClient in blobs.Select(blob => StorageClient.GetBlobClient(blob.Name)))
             {
-                var blobClient = StorageClient.GetBlobClient(blob.Name);
                 await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.None, null, cancellationToken);
             }
 

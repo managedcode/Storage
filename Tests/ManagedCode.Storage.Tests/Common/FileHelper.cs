@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core.Models;
 using Microsoft.AspNetCore.Http;
@@ -65,18 +67,17 @@ public static class FileHelper
     public static IFormFile GenerateFormFile(string fileName, int byteSize)
     {
         var localFile = GenerateLocalFile(fileName, byteSize);
+        var contentType = MimeHelper.GetMimeType(localFile.FileInfo.Extension);
 
-        var ms = new MemoryStream();
-        localFile.FileStream.CopyTo(ms);
-        var formFile = new FormFile(ms, 0, ms.Length, fileName, fileName)
+        byte[] bytes;
+        using (localFile)
         {
-            Headers = new HeaderDictionary(),
-            ContentType = MimeHelper.GetMimeType(localFile.FileInfo.Extension)
-        };
+            using var ms = new MemoryStream();
+            localFile.FileStream.CopyTo(ms);
+            bytes = ms.ToArray();
+        }
 
-        localFile.Dispose();
-
-        return formFile;
+        return new InMemoryFormFile(bytes, fileName, fileName, contentType);
     }
 
     public static string GenerateRandomFileName()
@@ -93,5 +94,48 @@ public static class FileHelper
         return new string(Enumerable.Repeat(chars, charCount)
             .Select(s => s[Random.Next(s.Length)])
             .ToArray());
+    }
+
+    private sealed class InMemoryFormFile : IFormFile
+    {
+        private readonly byte[] _content;
+
+        public InMemoryFormFile(byte[] content, string name, string fileName, string contentType)
+        {
+            _content = content;
+            Name = name;
+            FileName = fileName;
+            ContentType = contentType;
+            Headers = new HeaderDictionary
+            {
+                { "Content-Type", contentType }
+            };
+            ContentDisposition = $"form-data; name=\"{name}\"; filename=\"{fileName}\"";
+        }
+
+        public string ContentType { get; }
+        public string ContentDisposition { get; }
+        public IHeaderDictionary Headers { get; }
+        public long Length => _content.Length;
+        public string Name { get; }
+        public string FileName { get; }
+
+        public Stream OpenReadStream() => new MemoryStream(_content, writable: false);
+
+        public void CopyTo(Stream target)
+        {
+            ArgumentNullException.ThrowIfNull(target);
+
+            using var stream = OpenReadStream();
+            stream.CopyTo(target);
+        }
+
+        public async Task CopyToAsync(Stream target, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(target);
+
+            await using var stream = OpenReadStream();
+            await stream.CopyToAsync(target, cancellationToken);
+        }
     }
 }
