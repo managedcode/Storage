@@ -92,7 +92,10 @@ jobs:
           }
 
           linkify_repo_paths() {
-          python3 - "${REPO_BLOB_BASE}" "${REPO_TREE_BASE}" <<'PY'
+          local script
+          script="$(mktemp)"
+
+          cat > "${script}" <<'PY'
           import re
           import sys
 
@@ -127,6 +130,9 @@ jobs:
 
           sys.stdout.write(text)
           PY
+
+          python3 "${script}" "${REPO_BLOB_BASE}" "${REPO_TREE_BASE}"
+          rm -f "${script}"
           }
 
           extract_description() {

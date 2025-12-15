@@ -421,19 +421,34 @@ hr {
 .footer-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 28px 40px;
+  padding: 22px 40px;
   text-align: center;
   color: #6b6574;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.footer-container p {
-  margin-bottom: 6px;
-}
-
-.footer-container p:first-of-type {
   font-size: 11px;
+  line-height: 1.4;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  row-gap: 6px;
+}
+
+.footer-links li {
+  margin: 0;
+  padding: 0;
+}
+
+.footer-links li + li::before {
+  content: "·";
+  display: inline-block;
+  padding: 0 10px;
+  color: #8a8493;
 }
 
 .footer-container a {
@@ -449,7 +464,6 @@ hr {
 .footer-version {
   font-size: 10px;
   color: #5a5565;
-  margin-top: 8px;
 }
 
 /* Download button */
@@ -727,6 +741,10 @@ body.dark .footer-container a {
 
 body.dark .footer-container a:hover {
   color: #a88bc4;
+}
+
+body.dark .footer-links li + li::before {
+  color: #666;
 }
 
 body.dark .template-item {

@@ -181,12 +181,14 @@
 
   <footer class="footer">
     <div class="footer-container">
-      <p>{{ site.title }} &copy; {{ 'now' | date: '%Y' }} by <a href="https://managed-code.com" target="_blank" rel="noopener">Managed Code</a></p>
-      <p>Licensed under <a href="https://opensource.org/license/mit/" rel="noopener">MIT</a></p>
-      <p><a href="{{ effective_baseurl }}/sitemap/">Sitemap</a> · <a href="{{ effective_baseurl }}/sitemap.xml">sitemap.xml</a></p>
-      {% if site.version and site.build_date %}
-      <p class="footer-version">v{{ site.version }} · {{ site.build_date }}</p>
-      {% endif %}
+      <ul class="footer-links">
+        <li>{{ site.title }} &copy; {{ 'now' | date: '%Y' }} by <a href="https://managed-code.com" target="_blank" rel="noopener">Managed Code</a></li>
+        <li><a href="https://opensource.org/license/mit/" rel="noopener">MIT</a></li>
+        <li><a href="{{ effective_baseurl }}/sitemap/">Sitemap</a></li>
+        {% if site.version and site.build_date %}
+        <li class="footer-version">v{{ site.version }} · {{ site.build_date }}</li>
+        {% endif %}
+      </ul>
     </div>
   </footer>
 

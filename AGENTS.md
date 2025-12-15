@@ -98,9 +98,11 @@ If no new rule is detected → do not update the file.
 - Docs: validate all Mermaid diagrams render on the docs site (Mermaid v10.9.5) and fix any syntax errors before shipping docs changes
 - Docs site: include `sitemap.xml` and reference it from `robots.txt` so search engines can discover all pages after every rebuild
 - Docs site: display the project version from `Directory.Build.props` (not CI run numbers) and keep the footer copyright line slightly smaller than the rest for a cleaner visual hierarchy
+- Docs site footer: keep copyright/license/sitemap/version compact (prefer a single-line layout with separators) so it doesn’t look like a tall multi-line block
 - Docs site: display the short project name `Storage` in the site title/nav (keep `ManagedCode.Storage` in content where it refers to package IDs)
 - Docs: do not add ADRs for docs-site generation/pipeline changes; document the docs-site build, SEO, and GitHub Pages workflow under `docs/Development/` instead
 - Docs site: do not generate redirect/alias pages like `/Storage/`; keep a single canonical home URL (`/`) and remove unused routes
+- Docs site: after changing the generator/workflow/layout, smoke-check the built HTML is not empty (e.g., `/` contains the README H1 and `/setup/` contains a real doc heading), not just that Jekyll exits successfully
 
 ### Testing (ALL TASKS)
 
