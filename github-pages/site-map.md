@@ -31,23 +31,29 @@ This page lists the docs sections and every generated page (Features, ADRs, API)
 
 ## Features
 
-{% assign feature_pages = site.pages | where_exp: "p", "p.url contains '/features/' and p.url contains '.html'" | sort: "title" %}
+{% assign feature_pages = site.pages | where_exp: "p", "p.url contains '/features/'" | sort: "title" %}
 {% for p in feature_pages %}
+{% if p.url contains '.html' %}
 - [{{ p.title | escape }}]({{ effective_baseurl }}{{ p.url }})
+{% endif %}
 {% endfor %}
 
 ## ADR
 
-{% assign adr_pages = site.pages | where_exp: "p", "p.url contains '/adr/' and p.url contains '.html'" | sort: "title" %}
+{% assign adr_pages = site.pages | where_exp: "p", "p.url contains '/adr/'" | sort: "title" %}
 {% for p in adr_pages %}
+{% if p.url contains '.html' %}
 - [{{ p.title | escape }}]({{ effective_baseurl }}{{ p.url }})
+{% endif %}
 {% endfor %}
 
 ## API
 
-{% assign api_pages = site.pages | where_exp: "p", "p.url contains '/api/' and p.url contains '.html'" | sort: "title" %}
+{% assign api_pages = site.pages | where_exp: "p", "p.url contains '/api/'" | sort: "title" %}
 {% for p in api_pages %}
+{% if p.url contains '.html' %}
 - [{{ p.title | escape }}]({{ effective_baseurl }}{{ p.url }})
+{% endif %}
 {% endfor %}
 
 ## Machine sitemap

@@ -11,12 +11,14 @@ layout: null
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   {% for page in site.pages %}
   {% assign last_char = page.url | slice: -1 %}
-  {% if (page.url == '/' or page.url contains '.html' or last_char == '/') and page.url != '/404.html' and page.url != '/sitemap.xml' and page.url != '/robots.txt' %}
+  {% if page.url == '/' or page.url contains '.html' or last_char == '/' %}
+  {% if page.url != '/404.html' and page.url != '/sitemap.xml' and page.url != '/robots.txt' %}
   <url>
     <loc>{{ site.url }}{{ effective_baseurl }}{{ page.url | remove: 'index.html' }}</loc>
     <lastmod>{{ site.time | date: '%Y-%m-%d' }}</lastmod>
     <priority>{% if page.url == '/' %}1.0{% else %}0.8{% endif %}</priority>
   </url>
+  {% endif %}
   {% endif %}
   {% endfor %}
 </urlset>

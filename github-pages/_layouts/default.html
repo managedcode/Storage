@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  {% assign is_home_page = page.is_home or page.url == '/' %}
+  {% assign is_home_page = false %}
+  {% if page.is_home or page.url == '/' %}
+    {% assign is_home_page = true %}
+  {% endif %}
   {% assign page_title_resolved = page.title | default: site.title %}
   {% assign effective_baseurl = site.baseurl %}
   {% if site.url != nil and site.url != '' %}
@@ -139,7 +142,10 @@
     <a href="{{ effective_baseurl }}/" class="nav-logo">{{ site.title }}</a>
     <div class="nav-links">
       <a href="{{ effective_baseurl }}/" {% if page.url == '/' %}class="active"{% endif %}>Home</a>
-      {% assign docs_active = page.url == '/setup/' or page.url == '/credentials/' or page.url == '/testing/' %}
+      {% assign docs_active = false %}
+      {% if page.url == '/setup/' or page.url == '/credentials/' or page.url == '/testing/' %}
+        {% assign docs_active = true %}
+      {% endif %}
       <div class="nav-dropdown">
         <a href="{{ effective_baseurl }}/setup/" class="nav-dropdown-trigger {% if docs_active %}active{% endif %}">Docs</a>
         <div class="nav-dropdown-menu" aria-label="Docs navigation">
