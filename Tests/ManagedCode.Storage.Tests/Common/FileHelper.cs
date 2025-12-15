@@ -10,7 +10,7 @@ namespace ManagedCode.Storage.Tests.Common;
 public static class FileHelper
 {
     private static readonly Random Random = new();
-    
+
     public static LocalFile GenerateLocalFile(LocalFile localFile, int byteSize)
     {
         var fs = localFile.FileStream;
@@ -78,14 +78,14 @@ public static class FileHelper
 
         return formFile;
     }
-    
+
     public static string GenerateRandomFileName()
     {
         string[] extensions = { "txt", "jpg", "png", "pdf", "docx", "xlsx", "pptx", "mp3", "mp4", "zip" };
         var randomExtension = extensions[Random.Next(extensions.Length)];
         return $"{Guid.NewGuid().ToString("N").ToLowerInvariant()}.{randomExtension}";
     }
-    
+
     public static string GenerateRandomFileContent(int charCount = 250_000)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789_abcdefghijklmnopqrstuvwxyz";

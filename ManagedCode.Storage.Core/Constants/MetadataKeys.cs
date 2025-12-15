@@ -13,13 +13,13 @@ public static class MetadataKeys
     public const string LastAccessed = "last_accessed";
     public const string Created = "created";
     public const string Modified = "modified";
-    
+
     // FTP specific
     public const string FtpRawPermissions = "ftp_raw_permissions";
     public const string FtpFileType = "ftp_file_type";
     public const string FtpSize = "ftp_size";
     public const string FtpModifyTime = "ftp_modify_time";
-    
+
     // Cloud storage metadata
     public const string ContentEncoding = "content_encoding";
     public const string ContentLanguage = "content_language";
@@ -27,34 +27,34 @@ public static class MetadataKeys
     public const string ETag = "etag";
     public const string ContentHash = "content_hash";
     public const string StorageClass = "storage_class";
-    
+
     // Azure specific
     public const string AzureBlobType = "azure_blob_type";
     public const string AzureAccessTier = "azure_access_tier";
     public const string AzureServerEncrypted = "azure_server_encrypted";
-    
+
     // AWS specific  
     public const string AwsStorageClass = "aws_storage_class";
     public const string AwsServerSideEncryption = "aws_server_side_encryption";
     public const string AwsVersionId = "aws_version_id";
-    
+
     // Google Cloud specific
     public const string GcsStorageClass = "gcs_storage_class";
     public const string GcsGeneration = "gcs_generation";
     public const string GcsMetageneration = "gcs_metageneration";
-    
+
     // Media metadata
     public const string ImageWidth = "image_width";
     public const string ImageHeight = "image_height";
     public const string VideoDuration = "video_duration";
     public const string AudioBitrate = "audio_bitrate";
-    
+
     // Custom application metadata
     public const string ApplicationName = "app_name";
     public const string ApplicationVersion = "app_version";
     public const string UserId = "user_id";
     public const string SessionId = "session_id";
-    
+
     // Processing metadata
     public const string ProcessingStatus = "processing_status";
     public const string ThumbnailGenerated = "thumbnail_generated";
@@ -76,7 +76,7 @@ public static class MetadataValues
         public const string SymbolicLink = "symbolic_link";
         public const string Unknown = "unknown";
     }
-    
+
     // Processing statuses
     public static class ProcessingStatus
     {
@@ -85,14 +85,14 @@ public static class MetadataValues
         public const string Completed = "completed";
         public const string Failed = "failed";
     }
-    
+
     // Boolean values
     public static class Boolean
     {
         public const string True = "true";
         public const string False = "false";
     }
-    
+
     // Storage classes
     public static class StorageClasses
     {

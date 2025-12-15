@@ -8,17 +8,17 @@ public static class StorageFactoryExtensions
 {
     public static IFileSystemStorage CreateFileSystemStorage(this IStorageFactory factory, string baseFolder)
     {
-        return factory.CreateStorage<IFileSystemStorage,FileSystemStorageOptions>(options => options.BaseFolder = baseFolder);
+        return factory.CreateStorage<IFileSystemStorage, FileSystemStorageOptions>(options => options.BaseFolder = baseFolder);
     }
-    
+
     public static IFileSystemStorage CreateFileSystemStorage(this IStorageFactory factory, FileSystemStorageOptions options)
     {
         return factory.CreateStorage<IFileSystemStorage, FileSystemStorageOptions>(options);
     }
-    
-    
+
+
     public static IFileSystemStorage CreateFileSystemStorage(this IStorageFactory factory, Action<FileSystemStorageOptions> options)
     {
-        return factory.CreateStorage<IFileSystemStorage,FileSystemStorageOptions>(options);
+        return factory.CreateStorage<IFileSystemStorage, FileSystemStorageOptions>(options);
     }
 }

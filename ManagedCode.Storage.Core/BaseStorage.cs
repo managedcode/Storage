@@ -31,7 +31,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         {
             await _semaphoreSlim.WaitAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             var result = await CreateContainerInternalAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             IsContainerCreated = result.IsSuccess;
@@ -135,7 +135,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         {
             options.FileName = fileInfo.Name;
         }
-        
+
         return UploadInternalAsync(fileInfo.OpenRead(), SetUploadOptions(options), cancellationToken);
     }
 
@@ -333,7 +333,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 
     public void Dispose()
     {
-        if(StorageClient is IDisposable disposable)
+        if (StorageClient is IDisposable disposable)
             disposable.Dispose();
     }
 }

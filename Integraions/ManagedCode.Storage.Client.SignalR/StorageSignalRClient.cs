@@ -81,15 +81,15 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
 
             RegisterHubHandlers(_connection);
 
-        if (options.KeepAliveInterval.HasValue)
-        {
-            _connection.KeepAliveInterval = options.KeepAliveInterval.Value;
-        }
+            if (options.KeepAliveInterval.HasValue)
+            {
+                _connection.KeepAliveInterval = options.KeepAliveInterval.Value;
+            }
 
-        if (options.ServerTimeout.HasValue)
-        {
-            _connection.ServerTimeout = options.ServerTimeout.Value;
-        }
+            if (options.ServerTimeout.HasValue)
+            {
+                _connection.ServerTimeout = options.ServerTimeout.Value;
+            }
 
             await _connection.StartAsync(cancellationToken).ConfigureAwait(false);
         }

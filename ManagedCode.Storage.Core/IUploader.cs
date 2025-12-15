@@ -42,7 +42,7 @@ public interface IUploader
     /// <returns>A task that represents the asynchronous operation. The task result contains the metadata of the uploaded blob.</returns>
     Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, CancellationToken cancellationToken = default);
 
-   
+
     /// <summary>
     /// Asynchronously uploads the provided stream data to the storage with the specified upload options.
     /// </summary>

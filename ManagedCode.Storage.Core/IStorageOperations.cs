@@ -50,7 +50,7 @@ public interface IStorageOperations
     Task<Result<bool>> ExistsAsync(ExistOptions options, CancellationToken cancellationToken = default);
 
 
-       /// <summary>
+    /// <summary>
     /// Asynchronously checks if a file exists with the provided exist options.
     /// </summary>
     /// <param name="action">An action that configures the exist options.</param>

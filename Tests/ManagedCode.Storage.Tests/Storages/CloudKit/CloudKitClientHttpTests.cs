@@ -69,4 +69,38 @@ public class CloudKitClientHttpTests
         (await client.ExistsAsync(recordName, CancellationToken.None)).ShouldBeFalse();
         (await client.DeleteAsync(recordName, CancellationToken.None)).ShouldBeFalse();
     }
+
+    [Fact]
+    public async Task CloudKitClient_WithWebAuthToken_ShouldRotateTokenAcrossRequests()
+    {
+        var handler = new FakeCloudKitHttpHandler();
+        var httpClient = new HttpClient(handler);
+
+        var options = new CloudKitStorageOptions
+        {
+            ContainerId = "iCloud.com.example.app",
+            Environment = CloudKitEnvironment.Development,
+            Database = CloudKitDatabase.Public,
+            ApiToken = "test-token",
+            WebAuthToken = "initial-web-token",
+            RecordType = "MCStorageFile",
+            PathFieldName = "path",
+            ContentTypeFieldName = "contentType",
+            AssetFieldName = "file"
+        };
+
+        using var client = new CloudKitClient(options, httpClient);
+
+        await using (var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes("cloudkit payload")))
+        {
+            _ = await client.UploadAsync("record-rotating", "app-data/rotating.txt", uploadStream, "text/plain", CancellationToken.None);
+        }
+
+        options.WebAuthToken.ShouldNotBeNull();
+        options.WebAuthToken.ShouldNotBe("initial-web-token");
+        options.WebAuthToken.ShouldStartWith("web-token-");
+
+        (await client.ExistsAsync("record-rotating", CancellationToken.None)).ShouldBeTrue();
+        options.WebAuthToken.ShouldStartWith("web-token-");
+    }
 }

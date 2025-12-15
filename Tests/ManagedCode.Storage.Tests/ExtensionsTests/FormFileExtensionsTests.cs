@@ -44,7 +44,7 @@ public class FormFileExtensionsTests
         localFile.FileStream.Length.ShouldBe(formFile.Length);
         Path.GetExtension(localFile.Name).ShouldBe(Path.GetExtension(formFile.FileName));
     }
-    
+
     [Fact]
     public async Task ToLocalFilesAsync_SmallFiles()
     {

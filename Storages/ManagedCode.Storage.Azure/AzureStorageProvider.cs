@@ -11,9 +11,9 @@ namespace ManagedCode.Storage.Azure
     public class AzureStorageProvider(IServiceProvider serviceProvider, IAzureStorageOptions defaultOptions) : IStorageProvider
     {
         public Type StorageOptionsType => typeof(IAzureStorageOptions);
-        
-        public TStorage CreateStorage<TStorage, TOptions>(TOptions options) 
-            where TStorage : class, IStorage 
+
+        public TStorage CreateStorage<TStorage, TOptions>(TOptions options)
+            where TStorage : class, IStorage
             where TOptions : class, IStorageOptions
         {
             if (options is not IAzureStorageOptions azureOptions)
@@ -24,7 +24,7 @@ namespace ManagedCode.Storage.Azure
             var logger = serviceProvider.GetService<ILogger<AzureStorage>>();
             var storage = new AzureStorage(azureOptions, logger);
 
-            return storage as TStorage 
+            return storage as TStorage
                    ?? throw new InvalidOperationException($"Cannot create storage of type {typeof(TStorage)}");
         }
 

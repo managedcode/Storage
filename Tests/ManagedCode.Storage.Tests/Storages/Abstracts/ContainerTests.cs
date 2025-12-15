@@ -65,7 +65,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
         // Assert
         result.IsSuccess
             .ShouldBeTrue(result.Problem?.Detail ?? "Failed without details");
-        
+
         blobs.Count
             .ShouldBe(0);
     }

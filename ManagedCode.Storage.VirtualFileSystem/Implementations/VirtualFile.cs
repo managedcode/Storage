@@ -26,7 +26,7 @@ public class VirtualFile : IVirtualFile
     private readonly IMemoryCache _cache;
     private readonly ILogger _logger;
     private readonly VfsPath _path;
-    
+
     private BlobMetadata? _blobMetadata;
     private VfsMetadata? _vfsMetadata;
     private bool _metadataLoaded;
@@ -129,11 +129,11 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         options ??= new StreamOptions();
-        
+
         _logger.LogDebug("Opening read stream: {Path}", _path);
-        
+
         await EnsureMetadataLoadedAsync(cancellationToken);
-        
+
         if (_blobMetadata == null)
         {
             throw new VfsNotFoundException(_path);
@@ -142,7 +142,7 @@ public class VirtualFile : IVirtualFile
         try
         {
             var result = await _vfs.Storage.GetStreamAsync(_path.ToBlobKey(), cancellationToken);
-            
+
             if (!result.IsSuccess || result.Value == null)
             {
                 throw new VfsOperationException($"Failed to open read stream for file: {_path}");
@@ -163,9 +163,9 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         options ??= new WriteOptions();
-        
+
         _logger.LogDebug("Opening write stream: {Path}", _path);
-        
+
         if (!options.Overwrite && await ExistsAsync(cancellationToken))
         {
             throw new VfsAlreadyExistsException(_path);
@@ -196,19 +196,19 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Reading range: {Path}, offset: {Offset}, count: {Count}", _path, offset, count);
-        
+
         await using var stream = await OpenReadAsync(
-            new StreamOptions { RangeStart = offset, RangeEnd = offset + count - 1 }, 
+            new StreamOptions { RangeStart = offset, RangeEnd = offset + count - 1 },
             cancellationToken);
-        
+
         var buffer = new byte[count];
         var bytesRead = await stream.ReadAsync(buffer, 0, count, cancellationToken);
-        
+
         if (bytesRead < count)
         {
             Array.Resize(ref buffer, bytesRead);
         }
-        
+
         return buffer;
     }
 
@@ -216,7 +216,7 @@ public class VirtualFile : IVirtualFile
     public async Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Reading all bytes: {Path}", _path);
-        
+
         await using var stream = await OpenReadAsync(cancellationToken: cancellationToken);
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream, cancellationToken);
@@ -229,9 +229,9 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         encoding ??= Encoding.UTF8;
-        
+
         _logger.LogDebug("Reading all text: {Path}", _path);
-        
+
         var bytes = await ReadAllBytesAsync(cancellationToken);
         return encoding.GetString(bytes);
     }
@@ -243,7 +243,7 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Writing all bytes: {Path}, size: {Size}", _path, bytes.Length);
-        
+
         await using var stream = await OpenWriteAsync(options, cancellationToken);
         await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
     }
@@ -256,9 +256,9 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         encoding ??= Encoding.UTF8;
-        
+
         _logger.LogDebug("Writing all text: {Path}, length: {Length}", _path, text.Length);
-        
+
         var bytes = encoding.GetBytes(text);
         await WriteAllBytesAsync(bytes, options, cancellationToken);
     }
@@ -268,7 +268,7 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         var cacheKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
-        
+
         if (_vfs.Options.EnableCache && _cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string> cached))
         {
             _logger.LogDebug("File metadata (cached): {Path}", _path);
@@ -276,7 +276,7 @@ public class VirtualFile : IVirtualFile
         }
 
         var metadata = await _metadataManager.GetCustomMetadataAsync(_path.ToBlobKey(), cancellationToken);
-        
+
         if (_vfs.Options.EnableCache)
         {
             _cache.Set(cacheKey, metadata, _vfs.Options.CacheTTL);
@@ -287,7 +287,7 @@ public class VirtualFile : IVirtualFile
                 _cache.Set(metadataKey, entry, _vfs.Options.CacheTTL);
             }
         }
-        
+
         _logger.LogDebug("File metadata: {Path}, count: {Count}", _path, metadata.Count);
         return metadata;
     }
@@ -299,7 +299,7 @@ public class VirtualFile : IVirtualFile
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Setting metadata: {Path}, count: {Count}", _path, metadata.Count);
-        
+
         if (!string.IsNullOrEmpty(expectedETag))
         {
             await EnsureMetadataLoadedAsync(cancellationToken);
@@ -337,7 +337,7 @@ public class VirtualFile : IVirtualFile
     public async Task<IMultipartUpload> StartMultipartUploadAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Starting multipart upload: {Path}", _path);
-        
+
         // This is a simplified implementation - real multipart upload would depend on the storage provider
         throw new VfsNotSupportedException("Multipart upload", "Not yet implemented in this version");
     }

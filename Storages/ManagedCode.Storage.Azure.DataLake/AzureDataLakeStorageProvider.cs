@@ -11,9 +11,9 @@ namespace ManagedCode.Storage.Azure.DataLake
     public class AzureDataLakeStorageProvider(IServiceProvider serviceProvider, AzureDataLakeStorageOptions defaultOptions) : IStorageProvider
     {
         public Type StorageOptionsType => typeof(AzureDataLakeStorageOptions);
-        
-        public TStorage CreateStorage<TStorage, TOptions>(TOptions options) 
-            where TStorage : class, IStorage 
+
+        public TStorage CreateStorage<TStorage, TOptions>(TOptions options)
+            where TStorage : class, IStorage
             where TOptions : class, IStorageOptions
         {
             if (options is not AzureDataLakeStorageOptions azureOptions)
@@ -24,7 +24,7 @@ namespace ManagedCode.Storage.Azure.DataLake
             var logger = serviceProvider.GetService<ILogger<AzureDataLakeStorage>>();
             var storage = new AzureDataLakeStorage(azureOptions, logger);
 
-            return storage as TStorage 
+            return storage as TStorage
                    ?? throw new InvalidOperationException($"Cannot create storage of type {typeof(TStorage)}");
         }
 

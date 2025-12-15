@@ -147,7 +147,7 @@ public sealed class EmptyContainer : IContainer
     public TestcontainersStates State { get; } = TestcontainersStates.Running;
     public TestcontainersHealthStatus Health { get; } = TestcontainersHealthStatus.Healthy;
     public long HealthCheckFailingStreak { get; } = 0;
-    #pragma warning disable CS0067
+#pragma warning disable CS0067
     public event EventHandler? Creating;
     public event EventHandler? Starting;
     public event EventHandler? Stopping;
@@ -158,5 +158,5 @@ public sealed class EmptyContainer : IContainer
     public event EventHandler? Stopped;
     public event EventHandler? Paused;
     public event EventHandler? Unpaused;
-    #pragma warning restore CS0067
+#pragma warning restore CS0067
 }

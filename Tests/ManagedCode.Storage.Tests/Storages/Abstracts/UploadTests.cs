@@ -256,8 +256,8 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         result.IsSuccess
             .ShouldBeFalse();
     }
-    
-    
+
+
     [Fact]
     public virtual async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
     {
@@ -282,7 +282,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         // Assert
         uploadResult.IsSuccess
             .ShouldBeFalse();
-    
-     
+
+
     }
 }

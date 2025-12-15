@@ -11,5 +11,5 @@ public static class ServiceCollectionExtensions
         serviceCollection.TryAddSingleton<IStorageFactory, StorageFactory>();
         return serviceCollection;
     }
-    
+
 }

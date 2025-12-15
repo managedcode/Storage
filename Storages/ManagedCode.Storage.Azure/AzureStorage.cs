@@ -53,14 +53,14 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                            .AsPages()
                            .WithCancellation(cancellationToken))
         {
-            if(cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
                 yield break;
-            
+
             foreach (var blobItem in item.Values)
             {
-                if(cancellationToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                     yield break;
-                
+
                 var blobMetadata = new BlobMetadata
                 {
                     FullName = blobItem.Name,
@@ -186,9 +186,9 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                     logger.LogException(e);
                 }
             }
-            
+
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return Result.Succeed();
         }
         catch (Exception ex)

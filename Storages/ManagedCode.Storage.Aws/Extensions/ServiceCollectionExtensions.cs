@@ -52,7 +52,7 @@ public static class ServiceCollectionExtensions
         var options = new AWSStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAWSStorage>(key, (sp, k) =>
         {
@@ -68,7 +68,7 @@ public static class ServiceCollectionExtensions
         var options = new AWSStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAWSStorage>(key, (sp, k) =>
         {

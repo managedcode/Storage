@@ -265,23 +265,23 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
                 checksum = valueElement.GetUInt32();
                 break;
             case JsonValueKind.Object:
-            {
-                try
                 {
-                    var dto = JsonSerializer.Deserialize<ChunkUploadCompleteResponseDto>(valueElement.GetRawText());
-                    if (dto == null)
+                    try
                     {
-                        return Result<uint>.Fail("Chunk upload completion response is empty");
-                    }
+                        var dto = JsonSerializer.Deserialize<ChunkUploadCompleteResponseDto>(valueElement.GetRawText());
+                        if (dto == null)
+                        {
+                            return Result<uint>.Fail("Chunk upload completion response is empty");
+                        }
 
-                    checksum = dto.Checksum;
-                    break;
+                        checksum = dto.Checksum;
+                        break;
+                    }
+                    catch (JsonException ex)
+                    {
+                        return Result<uint>.Fail(ex);
+                    }
                 }
-                catch (JsonException ex)
-                {
-                    return Result<uint>.Fail(ex);
-                }
-            }
             case JsonValueKind.String when uint.TryParse(valueElement.GetString(), out var parsed):
                 checksum = parsed;
                 break;

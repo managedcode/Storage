@@ -27,7 +27,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
     {
         // Arrange
 
-        var uploadStream1 = new MemoryStream(90*1024);
+        var uploadStream1 = new MemoryStream(90 * 1024);
         var buffer = new byte[90 * 1024];
         var random = new Random();
         random.NextBytes(buffer);
@@ -57,7 +57,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
         });
         downloadedResult.IsSuccess.ShouldBeTrue();
         // size
-        downloadedResult.Value!.FileInfo.Length.ShouldBe(90*1024);
+        downloadedResult.Value!.FileInfo.Length.ShouldBe(90 * 1024);
 
 
         var secondResult = await Storage.UploadAsync(uploadStream2, options =>

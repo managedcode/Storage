@@ -18,7 +18,7 @@ namespace ManagedCode.Storage.Core
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the downloaded file.</returns>
         Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Downloads a file asynchronously using blob metadata.
         /// </summary>
@@ -30,7 +30,7 @@ namespace ManagedCode.Storage.Core
         /// The downloaded file is returned as a LocalFile object wrapped in a Result type for error handling.
         /// </remarks>
         Task<Result<LocalFile>> DownloadAsync(BlobMetadata metadata, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Downloads a file asynchronously with the specified download options.
         /// </summary>

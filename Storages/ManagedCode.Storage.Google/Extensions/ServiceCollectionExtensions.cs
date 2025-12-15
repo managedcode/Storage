@@ -53,7 +53,7 @@ public static class ServiceCollectionExtensions
         var options = new GCPStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IGCPStorage>(key, (sp, k) =>
         {
@@ -69,7 +69,7 @@ public static class ServiceCollectionExtensions
         var options = new GCPStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IGCPStorage>(key, (sp, k) =>
         {

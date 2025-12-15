@@ -39,7 +39,7 @@ internal class VfsWriteStream : Stream
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _vfsOptions = vfsOptions ?? throw new ArgumentNullException(nameof(vfsOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+
         _buffer = new MemoryStream();
     }
 
@@ -156,7 +156,7 @@ internal class VfsWriteStream : Stream
         try
         {
             _buffer.Position = 0;
-            
+
             var uploadOptions = new UploadOptions(_blobKey)
             {
                 MimeType = _options.ContentType,
@@ -164,7 +164,7 @@ internal class VfsWriteStream : Stream
             };
 
             var result = await _storage.UploadAsync(_buffer, uploadOptions);
-            
+
             if (!result.IsSuccess)
             {
                 throw new VfsOperationException($"Failed to upload data for: {_blobKey}. Error: {result.Problem}");

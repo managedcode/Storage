@@ -39,7 +39,8 @@ public class CloudKitStorageOptions : IStorageOptions
     public string? ApiToken { get; set; }
 
     /// <summary>
-    /// Optional user authentication token (<c>ckWebAuthToken</c>) for private database access.
+    /// Optional user authentication token (<c>ckWebAuthToken</c>) for user-scoped CloudKit requests.
+    /// Note: CloudKit rotates this token on each request; callers should treat it as single-use and persist the rotated value.
     /// </summary>
     public string? WebAuthToken { get; set; }
 
@@ -63,4 +64,3 @@ public class CloudKitStorageOptions : IStorageOptions
     /// </summary>
     public ICloudKitClient? Client { get; set; }
 }
-

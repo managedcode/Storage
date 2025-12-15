@@ -258,7 +258,7 @@ public class SearchPattern
 
         while (inputIndex < input.Length)
         {
-            if (patternIndex < pattern.Length && (pattern[patternIndex] == '?' || 
+            if (patternIndex < pattern.Length && (pattern[patternIndex] == '?' ||
                 string.Equals(pattern[patternIndex].ToString(), input[inputIndex].ToString(), comparison)))
             {
                 patternIndex++;

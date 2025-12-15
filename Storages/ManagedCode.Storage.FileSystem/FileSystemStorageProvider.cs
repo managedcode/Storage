@@ -9,9 +9,9 @@ namespace ManagedCode.Storage.FileSystem
     public class FileSystemStorageProvider(IServiceProvider serviceProvider, FileSystemStorageOptions defaultOptions) : IStorageProvider
     {
         public Type StorageOptionsType => typeof(FileSystemStorageOptions);
-        
-        public TStorage CreateStorage<TStorage, TOptions>(TOptions options) 
-            where TStorage : class, IStorage 
+
+        public TStorage CreateStorage<TStorage, TOptions>(TOptions options)
+            where TStorage : class, IStorage
             where TOptions : class, IStorageOptions
         {
             if (options is not FileSystemStorageOptions azureOptions)
@@ -22,7 +22,7 @@ namespace ManagedCode.Storage.FileSystem
             //var logger = serviceProvider.GetService<ILogger<FileSystemStorage>>();
             var storage = new FileSystemStorage(azureOptions);
 
-            return storage as TStorage 
+            return storage as TStorage
                    ?? throw new InvalidOperationException($"Cannot create storage of type {typeof(TStorage)}");
         }
 

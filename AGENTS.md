@@ -82,8 +82,10 @@ If no new rule is detected → do not update the file.
 
 - Docs live in `docs/` and `README.md`
 - Keep a GitHub Pages docs site in sync with `docs/`, using `DOCS-EXAMPLE/` as the reference template for structure and CI/pipeline
+- When adding new docs pages under `docs/Features/`, `docs/ADR/`, or `docs/API/`, also update the corresponding `index.md` to link the page so it’s discoverable in the docs catalog/navigation (the site generator will still publish the page even without the link)
 - Update docs when behaviour changes
 - Update configuration examples when required
+- Documentation must include clear schemas/diagrams (prefer Mermaid) for every non-trivial feature and integration so GitHub users can understand flows quickly
 - When adding new projects/providers, ensure `README.md` clearly documents installation, DI wiring, and basic usage examples
 - Where feasible, prefer provider options that can build vendor SDK clients from credentials (to reduce consumer boilerplate) while still allowing client injection for advanced scenarios
 - Avoid "ownership flags" like `ownsClient`; prefer a clear swap point (wrapper/factory) so lifetime and disposal rules stay simple and predictable

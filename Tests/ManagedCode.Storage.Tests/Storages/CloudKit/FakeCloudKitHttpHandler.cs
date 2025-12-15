@@ -17,6 +17,8 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
 
     private readonly Dictionary<string, StoredRecord> _records = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, byte[]> _uploads = new(StringComparer.OrdinalIgnoreCase);
+    private string? _expectedWebAuthToken;
+    private int _webAuthTokenCounter;
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -45,6 +47,13 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
             return new HttpResponseMessage(HttpStatusCode.MethodNotAllowed);
         }
 
+        var query = ParseQuery(request.RequestUri?.Query);
+        var (rotatedWebAuthToken, webAuthError) = ValidateAndRotateWebAuthToken(query);
+        if (webAuthError != null)
+        {
+            return webAuthError;
+        }
+
         if (path.EndsWith("/assets/upload", StringComparison.OrdinalIgnoreCase))
         {
             var body = await request.Content!.ReadAsStringAsync(cancellationToken);
@@ -53,9 +62,9 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
             var recordName = token.GetProperty("recordName").GetString() ?? string.Empty;
             var fieldName = token.GetProperty("fieldName").GetString() ?? "file";
 
-            return JsonResponse(new
+            return JsonResponseWithToken(new Dictionary<string, object?>
             {
-                tokens = new[]
+                ["tokens"] = new[]
                 {
                     new
                     {
@@ -64,7 +73,7 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
                         url = $"https://{AssetsHost}/upload/{recordName}"
                     }
                 }
-            });
+            }, rotatedWebAuthToken);
         }
 
         if (path.EndsWith("/records/modify", StringComparison.OrdinalIgnoreCase))
@@ -80,12 +89,12 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
             {
                 if (_records.Remove(recordName))
                 {
-                    return JsonResponse(new { });
+                    return JsonResponseWithToken(new Dictionary<string, object?>(), rotatedWebAuthToken);
                 }
 
-                return JsonResponse(new
+                return JsonResponseWithToken(new Dictionary<string, object?>
                 {
-                    errors = new[]
+                    ["errors"] = new[]
                     {
                         new
                         {
@@ -93,7 +102,7 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
                             serverErrorCode = "NOT_FOUND"
                         }
                     }
-                });
+                }, rotatedWebAuthToken);
             }
 
             if (!string.Equals(type, "forceUpdate", StringComparison.OrdinalIgnoreCase))
@@ -112,13 +121,13 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
             var stored = new StoredRecord(recordName, recordType, internalPath, contentType, content, now, now);
             _records[recordName] = stored;
 
-            return JsonResponse(new
+            return JsonResponseWithToken(new Dictionary<string, object?>
             {
-                records = new[]
+                ["records"] = new[]
                 {
                     ToRecordResponse(stored)
                 }
-            });
+            }, rotatedWebAuthToken);
         }
 
         if (path.EndsWith("/records/lookup", StringComparison.OrdinalIgnoreCase))
@@ -129,9 +138,9 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
 
             if (!_records.TryGetValue(recordName, out var stored))
             {
-                return JsonResponse(new
+                return JsonResponseWithToken(new Dictionary<string, object?>
                 {
-                    errors = new[]
+                    ["errors"] = new[]
                     {
                         new
                         {
@@ -139,16 +148,16 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
                             serverErrorCode = "NOT_FOUND"
                         }
                     }
-                });
+                }, rotatedWebAuthToken);
             }
 
-            return JsonResponse(new
+            return JsonResponseWithToken(new Dictionary<string, object?>
             {
-                records = new[]
+                ["records"] = new[]
                 {
                     ToRecordResponse(stored)
                 }
-            });
+            }, rotatedWebAuthToken);
         }
 
         if (path.EndsWith("/records/query", StringComparison.OrdinalIgnoreCase))
@@ -168,10 +177,10 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
                 .Select(ToRecordResponse)
                 .ToList();
 
-            return JsonResponse(new
+            return JsonResponseWithToken(new Dictionary<string, object?>
             {
-                records = results
-            });
+                ["records"] = results
+            }, rotatedWebAuthToken);
         }
 
         return new HttpResponseMessage(HttpStatusCode.NotFound)
@@ -259,6 +268,61 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
         return response;
     }
 
+    private static HttpResponseMessage JsonResponseWithToken(Dictionary<string, object?> payload, string? webAuthToken, HttpStatusCode statusCode = HttpStatusCode.OK)
+    {
+        if (!string.IsNullOrWhiteSpace(webAuthToken))
+        {
+            payload["ckWebAuthToken"] = webAuthToken;
+        }
+
+        return JsonResponse(payload, statusCode);
+    }
+
+    private static Dictionary<string, string> ParseQuery(string? query)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return result;
+        }
+
+        foreach (var part in query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = part.Split('=', 2);
+            var key = Uri.UnescapeDataString(kv[0]);
+            var value = kv.Length == 2 ? Uri.UnescapeDataString(kv[1]) : string.Empty;
+            result[key] = value;
+        }
+
+        return result;
+    }
+
+    private (string? RotatedToken, HttpResponseMessage? ErrorResponse) ValidateAndRotateWebAuthToken(Dictionary<string, string> query)
+    {
+        if (!query.TryGetValue("ckWebAuthToken", out var token) || string.IsNullOrWhiteSpace(token))
+        {
+            return (null, null);
+        }
+
+        if (_expectedWebAuthToken == null)
+        {
+            _expectedWebAuthToken = token;
+        }
+        else if (!string.Equals(_expectedWebAuthToken, token, StringComparison.Ordinal))
+        {
+            return (null, JsonResponse(new
+            {
+                uuid = Guid.NewGuid().ToString("N"),
+                serverErrorCode = "AUTHENTICATION_REQUIRED",
+                reason = "Invalid ckWebAuthToken."
+            }, HttpStatusCode.Unauthorized));
+        }
+
+        var rotated = "web-token-" + Interlocked.Increment(ref _webAuthTokenCounter);
+        _expectedWebAuthToken = rotated;
+        return (rotated, null);
+    }
+
     private sealed record StoredRecord(
         string RecordName,
         string RecordType,
@@ -268,4 +332,3 @@ internal sealed class FakeCloudKitHttpHandler : HttpMessageHandler
         DateTimeOffset CreatedOn,
         DateTimeOffset LastModified);
 }
-

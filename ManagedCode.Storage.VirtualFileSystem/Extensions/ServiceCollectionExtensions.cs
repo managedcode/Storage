@@ -45,11 +45,11 @@ public static class ServiceCollectionExtensions
 
         // Register core services
         services.TryAddSingleton<IMemoryCache, MemoryCache>();
-        
+
         // Register VFS services
         services.TryAddScoped<IVirtualFileSystem, Implementations.VirtualFileSystem>();
         services.TryAddSingleton<IVirtualFileSystemManager, VirtualFileSystemManager>();
-        
+
         // Register metadata manager (this will be overridden by storage-specific registrations)
         services.TryAddScoped<IMetadataManager, DefaultMetadataManager>();
 
@@ -115,7 +115,7 @@ internal class DefaultMetadataManager : BaseMetadataManager
         _logger.LogDebug("Setting VFS metadata for: {BlobName}", blobName);
 
         var metadataDict = BuildMetadataDictionary(metadata, customMetadata);
-        
+
         // Use the storage provider's metadata setting capability
         // Note: This is a simplified implementation. Real implementation would depend on the storage provider
         try
@@ -129,7 +129,7 @@ internal class DefaultMetadataManager : BaseMetadataManager
                 {
                     existingMetadata[kvp.Key] = kvp.Value;
                 }
-                
+
                 // Note: Most storage providers don't have a direct "set metadata" operation
                 // This would typically require re-uploading the blob with new metadata
                 _logger.LogWarning("Metadata update not fully implemented for this storage provider");
@@ -233,7 +233,7 @@ internal class VirtualFileSystemManager : IVirtualFileSystemManager
     {
         if (string.IsNullOrWhiteSpace(mountPoint))
             throw new ArgumentException("Mount point cannot be null or empty", nameof(mountPoint));
-        
+
         if (storage == null)
             throw new ArgumentNullException(nameof(storage));
 
@@ -248,14 +248,14 @@ internal class VirtualFileSystemManager : IVirtualFileSystemManager
         var cache = _serviceProvider.GetRequiredService<IMemoryCache>();
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         var metadataManager = new DefaultMetadataManager(storage, loggerFactory.CreateLogger<DefaultMetadataManager>());
-        
+
         var vfsOptions = Microsoft.Extensions.Options.Options.Create(options ?? new VfsOptions());
         var vfsLogger = loggerFactory.CreateLogger<Implementations.VirtualFileSystem>();
-        
+
         var vfs = new Implementations.VirtualFileSystem(storage, metadataManager, vfsOptions, cache, vfsLogger);
 
         _mounts[mountPoint] = vfs;
-        
+
         _logger.LogInformation("Storage mounted successfully at: {MountPoint}", mountPoint);
     }
 
@@ -340,12 +340,12 @@ internal class VirtualFileSystemManager : IVirtualFileSystemManager
         if (!_disposed)
         {
             _logger.LogDebug("Disposing VirtualFileSystemManager");
-            
+
             foreach (var vfs in _mounts.Values)
             {
                 await vfs.DisposeAsync();
             }
-            
+
             _mounts.Clear();
             _disposed = true;
         }

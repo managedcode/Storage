@@ -21,6 +21,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
     private readonly CloudKitStorageOptions _options;
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
+    private readonly SemaphoreSlim _webAuthTokenSemaphore = new(1, 1);
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -80,7 +81,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
             }
         };
 
-        var document = await SendCloudKitAsync("records/modify", payload, cancellationToken);
+        using var document = await SendCloudKitAsync("records/modify", payload, cancellationToken);
         if (TryGetRecordErrorCode(document.RootElement, out var errorCode))
         {
             if (errorCode == "NOT_FOUND")
@@ -113,7 +114,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
             ["desiredKeys"] = new[] { _options.PathFieldName, _options.ContentTypeFieldName, _options.AssetFieldName }
         };
 
-        var document = await SendCloudKitAsync("records/lookup", payload, cancellationToken);
+        using var document = await SendCloudKitAsync("records/lookup", payload, cancellationToken);
         if (TryGetRecordErrorCode(document.RootElement, out var errorCode))
         {
             if (errorCode == "NOT_FOUND")
@@ -167,7 +168,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
                 payload["continuationMarker"] = marker;
             }
 
-            var document = await SendCloudKitAsync("records/query", payload, cancellationToken);
+            using var document = await SendCloudKitAsync("records/query", payload, cancellationToken);
             if (document.RootElement.TryGetProperty("records", out var records) && records.ValueKind == JsonValueKind.Array)
             {
                 foreach (var record in records.EnumerateArray())
@@ -201,7 +202,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
             }
         };
 
-        var document = await SendCloudKitAsync("assets/upload", payload, cancellationToken);
+        using var document = await SendCloudKitAsync("assets/upload", payload, cancellationToken);
         if (!document.RootElement.TryGetProperty("tokens", out var tokens) || tokens.ValueKind != JsonValueKind.Array)
         {
             throw new InvalidOperationException("CloudKit assets/upload response does not include tokens.");
@@ -272,7 +273,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
             }
         };
 
-        var document = await SendCloudKitAsync("records/modify", payload, cancellationToken);
+        using var document = await SendCloudKitAsync("records/modify", payload, cancellationToken);
         if (TryGetRecordErrorCode(document.RootElement, out var errorCode))
         {
             throw new InvalidOperationException($"CloudKit modify failed with error code '{errorCode}'.");
@@ -294,6 +295,24 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
 
     private async Task<JsonDocument> SendCloudKitAsync(string operation, object payload, CancellationToken cancellationToken)
     {
+        if (!string.IsNullOrWhiteSpace(_options.WebAuthToken))
+        {
+            await _webAuthTokenSemaphore.WaitAsync(cancellationToken);
+            try
+            {
+                return await SendCloudKitCoreAsync(operation, payload, cancellationToken);
+            }
+            finally
+            {
+                _webAuthTokenSemaphore.Release();
+            }
+        }
+
+        return await SendCloudKitCoreAsync(operation, payload, cancellationToken);
+    }
+
+    private async Task<JsonDocument> SendCloudKitCoreAsync(string operation, object payload, CancellationToken cancellationToken)
+    {
         var subpath = BuildSubpath(operation);
         var uri = BuildUri(subpath);
         var body = JsonSerializer.SerializeToUtf8Bytes(payload, _jsonOptions);
@@ -313,7 +332,36 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
             throw new HttpRequestException($"CloudKit request failed: {(int)response.StatusCode} {response.ReasonPhrase}", null, response.StatusCode);
         }
 
-        return JsonDocument.Parse(json);
+        var document = JsonDocument.Parse(json);
+        TryRotateWebAuthToken(document.RootElement);
+        return document;
+    }
+
+    private void TryRotateWebAuthToken(JsonElement response)
+    {
+        if (string.IsNullOrWhiteSpace(_options.WebAuthToken))
+        {
+            return;
+        }
+
+        // CloudKit Web Services rotates ckWebAuthToken on each response when it was provided on the request.
+        if (response.ValueKind != JsonValueKind.Object || !response.TryGetProperty("ckWebAuthToken", out var tokenElement))
+        {
+            return;
+        }
+
+        if (tokenElement.ValueKind != JsonValueKind.String)
+        {
+            return;
+        }
+
+        var rotated = tokenElement.GetString();
+        if (string.IsNullOrWhiteSpace(rotated) || string.Equals(rotated, _options.WebAuthToken, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _options.WebAuthToken = rotated;
     }
 
     private async Task<Stream> DownloadFromUrlAsync(Uri downloadUrl, CancellationToken cancellationToken)

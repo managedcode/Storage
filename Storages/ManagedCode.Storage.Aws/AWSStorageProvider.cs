@@ -11,9 +11,9 @@ namespace ManagedCode.Storage.Aws
     public class AWSStorageProvider(IServiceProvider serviceProvider, AWSStorageOptions defaultOptions) : IStorageProvider
     {
         public Type StorageOptionsType => typeof(AWSStorageOptions);
-        
-        public TStorage CreateStorage<TStorage, TOptions>(TOptions options) 
-            where TStorage : class, IStorage 
+
+        public TStorage CreateStorage<TStorage, TOptions>(TOptions options)
+            where TStorage : class, IStorage
             where TOptions : class, IStorageOptions
         {
             if (options is not AWSStorageOptions azureOptions)
@@ -24,7 +24,7 @@ namespace ManagedCode.Storage.Aws
             var logger = serviceProvider.GetService<ILogger<AWSStorage>>();
             var storage = new AWSStorage(azureOptions, logger);
 
-            return storage as TStorage 
+            return storage as TStorage
                    ?? throw new InvalidOperationException($"Cannot create storage of type {typeof(TStorage)}");
         }
 

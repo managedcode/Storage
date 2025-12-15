@@ -27,10 +27,10 @@ public static class ControllerDownloadExtensions
         var result = await storage.GetStreamAsync(blobName, cancellationToken);
         if (result.IsFailed)
             throw new FileNotFoundException(blobName);
-        
+
         return Results.Stream(result.Value, MimeHelper.GetMimeType(blobName), blobName, enableRangeProcessing: enableRangeProcessing);
     }
-    
+
     /// <summary>
     /// Downloads the specified blob as a <see cref="FileResult"/>.
     /// </summary>
@@ -44,7 +44,7 @@ public static class ControllerDownloadExtensions
         var result = await storage.GetStreamAsync(blobName, cancellationToken);
         if (result.IsFailed)
             throw new FileNotFoundException(blobName);
-        
+
         return new FileStreamResult(result.Value, MimeHelper.GetMimeType(blobName))
         {
             FileDownloadName = blobName,
