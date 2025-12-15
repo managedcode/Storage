@@ -24,7 +24,7 @@ public class VirtualDirectory : IVirtualDirectory
     private readonly IMemoryCache _cache;
     private readonly ILogger _logger;
     private readonly VfsPath _path;
-    
+
     private VfsMetadata? _vfsMetadata;
     private bool _metadataLoaded;
 
@@ -70,7 +70,7 @@ public class VirtualDirectory : IVirtualDirectory
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Refreshing directory metadata: {Path}", _path);
-        
+
         // For virtual directories, we might not have explicit metadata unless using a directory strategy
         // that creates marker files
         if (_vfs.Options.DirectoryStrategy != DirectoryStrategy.Virtual)
@@ -78,7 +78,7 @@ public class VirtualDirectory : IVirtualDirectory
             var markerKey = GetDirectoryMarkerKey();
             _vfsMetadata = await _metadataManager.GetVfsMetadataAsync(markerKey, cancellationToken);
         }
-        
+
         _metadataLoaded = true;
     }
 
@@ -97,7 +97,7 @@ public class VirtualDirectory : IVirtualDirectory
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting files: {Path}, recursive: {Recursive}", _path, recursive);
-        
+
         await foreach (var entry in GetEntriesInternalAsync(pattern, recursive, pageSize, true, false, cancellationToken))
         {
             if (entry is IVirtualFile file)
@@ -115,7 +115,7 @@ public class VirtualDirectory : IVirtualDirectory
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting directories: {Path}, recursive: {Recursive}", _path, recursive);
-        
+
         await foreach (var entry in GetEntriesInternalAsync(pattern, recursive, pageSize, false, true, cancellationToken))
         {
             if (entry is IVirtualDirectory directory)
@@ -133,7 +133,7 @@ public class VirtualDirectory : IVirtualDirectory
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting entries: {Path}, recursive: {Recursive}", _path, recursive);
-        
+
         await foreach (var entry in GetEntriesInternalAsync(pattern, recursive, pageSize, true, true, cancellationToken))
         {
             yield return entry;
@@ -177,7 +177,7 @@ public class VirtualDirectory : IVirtualDirectory
             prefix += "/";
 
         var directories = new HashSet<string>();
-        
+
         await foreach (var blob in _vfs.Storage.GetBlobMetadataListAsync(prefix, cancellationToken))
         {
             if (blob is null)
@@ -192,7 +192,7 @@ public class VirtualDirectory : IVirtualDirectory
 
             var relativePath = blob.FullName.Length > prefix.Length ?
                 blob.FullName[prefix.Length..] : blob.FullName;
-            
+
             if (string.IsNullOrEmpty(relativePath))
                 continue;
 
@@ -235,12 +235,12 @@ public class VirtualDirectory : IVirtualDirectory
             {
                 var pathParts = relativePath.Split('/');
                 var currentPath = "";
-                
+
                 for (int i = 0; i < pathParts.Length - 1; i++) // Exclude the file name itself
                 {
                     if (i > 0) currentPath += "/";
                     currentPath += pathParts[i];
-                    
+
                     if (directories.Add(currentPath))
                     {
                         if (pattern == null || pattern.IsMatch(pathParts[i]))
@@ -265,12 +265,12 @@ public class VirtualDirectory : IVirtualDirectory
             throw new ArgumentException("File name cannot be null or empty", nameof(name));
 
         options ??= new CreateFileOptions();
-        
+
         _logger.LogDebug("Creating file: {Path}/{Name}", _path, name);
-        
+
         var filePath = _path.Combine(name);
         var file = await _vfs.GetFileAsync(filePath, cancellationToken);
-        
+
         if (await file.ExistsAsync(cancellationToken) && !options.Overwrite)
         {
             throw new VfsAlreadyExistsException(filePath);
@@ -285,7 +285,7 @@ public class VirtualDirectory : IVirtualDirectory
         };
 
         await file.WriteAllBytesAsync(Array.Empty<byte>(), writeOptions, cancellationToken);
-        
+
         return file;
     }
 
@@ -298,7 +298,7 @@ public class VirtualDirectory : IVirtualDirectory
             throw new ArgumentException("Directory name cannot be null or empty", nameof(name));
 
         _logger.LogDebug("Creating directory: {Path}/{Name}", _path, name);
-        
+
         var dirPath = _path.Combine(name);
         var directory = await _vfs.GetDirectoryAsync(dirPath, cancellationToken);
 
@@ -337,7 +337,7 @@ public class VirtualDirectory : IVirtualDirectory
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting directory stats: {Path}, recursive: {Recursive}", _path, recursive);
-        
+
         var fileCount = 0;
         var directoryCount = 0;
         var totalSize = 0L;
@@ -352,23 +352,23 @@ public class VirtualDirectory : IVirtualDirectory
             {
                 fileCount++;
                 totalSize += file.Size;
-                
+
                 var extension = System.IO.Path.GetExtension(file.Name).ToLowerInvariant();
                 if (string.IsNullOrEmpty(extension))
                     extension = "(no extension)";
-                
+
                 filesByExtension[extension] = filesByExtension.GetValueOrDefault(extension, 0) + 1;
-                
+
                 if (largestFile == null || file.Size > largestFile.Size)
                 {
                     largestFile = file;
                 }
-                
+
                 if (oldestModified == null || file.LastModified < oldestModified)
                 {
                     oldestModified = file.LastModified;
                 }
-                
+
                 if (newestModified == null || file.LastModified > newestModified)
                 {
                     newestModified = file.LastModified;

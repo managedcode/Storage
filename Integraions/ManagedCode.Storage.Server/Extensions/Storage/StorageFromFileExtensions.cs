@@ -27,7 +27,7 @@ public static class StorageFromFileExtensions
     {
         var newOptions = new UploadOptions(formFile.FileName, mimeType: formFile.ContentType);
         options.Invoke(newOptions);
-        
+
         await using var stream = formFile.OpenReadStream();
         return await storage.UploadAsync(stream, newOptions, cancellationToken);
     }

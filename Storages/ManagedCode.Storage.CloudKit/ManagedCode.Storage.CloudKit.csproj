@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Title>ManagedCode.Storage.CloudKit</Title>
+    <PackageId>ManagedCode.Storage.CloudKit</PackageId>
+    <Description>Apple CloudKit (iCloud app data) provider for ManagedCode.Storage.</Description>
+    <PackageTags>managedcode, storage, cloudkit, icloud</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
+    <PackageReference Include="ManagedCode.MimeTypes" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
+  </ItemGroup>
+</Project>
+

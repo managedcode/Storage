@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Title>ManagedCode.Storage.OneDrive</Title>
+    <PackageId>ManagedCode.Storage.OneDrive</PackageId>
+    <Description>Storage provider for Microsoft OneDrive built on Microsoft Graph.</Description>
+    <PackageTags>managedcode, storage, onedrive, microsoft graph</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
+    <PackageReference Include="ManagedCode.MimeTypes" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Graph" Version="5.98.0" />
+  </ItemGroup>
+</Project>

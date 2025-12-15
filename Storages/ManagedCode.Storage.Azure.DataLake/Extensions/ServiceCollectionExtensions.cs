@@ -47,13 +47,13 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<IAzureDataLakeStorage, AzureDataLakeStorage>();
         return serviceCollection.AddSingleton<IStorage, AzureDataLakeStorage>();
     }
-    
+
     public static IServiceCollection AddAzureDataLakeStorage(this IServiceCollection serviceCollection, string key, Action<AzureDataLakeStorageOptions> action)
     {
         var options = new AzureDataLakeStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureDataLakeStorage>(key, (sp, k) =>
         {
@@ -69,7 +69,7 @@ public static class ServiceCollectionExtensions
         var options = new AzureDataLakeStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureDataLakeStorage>(key, (sp, k) =>
         {

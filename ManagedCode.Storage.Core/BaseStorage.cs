@@ -31,7 +31,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         {
             await _semaphoreSlim.WaitAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             var result = await CreateContainerInternalAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             IsContainerCreated = result.IsSuccess;
@@ -110,23 +110,25 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         return UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadAsync(byte[] data, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
             options.MimeType = MimeHelper.GetMimeType(options.FileName);
 
-        return UploadInternalAsync(new MemoryStream(data), SetUploadOptions(options), cancellationToken);
+        using var stream = new MemoryStream(data, writable: false);
+        return await UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<BlobMetadata>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadAsync(string content, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
             options.MimeType = MimeHelper.TEXT;
 
-        return UploadInternalAsync(new Utf8StringStream(content), SetUploadOptions(options), cancellationToken);
+        using var stream = new Utf8StringStream(content);
+        return await UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)
+    public async Task<Result<BlobMetadata>> UploadAsync(FileInfo fileInfo, UploadOptions options, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(options.MimeType))
             options.MimeType = MimeHelper.GetMimeType(fileInfo.Extension);
@@ -135,8 +137,9 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         {
             options.FileName = fileInfo.Name;
         }
-        
-        return UploadInternalAsync(fileInfo.OpenRead(), SetUploadOptions(options), cancellationToken);
+
+        using var stream = fileInfo.OpenRead();
+        return await UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
 
     public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
@@ -333,7 +336,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 
     public void Dispose()
     {
-        if(StorageClient is IDisposable disposable)
+        if (StorageClient is IDisposable disposable)
             disposable.Dispose();
     }
 }

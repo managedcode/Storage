@@ -56,17 +56,17 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         {
             var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
 
-            if(cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
                 yield break;
-            
+
             if (objectsResponse?.S3Objects == null)
                 yield break;
-                
+
             foreach (var entry in objectsResponse.S3Objects)
             {
-                if(cancellationToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                     yield break;
-                
+
                 var objectMetaRequest = new GetObjectMetadataRequest
                 {
                     BucketName = StorageOptions.Bucket,
@@ -133,7 +133,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 await StorageClient.EnsureBucketExistsAsync(StorageOptions.Bucket);
 
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -156,7 +156,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 await StorageClient.DeleteAsync(StorageOptions.Bucket, item.Name, null, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
             }
-            
+
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -219,7 +219,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
             await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, options.FullPath, null,
                 cancellationToken), cancellationToken);
-            
+
             cancellationToken.ThrowIfCancellationRequested();
             return Result<LocalFile>.Succeed(localFile);
         }
@@ -248,7 +248,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
             }, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return Result<bool>.Succeed(true);
         }
         catch (Exception ex)
@@ -323,7 +323,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         {
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             var status = hasLegalHold ? ObjectLockLegalHoldStatus.On : ObjectLockLegalHoldStatus.Off;
 
             PutObjectLegalHoldRequest request = new()
@@ -338,7 +338,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
             await StorageClient.PutObjectLegalHoldAsync(request, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return Result.Succeed();
         }
         catch (Exception ex)

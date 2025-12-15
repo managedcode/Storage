@@ -20,19 +20,19 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Shouldly" Version="4.3.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.1" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
         <PackageReference Include="CsvHelper" Version="33.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
-        <PackageReference Include="Testcontainers" Version="4.8.1" />
-        <PackageReference Include="Testcontainers.Azurite" Version="4.8.1" />
-        <PackageReference Include="Testcontainers.FakeGcsServer" Version="4.8.1" />
-        <PackageReference Include="Testcontainers.LocalStack" Version="4.8.1" />
-        <PackageReference Include="Testcontainers.Sftp" Version="4.8.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.1" />
+        <PackageReference Include="Testcontainers" Version="4.9.0" />
+        <PackageReference Include="Testcontainers.Azurite" Version="4.9.0" />
+        <PackageReference Include="Testcontainers.FakeGcsServer" Version="4.9.0" />
+        <PackageReference Include="Testcontainers.LocalStack" Version="4.9.0" />
+        <PackageReference Include="Testcontainers.Sftp" Version="4.9.0" />
         <PackageReference Include="xunit" Version="2.9.3" />
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -52,6 +52,10 @@
         <ProjectReference Include="..\..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Sftp\ManagedCode.Storage.Sftp.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.GoogleDrive\ManagedCode.Storage.GoogleDrive.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.OneDrive\ManagedCode.Storage.OneDrive.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Dropbox\ManagedCode.Storage.Dropbox.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.CloudKit\ManagedCode.Storage.CloudKit.csproj" />
     </ItemGroup>
 
 

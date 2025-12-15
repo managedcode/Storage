@@ -1,0 +1,347 @@
+name: Docs (GitHub Pages)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - README.md
+      - docs/**
+      - github-pages/**
+      - .github/workflows/jekyll-gh-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Add version and build date
+        run: |
+          echo "version: \"${{ github.run_number }}\"" >> github-pages/_config.yml
+          echo "build_date: \"$(date +'%Y-%m-%d')\"" >> github-pages/_config.yml
+
+      - name: Generate site pages from docs
+        run: |
+          set -euo pipefail
+
+          rewrite_md_links() {
+            # Rewrite *.md links to *.html for the rendered site (keep source docs GitHub-friendly).
+            # Only rewrites relative links (no ':' in the target) so external URLs are untouched.
+            sed -E \
+              -e 's|\]\(README\.md\)|](/)|g' \
+              -e 's|\]\(([^):]+)\.md(#[^)]*)?\)|](\1.html\2)|g'
+          }
+
+          extract_description() {
+            # Grab the first meaningful paragraph (skips headings, code fences, and bullet lists).
+            awk '
+              BEGIN { in_code=0 }
+              /^```/ { in_code = !in_code; next }
+              in_code { next }
+              NR == 1 { next }                # skip H1
+              /^[[:space:]]*$/ { next }       # skip blanks
+              /^#/ { next }                   # skip headings
+              /^(Accepted|Proposed|Rejected|Superseded|Deprecated)[[:space:]]/ { next } # skip ADR status line
+              /^[[:space:]]*[-*]/ { next }    # skip bullets
+              { print; exit }
+            '
+          }
+
+          keywords_for_feature() {
+            case "$1" in
+              storage-core.md) echo "IStorage, ManagedCode.Storage.Core, provider-agnostic storage, upload, download, streaming, metadata, Result<T>, .NET" ;;
+              dependency-injection.md) echo "dependency injection, keyed services, IServiceCollection, IStorage, multi-tenant storage, .NET" ;;
+              virtual-file-system.md) echo "virtual file system, IVirtualFileSystem, overlay, metadata cache, ManagedCode.Storage.VirtualFileSystem, .NET" ;;
+              mime-and-crc.md) echo "MimeHelper, content-type, CRC32, integrity, ManagedCode.MimeTypes, ManagedCode.Storage.Core" ;;
+              testfakes.md) echo "test fakes, provider doubles, Testcontainers, integration tests, ManagedCode.Storage.TestFakes" ;;
+              integration-aspnet-server.md) echo "ASP.NET storage controller, streaming upload, ranged download, SignalR hub, ManagedCode.Storage.Server" ;;
+              integration-dotnet-client.md) echo ".NET HTTP client, StorageClient, upload, download, chunked upload, CRC32, ManagedCode.Storage.Client" ;;
+              integration-signalr-client.md) echo "SignalR client, streaming, upload, download, progress, StorageSignalRClient, ManagedCode.Storage.Client.SignalR" ;;
+              chunked-uploads.md) echo "chunked uploads, resumable upload, CRC32, ASP.NET, ManagedCode.Storage.Server, ManagedCode.Storage.Client" ;;
+              provider-azure-blob.md) echo "Azure Blob Storage, ManagedCode.Storage.Azure, IStorage, BlobClient, container, streaming upload, download, .NET" ;;
+              provider-azure-datalake.md) echo "Azure Data Lake Gen2, ADLS, ManagedCode.Storage.Azure.DataLake, IStorage, filesystem, directory, .NET" ;;
+              provider-aws-s3.md) echo "Amazon S3, AWS S3, ManagedCode.Storage.Aws, IStorage, bucket, streaming upload, Object Lock, legal hold, .NET" ;;
+              provider-google-cloud-storage.md) echo "Google Cloud Storage, GCS, ManagedCode.Storage.Gcp, StorageClient, IStorage, bucket, streaming, .NET" ;;
+              provider-filesystem.md) echo "file system storage, local development, ManagedCode.Storage.FileSystem, IStorage, tests, .NET" ;;
+              provider-sftp.md) echo "SFTP storage, SSH.NET, ManagedCode.Storage.Sftp, IStorage, upload, download, .NET" ;;
+              provider-onedrive.md) echo "OneDrive, Microsoft Graph, GraphServiceClient, Entra ID, OAuth, ManagedCode.Storage.OneDrive, IStorage, .NET" ;;
+              provider-googledrive.md) echo "Google Drive API, DriveService, OAuth, service account, ManagedCode.Storage.GoogleDrive, IStorage, .NET" ;;
+              provider-dropbox.md) echo "Dropbox API, DropboxClient, OAuth2, refresh token, ManagedCode.Storage.Dropbox, IStorage, .NET" ;;
+              provider-cloudkit.md) echo "CloudKit Web Services, iCloud app data, ckAPIToken, ckWebAuthToken, ManagedCode.Storage.CloudKit, IStorage, .NET" ;;
+              *) echo "ManagedCode.Storage, IStorage, .NET, storage" ;;
+            esac
+          }
+
+          keywords_for_api() {
+            case "$1" in
+              storage-server.md) echo "storage API, ASP.NET controllers, SignalR hub, upload, download, streaming, chunked upload, ranged download, ManagedCode.Storage.Server" ;;
+              *) echo "ManagedCode.Storage API, HTTP, SignalR, ASP.NET, streaming" ;;
+            esac
+          }
+
+          keywords_for_adr() {
+            case "$1" in
+              0001-icloud-drive-support.md) echo "iCloud Drive, CloudKit, Apple, server-side storage, provider design, ManagedCode.Storage.CloudKit, ADR" ;;
+              *) echo "architecture decision record, ADR, ManagedCode.Storage" ;;
+            esac
+          }
+
+          mkdir -p github-pages/features
+
+          WORDS=$(wc -w < README.md)
+          MINUTES=$(( (WORDS + 200) / 200 ))
+
+          cat > github-pages/index.md << 'EOF'
+          ---
+          layout: default
+          title: Home
+          description: ManagedCode.Storage documentation: cross-provider storage toolkit for .NET and ASP.NET streaming scenarios.
+          keywords: ManagedCode.Storage, IStorage, .NET, ASP.NET, SignalR, Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit, SFTP, chunked uploads, streaming uploads
+          is_home: true
+          nav_order: 1
+          ---
+          EOF
+          sed -i 's/^          //' github-pages/index.md
+          cat README.md >> github-pages/index.md
+          echo "" >> github-pages/index.md
+          echo "<p class=\"reading-time\">${MINUTES} min read</p>" >> github-pages/index.md
+
+          cat > github-pages/setup.md << 'EOF'
+          ---
+          layout: default
+          title: Setup
+          description: How to clone, build, and run tests for ManagedCode.Storage.
+          keywords: ManagedCode.Storage setup, .NET 10, dotnet restore, dotnet build, dotnet test, Docker, Testcontainers, Azurite, LocalStack, FakeGcsServer, SFTP
+          nav_order: 2
+          ---
+          EOF
+          sed -i 's/^          //' github-pages/setup.md
+          rewrite_md_links < docs/Development/setup.md >> github-pages/setup.md
+
+          cat > github-pages/credentials.md << 'EOF'
+          ---
+          layout: default
+          title: Credentials
+          description: How to obtain credentials for OneDrive, Google Drive, Dropbox, and CloudKit.
+          keywords: OneDrive credentials, Microsoft Graph auth, Entra ID, Google Drive OAuth, Drive API, service account, Dropbox OAuth2, refresh token, CloudKit ckAPIToken, ckWebAuthToken
+          nav_order: 3
+          ---
+          EOF
+          sed -i 's/^          //' github-pages/credentials.md
+          rewrite_md_links < docs/Development/credentials.md >> github-pages/credentials.md
+
+          cat > github-pages/testing.md << 'EOF'
+          ---
+          layout: default
+          title: Testing
+          description: Test strategy and how to run the ManagedCode.Storage test suite.
+          keywords: ManagedCode.Storage tests, xUnit, Shouldly, integration tests, Testcontainers, Azurite, LocalStack, FakeGcsServer, HttpMessageHandler fakes
+          nav_order: 4
+          ---
+          EOF
+          sed -i 's/^          //' github-pages/testing.md
+          rewrite_md_links < docs/Testing/strategy.md >> github-pages/testing.md
+
+          cat > github-pages/features/index.md << 'EOF'
+          ---
+          layout: default
+          title: Features
+          description: Documentation for major modules and providers in ManagedCode.Storage.
+          keywords: IStorage, providers, Azure Blob, AWS S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit, FileSystem, SFTP, Virtual File System, ASP.NET Server, SignalR
+          nav_order: 5
+          ---
+          EOF
+          sed -i 's/^          //' github-pages/features/index.md
+          rewrite_md_links < docs/Features/index.md >> github-pages/features/index.md
+
+          for file in docs/Features/*.md; do
+            base=$(basename "$file")
+            if [ "$base" = "index.md" ]; then
+              continue
+            fi
+
+            title=$(head -n 1 "$file" | sed 's/^# //')
+            title_escaped=$(printf '%s' "$title" | sed 's/"/\\"/g')
+
+            desc=$(extract_description < "$file" | tr -d '\r\n')
+            desc=$(printf '%s' "$desc" | sed -E 's/[[:space:]]+/ /g; s/[[:space:]]+$//; s/:$//')
+            if [ ${#desc} -gt 160 ]; then
+              desc="${desc:0:159}…"
+            fi
+            if [ -z "${desc}" ]; then
+              desc="${title} documentation."
+            fi
+            desc_escaped=$(printf '%s' "$desc" | sed 's/"/\\"/g')
+
+            keywords=$(keywords_for_feature "$base")
+            keywords_escaped=$(printf '%s' "$keywords" | sed 's/"/\\"/g')
+            cat > "github-pages/features/$base" << EOF
+          ---
+          layout: default
+          title: "${title_escaped}"
+          description: "${desc_escaped}"
+          keywords: "${keywords_escaped}"
+          ---
+          EOF
+            sed -i 's/^          //' "github-pages/features/$base"
+            rewrite_md_links < "$file" >> "github-pages/features/$base"
+          done
+
+          mkdir -p github-pages/adr
+
+          cat > github-pages/adr/index.md << 'EOF'
+          ---
+          layout: default
+          title: ADR
+          description: Architecture Decision Records (ADR) for ManagedCode.Storage.
+          keywords: architecture decisions, ADR, ManagedCode.Storage, design decisions, providers, CloudKit, iCloud Drive
+          nav_order: 6
+          ---
+          EOF
+          sed -i 's/^          //' github-pages/adr/index.md
+          rewrite_md_links < docs/ADR/index.md >> github-pages/adr/index.md
+
+          for file in docs/ADR/*.md; do
+            base=$(basename "$file")
+            if [ "$base" = "index.md" ]; then
+              continue
+            fi
+
+            title=$(head -n 1 "$file" | sed 's/^# //')
+            title_escaped=$(printf '%s' "$title" | sed 's/"/\\"/g')
+
+            desc=$(extract_description < "$file" | tr -d '\r\n')
+            desc=$(printf '%s' "$desc" | sed -E 's/[[:space:]]+/ /g; s/[[:space:]]+$//; s/:$//')
+            if [ ${#desc} -gt 160 ]; then
+              desc="${desc:0:159}…"
+            fi
+            if [ -z "${desc}" ]; then
+              desc="${title} decision record."
+            fi
+            desc_escaped=$(printf '%s' "$desc" | sed 's/"/\\"/g')
+
+            keywords=$(keywords_for_adr "$base")
+            keywords_escaped=$(printf '%s' "$keywords" | sed 's/"/\\"/g')
+            cat > "github-pages/adr/$base" << EOF
+          ---
+          layout: default
+          title: "${title_escaped}"
+          description: "${desc_escaped}"
+          keywords: "${keywords_escaped}"
+          ---
+          EOF
+            sed -i 's/^          //' "github-pages/adr/$base"
+            rewrite_md_links < "$file" >> "github-pages/adr/$base"
+          done
+
+          mkdir -p github-pages/api
+
+          cat > github-pages/api/index.md << 'EOF'
+          ---
+          layout: default
+          title: API
+          description: HTTP and SignalR API documentation for ManagedCode.Storage.Server.
+          keywords: storage API, HTTP, SignalR, ASP.NET controllers, upload, download, streaming, chunked uploads, ranged downloads, ManagedCode.Storage.Server
+          nav_order: 7
+          ---
+          EOF
+          sed -i 's/^          //' github-pages/api/index.md
+          rewrite_md_links < docs/API/index.md >> github-pages/api/index.md
+
+          for file in docs/API/*.md; do
+            base=$(basename "$file")
+            if [ "$base" = "index.md" ]; then
+              continue
+            fi
+
+            title=$(head -n 1 "$file" | sed 's/^# //')
+            title_escaped=$(printf '%s' "$title" | sed 's/"/\\"/g')
+
+            desc=$(extract_description < "$file" | tr -d '\r\n')
+            desc=$(printf '%s' "$desc" | sed -E 's/[[:space:]]+/ /g; s/[[:space:]]+$//; s/:$//')
+            if [ ${#desc} -gt 160 ]; then
+              desc="${desc:0:159}…"
+            fi
+            if [ -z "${desc}" ]; then
+              desc="${title} documentation."
+            fi
+            desc_escaped=$(printf '%s' "$desc" | sed 's/"/\\"/g')
+
+            keywords=$(keywords_for_api "$base")
+            keywords_escaped=$(printf '%s' "$keywords" | sed 's/"/\\"/g')
+            cat > "github-pages/api/$base" << EOF
+          ---
+          layout: default
+          title: "${title_escaped}"
+          description: "${desc_escaped}"
+          keywords: "${keywords_escaped}"
+          ---
+          EOF
+            sed -i 's/^          //' "github-pages/api/$base"
+            rewrite_md_links < "$file" >> "github-pages/api/$base"
+          done
+
+          cat > github-pages/templates.md << 'EOF'
+          ---
+          layout: default
+          title: Templates
+          description: Documentation templates used in this repository (Feature and ADR templates).
+          keywords: documentation templates, feature template, ADR template, MCAF, ManagedCode.Storage docs
+          nav_order: 8
+          ---
+
+          # Templates
+
+          These templates are used to keep documentation consistent and MCAF-friendly.
+
+          <div class="templates-list">
+          EOF
+          sed -i 's/^          //' github-pages/templates.md
+
+          for file in docs/templates/*.md; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              name="${filename%.md}"
+
+              echo "<div class=\"template-item\">" >> github-pages/templates.md
+              echo "<span class=\"template-name\">${name}</span>" >> github-pages/templates.md
+              echo "<div class=\"template-links\">" >> github-pages/templates.md
+              echo "<a href=\"https://github.com/managedcode/Storage/blob/main/docs/templates/${filename}\">View</a>" >> github-pages/templates.md
+              echo "<a href=\"https://raw.githubusercontent.com/managedcode/Storage/main/docs/templates/${filename}\" download>Download</a>" >> github-pages/templates.md
+              echo "</div>" >> github-pages/templates.md
+              echo "</div>" >> github-pages/templates.md
+            fi
+          done
+
+          echo "</div>" >> github-pages/templates.md
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./github-pages
+          destination: ./_site
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

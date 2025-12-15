@@ -35,7 +35,7 @@ public class StorageFactoryTests
     {
         ServiceProvider = ConfigureServices();
     }
-    
+
     public ServiceProvider ServiceProvider { get; }
 
     public static ServiceProvider ConfigureServices()
@@ -46,13 +46,13 @@ public class StorageFactoryTests
         {
             BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket")
         });
-        
+
         services.AddAzureStorage(new AzureStorageOptions
         {
             Container = "managed-code-bucket",
             ConnectionString = "UseDevelopmentStorage=true"
         });
-        
+
         services.AddGCPStorage(new GCPStorageOptions
         {
             BucketOptions = new BucketOptions
@@ -67,10 +67,10 @@ public class StorageFactoryTests
             }
         });
 
-            
+
         var config = new AmazonS3Config();
         config.ServiceURL = "http://localhost:4443";
-            
+
         services.AddAWSStorage(new AWSStorageOptions
         {
             PublicKey = "localkey",
@@ -97,7 +97,7 @@ public class StorageFactoryTests
         });
         storage.GetType().ShouldBe(typeof(AzureStorage));
     }
-    
+
     [Fact]
     public void CreateAwsStorage()
     {
@@ -133,7 +133,7 @@ public class StorageFactoryTests
         });
         storage.GetType().ShouldBe(typeof(GCPStorage));
     }
-    
+
     [Fact]
     public void UpdateAzureStorage()
     {
@@ -146,7 +146,7 @@ public class StorageFactoryTests
             .ShouldBe(containerName);
 
     }
-    
+
     [Fact]
     public void UpdateAwsStorage()
     {
@@ -156,7 +156,7 @@ public class StorageFactoryTests
         storage.StorageClient
             .ShouldNotBeNull();
     }
-    
+
     [Fact]
     public void UpdateGcpStorage()
     {
@@ -166,6 +166,6 @@ public class StorageFactoryTests
         storage.StorageClient
             .ShouldNotBeNull();
     }
- 
+
 }
 

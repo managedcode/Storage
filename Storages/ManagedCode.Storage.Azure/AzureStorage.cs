@@ -53,14 +53,14 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                            .AsPages()
                            .WithCancellation(cancellationToken))
         {
-            if(cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
                 yield break;
-            
+
             foreach (var blobItem in item.Values)
             {
-                if(cancellationToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                     yield break;
-                
+
                 var blobMetadata = new BlobMetadata
                 {
                     FullName = blobItem.Name,
@@ -186,9 +186,9 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                     logger.LogException(e);
                 }
             }
-            
+
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -204,9 +204,8 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
         {
             var blobs = StorageClient.GetBlobs(prefix: directory, cancellationToken: cancellationToken);
 
-            foreach (var blob in blobs)
+            foreach (var blobClient in blobs.Select(blob => StorageClient.GetBlobClient(blob.Name)))
             {
-                var blobClient = StorageClient.GetBlobClient(blob.Name);
                 await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.None, null, cancellationToken);
             }
 

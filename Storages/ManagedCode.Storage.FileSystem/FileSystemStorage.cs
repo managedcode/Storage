@@ -39,7 +39,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await EnsureContainerExist(cancellationToken);
-        
+
         if (cancellationToken.IsCancellationRequested)
             yield break;
 

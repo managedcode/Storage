@@ -58,7 +58,8 @@ public class StorageClientChunkTests
 
         double? finalProgress = null;
         var progressEvents = new List<double>();
-        var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, progress =>
+        using var payloadStream = new MemoryStream(payload, writable: false);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, progress =>
         {
             progressEvents.Add(progress);
             finalProgress = progress;
@@ -102,7 +103,8 @@ public class StorageClientChunkTests
         var client = new StorageClient(httpClient);
         client.SetChunkSize(256 * 1024);
 
-        var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
+        using var payloadStream = new MemoryStream(payload, writable: false);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(expectedChecksum);
@@ -141,7 +143,8 @@ public class StorageClientChunkTests
             ChunkSize = 128 * 1024
         };
 
-        var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
+        using var payloadStream = new MemoryStream(payload, writable: false);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(expectedChecksum);
     }
@@ -173,7 +176,8 @@ public class StorageClientChunkTests
             ChunkSize = 64 * 1024
         };
 
-        var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
+        using var payloadStream = new MemoryStream(payload, writable: false);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
         result.IsSuccess.ShouldBeFalse();
     }
 
@@ -183,7 +187,7 @@ public class StorageClientChunkTests
         using var httpClient = new HttpClient(new RecordingHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK))));
         var client = new StorageClient(httpClient);
 
-        Func<Task> act = () => client.UploadLargeFile(new MemoryStream(new byte[1]), UploadUrl, CompleteUrl, null);
+        Func<Task> act = () => client.UploadLargeFile(Stream.Null, UploadUrl, CompleteUrl, null);
 
         await Should.ThrowAsync<InvalidOperationException>(act);
     }
@@ -216,7 +220,8 @@ public class StorageClientChunkTests
             ChunkSize = 128 * 1024
         };
 
-        var result = await client.UploadLargeFile(new MemoryStream(payload, writable: false), UploadUrl, CompleteUrl, null);
+        using var payloadStream = new MemoryStream(payload, writable: false);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(expectedChecksum);
     }

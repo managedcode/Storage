@@ -5,6 +5,40 @@
 - Deliver matching HTTP and SignalR clients that can stream files, resume transfers, and interoperate with the controllers by default.
 - Maintain a provider-agnostic test suite that validates the contract across file system and all cloud storages.
 
+## High-level Architecture
+
+```mermaid
+flowchart LR
+  subgraph Clients
+    HttpClient[ManagedCode.Storage.Client (HTTP)]
+    SigClient[ManagedCode.Storage.Client.SignalR]
+    Browser[Browser / App]
+  end
+
+  subgraph Server
+    Controllers[ASP.NET Controllers]
+    Hub[SignalR Hub]
+    Chunk[ChunkUploadService]
+  end
+
+  subgraph Storage
+    Abstraction[IStorage]
+    Provider[Concrete provider (Azure/AWS/GCS/FS/SFTP/etc.)]
+  end
+
+  Browser --> HttpClient
+  Browser --> SigClient
+  HttpClient --> Controllers
+  SigClient --> Hub
+
+  Controllers --> Chunk
+  Hub --> Chunk
+
+  Controllers --> Abstraction
+  Hub --> Abstraction
+  Abstraction --> Provider
+```
+
 ## HTTP API Surface
 - `POST /api/storage/upload` — multipart upload for small/medium files; stores directly via `IStorage.UploadAsync`.
 - `POST /api/storage/upload/stream` — accepts raw stream (`application/octet-stream`) with `X-File-Name`, `X-Content-Type`, optional `X-Directory`; handles large uploads without buffering when possible.
@@ -64,4 +98,3 @@
 - HLS playlist generation for video streaming.
 - Server-sent events for progress notifications (bridge from hub to HTTP clients).
 - gRPC alternative endpoints when HTTP/3 is available.
-

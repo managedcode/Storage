@@ -16,6 +16,10 @@
     <Project Path="Storages/ManagedCode.Storage.FileSystem/ManagedCode.Storage.FileSystem.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Sftp/ManagedCode.Storage.Sftp.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Google/ManagedCode.Storage.Google.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.GoogleDrive/ManagedCode.Storage.GoogleDrive.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.OneDrive/ManagedCode.Storage.OneDrive.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Dropbox/ManagedCode.Storage.Dropbox.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.CloudKit/ManagedCode.Storage.CloudKit.csproj" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj" />

@@ -72,7 +72,7 @@ public static class ServiceCollectionExtensions
         var options = new AzureStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<AzureStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureStorage>(key, (sp, k) =>
         {
@@ -88,7 +88,7 @@ public static class ServiceCollectionExtensions
         var options = new AzureStorageOptions();
         action.Invoke(options);
         CheckConfiguration(options);
-    
+
         serviceCollection.AddKeyedSingleton<AzureStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureStorage>(key, (sp, k) =>
         {

@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using DotNet.Testcontainers.Builders;
 using ManagedCode.Storage.Tests.Common;
@@ -18,7 +19,8 @@ internal static class AwsContainerFactory
                 .UntilHttpRequestIsSucceeded(request => request
                     .ForPort(EdgePort)
                     .ForPath("/_localstack/health")
-                    .ForStatusCode(HttpStatusCode.OK)))
+                    .ForStatusCode(HttpStatusCode.OK),
+                    wait => wait.WithTimeout(TimeSpan.FromMinutes(5))))
             .Build();
     }
 }

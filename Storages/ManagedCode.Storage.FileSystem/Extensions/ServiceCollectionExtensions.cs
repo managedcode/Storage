@@ -43,14 +43,14 @@ public static class ServiceCollectionExtensions
     {
         var options = new FileSystemStorageOptions();
         action.Invoke(options);
-    
+
         serviceCollection.AddKeyedSingleton<FileSystemStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IFileSystemStorage>(key, (sp, k) =>
         {
             var opts = sp.GetKeyedService<FileSystemStorageOptions>(k);
             return new FileSystemStorage(opts);
         });
-    
+
         return serviceCollection;
     }
 
@@ -58,16 +58,16 @@ public static class ServiceCollectionExtensions
     {
         var options = new FileSystemStorageOptions();
         action.Invoke(options);
-    
+
         serviceCollection.AddKeyedSingleton<FileSystemStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IFileSystemStorage>(key, (sp, k) =>
         {
             var opts = sp.GetKeyedService<FileSystemStorageOptions>(k);
             return new FileSystemStorage(opts);
         });
-        serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) => 
+        serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>
             sp.GetRequiredKeyedService<IFileSystemStorage>(k));
-    
+
         return serviceCollection;
     }
 }

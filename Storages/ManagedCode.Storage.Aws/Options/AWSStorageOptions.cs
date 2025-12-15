@@ -41,7 +41,7 @@ public class AWSStorageOptions : IStorageOptions
     ///     Whether to create the container if it does not exist. Default is <c>true</c>.
     /// </summary>
     public bool CreateContainerIfNotExists { get; set; } = true;
-    
+
     /// <summary>
     ///     Whether to use the instance profile credentials. Default is <c>false</c>.
     /// </summary>

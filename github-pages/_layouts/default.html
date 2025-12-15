@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary Meta Tags -->
+  {% if page.is_home %}
+  <title>{{ site.title }} - {{ site.tagline }}</title>
+  <meta name="title" content="{{ site.title }} - {{ site.tagline }}">
+  {% else %}
+  <title>{{ page.title }} | {{ site.title }}</title>
+  <meta name="title" content="{{ page.title }} | {{ site.title }}">
+  {% endif %}
+  <meta name="description" content="{{ page.description | default: site.description }}">
+  <meta name="keywords" content="{{ page.keywords | default: site.keywords }}">
+  <meta name="author" content="{{ site.author | default: 'ManagedCode' }}">
+  {% if page.url == '/404.html' %}
+  <meta name="robots" content="noindex, follow">
+  {% else %}
+  <meta name="robots" content="index, follow">
+  {% endif %}
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+  {% if page.is_home %}
+  <meta property="og:title" content="{{ site.title }} - {{ site.tagline }}">
+  {% else %}
+  <meta property="og:title" content="{{ page.title }} | {{ site.title }}">
+  {% endif %}
+  <meta property="og:description" content="{{ page.description | default: site.description }}">
+  <meta property="og:image" content="{{ site.og_image | default: '/assets/images/og-image.png' | absolute_url }}">
+  <meta property="og:image:alt" content="{{ site.title }} documentation">
+  <meta property="og:site_name" content="{{ site.title }}">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+  {% if page.is_home %}
+  <meta name="twitter:title" content="{{ site.title }} - {{ site.tagline }}">
+  {% else %}
+  <meta name="twitter:title" content="{{ page.title }} | {{ site.title }}">
+  {% endif %}
+  <meta name="twitter:description" content="{{ page.description | default: site.description }}">
+  <meta name="twitter:image" content="{{ site.og_image | default: '/assets/images/og-image.png' | absolute_url }}">
+  <meta name="twitter:image:alt" content="{{ site.title }} documentation">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{{ '/assets/images/favicon.svg' | relative_url }}">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#785D8F">
+  <meta name="msapplication-TileColor" content="#785D8F">
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Critical CSS inline -->
+  <style>
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0;background:#fff}
+    .nav{display:flex;justify-content:space-between;align-items:center;padding:20px 60px;max-width:1280px;margin:0 auto}
+    .main{max-width:860px;margin:0 auto;padding:40px 60px}
+  </style>
+
+  <!-- Stylesheet - non-blocking -->
+  <link rel="preload" href="{{ '/assets/css/style.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}"></noscript>
+
+  <!-- Fonts - non-blocking -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+
+  <!-- Structured Data for SEO & AI/LLM Discovery -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "{{ site.title }}",
+    "alternateName": ["ManagedCode.Storage"],
+    "description": "{{ site.description }}",
+    "url": "{{ site.url }}{{ site.baseurl }}",
+    "publisher": {
+      "@type": "Organization",
+      "name": "ManagedCode",
+      "url": "https://managed-code.com"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": "ManagedCode.Storage",
+    "description": "Cross-provider blob storage toolkit for .NET and ASP.NET streaming scenarios. Unifies uploads/downloads/streaming behind a single IStorage abstraction.",
+    "codeRepository": "https://github.com/managedcode/Storage",
+    "programmingLanguage": "C#",
+    "runtimePlatform": ".NET",
+    "license": "https://opensource.org/license/mit/",
+    "author": {
+      "@type": "Organization",
+      "name": "ManagedCode",
+      "url": "https://managed-code.com"
+    },
+    "keywords": ["ManagedCode.Storage", "IStorage", "Azure Blob", "Amazon S3", "Google Cloud Storage", "OneDrive", "Google Drive", "Dropbox", "CloudKit", "SFTP", ".NET", "ASP.NET", "SignalR", "streaming"]
+  }
+  </script>
+</head>
+<body>
+  <nav class="nav">
+    <a href="{{ '/' | relative_url }}" class="nav-logo">{{ site.title }}</a>
+    <div class="nav-links">
+      <a href="{{ '/' | relative_url }}" {% if page.url == '/' %}class="active"{% endif %}>Home</a>
+      <a href="{{ '/setup' | relative_url }}" {% if page.url == '/setup.html' %}class="active"{% endif %}>Setup</a>
+      <a href="{{ '/credentials' | relative_url }}" {% if page.url == '/credentials.html' %}class="active"{% endif %}>Credentials</a>
+      <a href="{{ '/testing' | relative_url }}" {% if page.url == '/testing.html' %}class="active"{% endif %}>Testing</a>
+      <a href="{{ '/features' | relative_url }}" {% if page.url contains '/features' %}class="active"{% endif %}>Features</a>
+      <a href="{{ '/adr' | relative_url }}" {% if page.url contains '/adr' %}class="active"{% endif %}>ADR</a>
+      <a href="{{ '/api' | relative_url }}" {% if page.url contains '/api' %}class="active"{% endif %}>API</a>
+      <a href="{{ '/templates' | relative_url }}" {% if page.url == '/templates.html' %}class="active"{% endif %}>Templates</a>
+      <a href="https://github.com/managedcode/Storage" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://managed-code.com" target="_blank" rel="noopener" class="nav-brand">ManagedCode</a>
+      <label class="dark-toggle-label" title="Toggle dark mode">
+        <input type="checkbox" id="dark-toggle">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </label>
+    </div>
+  </nav>
+
+  <main class="main">
+    <article class="content">
+      {{ content }}
+    </article>
+  </main>
+
+  <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>{{ site.title }} &copy; {{ 'now' | date: '%Y' }} by <a href="https://managed-code.com" target="_blank" rel="noopener">Managed Code</a></p>
+      <p>Licensed under <a href="https://opensource.org/license/mit/" rel="noopener">MIT</a></p>
+      {% if site.version and site.build_date %}
+      <p class="footer-version">v{{ site.version }} · {{ site.build_date }}</p>
+      {% endif %}
+    </div>
+  </footer>
+
+  <!-- Scripts at end of body -->
+  <script>
+    // Dark mode - run immediately to prevent flash
+    (function(){
+      var d=document.body,t=document.getElementById('dark-toggle'),
+          s=localStorage.getItem('darkMode'),
+          p=window.matchMedia('(prefers-color-scheme:dark)').matches;
+      if(s==='true'||(s===null&&p)){d.classList.add('dark');if(t)t.checked=true}
+      if(t)t.onchange=function(){d.classList.toggle('dark');localStorage.setItem('darkMode',d.classList.contains('dark'))}
+    })();
+  </script>
+
+  <!-- Mermaid (for diagrams in docs) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <!-- Deferred scripts -->
+  <script defer>
+    // Mermaid diagrams: convert ```mermaid blocks into rendered diagrams
+    document.querySelectorAll('pre > code.language-mermaid').forEach(function(code){
+      var pre = code.parentElement;
+      var div = document.createElement('div');
+      div.className = 'mermaid';
+      div.textContent = code.textContent || '';
+      pre.replaceWith(div);
+    });
+
+    if (window.mermaid) {
+      window.mermaid.initialize({
+        startOnLoad: false,
+        theme: document.body.classList.contains('dark') ? 'dark' : 'default'
+      });
+      window.mermaid.run({ querySelector: '.mermaid' });
+    }
+
+    // Back to top
+    var b=document.getElementById('back-to-top');
+    window.onscroll=function(){b.classList.toggle('visible',window.scrollY>400)};
+    b.onclick=function(){window.scrollTo({top:0,behavior:'smooth'})};
+
+    // TOC navigation
+    document.querySelectorAll('.toc a').forEach(function(l){
+      l.onclick=function(e){
+        e.preventDefault();
+        var t=this.textContent.trim().toLowerCase();
+        document.querySelectorAll('h2').forEach(function(h){
+          if(h.textContent.toLowerCase().includes(t))h.scrollIntoView({behavior:'smooth',block:'start'})
+        })
+      }
+    });
+
+    // Copy code button
+    document.querySelectorAll('pre').forEach(function(p){
+      var b=document.createElement('button');
+      b.className='copy-btn';b.textContent='Copy';
+      b.onclick=function(){
+        navigator.clipboard.writeText((p.querySelector('code')||p).textContent).then(function(){
+          b.textContent='Copied!';setTimeout(function(){b.textContent='Copy'},2000)
+        })
+      };
+      p.style.position='relative';p.appendChild(b)
+    });
+  </script>
+
+</body>
+</html>

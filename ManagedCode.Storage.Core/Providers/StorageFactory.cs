@@ -10,7 +10,7 @@ namespace ManagedCode.Storage.Core.Providers
         {
             Providers = providers.ToDictionary(p => p.StorageOptionsType, p => p);
         }
-        
+
         private IStorageProvider? GetProvider(Type optionsType)
         {
             return Providers
@@ -22,9 +22,9 @@ namespace ManagedCode.Storage.Core.Providers
 
         public IStorage CreateStorage(IStorageOptions options)
         {
-            var provider = GetProvider(options.GetType()) 
+            var provider = GetProvider(options.GetType())
                            ?? throw new NotSupportedException($"Provider for {options.GetType()} not found");
-        
+
             return provider.CreateStorage<IStorage, IStorageOptions>(options);
         }
 
@@ -32,7 +32,7 @@ namespace ManagedCode.Storage.Core.Providers
         {
             var provider = GetProvider(options.GetType())
                            ?? throw new NotSupportedException($"Provider for {options.GetType()} not found");
-        
+
             var storageOptions = provider.GetDefaultOptions();
             options.Invoke(storageOptions);
             return CreateStorage(storageOptions);
@@ -44,7 +44,7 @@ namespace ManagedCode.Storage.Core.Providers
         {
             var provider = GetProvider(typeof(TOptions))
                            ?? throw new NotSupportedException($"Provider for {typeof(TOptions)} not found");
-        
+
             return provider.CreateStorage<TStorage, TOptions>(options);
         }
 
@@ -54,7 +54,7 @@ namespace ManagedCode.Storage.Core.Providers
         {
             var provider = GetProvider(typeof(TOptions))
                            ?? throw new NotSupportedException($"Provider for {typeof(TOptions)} not found");
-        
+
             TOptions storageOptions = (TOptions)provider.GetDefaultOptions();
             options.Invoke(storageOptions);
             return provider.CreateStorage<TStorage, TOptions>(storageOptions);

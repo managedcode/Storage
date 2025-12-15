@@ -27,6 +27,7 @@ public class GCSUploadTests : UploadTests<FakeGcsServerContainer>
     [InlineData(5)]
     public override Task UploadAsync_LargeStream_ShouldRoundTrip(int gigabytes)
     {
+        _ = gigabytes;
         return Task.CompletedTask;
     }
 }

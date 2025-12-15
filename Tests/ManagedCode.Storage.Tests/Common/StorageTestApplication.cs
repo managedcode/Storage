@@ -98,10 +98,10 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
                 }
             });
 
-            
+
             var config = new AmazonS3Config();
             config.ServiceURL = _localStackContainer.GetConnectionString();
-            
+
             services.AddAWSStorage(new AWSStorageOptions
             {
                 PublicKey = "localkey",

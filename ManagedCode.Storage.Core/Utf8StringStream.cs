@@ -23,7 +23,7 @@ public sealed class Utf8StringStream : Stream
     public Utf8StringStream(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        
+
         // Use UTF-8 encoding directly to byte array - most efficient for large strings
         var byteCount = Encoding.UTF8.GetByteCount(text);
         var buffer = new byte[byteCount];
@@ -51,11 +51,11 @@ public sealed class Utf8StringStream : Stream
     public static Utf8StringStream CreatePooled(string text, ArrayPool<byte>? arrayPool = null)
     {
         ArgumentNullException.ThrowIfNull(text);
-        
+
         arrayPool ??= ArrayPool<byte>.Shared;
         var byteCount = Encoding.UTF8.GetByteCount(text);
         var rentedArray = arrayPool.Rent(byteCount);
-        
+
         try
         {
             var actualLength = Encoding.UTF8.GetBytes(text, rentedArray);
@@ -99,7 +99,7 @@ public sealed class Utf8StringStream : Stream
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        
+
         // Since we're reading from memory, this is synchronous but we await for API compliance
         await Task.CompletedTask;
         return ReadCore(buffer.Span);
@@ -109,14 +109,14 @@ public sealed class Utf8StringStream : Stream
     {
         var remaining = _buffer.Length - _position;
         var bytesToRead = Math.Min(destination.Length, remaining);
-        
+
         if (bytesToRead <= 0)
             return 0;
 
         var source = _buffer.Span.Slice(_position, bytesToRead);
         source.CopyTo(destination);
         _position += bytesToRead;
-        
+
         return bytesToRead;
     }
 

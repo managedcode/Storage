@@ -176,21 +176,23 @@ public class StorageExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        
-        services.AddFileSystemStorage("storage1", opt => { 
-            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket-1"); 
+
+        services.AddFileSystemStorage("storage1", opt =>
+        {
+            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket-1");
         });
-        
-        services.AddFileSystemStorage("storage2", opt => { 
-            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket-2"); 
+
+        services.AddFileSystemStorage("storage2", opt =>
+        {
+            opt.BaseFolder = Path.Combine(Environment.CurrentDirectory, "managed-code-bucket-2");
         });
-        
+
         var provider = services.BuildServiceProvider();
-        
+
         // Act
         var storage1 = provider.GetKeyedService<IFileSystemStorage>("storage1");
         var storage2 = provider.GetKeyedService<IFileSystemStorage>("storage2");
-        
+
         // Assert
         storage1.ShouldNotBeNull();
         storage2.ShouldNotBeNull();

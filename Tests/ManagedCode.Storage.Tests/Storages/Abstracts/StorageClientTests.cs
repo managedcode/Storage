@@ -22,21 +22,15 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
     {
         _httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK);
             if (request.Method == HttpMethod.Get && request.RequestUri?.AbsoluteUri.Contains("loader.com", StringComparison.Ordinal) == true)
             {
-                var contentStream = new MemoryStream();
-                using (var writer = new StreamWriter(contentStream))
+                return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    writer.Write("Test content");
-                    writer.Flush();
-                    contentStream.Position = 0;
-                }
-
-                response.Content = new StreamContent(contentStream);
+                    Content = new StringContent("Test content")
+                };
             }
 
-            return response;
+            return new HttpResponseMessage(HttpStatusCode.OK);
         }));
 
         _storageClient = new StorageClient(_httpClient);

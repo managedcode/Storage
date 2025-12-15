@@ -87,8 +87,8 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
                     Name = item.Name
                 };
             }
-            
-            if(cancellationToken.IsCancellationRequested)
+
+            if (cancellationToken.IsCancellationRequested)
                 yield break;
         }
     }
@@ -197,10 +197,10 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
                 await fileStream.WriteAsync(buffer, 0, count, cancellationToken);
 
             await fileStream.FlushAsync(cancellationToken);
-            
+
             fileStream.Close();
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
@@ -274,7 +274,7 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
     protected override async Task<Result> DeleteDirectoryInternalAsync(string directory, CancellationToken cancellationToken = default)
     {
         try
-        {        
+        {
             await StorageClient.DeleteDirectoryAsync(directory, cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             return Result.Succeed();

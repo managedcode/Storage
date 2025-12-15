@@ -82,7 +82,7 @@ public static class PathHelper
             return string.Empty;
 
         var result = paths[0] ?? string.Empty;
-        
+
         for (int i = 1; i < paths.Length; i++)
         {
             var path = paths[i];
@@ -91,11 +91,11 @@ public static class PathHelper
 
             // Remove leading separators from current path
             path = path.TrimStart('/', '\\');
-            
+
             // Ensure result doesn't end with separator (unless it's root)
             if (result.Length > 0 && result[^1] != separator)
                 result += separator;
-                
+
             result += path;
         }
 
@@ -147,10 +147,10 @@ public static class PathHelper
             return separator.ToString();
 
         var normalizedPath = NormalizePath(path, separator);
-        
+
         if (normalizedPath[0] != separator)
             normalizedPath = separator + normalizedPath;
-            
+
         return normalizedPath;
     }
 
@@ -200,9 +200,9 @@ public static class PathHelper
 
         var normalizedPath = NormalizePath(path);
         var lastSeparatorIndex = normalizedPath.LastIndexOfAny(new[] { '/', '\\' });
-        
-        return lastSeparatorIndex >= 0 
-            ? normalizedPath[(lastSeparatorIndex + 1)..] 
+
+        return lastSeparatorIndex >= 0
+            ? normalizedPath[(lastSeparatorIndex + 1)..]
             : normalizedPath;
     }
 }

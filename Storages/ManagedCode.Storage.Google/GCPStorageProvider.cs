@@ -11,9 +11,9 @@ namespace ManagedCode.Storage.Google
     public class GCPStorageProvider(IServiceProvider serviceProvider, GCPStorageOptions defaultOptions) : IStorageProvider
     {
         public Type StorageOptionsType => typeof(GCPStorageOptions);
-        
-        public TStorage CreateStorage<TStorage, TOptions>(TOptions options) 
-            where TStorage : class, IStorage 
+
+        public TStorage CreateStorage<TStorage, TOptions>(TOptions options)
+            where TStorage : class, IStorage
             where TOptions : class, IStorageOptions
         {
             if (options is not GCPStorageOptions azureOptions)
@@ -24,7 +24,7 @@ namespace ManagedCode.Storage.Google
             var logger = serviceProvider.GetService<ILogger<GCPStorage>>();
             var storage = new GCPStorage(azureOptions, logger);
 
-            return storage as TStorage 
+            return storage as TStorage
                    ?? throw new InvalidOperationException($"Cannot create storage of type {typeof(TStorage)}");
         }
 
@@ -35,7 +35,7 @@ namespace ManagedCode.Storage.Google
                 AuthFileName = defaultOptions.AuthFileName,
                 BucketOptions = new BucketOptions
                 {
-                    Bucket  = defaultOptions.BucketOptions.Bucket,
+                    Bucket = defaultOptions.BucketOptions.Bucket,
                     ProjectId = defaultOptions.BucketOptions.ProjectId
                 },
                 GoogleCredential = defaultOptions.GoogleCredential,

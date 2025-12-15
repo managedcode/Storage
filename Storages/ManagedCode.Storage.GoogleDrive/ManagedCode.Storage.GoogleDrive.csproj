@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Title>ManagedCode.Storage.GoogleDrive</Title>
+    <PackageId>ManagedCode.Storage.GoogleDrive</PackageId>
+    <Description>Google Drive provider for ManagedCode.Storage.</Description>
+    <PackageTags>managedcode, storage, google drive</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
+    <PackageReference Include="ManagedCode.MimeTypes" Version="10.0.1" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.73.0.3987" />
+  </ItemGroup>
+</Project>

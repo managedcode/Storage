@@ -99,10 +99,10 @@ public class BlobStream : Stream
 
         if (_metadata.UploadId == null)
             _metadata.UploadId = _s3.InitiateMultipartUploadAsync(new InitiateMultipartUploadRequest
-                {
-                    BucketName = _metadata.BucketName,
-                    Key = _metadata.Key
-                })
+            {
+                BucketName = _metadata.BucketName,
+                Key = _metadata.Key
+            })
                 .GetAwaiter()
                 .GetResult()
                 .UploadId;
@@ -139,14 +139,14 @@ public class BlobStream : Stream
 
         if (Length > 0)
             _s3.CompleteMultipartUploadAsync(new CompleteMultipartUploadRequest
-                {
-                    BucketName = _metadata.BucketName,
-                    Key = _metadata.Key,
-                    PartETags = _metadata.PartETags
+            {
+                BucketName = _metadata.BucketName,
+                Key = _metadata.Key,
+                PartETags = _metadata.PartETags
                         .Select(e => new PartETag(e.Key, e.Value))
                         .ToList(),
-                    UploadId = _metadata.UploadId
-                })
+                UploadId = _metadata.UploadId
+            })
                 .GetAwaiter()
                 .GetResult();
     }
