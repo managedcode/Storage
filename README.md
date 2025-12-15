@@ -2,7 +2,7 @@
 
 # ManagedCode.Storage
 
-[![CI](https://github.com/managedcode/Storage/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/ci.yml)
+[![build-and-test](https://github.com/managedcode/Storage/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/ci.yml)
 [![Docs](https://github.com/managedcode/Storage/actions/workflows/jekyll-gh-pages.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/jekyll-gh-pages.yml)
 [![Release](https://github.com/managedcode/Storage/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/release.yml)
 [![CodeQL](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/managedcode/Storage/actions/workflows/codeql-analysis.yml)
@@ -341,6 +341,7 @@ var tenantStorage = app.Services.GetRequiredKeyedService<IStorage>("tenant-a");
    Docs: [CloudKit Web Services Reference](https://developer.apple.com/library/archive/documentation/DataManagement/Conceptual/CloudKitWebServicesReference/index.html).
 
 1. In Apple Developer / CloudKit Dashboard, configure the container you want to use and note its container id (example: `iCloud.com.company.app`).
+   - `ContainerId` is an identifier (not a secret) and is typically derived from your App ID / bundle id.
 2. Ensure the file record type exists (default `MCStorageFile`).
 3. Add these fields to the record type:
    - `path` (String) — must be queryable/indexed for prefix listing.
@@ -354,7 +355,7 @@ var tenantStorage = app.Services.GetRequiredKeyedService<IStorage>("tenant-a");
    ```csharp
    builder.Services.AddCloudKitStorageAsDefault(options =>
    {
-       options.ContainerId = "iCloud.com.company.app";
+       options.ContainerId = "iCloud.com.company.app"; // identifier, not a secret
        options.Environment = CloudKitEnvironment.Production;
        options.Database = CloudKitDatabase.Public;
        options.RootPath = "app-data";
@@ -364,6 +365,9 @@ var tenantStorage = app.Services.GetRequiredKeyedService<IStorage>("tenant-a");
        // OR:
        // options.ServerToServerKeyId = configuration["CloudKit:KeyId"];
        // options.ServerToServerPrivateKeyPem = configuration["CloudKit:PrivateKeyPem"]; // paste PEM (.p8) contents
+
+       // Optional: provide a custom HttpClient (proxy, retries, test handler).
+       // options.HttpClient = new HttpClient();
    });
    ```
 
@@ -543,19 +547,27 @@ public sealed class AssetReplicator
 
     public async Task MirrorAsync(Stream content, string fileName, CancellationToken cancellationToken = default)
     {
-        await using var buffer = new MemoryStream();
-        await content.CopyToAsync(buffer, cancellationToken);
-
-        buffer.Position = 0;
         var uploadOptions = new UploadOptions(fileName, mimeType: MimeHelper.GetMimeType(fileName));
 
-        await _primary.UploadAsync(buffer, uploadOptions, cancellationToken);
+        if (content.CanSeek)
+        {
+            content.Position = 0;
+            await _primary.UploadAsync(content, uploadOptions, cancellationToken);
 
-        buffer.Position = 0;
-        await _disasterRecovery.UploadAsync(buffer, uploadOptions, cancellationToken);
+            content.Position = 0;
+            await _disasterRecovery.UploadAsync(content, uploadOptions, cancellationToken);
 
-        buffer.Position = 0;
-        await _backup.UploadAsync(buffer, uploadOptions, cancellationToken);
+            content.Position = 0;
+            await _backup.UploadAsync(content, uploadOptions, cancellationToken);
+            return;
+        }
+
+        await using var bufferFile = LocalFile.FromRandomNameWithExtension(fileName);
+        await bufferFile.CopyFromStreamAsync(content, cancellationToken);
+
+        await _primary.UploadAsync(bufferFile.FileInfo, uploadOptions, cancellationToken);
+        await _disasterRecovery.UploadAsync(bufferFile.FileInfo, uploadOptions, cancellationToken);
+        await _backup.UploadAsync(bufferFile.FileInfo, uploadOptions, cancellationToken);
     }
 }
 ```
@@ -585,6 +597,7 @@ builder.Services.AddStorageServer(options =>
 {
     options.EnableRangeProcessing = true;              // support range/seek operations
     options.InMemoryUploadThresholdBytes = 512 * 1024;  // spill to disk after 512 KB
+    options.InMemoryDownloadThresholdBytes = 512 * 1024; // guard APIs that materialize bytes in memory
 });
 
 app.MapControllers(); // exposes /api/storage/* endpoints by default

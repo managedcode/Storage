@@ -1,3 +1,7 @@
+---
+keywords: "Google Drive API, DriveService, OAuth, service account, ManagedCode.Storage.GoogleDrive, IStorage, .NET"
+---
+
 # Feature: Google Drive Provider (`ManagedCode.Storage.GoogleDrive`)
 
 ## Purpose

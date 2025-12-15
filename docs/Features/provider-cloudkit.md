@@ -1,3 +1,7 @@
+---
+keywords: "CloudKit Web Services, iCloud app data, ckAPIToken, ckWebAuthToken, ManagedCode.Storage.CloudKit, IStorage, .NET"
+---
+
 # Feature: CloudKit Provider (`ManagedCode.Storage.CloudKit`)
 
 ## Purpose
@@ -41,11 +45,14 @@ using ManagedCode.Storage.CloudKit.Options;
 
 builder.Services.AddCloudKitStorageAsDefault(options =>
 {
-    options.ContainerId = "iCloud.com.company.app";
+    options.ContainerId = "iCloud.com.company.app"; // identifier, not a secret
     options.Environment = CloudKitEnvironment.Production;
     options.Database = CloudKitDatabase.Public;
     options.RootPath = "app-data";
     options.ApiToken = configuration["CloudKit:ApiToken"];
+
+    // Optional: customize HTTP transport (proxy, retries, test handler).
+    // options.HttpClient = new HttpClient();
 });
 ```
 

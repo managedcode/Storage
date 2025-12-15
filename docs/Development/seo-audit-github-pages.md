@@ -26,10 +26,10 @@ Source of truth:
 
 ### What’s covered
 
-- **Title tags**: `Home` uses `site.title - site.tagline`; all other pages use `page.title | site.title`.
+- **Title tags**: `Home` uses `site.title`; all other pages use `page.title | site.title`.
 - **Meta descriptions**: every page has a `description` (manual for top-level pages, extracted for doc pages).
-- **Keywords**: every page has `keywords` (manual for top-level pages, mapped for doc pages; falls back to site keywords).
-- **Canonical URLs**: always include `site.url` + `site.baseurl` + `page.url` (GitHub Pages-friendly).
+- **Keywords**: pages can define `keywords` in doc front matter; otherwise the layout falls back to site keywords.
+- **Canonical URLs**: always include `site.url` + `page.url`, and treat `site.baseurl` as empty on a custom domain to prevent `/Storage/...` URLs on `storage.managed-code.com`.
 - **Open Graph / Twitter**: includes `og:title/description/url/image` and `twitter:*` equivalents.
 - **Structured data (JSON-LD)**: includes `WebSite` and `SoftwareSourceCode`.
 - **Sitemap**: includes all HTML pages except `/404.html`.
@@ -54,11 +54,11 @@ Notes:
 
 | URL | Title | Meta description | H1 | Notes |
 | --- | --- | --- | --- | --- |
-| `/` | Home | ManagedCode.Storage documentation: cross-provider storage toolkit for .NET and ASP.NET streaming scenarios. | ManagedCode.Storage | Title uses `site.title - site.tagline`; content from `README.md`. |
-| `/setup.html` | Setup | How to clone, build, and run tests for ManagedCode.Storage. | Development Setup | Generated from `docs/Development/setup.md`. |
-| `/credentials.html` | Credentials | How to obtain credentials for OneDrive, Google Drive, Dropbox, and CloudKit. | Credentials & Auth (Cloud Drives + CloudKit) | Generated from `docs/Development/credentials.md`. |
-| `/testing.html` | Testing | Test strategy and how to run the ManagedCode.Storage test suite. | Testing Strategy | Generated from `docs/Testing/strategy.md`. |
-| `/features/index.html` | Features | Documentation for major modules and providers in ManagedCode.Storage. | Features | Internal links rewritten (`.md` -> `.html`). |
+| `/` | Home | ManagedCode.Storage documentation: cross-provider storage toolkit for .NET and ASP.NET streaming scenarios. | ManagedCode.Storage | Title uses `site.title` (site title is `Storage`); content from `README.md`. |
+| `/setup/` | Setup | How to clone, build, and run tests for ManagedCode.Storage. | Development Setup | Generated from `docs/Development/setup.md`. |
+| `/credentials/` | Credentials | How to obtain credentials for OneDrive, Google Drive, Dropbox, and CloudKit. | Credentials & Auth (Cloud Drives + CloudKit) | Generated from `docs/Development/credentials.md`. |
+| `/testing/` | Testing | Test strategy and how to run the ManagedCode.Storage test suite. | Testing Strategy | Generated from `docs/Testing/strategy.md`. |
+| `/features/` | Features | Documentation for major modules and providers in ManagedCode.Storage. | Features | Internal links rewritten (`.md` -> `.html`). |
 | `/features/chunked-uploads.html` | Feature: Chunked Uploads (HTTP + Client) | Support reliable, resumable uploads of large files over unreliable connections by splitting a payload into chunks and completing with an integrity check (CRC32) | Feature: Chunked Uploads (HTTP + Client) |  |
 | `/features/dependency-injection.html` | Feature: Dependency Injection & Keyed Registrations | Make storage wiring predictable and scalable for .NET apps by supporting both a single default `IStorage` and multiple keyed storage registrations (multi-tenan… | Feature: Dependency Injection & Keyed Registrations |  |
 | `/features/integration-aspnet-server.html` | Feature: ASP.NET Server (`ManagedCode.Storage.Server`) | Expose storage operations over HTTP and SignalR on top of `IStorage` so ASP.NET apps can add streaming upload/download endpoints, chunked uploads, and live pro… | Feature: ASP.NET Server (`ManagedCode.Storage.Server`) |  |
@@ -78,11 +78,21 @@ Notes:
 | `/features/storage-core.html` | Feature: Storage Core Abstraction (`ManagedCode.Storage.Core`) | Provide a single, provider-agnostic storage API for .NET so application code can upload/download/list/stream files without being coupled to vendor SDKs. | Feature: Storage Core Abstraction (`ManagedCode.Storage.Core`) |  |
 | `/features/testfakes.html` | Feature: Test Fakes (`ManagedCode.Storage.TestFakes`) | Provide lightweight storage doubles for tests and demos, allowing consumers to replace real provider registrations without provisioning cloud resources. | Feature: Test Fakes (`ManagedCode.Storage.TestFakes`) |  |
 | `/features/virtual-file-system.html` | Feature: Virtual File System (`ManagedCode.Storage.VirtualFileSystem`) | Expose a higher-level “virtual file system” API on top of `IStorage` | Feature: Virtual File System (`ManagedCode.Storage.VirtualFileSystem`) |  |
-| `/adr/index.html` | ADR | Architecture Decision Records (ADR) for ManagedCode.Storage. | Architecture Decisions (ADR) | Internal links rewritten (`.md` -> `.html`). |
+| `/adr/` | ADR | Architecture Decision Records (ADR) for ManagedCode.Storage. | Architecture Decisions (ADR) | Internal links rewritten (`.md` -> `.html`). |
 | `/adr/0001-icloud-drive-support.html` | ADR 0001: iCloud Drive Support vs CloudKit (Server-side) | This repository provides a provider-agnostic `IStorage` abstraction for server-side and cross-platform .NET apps. | ADR 0001: iCloud Drive Support vs CloudKit (Server-side) |  |
-| `/api/index.html` | API | HTTP and SignalR API documentation for ManagedCode.Storage.Server. | API | Internal links rewritten (`.md` -> `.html`). |
+| `/adr/0002-result-model.html` | ADR 0002: Standardize on `Result` / `Result<T>` for Public APIs | `ManagedCode.Storage` targets multiple providers and integration surfaces (core abstractions, ASP.NET controllers, SignalR, client SDKs). | ADR 0002: Standardize on `Result` / `Result<T>` for Public APIs |  |
+| `/adr/0003-base-storage-template.html` | ADR 0003: Implement Providers via `BaseStorage<TClient, TOptions>` (Template Method) | Providers share the same high-level capabilities (upload/download/streaming, metadata, deletion, and container lifecycle), and we want these behaviours to be c… | ADR 0003: Implement Providers via `BaseStorage<TClient, TOptions>` (Template Method) |  |
+| `/adr/0004-keyed-di-and-extensions.html` | ADR 0004: Use Keyed DI + `Add*Storage...` Extensions for Multi-Storage Wiring | Consumers frequently need both a single “default” `IStorage` and multiple storages side-by-side (multi-tenant, multi-region, mirroring, per-workload routing). | ADR 0004: Use Keyed DI + `Add*Storage...` Extensions for Multi-Storage Wiring |  |
+| `/adr/0005-virtual-file-system-overlay.html` | ADR 0005: Implement a VFS Overlay (`IVirtualFileSystem`) on Top of `IStorage` | Most object-storage providers do not have “real directories”; they have key prefixes, but many apps still need a file/directory API that works consistently on … | ADR 0005: Implement a VFS Overlay (`IVirtualFileSystem`) on Top of `IStorage` |  |
+| `/adr/0006-aspnet-base-first.html` | ADR 0006: “Base-First” ASP.NET Controllers/Hubs with Minimal Routing Defaults | ManagedCode.Storage aims to provide end-to-end HTTP and SignalR flows on top of `IStorage`, while still allowing host applications to fully control routing and… | ADR 0006: “Base-First” ASP.NET Controllers/Hubs with Minimal Routing Defaults |  |
+| `/adr/0007-chunked-uploads-disk-and-crc.html` | ADR 0007: Chunked Uploads Stage to Disk and Validate with CRC32 | Large file uploads over HTTP are inherently unreliable (mobile networks, proxy timeouts, client disconnects). | ADR 0007: Chunked Uploads Stage to Disk and Validate with CRC32 |  |
+| `/adr/0008-cloud-drive-clients-and-auth.html` | ADR 0008: Cloud Drive Providers Use SDK Client Wrappers + Options-Based Auth | Cloud drive providers (OneDrive/Google Drive/Dropbox) are API-first systems that require OAuth token management and typically ship vendor SDKs with their own a… | ADR 0008: Cloud Drive Providers Use SDK Client Wrappers + Options-Based Auth |  |
+| `/adr/0009-testing-containers-and-httpfakes.html` | ADR 0009: Integration-First Testing with Testcontainers + `HttpMessageHandler` Fakes | This repository targets many providers and wants high-confidence coverage in CI and locally without requiring real cloud accounts or fragile SDK mocks. | ADR 0009: Integration-First Testing with Testcontainers + `HttpMessageHandler` Fakes |  |
+| `/adr/0011-mimehelper-normalization.html` | ADR 0011: Normalize MIME Type Resolution via `MimeHelper` | Content-type (`Content-Type`) influences behaviour across providers and integrations, so we need one consistent, predictable MIME rule across the repository. | ADR 0011: Normalize MIME Type Resolution via `MimeHelper` |  |
+| `/adr/0012-modular-packaging-structure.html` | ADR 0012: Modular Packaging (Core + Providers + Integrations) | ManagedCode.Storage supports many storage backends (Azure/AWS/GCP/SFTP/Cloud drives/CloudKit) and multiple integration surfaces (ASP.NET server, clients, VFS). | ADR 0012: Modular Packaging (Core + Providers + Integrations) |  |
+| `/api/` | API | HTTP and SignalR API documentation for ManagedCode.Storage.Server. | API | Internal links rewritten (`.md` -> `.html`). |
 | `/api/storage-server.html` | API: Storage Server (HTTP + SignalR) | This document describes the integration surface exposed by `Integraions/ManagedCode.Storage.Server`. | API: Storage Server (HTTP + SignalR) |  |
-| `/templates.html` | Templates | Documentation templates used in this repository (Feature and ADR templates). | Templates | Lists `docs/templates/*.md` via links to GitHub. |
+| `/sitemap/` | Sitemap | A complete index of all documentation pages on this site. | Sitemap | Human-friendly sitemap page; links to `/sitemap.xml`. |
 | `/404.html` | 404 | This page doesn't exist. Check the documentation navigation or go back home. | 404 | Noindex; excluded from sitemap. |
 
 ## Follow-up (optional)

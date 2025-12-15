@@ -2,6 +2,7 @@
 layout: default
 title: API
 description: HTTP and SignalR API documentation for ManagedCode.Storage.Server.
+permalink: /api/
 nav_order: 6
 ---
 

@@ -130,71 +130,79 @@ public class DropboxClientWrapperHttpTests
             }
 
             var body = request.Content == null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
-            var json = string.IsNullOrWhiteSpace(body) ? null : JsonDocument.Parse(body);
-
-            if (path.Equals("/2/files/get_metadata", StringComparison.OrdinalIgnoreCase))
+            JsonDocument? json = null;
+            try
             {
-                var metadataPath = ReadPath(json);
-                if (!_entries.TryGetValue(NormalizeLower(metadataPath), out var entry))
+                json = string.IsNullOrWhiteSpace(body) ? null : JsonDocument.Parse(body);
+
+                if (path.Equals("/2/files/get_metadata", StringComparison.OrdinalIgnoreCase))
                 {
-                    return PathNotFoundError();
+                    var metadataPath = ReadPath(json);
+                    if (!_entries.TryGetValue(NormalizeLower(metadataPath), out var entry))
+                    {
+                        return PathNotFoundError();
+                    }
+
+                    return JsonResponse(ToMetadata(entry));
                 }
 
-                return JsonResponse(ToMetadata(entry));
-            }
-
-            if (path.Equals("/2/files/create_folder_v2", StringComparison.OrdinalIgnoreCase))
-            {
-                var folderPath = ReadPath(json);
-                var normalized = NormalizeDisplay(folderPath);
-                var created = EnsureFolder(normalized);
-                return JsonResponse(new Dictionary<string, object?>
+                if (path.Equals("/2/files/create_folder_v2", StringComparison.OrdinalIgnoreCase))
                 {
-                    ["metadata"] = ToMetadata(created)
-                });
-            }
-
-            if (path.Equals("/2/files/list_folder", StringComparison.OrdinalIgnoreCase))
-            {
-                var folderPath = ReadPath(json);
-                var normalizedFolder = NormalizeLower(NormalizeDisplay(folderPath));
-                var entries = ListChildren(normalizedFolder).Select(ToMetadata).ToList();
-
-                return JsonResponse(new Dictionary<string, object?>
-                {
-                    ["entries"] = entries,
-                    ["cursor"] = "cursor-1",
-                    ["has_more"] = false
-                });
-            }
-
-            if (path.Equals("/2/files/list_folder/continue", StringComparison.OrdinalIgnoreCase))
-            {
-                return JsonResponse(new Dictionary<string, object?>
-                {
-                    ["entries"] = Array.Empty<object>(),
-                    ["cursor"] = "cursor-1",
-                    ["has_more"] = false
-                });
-            }
-
-            if (path.Equals("/2/files/delete_v2", StringComparison.OrdinalIgnoreCase))
-            {
-                var deletePath = ReadPath(json);
-                var normalized = NormalizeLower(NormalizeDisplay(deletePath));
-                var deleted = DeleteRecursive(normalized);
-                if (deleted == null)
-                {
-                    return PathLookupNotFoundError();
+                    var folderPath = ReadPath(json);
+                    var normalized = NormalizeDisplay(folderPath);
+                    var created = EnsureFolder(normalized);
+                    return JsonResponse(new Dictionary<string, object?>
+                    {
+                        ["metadata"] = ToMetadata(created)
+                    });
                 }
 
-                return JsonResponse(new Dictionary<string, object?>
+                if (path.Equals("/2/files/list_folder", StringComparison.OrdinalIgnoreCase))
                 {
-                    ["metadata"] = ToMetadata(deleted)
-                });
-            }
+                    var folderPath = ReadPath(json);
+                    var normalizedFolder = NormalizeLower(NormalizeDisplay(folderPath));
+                    var entries = ListChildren(normalizedFolder).Select(ToMetadata).ToList();
 
-            return new HttpResponseMessage(HttpStatusCode.NotFound);
+                    return JsonResponse(new Dictionary<string, object?>
+                    {
+                        ["entries"] = entries,
+                        ["cursor"] = "cursor-1",
+                        ["has_more"] = false
+                    });
+                }
+
+                if (path.Equals("/2/files/list_folder/continue", StringComparison.OrdinalIgnoreCase))
+                {
+                    return JsonResponse(new Dictionary<string, object?>
+                    {
+                        ["entries"] = Array.Empty<object>(),
+                        ["cursor"] = "cursor-1",
+                        ["has_more"] = false
+                    });
+                }
+
+                if (path.Equals("/2/files/delete_v2", StringComparison.OrdinalIgnoreCase))
+                {
+                    var deletePath = ReadPath(json);
+                    var normalized = NormalizeLower(NormalizeDisplay(deletePath));
+                    var deleted = DeleteRecursive(normalized);
+                    if (deleted == null)
+                    {
+                        return PathLookupNotFoundError();
+                    }
+
+                    return JsonResponse(new Dictionary<string, object?>
+                    {
+                        ["metadata"] = ToMetadata(deleted)
+                    });
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+            finally
+            {
+                json?.Dispose();
+            }
         }
 
         private async Task<HttpResponseMessage> HandleContentAsync(HttpRequestMessage request, string path, CancellationToken cancellationToken)
@@ -209,7 +217,7 @@ public class DropboxClientWrapperHttpTests
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
 
-            var argJson = JsonDocument.Parse(args.First());
+            using var argJson = JsonDocument.Parse(args.First());
             var fullPath = ReadPath(argJson);
             var normalizedDisplay = NormalizeDisplay(fullPath);
             var normalizedLower = NormalizeLower(normalizedDisplay);
@@ -225,22 +233,22 @@ public class DropboxClientWrapperHttpTests
                 return JsonResponse(ToMetadata(entry));
             }
 
-	            if (path.Equals("/2/files/download", StringComparison.OrdinalIgnoreCase))
-	            {
-	                if (!_entries.TryGetValue(normalizedLower, out var entry) || entry.IsFolder)
-	                {
-	                    return PathNotFoundError();
-	                }
+            if (path.Equals("/2/files/download", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!_entries.TryGetValue(normalizedLower, out var entry) || entry.IsFolder)
+                {
+                    return PathNotFoundError();
+                }
 
-	                return new HttpResponseMessage(HttpStatusCode.OK)
-	                {
-	                    Content = new ByteArrayContent(entry.Content)
-	                    {
-	                        Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream") }
-	                    },
-	                    Headers = { { "Dropbox-API-Result", JsonSerializer.Serialize(ToMetadata(entry)) } }
-	                };
-	            }
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(entry.Content)
+                    {
+                        Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream") }
+                    },
+                    Headers = { { "Dropbox-API-Result", JsonSerializer.Serialize(ToMetadata(entry)) } }
+                };
+            }
 
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
@@ -379,14 +387,14 @@ public class DropboxClientWrapperHttpTests
             };
         }
 
-	        private static HttpResponseMessage JsonResponse(object payload, HttpStatusCode statusCode = HttpStatusCode.OK)
-	        {
-	            var json = JsonSerializer.Serialize(payload);
-	            return new HttpResponseMessage(statusCode)
-	            {
-	                Content = new StringContent(json, Encoding.UTF8, "application/json")
-	            };
-	        }
+        private static HttpResponseMessage JsonResponse(object payload, HttpStatusCode statusCode = HttpStatusCode.OK)
+        {
+            var json = JsonSerializer.Serialize(payload);
+            return new HttpResponseMessage(statusCode)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+        }
 
         private static HttpResponseMessage PathNotFoundError()
         {

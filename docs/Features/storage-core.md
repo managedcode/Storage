@@ -1,3 +1,7 @@
+---
+keywords: "IStorage, ManagedCode.Storage.Core, provider-agnostic storage, upload, download, streaming, metadata, Result<T>, .NET"
+---
+
 # Feature: Storage Core Abstraction (`ManagedCode.Storage.Core`)
 
 ## Purpose
@@ -64,4 +68,3 @@ Key files:
 
 - `README.md` (package list + quickstart)
 - `docs/Testing/strategy.md` (suite structure and rules)
-

@@ -1,3 +1,7 @@
+---
+keywords: "OneDrive, Microsoft Graph, GraphServiceClient, Entra ID, OAuth, ManagedCode.Storage.OneDrive, IStorage, .NET"
+---
+
 # Feature: OneDrive Provider (`ManagedCode.Storage.OneDrive`)
 
 ## Purpose

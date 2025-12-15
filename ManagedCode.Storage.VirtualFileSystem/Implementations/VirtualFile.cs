@@ -184,8 +184,7 @@ public class VirtualFile : IVirtualFile
             }
         }
 
-        // For now, return a memory stream that will be uploaded when disposed
-        // This is a simplified implementation - real streaming would require provider-specific support
+        // Return a file-backed write stream that uploads on dispose to avoid buffering large payloads in memory.
         return new VfsWriteStream(_vfs.Storage, _path.ToBlobKey(), options, _cache, _vfs.Options, _logger);
     }
 
@@ -217,10 +216,22 @@ public class VirtualFile : IVirtualFile
     {
         _logger.LogDebug("Reading all bytes: {Path}", _path);
 
-        await using var stream = await OpenReadAsync(cancellationToken: cancellationToken);
-        using var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream, cancellationToken);
-        return memoryStream.ToArray();
+        await EnsureMetadataLoadedAsync(cancellationToken);
+
+        if (_blobMetadata == null)
+        {
+            throw new VfsNotFoundException(_path);
+        }
+
+        var result = await _vfs.Storage.DownloadAsync(_path.ToBlobKey(), cancellationToken);
+
+        if (!result.IsSuccess || result.Value == null)
+        {
+            throw new VfsOperationException($"Failed to read all bytes for file: {_path}");
+        }
+
+        await using var localFile = result.Value;
+        return await localFile.ReadAllBytesAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -269,7 +280,9 @@ public class VirtualFile : IVirtualFile
     {
         var cacheKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
 
-        if (_vfs.Options.EnableCache && _cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string> cached))
+        if (_vfs.Options.EnableCache
+            && _cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached)
+            && cached is not null)
         {
             _logger.LogDebug("File metadata (cached): {Path}", _path);
             return cached;
@@ -281,7 +294,7 @@ public class VirtualFile : IVirtualFile
         {
             _cache.Set(cacheKey, metadata, _vfs.Options.CacheTTL);
             var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
-            if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry entry))
+            if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry? entry) && entry is not null)
             {
                 entry.CustomMetadata = metadata;
                 _cache.Set(metadataKey, entry, _vfs.Options.CacheTTL);
@@ -358,7 +371,7 @@ public class VirtualFile : IVirtualFile
         if (_vfs.Options.EnableCache)
         {
             var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
-            if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry entry))
+            if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry? entry) && entry is not null)
             {
                 _vfsMetadata = entry.Metadata;
                 _blobMetadata = entry.BlobMetadata;

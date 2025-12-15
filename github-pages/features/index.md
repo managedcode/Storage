@@ -2,6 +2,7 @@
 layout: default
 title: Features
 description: Documentation for major modules and providers in ManagedCode.Storage.
+permalink: /features/
 nav_order: 5
 ---
 

@@ -1,3 +1,7 @@
+---
+keywords: "test fakes, provider doubles, Testcontainers, integration tests, ManagedCode.Storage.TestFakes"
+---
+
 # Feature: Test Fakes (`ManagedCode.Storage.TestFakes`)
 
 ## Purpose
@@ -15,7 +19,7 @@ These fakes are intended for fast tests where provider-specific behaviour is not
 flowchart LR
   App[App/Test] --> DI[DI container]
   DI --> Real[Real provider registration]
-  DI --> Fake[Replace*() -> Fake provider]
+  DI --> Fake["Replace*() -> Fake provider"]
   Fake --> Tests[Fast tests without cloud accounts]
 ```
 

@@ -1,3 +1,7 @@
+---
+keywords: "Dropbox API, DropboxClient, OAuth2, refresh token, ManagedCode.Storage.Dropbox, IStorage, .NET"
+---
+
 # Feature: Dropbox Provider (`ManagedCode.Storage.Dropbox`)
 
 ## Purpose

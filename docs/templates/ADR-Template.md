@@ -1,3 +1,8 @@
+---
+description: "{{Short SEO description}}"
+keywords: "{{comma-separated keywords}}"
+---
+
 # ADR {{NNN}}: {{Title}}
 
 - Status: Proposed | Accepted | Superseded

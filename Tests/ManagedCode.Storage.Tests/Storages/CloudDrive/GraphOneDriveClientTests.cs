@@ -133,7 +133,7 @@ public class GraphOneDriveClientTests
                 return Task.FromResult(childrenResponse);
             }
 
-            if (TryHandleItemRequest(request, out var itemResponse))
+            if (TryHandleItemRequest(request, out var itemResponse, cancellationToken))
             {
                 return Task.FromResult(itemResponse);
             }
@@ -167,17 +167,17 @@ public class GraphOneDriveClientTests
             return true;
         }
 
-        private bool HandleContentRequest(HttpRequestMessage request, string path, ref HttpResponseMessage response)
+        private bool HandleContentRequest(HttpRequestMessage request, string path, ref HttpResponseMessage response, CancellationToken cancellationToken)
         {
             if (request.Method == HttpMethod.Put)
             {
                 var parentPath = Path.GetDirectoryName(path)?.Replace("\\", "/").Trim('/') ?? string.Empty;
                 EnsureFolder(parentPath);
 
-                var buffer = request.Content!.ReadAsStream();
-                using var memory = new MemoryStream();
-                buffer.CopyTo(memory);
-                var entry = GraphEntry.File(Path.GetFileName(path), parentPath, memory.ToArray());
+                var content = request.Content == null
+                    ? Array.Empty<byte>()
+                    : request.Content.ReadAsByteArrayAsync(cancellationToken).GetAwaiter().GetResult();
+                var entry = GraphEntry.File(Path.GetFileName(path), parentPath, content);
                 _entries[entry.Id] = entry;
                 response = JsonResponse(GraphEntry.ToDriveItem(entry));
                 return true;
@@ -212,10 +212,10 @@ public class GraphOneDriveClientTests
 
         private bool TryHandleChildrenRequest(HttpRequestMessage request, out HttpResponseMessage response)
         {
-            response = new HttpResponseMessage(HttpStatusCode.NotFound);
             var path = request.RequestUri!.AbsolutePath;
             if (!path.EndsWith("/children", StringComparison.OrdinalIgnoreCase))
             {
+                response = default!;
                 return false;
             }
 
@@ -307,26 +307,26 @@ public class GraphOneDriveClientTests
             return true;
         }
 
-	        private static HttpResponseMessage JsonResponse(object content, HttpStatusCode status = HttpStatusCode.OK)
-	        {
-	            var json = JsonSerializer.Serialize(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-	            return new HttpResponseMessage(status)
-	            {
-	                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
-	            };
-	        }
-
-        private bool TryHandleItemRequest(HttpRequestMessage request, out HttpResponseMessage response)
+        private static HttpResponseMessage JsonResponse(object content, HttpStatusCode status = HttpStatusCode.OK)
         {
-            response = new HttpResponseMessage(HttpStatusCode.NotFound);
+            var json = JsonSerializer.Serialize(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            return new HttpResponseMessage(status)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            };
+        }
 
+        private bool TryHandleItemRequest(HttpRequestMessage request, out HttpResponseMessage response, CancellationToken cancellationToken)
+        {
             if (!TryGetItemPath(request.RequestUri!, out var path, out var isContent))
             {
+                response = default!;
                 return false;
             }
 
+            response = default!;
             return isContent
-                ? HandleContentRequest(request, path, ref response)
+                ? HandleContentRequest(request, path, ref response, cancellationToken)
                 : HandleMetadataRequest(request.Method, path, ref response);
         }
     }

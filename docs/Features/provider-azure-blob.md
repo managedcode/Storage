@@ -1,3 +1,7 @@
+---
+keywords: "Azure Blob Storage, ManagedCode.Storage.Azure, IStorage, BlobClient, container, streaming upload, download, .NET"
+---
+
 # Feature: Azure Blob Storage Provider (`ManagedCode.Storage.Azure`)
 
 ## Purpose

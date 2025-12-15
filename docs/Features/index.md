@@ -1,10 +1,20 @@
+---
+title: Features
+description: "Documentation for major modules and providers in ManagedCode.Storage."
+keywords: "IStorage, providers, Azure Blob, AWS S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit, FileSystem, SFTP, Virtual File System, ASP.NET Server, SignalR"
+permalink: /features/
+nav_order: 5
+---
+
 # Features
 
 This folder documents the major modules in the repository.
 
+> Note: the GitHub Pages docs generator publishes every `docs/Features/*.md` page automatically, but to make a page “visible” in the catalog/navigation you should also link it from this index.
+
 ```mermaid
 flowchart LR
-  App[Application code] --> Core[IStorage (Core)]
+  App[Application code] --> Core["IStorage (Core)"]
   Core --> Providers[Providers]
   Core --> VFS[Virtual File System]
   App --> Server[ASP.NET Server]

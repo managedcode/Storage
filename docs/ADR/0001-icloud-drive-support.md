@@ -1,3 +1,7 @@
+---
+keywords: "iCloud Drive, CloudKit, Apple, server-side storage, provider design, ManagedCode.Storage.CloudKit, ADR"
+---
+
 # ADR 0001: iCloud Drive Support vs CloudKit (Server-side)
 
 ## Status
@@ -70,4 +74,3 @@ flowchart TD
 - `docs/Development/credentials.md` (CloudKit auth + setup)
 - `docs/Features/provider-cloudkit.md`
 - `README.md` (CloudKit section + explicit “not iCloud Drive” note)
-

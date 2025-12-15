@@ -5,12 +5,19 @@ description: This page doesn't exist. Check the documentation navigation or go b
 permalink: /404.html
 ---
 
+{% assign effective_baseurl = site.baseurl %}
+{% if site.url != nil and site.url != '' %}
+{% unless site.url contains 'github.io' %}
+{% assign effective_baseurl = '' %}
+{% endunless %}
+{% endif %}
+
 <div class="error-page">
   <h1>404</h1>
   <p class="error-subtitle">This page doesn't exist.</p>
   <p class="error-joke">Check the navigation links or return to the home page.</p>
   <div class="error-actions">
-    <a href="{{ '/' | relative_url }}" class="btn btn-primary">Go Home</a>
+    <a href="{{ effective_baseurl }}/" class="btn btn-primary">Go Home</a>
     <a href="https://github.com/managedcode/Storage" target="_blank" rel="noopener" class="btn">GitHub Repo</a>
   </div>
 </div>

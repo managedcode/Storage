@@ -1,3 +1,7 @@
+---
+keywords: ".NET HTTP client, StorageClient, upload, download, chunked upload, CRC32, ManagedCode.Storage.Client"
+---
+
 # Feature: .NET HTTP Client (`ManagedCode.Storage.Client`)
 
 ## Purpose

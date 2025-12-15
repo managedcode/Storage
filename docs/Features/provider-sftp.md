@@ -1,3 +1,7 @@
+---
+keywords: "SFTP storage, SSH.NET, ManagedCode.Storage.Sftp, IStorage, upload, download, .NET"
+---
+
 # Feature: SFTP Provider (`ManagedCode.Storage.Sftp`)
 
 ## Purpose

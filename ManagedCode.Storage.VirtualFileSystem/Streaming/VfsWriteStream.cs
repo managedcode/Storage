@@ -22,7 +22,8 @@ internal class VfsWriteStream : Stream
     private readonly IMemoryCache _cache;
     private readonly VfsOptions _vfsOptions;
     private readonly ILogger _logger;
-    private readonly MemoryStream _buffer;
+    private readonly LocalFile _bufferFile;
+    private readonly FileStream _bufferStream;
     private bool _disposed;
 
     public VfsWriteStream(
@@ -40,28 +41,35 @@ internal class VfsWriteStream : Stream
         _vfsOptions = vfsOptions ?? throw new ArgumentNullException(nameof(vfsOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _buffer = new MemoryStream();
+        _bufferFile = LocalFile.FromRandomNameWithExtension(blobKey);
+        _bufferStream = new FileStream(_bufferFile.FilePath, new FileStreamOptions
+        {
+            Mode = FileMode.Create,
+            Access = FileAccess.ReadWrite,
+            Share = FileShare.None,
+            Options = FileOptions.Asynchronous | FileOptions.SequentialScan
+        });
     }
 
     public override bool CanRead => false;
-    public override bool CanSeek => _buffer.CanSeek;
-    public override bool CanWrite => !_disposed && _buffer.CanWrite;
-    public override long Length => _buffer.Length;
+    public override bool CanSeek => _bufferStream.CanSeek;
+    public override bool CanWrite => !_disposed && _bufferStream.CanWrite;
+    public override long Length => _bufferStream.Length;
 
     public override long Position
     {
-        get => _buffer.Position;
-        set => _buffer.Position = value;
+        get => _bufferStream.Position;
+        set => _bufferStream.Position = value;
     }
 
     public override void Flush()
     {
-        _buffer.Flush();
+        _bufferStream.Flush();
     }
 
     public override async Task FlushAsync(CancellationToken cancellationToken)
     {
-        await _buffer.FlushAsync(cancellationToken);
+        await _bufferStream.FlushAsync(cancellationToken);
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -71,30 +79,36 @@ internal class VfsWriteStream : Stream
 
     public override long Seek(long offset, SeekOrigin origin)
     {
-        return _buffer.Seek(offset, origin);
+        return _bufferStream.Seek(offset, origin);
     }
 
     public override void SetLength(long value)
     {
-        _buffer.SetLength(value);
+        _bufferStream.SetLength(value);
     }
 
     public override void Write(byte[] buffer, int offset, int count)
     {
         ThrowIfDisposed();
-        _buffer.Write(buffer, offset, count);
+        _bufferStream.Write(buffer, offset, count);
+    }
+
+    public override void Write(ReadOnlySpan<byte> buffer)
+    {
+        ThrowIfDisposed();
+        _bufferStream.Write(buffer);
     }
 
     public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
-        await _buffer.WriteAsync(buffer, offset, count, cancellationToken);
+        await _bufferStream.WriteAsync(buffer, offset, count, cancellationToken);
     }
 
     public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        await _buffer.WriteAsync(buffer, cancellationToken);
+        await _bufferStream.WriteAsync(buffer, cancellationToken);
     }
 
     protected override void Dispose(bool disposing)
@@ -112,7 +126,8 @@ internal class VfsWriteStream : Stream
             }
             finally
             {
-                _buffer.Dispose();
+                _bufferStream.Dispose();
+                _bufferFile.Dispose();
                 _disposed = true;
             }
         }
@@ -135,7 +150,8 @@ internal class VfsWriteStream : Stream
             }
             finally
             {
-                await _buffer.DisposeAsync();
+                await _bufferStream.DisposeAsync();
+                await _bufferFile.DisposeAsync();
                 _disposed = true;
             }
         }
@@ -145,17 +161,18 @@ internal class VfsWriteStream : Stream
 
     private async Task UploadBufferedDataAsync()
     {
-        if (_buffer.Length == 0)
+        if (_bufferStream.Length == 0)
         {
             _logger.LogDebug("No data to upload for: {BlobKey}", _blobKey);
             return;
         }
 
-        _logger.LogDebug("Uploading buffered data: {BlobKey}, size: {Size}", _blobKey, _buffer.Length);
+        _logger.LogDebug("Uploading buffered data: {BlobKey}, size: {Size}", _blobKey, _bufferStream.Length);
 
         try
         {
-            _buffer.Position = 0;
+            await _bufferStream.FlushAsync();
+            _bufferStream.Position = 0;
 
             var uploadOptions = new UploadOptions(_blobKey)
             {
@@ -163,7 +180,7 @@ internal class VfsWriteStream : Stream
                 Metadata = _options.Metadata
             };
 
-            var result = await _storage.UploadAsync(_buffer, uploadOptions);
+            var result = await _storage.UploadAsync(_bufferStream, uploadOptions);
 
             if (!result.IsSuccess)
             {

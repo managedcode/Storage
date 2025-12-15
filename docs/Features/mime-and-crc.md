@@ -1,3 +1,7 @@
+---
+keywords: "MimeHelper, content-type, CRC32, integrity, ManagedCode.MimeTypes, ManagedCode.Storage.Core"
+---
+
 # Feature: MIME & Integrity Helpers (MimeHelper + CRC32)
 
 ## Purpose
@@ -33,4 +37,3 @@ flowchart LR
 ## Tests
 
 - `Tests/ManagedCode.Storage.Tests/Core/Crc32HelperTests.cs`
-

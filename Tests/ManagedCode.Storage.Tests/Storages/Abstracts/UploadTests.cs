@@ -36,15 +36,15 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     }
 
     [Fact]
-	    public async Task UploadAsync_AsStream_WithoutOptions()
-	    {
-	        // Arrange
-	        var uploadContent = FileHelper.GenerateRandomFileContent();
-	        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-	        using var stream = new MemoryStream(byteArray);
+    public async Task UploadAsync_AsStream_WithoutOptions()
+    {
+        // Arrange
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        using var stream = new MemoryStream(byteArray);
 
-	        // Act
-	        var result = await Storage.UploadAsync(stream);
+        // Act
+        var result = await Storage.UploadAsync(stream);
 
         // Assert
         result.IsSuccess
@@ -56,14 +56,14 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     }
 
     [Fact]
-	    public async Task StreamUploadAsyncTest()
-	    {
-	        var file = await GetTestFileAsync();
-	        await using var stream = file.OpenRead();
-	        var uploadResult = await Storage.UploadAsync(stream);
-	        uploadResult.IsSuccess
-	            .ShouldBeTrue();
-	    }
+    public async Task StreamUploadAsyncTest()
+    {
+        var file = await GetTestFileAsync();
+        await using var stream = file.OpenRead();
+        var uploadResult = await Storage.UploadAsync(stream);
+        uploadResult.IsSuccess
+            .ShouldBeTrue();
+    }
 
     [Fact]
     public async Task ArrayUploadAsyncTest()
@@ -104,14 +104,14 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         // Arrange
         var directory = "test-directory";
         var uploadContent = FileHelper.GenerateRandomFileContent();
-	        var fileName = FileHelper.GenerateRandomFileName();
+        var fileName = FileHelper.GenerateRandomFileName();
 
-	        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-	        using var stream = new MemoryStream(byteArray);
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        using var stream = new MemoryStream(byteArray);
 
-	        // Act
-	        var result = await Storage.UploadAsync(stream, new UploadOptions { FileName = fileName, Directory = directory });
-	        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
+        // Act
+        var result = await Storage.UploadAsync(stream, new UploadOptions { FileName = fileName, Directory = directory });
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
 
         // Assert
         result.IsSuccess
@@ -243,12 +243,12 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     [Fact]
     public async Task UploadAsync_WithCancellationToken_ShouldCancel()
     {
-	        // Arrange
-	        var uploadContent = FileHelper.GenerateRandomFileContent();
-	        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-	        using var stream = new MemoryStream(byteArray);
-	        var cts = new CancellationTokenSource();
-	        cts.Cancel();
+        // Arrange
+        var uploadContent = FileHelper.GenerateRandomFileContent();
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        using var stream = new MemoryStream(byteArray);
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
 
         // Act
         var result = await Storage.UploadAsync(stream, cancellationToken: cts.Token);
@@ -262,11 +262,11 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     [Fact]
     public virtual async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
     {
-	        // Arrange
-	        var uploadContent = FileHelper.GenerateRandomFileContent((Storage is FileSystemStorage) ? 100_0000_000 : 10_0000_000);
-	        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
-	        using var stream = new MemoryStream(byteArray);
-	        var cts = new CancellationTokenSource();
+        // Arrange
+        var uploadContent = FileHelper.GenerateRandomFileContent((Storage is FileSystemStorage) ? 100_0000_000 : 10_0000_000);
+        var byteArray = Encoding.ASCII.GetBytes(uploadContent);
+        using var stream = new MemoryStream(byteArray);
+        var cts = new CancellationTokenSource();
 
         // Act
         var cancellationTask = Task.Run(() =>

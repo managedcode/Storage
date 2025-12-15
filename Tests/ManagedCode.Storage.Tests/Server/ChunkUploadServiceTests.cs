@@ -58,18 +58,18 @@ public class ChunkUploadServiceTests : IAsyncLifetime
         var chunkSize = 2048;
         var totalChunks = (int)Math.Ceiling(payload.Length / (double)chunkSize);
 
-	        for (var i = 0; i < totalChunks; i++)
-	        {
-	            var sliceLength = Math.Min(chunkSize, payload.Length - (i * chunkSize));
-	            var slice = new byte[sliceLength];
-	            Array.Copy(payload, i * chunkSize, slice, 0, sliceLength);
+        for (var i = 0; i < totalChunks; i++)
+        {
+            var sliceLength = Math.Min(chunkSize, payload.Length - (i * chunkSize));
+            var slice = new byte[sliceLength];
+            Array.Copy(payload, i * chunkSize, slice, 0, sliceLength);
 
-	            using var formFile = CreateFormFile(slice, fileName);
+            using var formFile = CreateFormFile(slice, fileName);
 
-	            var appendResult = await service.AppendChunkAsync(new FileUploadPayload
-	            {
-	                File = formFile,
-	                Payload = new FilePayload
+            var appendResult = await service.AppendChunkAsync(new FileUploadPayload
+            {
+                File = formFile,
+                Payload = new FilePayload
                 {
                     UploadId = uploadId,
                     FileName = fileName,
@@ -114,15 +114,15 @@ public class ChunkUploadServiceTests : IAsyncLifetime
     [Fact]
     public async Task Abort_ShouldRemoveSessionArtifacts()
     {
-	        var service = new ChunkUploadService(_options);
-	        var uploadId = Guid.NewGuid().ToString("N");
-	        var fileName = "artifact.bin";
-	        var chunkBytes = new byte[] { 1, 2, 3, 4 };
-	        using var formFile = CreateFormFile(chunkBytes, fileName);
+        var service = new ChunkUploadService(_options);
+        var uploadId = Guid.NewGuid().ToString("N");
+        var fileName = "artifact.bin";
+        var chunkBytes = new byte[] { 1, 2, 3, 4 };
+        using var formFile = CreateFormFile(chunkBytes, fileName);
 
-	        var append = await service.AppendChunkAsync(new FileUploadPayload
-	        {
-	            File = formFile,
+        var append = await service.AppendChunkAsync(new FileUploadPayload
+        {
+            File = formFile,
             Payload = new FilePayload
             {
                 UploadId = uploadId,
@@ -153,13 +153,13 @@ public class ChunkUploadServiceTests : IAsyncLifetime
 
         var service = new ChunkUploadService(options);
 
-	        async Task<bool> Append(string uploadId)
-	        {
-	            using var formFile = CreateFormFile(new byte[] { 1 }, "chunk.bin");
-	            var result = await service.AppendChunkAsync(new FileUploadPayload
-	            {
-	                File = formFile,
-	                Payload = new FilePayload
+        async Task<bool> Append(string uploadId)
+        {
+            using var formFile = CreateFormFile(new byte[] { 1 }, "chunk.bin");
+            var result = await service.AppendChunkAsync(new FileUploadPayload
+            {
+                File = formFile,
+                Payload = new FilePayload
                 {
                     UploadId = uploadId,
                     FileName = "chunk.bin",
@@ -189,15 +189,15 @@ public class ChunkUploadServiceTests : IAsyncLifetime
         var uploadId = Guid.NewGuid().ToString("N");
         var fileName = "single-chunk.bin";
 
-	        var payload = new byte[51];
-	        new Random(123).NextBytes(payload);
-	        var checksum = Crc32Helper.Calculate(payload);
+        var payload = new byte[51];
+        new Random(123).NextBytes(payload);
+        var checksum = Crc32Helper.Calculate(payload);
 
-	        using var formFile = CreateFormFile(payload, fileName);
+        using var formFile = CreateFormFile(payload, fileName);
 
-	        var appendResult = await service.AppendChunkAsync(new FileUploadPayload
-	        {
-	            File = formFile,
+        var appendResult = await service.AppendChunkAsync(new FileUploadPayload
+        {
+            File = formFile,
             Payload = new FilePayload
             {
                 UploadId = uploadId,
@@ -230,46 +230,46 @@ public class ChunkUploadServiceTests : IAsyncLifetime
         {
             BaseFolder = baseFolder,
             CreateContainerIfNotExists = true
-	        });
-	    }
+        });
+    }
 
-	    private static DisposableFormFile CreateFormFile(byte[] bytes, string fileName)
-	    {
-	        return new DisposableFormFile(bytes, fileName);
-	    }
+    private static DisposableFormFile CreateFormFile(byte[] bytes, string fileName)
+    {
+        return new DisposableFormFile(bytes, fileName);
+    }
 
-	    private sealed class DisposableFormFile : IFormFile, IDisposable
-	    {
-	        private readonly MemoryStream _stream;
-	        private readonly FormFile _inner;
+    private sealed class DisposableFormFile : IFormFile, IDisposable
+    {
+        private readonly MemoryStream _stream;
+        private readonly FormFile _inner;
 
-	        public DisposableFormFile(byte[] bytes, string fileName)
-	        {
-	            _stream = new MemoryStream(bytes, writable: false);
-	            _inner = new FormFile(_stream, 0, bytes.Length, "File", fileName)
-	            {
-	                Headers = new HeaderDictionary
-	                {
-	                    { "Content-Type", new StringValues("application/octet-stream") }
-	                }
-	            };
-	            _inner.ContentType = "application/octet-stream";
-	        }
+        public DisposableFormFile(byte[] bytes, string fileName)
+        {
+            _stream = new MemoryStream(bytes, writable: false);
+            _inner = new FormFile(_stream, 0, bytes.Length, "File", fileName)
+            {
+                Headers = new HeaderDictionary
+                    {
+                        { "Content-Type", new StringValues("application/octet-stream") }
+                    }
+            };
+            _inner.ContentType = "application/octet-stream";
+        }
 
-	        public string ContentType => _inner.ContentType;
-	        public string ContentDisposition => _inner.ContentDisposition;
-	        public IHeaderDictionary Headers => _inner.Headers;
-	        public long Length => _inner.Length;
-	        public string Name => _inner.Name;
-	        public string FileName => _inner.FileName;
+        public string ContentType => _inner.ContentType;
+        public string ContentDisposition => _inner.ContentDisposition;
+        public IHeaderDictionary Headers => _inner.Headers;
+        public long Length => _inner.Length;
+        public string Name => _inner.Name;
+        public string FileName => _inner.FileName;
 
-	        public Stream OpenReadStream() => _inner.OpenReadStream();
+        public Stream OpenReadStream() => _inner.OpenReadStream();
 
-	        public void CopyTo(Stream target) => _inner.CopyTo(target);
+        public void CopyTo(Stream target) => _inner.CopyTo(target);
 
-	        public Task CopyToAsync(Stream target, CancellationToken cancellationToken = default) =>
-	            _inner.CopyToAsync(target, cancellationToken);
+        public Task CopyToAsync(Stream target, CancellationToken cancellationToken = default) =>
+            _inner.CopyToAsync(target, cancellationToken);
 
-	        public void Dispose() => _stream.Dispose();
-	    }
-	}
+        public void Dispose() => _stream.Dispose();
+    }
+}

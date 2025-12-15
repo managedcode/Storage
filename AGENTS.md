@@ -83,6 +83,8 @@ If no new rule is detected → do not update the file.
 - Docs live in `docs/` and `README.md`
 - Keep a GitHub Pages docs site in sync with `docs/`, using `DOCS-EXAMPLE/` as the reference template for structure and CI/pipeline
 - When adding new docs pages under `docs/Features/`, `docs/ADR/`, or `docs/API/`, also update the corresponding `index.md` to link the page so it’s discoverable in the docs catalog/navigation (the site generator will still publish the page even without the link)
+- Docs site navigation: do not include a `Templates` page (keep templates in-repo, but don’t surface a dedicated docs-site section for them)
+- Docs content: when referencing repo file paths (e.g. `Tests/.../X.cs`), make them clickable by linking to the corresponding GitHub `blob/tree` URL
 - Update docs when behaviour changes
 - Update configuration examples when required
 - Documentation must include clear schemas/diagrams (prefer Mermaid) for every non-trivial feature and integration so GitHub users can understand flows quickly
@@ -90,6 +92,15 @@ If no new rule is detected → do not update the file.
 - Where feasible, prefer provider options that can build vendor SDK clients from credentials (to reduce consumer boilerplate) while still allowing client injection for advanced scenarios
 - Avoid "ownership flags" like `ownsClient`; prefer a clear swap point (wrapper/factory) so lifetime and disposal rules stay simple and predictable
 - For providers that rely on vendor SDK clients (Graph/Drive/Dropbox/etc.), document how to obtain credentials/keys/tokens and include a minimal code snippet that builds the required SDK client instance
+- CloudKit docs: explicitly clarify that `ContainerId` is a CloudKit container identifier (not a secret) tied to an Apple App ID, and document the optional `HttpClient`/`ICloudKitClient` injection points for advanced HTTP customization and testing
+- Credentials docs: keep provider sections consistent (What you need → Typical steps → Minimal SDK/DI snippet → Suggested configuration keys) so consumers can wire providers without guesswork
+- Docs: keep the testing strategy discoverable from `docs/Development/setup.md` (link or embedded section) so users find how/why tests run during initial setup
+- Docs: validate all Mermaid diagrams render on the docs site (Mermaid v10.9.5) and fix any syntax errors before shipping docs changes
+- Docs site: include `sitemap.xml` and reference it from `robots.txt` so search engines can discover all pages after every rebuild
+- Docs site: display the project version from `Directory.Build.props` (not CI run numbers) and keep the footer copyright line slightly smaller than the rest for a cleaner visual hierarchy
+- Docs site: display the short project name `Storage` in the site title/nav (keep `ManagedCode.Storage` in content where it refers to package IDs)
+- Docs: do not add ADRs for docs-site generation/pipeline changes; document the docs-site build, SEO, and GitHub Pages workflow under `docs/Development/` instead
+- Docs site: do not generate redirect/alias pages like `/Storage/`; keep a single canonical home URL (`/`) and remove unused routes
 
 ### Testing (ALL TASKS)
 
@@ -143,6 +154,7 @@ If no new rule is detected → do not update the file.
 - Suffix async APIs with `Async`; keep test names aligned with existing patterns (e.g., `DownloadFile_WhenFileExists_ReturnsSuccess`)
 - Remove unused usings and let analyzers guide layout
 - When a `foreach` loop’s first step is just transforming the iteration variable (e.g., `var y = Map(x)`), prefer mapping the sequence explicitly with `.Select(...)` so intent is clearer and analyzers stay quiet
+- Avoid buffering whole files into `MemoryStream` in product code (assume multi‑GB files); stream directly to the destination (response stream / file stream) and use incremental hashing/CRC when you need verification
 - No magic literals — extract to constants, enums, or config when it improves clarity
 
 ### Git & PRs

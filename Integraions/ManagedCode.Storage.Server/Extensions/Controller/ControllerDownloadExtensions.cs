@@ -1,10 +1,13 @@
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.MimeTypes;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Server.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace ManagedCode.Storage.Server.Extensions.Controller;
@@ -14,6 +17,12 @@ namespace ManagedCode.Storage.Server.Extensions.Controller;
 /// </summary>
 public static class ControllerDownloadExtensions
 {
+    private static StorageServerOptions ResolveServerOptions(ControllerBase controller)
+    {
+        var services = controller.HttpContext?.RequestServices;
+        return services?.GetService<StorageServerOptions>() ?? new StorageServerOptions();
+    }
+
     /// <summary>
     /// Streams the specified blob to the caller using <see cref="IResult"/>.
     /// </summary>
@@ -61,13 +70,24 @@ public static class ControllerDownloadExtensions
         string blobName,
         CancellationToken cancellationToken = default)
     {
+        var serverOptions = ResolveServerOptions(controller);
+
         var result = await storage.DownloadAsync(blobName, cancellationToken);
         if (result.IsFailed)
             throw new FileNotFoundException(blobName);
 
-        using var memoryStream = new MemoryStream();
-        await result.Value.FileStream.CopyToAsync(memoryStream, cancellationToken);
-        return new FileContentResult(memoryStream.ToArray(), MimeHelper.GetMimeType(blobName))
+        await using var localFile = result.Value;
+
+        var length = localFile.FileInfo.Length;
+        if (length > serverOptions.InMemoryDownloadThresholdBytes)
+        {
+            throw new InvalidOperationException(
+                $"Blob '{blobName}' is {length} bytes which exceeds the in-memory download threshold of {serverOptions.InMemoryDownloadThresholdBytes} bytes. " +
+                "Use DownloadAsFileResultAsync or DownloadAsStreamAsync for large files.");
+        }
+
+        var bytes = await localFile.ReadAllBytesAsync(cancellationToken);
+        return new FileContentResult(bytes, MimeHelper.GetMimeType(blobName))
         {
             FileDownloadName = blobName
         };

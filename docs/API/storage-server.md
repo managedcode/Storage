@@ -1,3 +1,7 @@
+---
+keywords: "storage API, ASP.NET controllers, SignalR hub, upload, download, streaming, chunked upload, ranged download, ManagedCode.Storage.Server"
+---
+
 # API: Storage Server (HTTP + SignalR)
 
 This document describes the integration surface exposed by `Integraions/ManagedCode.Storage.Server`.

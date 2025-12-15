@@ -42,11 +42,11 @@ public class CrossProviderSyncTests(StorageTestApplication testApplication)
         await EnsureContainerAsync(sourceStorage);
         await EnsureContainerAsync(targetStorage);
 
-	        var payload = new byte[256 * 1024];
-	        RandomNumberGenerator.Fill(payload);
+        var payload = new byte[256 * 1024];
+        RandomNumberGenerator.Fill(payload);
 
-	        using var crcStream = new MemoryStream(payload, writable: false);
-	        var expectedCrc = Crc32Helper.CalculateStreamCrc(crcStream);
+        using var crcStream = new MemoryStream(payload, writable: false);
+        var expectedCrc = Crc32Helper.CalculateStreamCrc(crcStream);
 
         var directory = $"sync-tests/{Guid.NewGuid():N}";
         var fileName = $"payload-{Guid.NewGuid():N}.bin";

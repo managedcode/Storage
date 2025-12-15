@@ -1,12 +1,19 @@
 ---
 layout: null
 ---
+{% assign effective_baseurl = site.baseurl %}
+{% if site.url != nil and site.url != '' %}
+{% unless site.url contains 'github.io' %}
+{% assign effective_baseurl = '' %}
+{% endunless %}
+{% endif %}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   {% for page in site.pages %}
-  {% if (page.url contains '.html' or page.url == '/') and page.url != '/404.html' %}
+  {% assign last_char = page.url | slice: -1 %}
+  {% if (page.url == '/' or page.url contains '.html' or last_char == '/') and page.url != '/404.html' and page.url != '/sitemap.xml' and page.url != '/robots.txt' %}
   <url>
-    <loc>{{ site.url }}{{ site.baseurl }}{{ page.url | remove: 'index.html' }}</loc>
+    <loc>{{ site.url }}{{ effective_baseurl }}{{ page.url | remove: 'index.html' }}</loc>
     <lastmod>{{ site.time | date: '%Y-%m-%d' }}</lastmod>
     <priority>{% if page.url == '/' %}1.0{% else %}0.8{% endif %}</priority>
   </url>

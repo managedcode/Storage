@@ -1,3 +1,7 @@
+---
+keywords: "SignalR client, streaming, upload, download, progress, StorageSignalRClient, ManagedCode.Storage.Client.SignalR"
+---
+
 # Feature: .NET SignalR Client (`ManagedCode.Storage.Client.SignalR`)
 
 ## Purpose

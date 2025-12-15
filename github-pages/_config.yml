@@ -1,4 +1,4 @@
-title: ManagedCode.Storage
+title: Storage
 tagline: Cross-provider storage toolkit for .NET
 description: ManagedCode.Storage wraps vendor SDKs behind a single IStorage abstraction so uploads, downloads, metadata, streaming, and retention behave the same across providers.
 url: "https://storage.managed-code.com"

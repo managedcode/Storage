@@ -1,3 +1,11 @@
+---
+title: Setup
+description: "How to clone, build, and run tests for ManagedCode.Storage."
+keywords: "ManagedCode.Storage setup, .NET 10, dotnet restore, dotnet build, dotnet test, Docker, Testcontainers, Azurite, LocalStack, FakeGcsServer, SFTP"
+permalink: /setup/
+nav_order: 2
+---
+
 # Development Setup
 
 ## Prerequisites
@@ -32,6 +40,12 @@ dotnet restore ManagedCode.Storage.slnx
 dotnet build ManagedCode.Storage.slnx --configuration Release
 dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release
 ```
+
+## Testing Strategy
+
+The full test strategy (suite layout, categories, containers, cloud-drive HTTP fakes) lives in `docs/Testing/strategy.md`:
+
+- [Testing Strategy](../Testing/strategy.md)
 
 ## Formatting
 

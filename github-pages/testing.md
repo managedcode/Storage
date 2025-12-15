@@ -2,6 +2,7 @@
 layout: default
 title: Testing
 description: Test strategy and how to run the ManagedCode.Storage test suite.
+permalink: /testing/
 nav_order: 4
 ---
 

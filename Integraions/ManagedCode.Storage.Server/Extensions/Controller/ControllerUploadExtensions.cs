@@ -45,7 +45,7 @@ public static class ControllerUploadExtensions
         var serverOptions = ResolveServerOptions(controller);
         if (file.Length > serverOptions.InMemoryUploadThresholdBytes)
         {
-            var localFile = await file.ToLocalFileAsync(cancellationToken);
+            await using var localFile = await file.ToLocalFileAsync(cancellationToken);
             var result = await storage.UploadAsync(localFile.FileInfo, uploadOptions, cancellationToken);
             result.ThrowIfFail();
             return result.Value!;
@@ -73,7 +73,7 @@ public static class ControllerUploadExtensions
 
         if (file.Size > serverOptions.InMemoryUploadThresholdBytes)
         {
-            var localFile = await file.ToLocalFileAsync(cancellationToken);
+            await using var localFile = await file.ToLocalFileAsync(cancellationToken);
             var result = await storage.UploadAsync(localFile.FileInfo, uploadOptions, cancellationToken);
             result.ThrowIfFail();
             return result.Value!;
@@ -155,11 +155,7 @@ public static class ControllerUploadExtensions
 
                 uploadOptions ??= new UploadOptions(fileName, mimeType: contentType);
 
-                using var memoryStream = new MemoryStream();
-                await section.Body.CopyToAsync(memoryStream, cancellationToken);
-                memoryStream.Position = 0;
-
-                var result = await storage.UploadAsync(memoryStream, uploadOptions, cancellationToken);
+                var result = await storage.UploadAsync(section.Body, uploadOptions, cancellationToken);
                 result.ThrowIfFail();
                 return result.Value!;
             }

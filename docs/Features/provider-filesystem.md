@@ -1,3 +1,7 @@
+---
+keywords: "file system storage, local development, ManagedCode.Storage.FileSystem, IStorage, tests, .NET"
+---
+
 # Feature: File System Provider (`ManagedCode.Storage.FileSystem`)
 
 ## Purpose

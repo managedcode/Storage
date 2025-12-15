@@ -1,7 +1,13 @@
 ---
 layout: null
 ---
+{% assign effective_baseurl = site.baseurl %}
+{% if site.url != nil and site.url != '' %}
+{% unless site.url contains 'github.io' %}
+{% assign effective_baseurl = '' %}
+{% endunless %}
+{% endif %}
 User-agent: *
 Allow: /
 
-Sitemap: {{ site.url }}{{ site.baseurl }}/sitemap.xml
+Sitemap: {{ site.url }}{{ effective_baseurl }}/sitemap.xml

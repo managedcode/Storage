@@ -205,12 +205,35 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var filePath = GetPathFromOptions(options);
+            var sourcePath = GetPathFromOptions(options);
             cancellationToken.ThrowIfCancellationRequested();
 
-            return File.Exists(filePath)
-                ? Result<LocalFile>.Succeed(new LocalFile(filePath))
-                : Result<LocalFile>.Fail("File not found");
+            if (!File.Exists(sourcePath))
+            {
+                return Result<LocalFile>.Fail("File not found");
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            var metadata = await GetBlobMetadataInternalAsync(MetadataOptions.FromBaseOptions(options), cancellationToken);
+
+            if (options.LocalPath is null)
+            {
+                var linkedFile = new LocalFile(sourcePath, keepAlive: true);
+                if (metadata.IsSuccess)
+                {
+                    linkedFile.BlobMetadata = metadata.Value;
+                }
+
+                return Result<LocalFile>.Succeed(linkedFile);
+            }
+
+            File.Copy(sourcePath, localFile.FilePath, overwrite: true);
+            if (metadata.IsSuccess)
+            {
+                localFile.BlobMetadata = metadata.Value;
+            }
+
+            return Result<LocalFile>.Succeed(localFile);
         }
         catch (Exception ex)
         {

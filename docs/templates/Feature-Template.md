@@ -1,3 +1,8 @@
+---
+description: "{{Short SEO description}}"
+keywords: "{{comma-separated keywords}}"
+---
+
 # Feature: {{Feature Name}}
 
 ## Purpose
@@ -50,4 +55,3 @@ List the tests that cover this feature and what they assert.
 - Related docs:
 - Related ADRs:
 - External specs / SDK docs:
-

@@ -36,33 +36,33 @@ public class FileSystemSecurityTests : IDisposable
     [InlineData("..\\..\\..\\Windows\\System32\\config\\SAM")]
     [InlineData("../../../../secret.txt")]
     [InlineData("..\\..\\sensitive.dat")]
-	    public async Task UploadAsync_WithPathTraversal_ShouldFail(string maliciousFileName)
-	    {
-	        // Arrange
-	        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
-	        var options = new UploadOptions
-	        {
-	            FileName = maliciousFileName
-	        };
+    public async Task UploadAsync_WithPathTraversal_ShouldFail(string maliciousFileName)
+    {
+        // Arrange
+        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        var options = new UploadOptions
+        {
+            FileName = maliciousFileName
+        };
 
         // Act
         var result = await _storage.UploadAsync(stream, options);
 
-	        // Assert - security validation should reject path traversal
-	        result.IsFailed.ShouldBeTrue();
-	        result.Problem.ShouldNotBeNull();
-	        result.Problem.Title.ShouldBe("UnauthorizedAccessException");
-	    }
+        // Assert - security validation should reject path traversal
+        result.IsFailed.ShouldBeTrue();
+        result.Problem.ShouldNotBeNull();
+        result.Problem.Title.ShouldBe("UnauthorizedAccessException");
+    }
 
     [Fact]
-	    public async Task UploadAsync_WithValidFileName_ShouldSucceed()
-	    {
-	        // Arrange
-	        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
-	        var options = new UploadOptions
-	        {
-	            FileName = "legitimate-file.txt"
-	        };
+    public async Task UploadAsync_WithValidFileName_ShouldSucceed()
+    {
+        // Arrange
+        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        var options = new UploadOptions
+        {
+            FileName = "legitimate-file.txt"
+        };
 
         // Act
         var result = await _storage.UploadAsync(stream, options);
@@ -75,35 +75,35 @@ public class FileSystemSecurityTests : IDisposable
     [Theory]
     [InlineData("../../../malicious")]
     [InlineData("../../outside")]
-	    public async Task UploadAsync_WithPathTraversalInDirectory_ShouldFail(
-	        string maliciousDirectory)
-	    {
-	        // Arrange
-	        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
-	        var options = new UploadOptions
-	        {
-	            FileName = "file.txt",
-	            Directory = maliciousDirectory
-	        };
+    public async Task UploadAsync_WithPathTraversalInDirectory_ShouldFail(
+            string maliciousDirectory)
+    {
+        // Arrange
+        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        var options = new UploadOptions
+        {
+            FileName = "file.txt",
+            Directory = maliciousDirectory
+        };
 
         // Act
         var result = await _storage.UploadAsync(stream, options);
 
-	        // Assert - security validation should reject path traversal
-	        result.IsFailed.ShouldBeTrue();
-	        result.Problem.ShouldNotBeNull();
-	        result.Problem.Title.ShouldBe("UnauthorizedAccessException");
-	    }
+        // Assert - security validation should reject path traversal
+        result.IsFailed.ShouldBeTrue();
+        result.Problem.ShouldNotBeNull();
+        result.Problem.Title.ShouldBe("UnauthorizedAccessException");
+    }
 
     [Fact]
-	    public async Task UploadAsync_WithValidDirectory_ShouldSucceed()
-	    {
-	        // Arrange
-	        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
-	        var options = new UploadOptions
-	        {
-	            FileName = "file.txt",
-	            Directory = "subfolder/nested"
+    public async Task UploadAsync_WithValidDirectory_ShouldSucceed()
+    {
+        // Arrange
+        using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        var options = new UploadOptions
+        {
+            FileName = "file.txt",
+            Directory = "subfolder/nested"
         };
 
         // Act

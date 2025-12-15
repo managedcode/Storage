@@ -10,8 +10,8 @@
 ```mermaid
 flowchart LR
   subgraph Clients
-    HttpClient[ManagedCode.Storage.Client (HTTP)]
-    SigClient[ManagedCode.Storage.Client.SignalR]
+    HttpClient["ManagedCode.Storage.Client (HTTP)"]
+    SigClient["ManagedCode.Storage.Client.SignalR"]
     Browser[Browser / App]
   end
 
@@ -23,7 +23,7 @@ flowchart LR
 
   subgraph Storage
     Abstraction[IStorage]
-    Provider[Concrete provider (Azure/AWS/GCS/FS/SFTP/etc.)]
+    Provider["Concrete provider (Azure/AWS/GCS/FS/SFTP/etc.)"]
   end
 
   Browser --> HttpClient

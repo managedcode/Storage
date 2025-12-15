@@ -1,3 +1,11 @@
+---
+title: Testing
+description: "Test strategy and how to run the ManagedCode.Storage test suite."
+keywords: "ManagedCode.Storage tests, xUnit, Shouldly, integration tests, Testcontainers, Azurite, LocalStack, FakeGcsServer, HttpMessageHandler fakes"
+permalink: /testing/
+nav_order: 4
+---
+
 # Testing Strategy
 
 ManagedCode.Storage uses **xUnit** + **Shouldly** and aims to verify storage behaviour through realistic flows (upload/download/list/delete/metadata) with minimal mocking.
@@ -15,8 +23,8 @@ flowchart TD
   Tests --> AspNet[ASP.NET controllers + SignalR]
   Tests --> Vfs[VFS suites]
 
-  Providers --> Containers[Testcontainers (Azurite/LocalStack/FakeGcsServer/SFTP)]
-  Providers --> CloudDrive[CloudDrive (Graph/Drive/Dropbox)]
+  Providers --> Containers["Testcontainers (Azurite/LocalStack/FakeGcsServer/SFTP)"]
+  Providers --> CloudDrive["CloudDrive (Graph/Drive/Dropbox)"]
   CloudDrive --> HttpFakes[HttpMessageHandler fakes wired into official SDK clients]
 ```
 

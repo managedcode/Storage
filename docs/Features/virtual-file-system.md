@@ -1,3 +1,7 @@
+---
+keywords: "virtual file system, IVirtualFileSystem, overlay, metadata cache, ManagedCode.Storage.VirtualFileSystem, .NET"
+---
+
 # Feature: Virtual File System (`ManagedCode.Storage.VirtualFileSystem`)
 
 ## Purpose

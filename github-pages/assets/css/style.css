@@ -144,6 +144,49 @@ html {
   border-color: #785D8F;
 }
 
+.nav-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nav-dropdown-trigger::after {
+  content: "▾";
+  font-size: 12px;
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  min-width: 220px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #E8E5EB;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  z-index: 120;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  display: block;
+}
+
+.nav-dropdown-menu a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.nav-dropdown-menu a:hover,
+.nav-dropdown-menu a.active {
+  background: #F5F3F7;
+}
+
 /* Main content */
 .main {
   flex: 1;
@@ -389,6 +432,10 @@ hr {
   margin-bottom: 6px;
 }
 
+.footer-container p:first-of-type {
+  font-size: 11px;
+}
+
 .footer-container a {
   color: #5a5565;
   text-decoration: underline;
@@ -400,49 +447,9 @@ hr {
 }
 
 .footer-version {
-  font-size: 11px;
+  font-size: 10px;
   color: #5a5565;
   margin-top: 8px;
-}
-
-/* Templates list */
-.templates-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 32px;
-}
-
-.template-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: #F5F3F7;
-  border-radius: 8px;
-  border: 1px solid #E8E5EB;
-}
-
-.template-name {
-  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 15px;
-  font-weight: 500;
-  color: #27232A;
-}
-
-.template-links {
-  display: flex;
-  gap: 16px;
-}
-
-.template-links a {
-  font-size: 14px;
-  color: #785D8F;
-  text-decoration: none;
-}
-
-.template-links a:hover {
-  text-decoration: underline;
 }
 
 /* Download button */
@@ -594,6 +601,17 @@ body.dark .nav-links a.nav-brand {
 body.dark .nav-links a.nav-brand:hover {
   background: #a88bc4;
   color: #1a1a1a;
+}
+
+body.dark .nav-dropdown-menu {
+  background: rgba(26, 26, 26, 0.98);
+  border-color: #444;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .nav-dropdown-menu a:hover,
+body.dark .nav-dropdown-menu a.active {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 body.dark .dark-toggle-label svg {

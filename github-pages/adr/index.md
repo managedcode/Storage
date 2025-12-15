@@ -2,6 +2,7 @@
 layout: default
 title: ADR
 description: Architecture Decision Records (ADR) for ManagedCode.Storage.
+permalink: /adr/
 nav_order: 6
 ---
 
@@ -10,4 +11,3 @@ nav_order: 6
 This page is generated from `docs/ADR/` in CI (GitHub Pages workflow).
 
 Start here: `docs/ADR/index.md`.
-

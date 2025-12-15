@@ -1,3 +1,7 @@
+---
+keywords: "dependency injection, keyed services, IServiceCollection, IStorage, multi-tenant storage, .NET"
+---
+
 # Feature: Dependency Injection & Keyed Registrations
 
 ## Purpose
@@ -15,7 +19,7 @@ Make storage wiring predictable and scalable for .NET apps by supporting both a 
 ```mermaid
 flowchart LR
   App --> DI[ServiceCollection]
-  DI --> Default[IStorage (default)]
+  DI --> Default["IStorage (default)"]
   Default --> Provider[Concrete provider storage]
 ```
 
@@ -24,8 +28,8 @@ flowchart LR
 ```mermaid
 flowchart LR
   App --> DI[ServiceCollection]
-  DI --> A[IStorage keyed: tenant-a]
-  DI --> B[IStorage keyed: tenant-b]
+  DI --> A["IStorage keyed: tenant-a"]
+  DI --> B["IStorage keyed: tenant-b"]
   A --> ProviderA[Provider instance A]
   B --> ProviderB[Provider instance B]
 ```

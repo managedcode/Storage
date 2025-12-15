@@ -146,15 +146,13 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
             return Problem("File name is required", statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var download = await Storage.DownloadAsync(path, cancellationToken);
-        if (download.IsFailed)
+        var streamResult = await Storage.GetStreamAsync(path, cancellationToken);
+        if (streamResult.IsFailed)
         {
-            return Problem(download.Problem?.Title ?? "File not found", statusCode: (int?)download.Problem?.StatusCode ?? StatusCodes.Status404NotFound);
+            return Problem(streamResult.Problem?.Title ?? "File not found", statusCode: (int?)streamResult.Problem?.StatusCode ?? StatusCodes.Status404NotFound);
         }
 
-        await using var tempStream = new MemoryStream();
-        await download.Value.FileStream.CopyToAsync(tempStream, cancellationToken);
-        return File(tempStream.ToArray(), MimeHelper.GetMimeType(path), path);
+        return File(streamResult.Value, MimeHelper.GetMimeType(path), path, enableRangeProcessing: _options.EnableRangeProcessing);
     }
 
     /// <inheritdoc />
@@ -238,6 +236,11 @@ public class StorageServerOptions
     public const int DefaultInMemoryUploadThresholdBytes = 256 * 1024;
 
     /// <summary>
+    /// Default threshold in bytes for endpoints that return an in-memory payload (for example: <see cref="FileContentResult"/>).
+    /// </summary>
+    public const int DefaultInMemoryDownloadThresholdBytes = 256 * 1024;
+
+    /// <summary>
     /// Default boundary length limit applied to multipart requests.
     /// </summary>
     public const int DefaultMultipartBoundaryLengthLimit = 70;
@@ -261,6 +264,12 @@ public class StorageServerOptions
     /// Gets or sets the maximum payload size (in bytes) that will be buffered in memory before switching to a file-backed upload path.
     /// </summary>
     public int InMemoryUploadThresholdBytes { get; set; } = DefaultInMemoryUploadThresholdBytes;
+
+    /// <summary>
+    /// Gets or sets the maximum payload size (in bytes) that will be materialised in memory when an API returns the entire payload as bytes.
+    /// Use streaming endpoints for larger payloads.
+    /// </summary>
+    public int InMemoryDownloadThresholdBytes { get; set; } = DefaultInMemoryDownloadThresholdBytes;
 
     /// <summary>
     /// Gets or sets the maximum allowed length for multipart boundaries when parsing raw upload streams.

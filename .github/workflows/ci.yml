@@ -1,4 +1,4 @@
-name: CI
+name: build-and-test
 
 on:
   pull_request:

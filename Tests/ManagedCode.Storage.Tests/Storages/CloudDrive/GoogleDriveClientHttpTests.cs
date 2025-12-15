@@ -132,27 +132,27 @@ public class GoogleDriveClientHttpTests
                 return JsonResponse(ToResponse(created));
             }
 
-	            if (request.Method == HttpMethod.Post
-	                && path.Equals("/upload/drive/v3/files", StringComparison.OrdinalIgnoreCase)
-	                && query.TryGetValue("uploadType", out var uploadType)
-	                && string.Equals(uploadType, "resumable", StringComparison.OrdinalIgnoreCase))
+            if (request.Method == HttpMethod.Post
+                && path.Equals("/upload/drive/v3/files", StringComparison.OrdinalIgnoreCase)
+                && query.TryGetValue("uploadType", out var uploadType)
+                && string.Equals(uploadType, "resumable", StringComparison.OrdinalIgnoreCase))
             {
                 var body = await request.Content!.ReadAsStringAsync(cancellationToken);
                 var model = JsonSerializer.Deserialize<CreateRequest>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                     ?? throw new InvalidOperationException("Upload initiation body is missing.");
 
                 var uploadId = "upload-" + Interlocked.Increment(ref _counter);
-	                _pendingUploads[uploadId] = new PendingUpload(
-	                    Name: model.Name ?? Guid.NewGuid().ToString("N"),
-	                    ParentId: model.Parents?.FirstOrDefault() ?? RootFolderId,
-	                    MimeType: model.MimeType ?? "application/octet-stream");
+                _pendingUploads[uploadId] = new PendingUpload(
+                    Name: model.Name ?? Guid.NewGuid().ToString("N"),
+                    ParentId: model.Parents?.FirstOrDefault() ?? RootFolderId,
+                    MimeType: model.MimeType ?? "application/octet-stream");
 
-	                return new HttpResponseMessage(HttpStatusCode.OK)
-	                {
-	                    Headers = { Location = new Uri($"https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id={uploadId}") },
-	                    Content = new ByteArrayContent(Array.Empty<byte>())
-	                };
-	            }
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Headers = { Location = new Uri($"https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id={uploadId}") },
+                    Content = new ByteArrayContent(Array.Empty<byte>())
+                };
+            }
 
             if (request.Method == HttpMethod.Put
                 && path.Equals("/upload/drive/v3/files", StringComparison.OrdinalIgnoreCase)
@@ -180,21 +180,21 @@ public class GoogleDriveClientHttpTests
                     return new HttpResponseMessage(HttpStatusCode.NoContent);
                 }
 
-	                if (request.Method == HttpMethod.Get && query.TryGetValue("alt", out var alt) && string.Equals(alt, "media", StringComparison.OrdinalIgnoreCase))
-	                {
-	                    if (!_entriesById.TryGetValue(fileId, out var entry) || entry.MimeType == FolderMimeType)
-	                    {
-	                        return new HttpResponseMessage(HttpStatusCode.NotFound);
-	                    }
+                if (request.Method == HttpMethod.Get && query.TryGetValue("alt", out var alt) && string.Equals(alt, "media", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!_entriesById.TryGetValue(fileId, out var entry) || entry.MimeType == FolderMimeType)
+                    {
+                        return new HttpResponseMessage(HttpStatusCode.NotFound);
+                    }
 
-	                    return new HttpResponseMessage(HttpStatusCode.OK)
-	                    {
-	                        Content = new ByteArrayContent(entry.Content)
-	                        {
-	                            Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(entry.MimeType) }
-	                        }
-	                    };
-	                }
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new ByteArrayContent(entry.Content)
+                        {
+                            Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(entry.MimeType) }
+                        }
+                    };
+                }
 
                 if (request.Method == HttpMethod.Get)
                 {
@@ -299,22 +299,22 @@ public class GoogleDriveClientHttpTests
             return result;
         }
 
-	        private HttpResponseMessage JsonResponse(object payload, HttpStatusCode statusCode = HttpStatusCode.OK)
-	        {
-	            var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-	            var bytes = Encoding.UTF8.GetBytes(json);
-	            return new HttpResponseMessage(statusCode)
-	            {
-	                Content = new ByteArrayContent(bytes)
-	                {
-	                    Headers =
-	                    {
-	                        ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json"),
-	                        ContentLength = bytes.LongLength
-	                    }
-	                }
-	            };
-	        }
+        private HttpResponseMessage JsonResponse(object payload, HttpStatusCode statusCode = HttpStatusCode.OK)
+        {
+            var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var bytes = Encoding.UTF8.GetBytes(json);
+            return new HttpResponseMessage(statusCode)
+            {
+                Content = new ByteArrayContent(bytes)
+                {
+                    Headers =
+                    {
+                        ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json"),
+                        ContentLength = bytes.LongLength
+                    }
+                }
+            };
+        }
 
         private sealed record Entry(string Id, string Name, string ParentId, string MimeType, byte[] Content, DateTimeOffset Created, DateTimeOffset Modified);
 

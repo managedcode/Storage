@@ -1,3 +1,7 @@
+---
+keywords: "chunked uploads, resumable upload, CRC32, ASP.NET, ManagedCode.Storage.Server, ManagedCode.Storage.Client"
+---
+
 # Feature: Chunked Uploads (HTTP + Client)
 
 ## Purpose

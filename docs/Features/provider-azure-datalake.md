@@ -1,3 +1,7 @@
+---
+keywords: "Azure Data Lake Gen2, ADLS, ManagedCode.Storage.Azure.DataLake, IStorage, filesystem, directory, .NET"
+---
+
 # Feature: Azure Data Lake Gen2 Provider (`ManagedCode.Storage.Azure.DataLake`)
 
 ## Purpose

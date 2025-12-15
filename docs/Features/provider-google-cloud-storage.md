@@ -1,3 +1,7 @@
+---
+keywords: "Google Cloud Storage, GCS, ManagedCode.Storage.Gcp, StorageClient, IStorage, bucket, streaming, .NET"
+---
+
 # Feature: Google Cloud Storage Provider (`ManagedCode.Storage.Gcp`)
 
 ## Purpose

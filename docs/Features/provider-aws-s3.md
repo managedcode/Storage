@@ -1,3 +1,7 @@
+---
+keywords: "Amazon S3, AWS S3, ManagedCode.Storage.Aws, IStorage, bucket, streaming upload, Object Lock, legal hold, .NET"
+---
+
 # Feature: Amazon S3 Provider (`ManagedCode.Storage.Aws`)
 
 ## Purpose
