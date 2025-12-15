@@ -1,8 +1,8 @@
 title: ManagedCode.Storage
 tagline: Cross-provider storage toolkit for .NET
 description: ManagedCode.Storage wraps vendor SDKs behind a single IStorage abstraction so uploads, downloads, metadata, streaming, and retention behave the same across providers.
-url: "https://managedcode.github.io"
-baseurl: "/Storage"
+url: "https://storage.managed-code.com"
+baseurl: ""
 
 # SEO & AEO (AI Engine Optimization)
 keywords: "ManagedCode.Storage, IStorage, blob storage, Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit, SFTP, .NET, ASP.NET, SignalR, streaming uploads, chunked uploads"
