@@ -12,7 +12,7 @@ flowchart LR
   Docs[docs/**] --> Gen
   Gen --> SiteSrc[github-pages/**]
   SiteSrc --> Jekyll[Jekyll build]
-  Jekyll --> Pages[GitHub Pages<br/>https://managedcode.github.io/Storage/]
+  Jekyll --> Pages[GitHub Pages<br/>https://storage.managed-code.com/]
 ```
 
 ## Site-wide checks (layout/config)
@@ -46,7 +46,7 @@ Source of truth:
 
 Notes:
 
-- URLs below are **relative to** `https://managedcode.github.io/Storage`.
+- URLs below are **relative to** `https://storage.managed-code.com`.
 - For doc pages (Features/API/ADR), `description` is generated from doc content by the workflow:
   - skips headings, code fences, bullet lists
   - skips ADR status lines (`Accepted/Proposed/...`)
