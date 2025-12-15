@@ -18,7 +18,7 @@ Cross-provider blob storage toolkit for .NET and ASP.NET streaming scenarios.
 
 ## Documentation
 
-- Published docs (GitHub Pages): https://managedcode.github.io/Storage/
+- Published docs (GitHub Pages): https://storage.managed-code.com/
 - Source docs live in `docs/`:
   - Setup: `docs/Development/setup.md`
   - Credentials (OneDrive/Google Drive/Dropbox/CloudKit): `docs/Development/credentials.md`
