@@ -170,6 +170,22 @@ public class GoogleDriveClientHttpTests
             if (path.StartsWith("/drive/v3/files/", StringComparison.OrdinalIgnoreCase))
             {
                 var fileId = path["/drive/v3/files/".Length..];
+
+                // Handle PATCH for trash operation (soft delete)
+                if (request.Method == HttpMethod.Patch)
+                {
+                    if (!_entriesById.TryGetValue(fileId, out var entry))
+                    {
+                        return new HttpResponseMessage(HttpStatusCode.NotFound);
+                    }
+
+                    // Remove the entry (simulates trashing)
+                    _entriesById.Remove(fileId);
+                    _idByParentAndName.Remove((entry.ParentId, entry.Name));
+
+                    return JsonResponse(new { id = fileId, name = entry.Name, trashed = true });
+                }
+
                 if (request.Method == HttpMethod.Delete)
                 {
                     if (!_entriesById.Remove(fileId))
