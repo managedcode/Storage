@@ -186,9 +186,9 @@ public class GoogleDriveClient : IGoogleDriveClient
             await DeleteFolderChildrenAsync(fileId, supportsAllDrives, cancellationToken);
         }
 
-        var deleteRequest = _driveService.Files.Delete(fileId);
-        deleteRequest.SupportsAllDrives = supportsAllDrives;
-        await deleteRequest.ExecuteAsync(cancellationToken);
+        var trashRequest = _driveService.Files.Update(new DriveFile { Trashed = true }, fileId);
+        trashRequest.SupportsAllDrives = supportsAllDrives;
+        await trashRequest.ExecuteAsync(cancellationToken);
     }
 
     private async Task DeleteFolderChildrenAsync(string folderId, bool supportsAllDrives, CancellationToken cancellationToken)
