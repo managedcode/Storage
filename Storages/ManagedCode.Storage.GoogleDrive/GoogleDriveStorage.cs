@@ -1,16 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.GoogleDrive.Clients;
 using ManagedCode.Storage.GoogleDrive.Options;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using File = Google.Apis.Drive.v3.Data.File;
 
 namespace ManagedCode.Storage.GoogleDrive;
@@ -69,18 +68,18 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
 
             if (!string.IsNullOrWhiteSpace(normalizedDirectory))
             {
-                _ = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, normalizedDirectory, cancellationToken);
+                _ = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, normalizedDirectory, StorageOptions.SupportsAllDrives, cancellationToken);
                 return Result.Succeed();
             }
 
-            await foreach (var item in StorageClient.ListAsync(StorageOptions.RootFolderId, null, cancellationToken))
+            await foreach (var item in StorageClient.ListAsync(StorageOptions.RootFolderId, null, StorageOptions.SupportsAllDrives, cancellationToken))
             {
                 if (string.IsNullOrWhiteSpace(item.Name))
                 {
                     continue;
                 }
 
-                _ = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, item.Name, cancellationToken);
+                _ = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, item.Name, StorageOptions.SupportsAllDrives, cancellationToken);
             }
 
             return Result.Succeed();
@@ -98,7 +97,7 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(options.FullPath);
-            var uploaded = await StorageClient.UploadAsync(StorageOptions.RootFolderId, path, stream, options.MimeType, cancellationToken);
+            var uploaded = await StorageClient.UploadAsync(StorageOptions.RootFolderId, path, stream, options.MimeType, StorageOptions.SupportsAllDrives, cancellationToken);
             return Result<BlobMetadata>.Succeed(ToBlobMetadata(uploaded, path));
         }
         catch (Exception ex)
@@ -114,7 +113,7 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(options.FullPath);
-            var remoteStream = await StorageClient.DownloadAsync(StorageOptions.RootFolderId, path, cancellationToken);
+            var remoteStream = await StorageClient.DownloadAsync(StorageOptions.RootFolderId, path, StorageOptions.SupportsAllDrives, cancellationToken);
 
             await using (remoteStream)
             await using (var fileStream = localFile.FileStream)
@@ -138,7 +137,7 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(options.FullPath);
-            var deleted = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, path, cancellationToken);
+            var deleted = await StorageClient.DeleteAsync(StorageOptions.RootFolderId, path, StorageOptions.SupportsAllDrives, cancellationToken);
             return Result<bool>.Succeed(deleted);
         }
         catch (Exception ex)
@@ -154,7 +153,7 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(options.FullPath);
-            var exists = await StorageClient.ExistsAsync(StorageOptions.RootFolderId, path, cancellationToken);
+            var exists = await StorageClient.ExistsAsync(StorageOptions.RootFolderId, path, StorageOptions.SupportsAllDrives, cancellationToken);
             return Result<bool>.Succeed(exists);
         }
         catch (Exception ex)
@@ -170,7 +169,7 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(options.FullPath);
-            var item = await StorageClient.GetMetadataAsync(StorageOptions.RootFolderId, path, cancellationToken);
+            var item = await StorageClient.GetMetadataAsync(StorageOptions.RootFolderId, path, StorageOptions.SupportsAllDrives, cancellationToken);
             return item == null
                 ? Result<BlobMetadata>.Fail(new FileNotFoundException($"File '{path}' not found in Google Drive."))
                 : Result<BlobMetadata>.Succeed(ToBlobMetadata(item, path));
@@ -187,7 +186,7 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
         await EnsureContainerExist(cancellationToken);
         var normalizedDirectory = string.IsNullOrWhiteSpace(directory) ? null : NormalizeRelativePath(directory!);
 
-        await foreach (var item in StorageClient.ListAsync(StorageOptions.RootFolderId, normalizedDirectory, cancellationToken))
+        await foreach (var item in StorageClient.ListAsync(StorageOptions.RootFolderId, normalizedDirectory, StorageOptions.SupportsAllDrives, cancellationToken))
         {
             if (item.MimeType == "application/vnd.google-apps.folder")
             {
@@ -205,7 +204,7 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(fileName);
-            var stream = await StorageClient.DownloadAsync(StorageOptions.RootFolderId, path, cancellationToken);
+            var stream = await StorageClient.DownloadAsync(StorageOptions.RootFolderId, path, StorageOptions.SupportsAllDrives, cancellationToken);
             return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)

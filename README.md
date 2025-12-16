@@ -255,8 +255,9 @@ var tenantStorage = app.Services.GetRequiredKeyedService<IStorage>("tenant-a");
    builder.Services.AddGoogleDriveStorageAsDefault(options =>
    {
        options.DriveService = driveService;
-       options.RootFolderId = "root"; // or a specific folder id you control
+       options.RootFolderId = "root"; // or a specific folder id you control / shared team drive folder id
        options.CreateContainerIfNotExists = true;
+       options.SupportsAllDrives = true; // To support shared/team drives
    });
    ```
 
@@ -723,7 +724,7 @@ Using in default mode:
 public class MyService
 {
     private readonly IStorage _storage;
-  
+
     public MyService(IStorage storage)
     {
         _storage = storage;
@@ -797,7 +798,7 @@ Using in default mode:
 public class MyService
 {
     private readonly IStorage _storage;
-  
+
     public MyService(IStorage storage)
     {
         _storage = storage;
@@ -858,7 +859,7 @@ Using in default mode:
 public class MyService
 {
     private readonly IStorage _storage;
-  
+
     public MyService(IStorage storage)
     {
         _storage = storage;

@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Google.Apis.Drive.v3.Data;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
 using ManagedCode.Storage.Dropbox;
@@ -18,6 +12,11 @@ using ManagedCode.Storage.OneDrive.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph.Models;
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using DriveFile = Google.Apis.Drive.v3.Data.File;
 
@@ -221,18 +220,18 @@ public class CloudDriveDependencyInjectionTests
     {
         public Task EnsureRootAsync(string rootFolderId, bool createIfNotExists, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-        public Task<DriveFile> UploadAsync(string rootFolderId, string path, Stream content, string? contentType, CancellationToken cancellationToken)
+        public Task<DriveFile> UploadAsync(string rootFolderId, string path, Stream content, string? contentType, bool supportsAllDrives, CancellationToken cancellationToken)
             => throw new NotImplementedException();
 
-        public Task<Stream> DownloadAsync(string rootFolderId, string path, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public Task<Stream> DownloadAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-        public Task<bool> DeleteAsync(string rootFolderId, string path, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public Task<bool> DeleteAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-        public Task<bool> ExistsAsync(string rootFolderId, string path, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public Task<bool> ExistsAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-        public Task<DriveFile?> GetMetadataAsync(string rootFolderId, string path, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public Task<DriveFile?> GetMetadataAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-        public IAsyncEnumerable<DriveFile> ListAsync(string rootFolderId, string? directory, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public IAsyncEnumerable<DriveFile> ListAsync(string rootFolderId, string? directory, bool supportsAllDrives, CancellationToken cancellationToken) => throw new NotImplementedException();
     }
 
     private sealed class StubOneDriveClient : IOneDriveClient
