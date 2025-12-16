@@ -1,12 +1,12 @@
+using Google.Apis.Drive.v3;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.IO.Pipelines;
-using Google.Apis.Drive.v3;
 using DriveFile = Google.Apis.Drive.v3.Data.File;
 
 namespace ManagedCode.Storage.GoogleDrive.Clients;
@@ -27,9 +27,9 @@ public class GoogleDriveClient : IGoogleDriveClient
         return Task.CompletedTask;
     }
 
-    public async Task<DriveFile> UploadAsync(string rootFolderId, string path, Stream content, string? contentType, CancellationToken cancellationToken)
+    public async Task<DriveFile> UploadAsync(string rootFolderId, string path, Stream content, string? contentType, bool supportsAllDrives, CancellationToken cancellationToken)
     {
-        var (parentId, fileName) = await EnsureParentFolderAsync(rootFolderId, path, cancellationToken);
+        var (parentId, fileName) = await EnsureParentFolderAsync(rootFolderId, path, supportsAllDrives, cancellationToken);
 
         var fileMetadata = new DriveFile
         {
@@ -39,20 +39,24 @@ public class GoogleDriveClient : IGoogleDriveClient
 
         var request = _driveService.Files.Create(fileMetadata, content, contentType ?? "application/octet-stream");
         request.Fields = "id,name,parents,createdTime,modifiedTime,md5Checksum,size";
+        request.SupportsAllDrives = supportsAllDrives;
         await request.UploadAsync(cancellationToken);
         return request.ResponseBody ?? throw new InvalidOperationException("Google Drive upload returned no metadata.");
     }
 
-    public async Task<Stream> DownloadAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+    public async Task<Stream> DownloadAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
     {
-        var file = await FindFileByPathAsync(rootFolderId, path, cancellationToken) ?? throw new FileNotFoundException(path);
+        var file = await FindFileByPathAsync(rootFolderId, path, supportsAllDrives, cancellationToken) ?? throw new FileNotFoundException(path);
         var pipe = new Pipe();
+        var getRequest = _driveService.Files.Get(file.Id);
+        getRequest.SupportsAllDrives = supportsAllDrives;
+
         _ = Task.Run(async () =>
         {
             try
             {
                 await using var destination = pipe.Writer.AsStream(leaveOpen: true);
-                await _driveService.Files.Get(file.Id).DownloadAsync(destination, cancellationToken);
+                await getRequest.DownloadAsync(destination, cancellationToken);
                 pipe.Writer.Complete();
             }
             catch (Exception ex)
@@ -64,29 +68,29 @@ public class GoogleDriveClient : IGoogleDriveClient
         return pipe.Reader.AsStream();
     }
 
-    public async Task<bool> DeleteAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+    public async Task<bool> DeleteAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
     {
-        var file = await FindFileByPathAsync(rootFolderId, path, cancellationToken);
+        var file = await FindFileByPathAsync(rootFolderId, path, supportsAllDrives, cancellationToken);
         if (file == null)
         {
             return false;
         }
 
-        await DeleteRecursiveAsync(file.Id, file.MimeType, cancellationToken);
+        await DeleteRecursiveAsync(file.Id, file.MimeType, supportsAllDrives, cancellationToken);
         return true;
     }
 
-    public async Task<bool> ExistsAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
     {
-        return await FindFileByPathAsync(rootFolderId, path, cancellationToken) != null;
+        return await FindFileByPathAsync(rootFolderId, path, supportsAllDrives, cancellationToken) != null;
     }
 
-    public Task<DriveFile?> GetMetadataAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+    public Task<DriveFile?> GetMetadataAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
     {
-        return FindFileByPathAsync(rootFolderId, path, cancellationToken);
+        return FindFileByPathAsync(rootFolderId, path, supportsAllDrives, cancellationToken);
     }
 
-    public async IAsyncEnumerable<DriveFile> ListAsync(string rootFolderId, string? directory, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<DriveFile> ListAsync(string rootFolderId, string? directory, bool supportsAllDrives, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         string parentId;
         if (string.IsNullOrWhiteSpace(directory))
@@ -95,7 +99,7 @@ public class GoogleDriveClient : IGoogleDriveClient
         }
         else
         {
-            parentId = await EnsureFolderPathAsync(rootFolderId, directory!, false, cancellationToken) ?? string.Empty;
+            parentId = await EnsureFolderPathAsync(rootFolderId, directory!, false, supportsAllDrives, cancellationToken) ?? string.Empty;
             if (string.IsNullOrWhiteSpace(parentId))
             {
                 yield break;
@@ -103,7 +107,11 @@ public class GoogleDriveClient : IGoogleDriveClient
         }
 
         var request = _driveService.Files.List();
+        request.SupportsAllDrives = supportsAllDrives;
+        request.IncludeItemsFromAllDrives = supportsAllDrives;
+
         request.Q = $"'{parentId}' in parents and trashed=false";
+
         request.Fields = "nextPageToken,files(id,name,parents,createdTime,modifiedTime,md5Checksum,size,mimeType)";
 
         do
@@ -119,7 +127,7 @@ public class GoogleDriveClient : IGoogleDriveClient
         } while (!string.IsNullOrEmpty(request.PageToken));
     }
 
-    private async Task<(string ParentId, string Name)> EnsureParentFolderAsync(string rootFolderId, string fullPath, CancellationToken cancellationToken)
+    private async Task<(string ParentId, string Name)> EnsureParentFolderAsync(string rootFolderId, string fullPath, bool supportsAllDrives, CancellationToken cancellationToken)
     {
         var normalizedPath = fullPath.Replace("\\", "/").Trim('/');
         var segments = normalizedPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -129,16 +137,16 @@ public class GoogleDriveClient : IGoogleDriveClient
         }
 
         var parentPath = string.Join('/', segments.Take(segments.Length - 1));
-        var parentId = await EnsureFolderPathAsync(rootFolderId, parentPath, true, cancellationToken) ?? rootFolderId;
+        var parentId = await EnsureFolderPathAsync(rootFolderId, parentPath, true, supportsAllDrives, cancellationToken) ?? rootFolderId;
         return (parentId, segments.Last());
     }
 
-    private async Task<string?> EnsureFolderPathAsync(string rootFolderId, string path, bool createIfMissing, CancellationToken cancellationToken)
+    private async Task<string?> EnsureFolderPathAsync(string rootFolderId, string path, bool createIfMissing, bool supportsAllDrives, CancellationToken cancellationToken)
     {
         var currentId = rootFolderId;
         foreach (var segment in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
         {
-            var folder = await FindChildAsync(currentId, segment, cancellationToken);
+            var folder = await FindChildAsync(currentId, segment, supportsAllDrives, cancellationToken);
             if (folder == null)
             {
                 if (!createIfMissing)
@@ -147,7 +155,9 @@ public class GoogleDriveClient : IGoogleDriveClient
                 }
 
                 var metadata = new DriveFile { Name = segment, MimeType = "application/vnd.google-apps.folder", Parents = new List<string> { currentId } };
-                folder = await _driveService.Files.Create(metadata).ExecuteAsync(cancellationToken);
+                var createRequest = _driveService.Files.Create(metadata);
+                createRequest.SupportsAllDrives = supportsAllDrives;
+                folder = await createRequest.ExecuteAsync(cancellationToken);
             }
 
             currentId = folder.Id;
@@ -156,32 +166,38 @@ public class GoogleDriveClient : IGoogleDriveClient
         return currentId;
     }
 
-    private async Task<DriveFile?> FindChildAsync(string parentId, string name, CancellationToken cancellationToken)
+    private async Task<DriveFile?> FindChildAsync(string parentId, string name, bool supportsAllDrives, CancellationToken cancellationToken)
     {
         var request = _driveService.Files.List();
         request.Q = $"'{parentId}' in parents and name='{name}' and trashed=false";
         request.Fields = "files(id,name,parents,createdTime,modifiedTime,md5Checksum,size,mimeType)";
+        request.SupportsAllDrives = supportsAllDrives;
+        request.IncludeItemsFromAllDrives = supportsAllDrives;
         var response = await request.ExecuteAsync(cancellationToken);
         return response.Files?.FirstOrDefault();
     }
 
-    private async Task DeleteRecursiveAsync(string fileId, string? mimeType, CancellationToken cancellationToken)
+    private async Task DeleteRecursiveAsync(string fileId, string? mimeType, bool supportsAllDrives, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         if (string.Equals(mimeType, FolderMimeType, StringComparison.OrdinalIgnoreCase))
         {
-            await DeleteFolderChildrenAsync(fileId, cancellationToken);
+            await DeleteFolderChildrenAsync(fileId, supportsAllDrives, cancellationToken);
         }
 
-        await _driveService.Files.Delete(fileId).ExecuteAsync(cancellationToken);
+        var deleteRequest = _driveService.Files.Delete(fileId);
+        deleteRequest.SupportsAllDrives = supportsAllDrives;
+        await deleteRequest.ExecuteAsync(cancellationToken);
     }
 
-    private async Task DeleteFolderChildrenAsync(string folderId, CancellationToken cancellationToken)
+    private async Task DeleteFolderChildrenAsync(string folderId, bool supportsAllDrives, CancellationToken cancellationToken)
     {
         var request = _driveService.Files.List();
         request.Q = $"'{folderId}' in parents and trashed=false";
         request.Fields = "nextPageToken,files(id,mimeType)";
+        request.SupportsAllDrives = supportsAllDrives;
+        request.IncludeItemsFromAllDrives = supportsAllDrives;
 
         do
         {
@@ -194,14 +210,14 @@ public class GoogleDriveClient : IGoogleDriveClient
                     continue;
                 }
 
-                await DeleteRecursiveAsync(entry.Id, entry.MimeType, cancellationToken);
+                await DeleteRecursiveAsync(entry.Id, entry.MimeType, supportsAllDrives, cancellationToken);
             }
 
             request.PageToken = response.NextPageToken;
         } while (!string.IsNullOrWhiteSpace(request.PageToken));
     }
 
-    private async Task<DriveFile?> FindFileByPathAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+    private async Task<DriveFile?> FindFileByPathAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
     {
         var normalizedPath = path.Replace("\\", "/").Trim('/');
         var segments = normalizedPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -212,12 +228,12 @@ public class GoogleDriveClient : IGoogleDriveClient
 
         var parentPath = string.Join('/', segments.Take(segments.Length - 1));
         var fileName = segments.Last();
-        var parentId = await EnsureFolderPathAsync(rootFolderId, parentPath, false, cancellationToken);
+        var parentId = await EnsureFolderPathAsync(rootFolderId, parentPath, false, supportsAllDrives, cancellationToken);
         if (parentId == null)
         {
             return null;
         }
 
-        return await FindChildAsync(parentId, fileName, cancellationToken);
+        return await FindChildAsync(parentId, fileName, supportsAllDrives, cancellationToken);
     }
 }

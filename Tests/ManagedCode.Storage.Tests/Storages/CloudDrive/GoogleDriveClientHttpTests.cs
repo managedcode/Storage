@@ -1,3 +1,9 @@
+using Google.Apis.Drive.v3;
+using Google.Apis.Http;
+using Google.Apis.Services;
+using ManagedCode.Storage.GoogleDrive.Clients;
+using ManagedCode.Storage.GoogleDrive.Options;
+using Shouldly;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,12 +14,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Apis.Drive.v3;
-using Google.Apis.Drive.v3.Data;
-using Google.Apis.Http;
-using Google.Apis.Services;
-using ManagedCode.Storage.GoogleDrive.Clients;
-using Shouldly;
 using Xunit;
 using DriveFile = Google.Apis.Drive.v3.Data.File;
 
@@ -21,7 +21,7 @@ namespace ManagedCode.Storage.Tests.Storages.CloudDrive;
 
 public class GoogleDriveClientHttpTests
 {
-    private const string RootFolderId = "root";
+    private static readonly GoogleDriveStorageOptions TestOptions = new() { RootFolderId = "root", SupportsAllDrives = false };
 
     [Fact]
     public async Task GoogleDriveClient_WithHttpHandler_RoundTrip()
@@ -30,50 +30,50 @@ public class GoogleDriveClientHttpTests
         var driveService = CreateDriveService(handler);
         var client = new GoogleDriveClient(driveService);
 
-        await client.EnsureRootAsync(RootFolderId, true, CancellationToken.None);
+        await client.EnsureRootAsync(TestOptions.RootFolderId, true, CancellationToken.None);
 
         await using (var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes("google payload")))
         {
-            var uploaded = await client.UploadAsync(RootFolderId, "dir/file.txt", uploadStream, "text/plain", CancellationToken.None);
+            var uploaded = await client.UploadAsync(TestOptions.RootFolderId, "dir/file.txt", uploadStream, "text/plain", TestOptions.SupportsAllDrives, CancellationToken.None);
             uploaded.Name.ShouldBe("file.txt");
             uploaded.Size.ShouldBe("google payload".Length);
         }
 
         await using (var nestedStream = new MemoryStream(Encoding.UTF8.GetBytes("nested payload")))
         {
-            var uploaded = await client.UploadAsync(RootFolderId, "dir/sub/inner.txt", nestedStream, "text/plain", CancellationToken.None);
+            var uploaded = await client.UploadAsync(TestOptions.RootFolderId, "dir/sub/inner.txt", nestedStream, "text/plain", TestOptions.SupportsAllDrives, CancellationToken.None);
             uploaded.Name.ShouldBe("inner.txt");
         }
 
-        (await client.ExistsAsync(RootFolderId, "dir/file.txt", CancellationToken.None)).ShouldBeTrue();
-        (await client.ExistsAsync(RootFolderId, "dir/sub/inner.txt", CancellationToken.None)).ShouldBeTrue();
+        (await client.ExistsAsync(TestOptions.RootFolderId, "dir/file.txt", TestOptions.SupportsAllDrives, CancellationToken.None)).ShouldBeTrue();
+        (await client.ExistsAsync(TestOptions.RootFolderId, "dir/sub/inner.txt", TestOptions.SupportsAllDrives, CancellationToken.None)).ShouldBeTrue();
 
-        await using (var downloaded = await client.DownloadAsync(RootFolderId, "dir/file.txt", CancellationToken.None))
-        using (var reader = new StreamReader(downloaded, Encoding.UTF8))
+        await using (var downloaded = await client.DownloadAsync(TestOptions.RootFolderId, "dir/file.txt", TestOptions.SupportsAllDrives, CancellationToken.None))
+        using (var reader = new StreamReader(downloaded))
         {
             (await reader.ReadToEndAsync()).ShouldBe("google payload");
         }
 
         var listed = new List<DriveFile>();
-        await foreach (var item in client.ListAsync(RootFolderId, "dir", CancellationToken.None))
+        await foreach (var item in client.ListAsync(TestOptions.RootFolderId, "dir", TestOptions.SupportsAllDrives, CancellationToken.None))
         {
             listed.Add(item);
         }
 
         listed.ShouldContain(f => f.Name == "file.txt");
 
-        (await client.DeleteAsync(RootFolderId, "dir", CancellationToken.None)).ShouldBeTrue();
-        (await client.ExistsAsync(RootFolderId, "dir/file.txt", CancellationToken.None)).ShouldBeFalse();
-        (await client.ExistsAsync(RootFolderId, "dir/sub/inner.txt", CancellationToken.None)).ShouldBeFalse();
+        (await client.DeleteAsync(TestOptions.RootFolderId, "dir", TestOptions.SupportsAllDrives, CancellationToken.None)).ShouldBeTrue();
+        (await client.ExistsAsync(TestOptions.RootFolderId, "dir/file.txt", TestOptions.SupportsAllDrives, CancellationToken.None)).ShouldBeFalse();
+        (await client.ExistsAsync(TestOptions.RootFolderId, "dir/sub/inner.txt", TestOptions.SupportsAllDrives, CancellationToken.None)).ShouldBeFalse();
 
         var afterDelete = new List<DriveFile>();
-        await foreach (var item in client.ListAsync(RootFolderId, "dir", CancellationToken.None))
+        await foreach (var item in client.ListAsync(TestOptions.RootFolderId, "dir", TestOptions.SupportsAllDrives, CancellationToken.None))
         {
             afterDelete.Add(item);
         }
 
         afterDelete.ShouldBeEmpty();
-        (await client.DeleteAsync(RootFolderId, "dir", CancellationToken.None)).ShouldBeFalse();
+        (await client.DeleteAsync(TestOptions.RootFolderId, "dir", TestOptions.SupportsAllDrives, CancellationToken.None)).ShouldBeFalse();
     }
 
     private static DriveService CreateDriveService(HttpMessageHandler handler)
@@ -126,7 +126,7 @@ public class GoogleDriveClientHttpTests
                 var model = JsonSerializer.Deserialize<CreateRequest>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                     ?? throw new InvalidOperationException("Create request body is missing.");
 
-                var parentId = model.Parents?.FirstOrDefault() ?? RootFolderId;
+                var parentId = model.Parents?.FirstOrDefault() ?? TestOptions.RootFolderId;
                 var mimeType = string.IsNullOrWhiteSpace(model.MimeType) ? "application/octet-stream" : model.MimeType;
                 var created = CreateEntry(name: model.Name ?? Guid.NewGuid().ToString("N"), parentId: parentId, mimeType: mimeType, content: Array.Empty<byte>());
                 return JsonResponse(ToResponse(created));
@@ -144,7 +144,7 @@ public class GoogleDriveClientHttpTests
                 var uploadId = "upload-" + Interlocked.Increment(ref _counter);
                 _pendingUploads[uploadId] = new PendingUpload(
                     Name: model.Name ?? Guid.NewGuid().ToString("N"),
-                    ParentId: model.Parents?.FirstOrDefault() ?? RootFolderId,
+                    ParentId: model.Parents?.FirstOrDefault() ?? TestOptions.RootFolderId,
                     MimeType: model.MimeType ?? "application/octet-stream");
 
                 return new HttpResponseMessage(HttpStatusCode.OK)

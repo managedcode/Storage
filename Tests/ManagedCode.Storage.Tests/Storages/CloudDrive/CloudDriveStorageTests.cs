@@ -1,10 +1,3 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
-using Google.Apis.Drive.v3.Data;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Dropbox;
 using ManagedCode.Storage.Dropbox.Clients;
@@ -17,6 +10,12 @@ using ManagedCode.Storage.OneDrive.Clients;
 using ManagedCode.Storage.OneDrive.Options;
 using Microsoft.Graph.Models;
 using Shouldly;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using File = Google.Apis.Drive.v3.Data.File;
 
@@ -346,33 +345,33 @@ public class CloudDriveStorageTests
             return Task.CompletedTask;
         }
 
-        public Task<File> UploadAsync(string rootFolderId, string path, Stream content, string? contentType, CancellationToken cancellationToken)
+        public Task<File> UploadAsync(string rootFolderId, string path, Stream content, string? contentType, bool supportsAllDrives, CancellationToken cancellationToken)
         {
             var entry = _drive.Save(path, content, contentType);
             return Task.FromResult(entry.ToGoogleFile(path));
         }
 
-        public Task<Stream> DownloadAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+        public Task<Stream> DownloadAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
         {
             return Task.FromResult(_drive.Download(path));
         }
 
-        public Task<bool> DeleteAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+        public Task<bool> DeleteAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
         {
             return Task.FromResult(_drive.Delete(path));
         }
 
-        public Task<bool> ExistsAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+        public Task<bool> ExistsAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
         {
             return Task.FromResult(_drive.Exists(path));
         }
 
-        public Task<File?> GetMetadataAsync(string rootFolderId, string path, CancellationToken cancellationToken)
+        public Task<File?> GetMetadataAsync(string rootFolderId, string path, bool supportsAllDrives, CancellationToken cancellationToken)
         {
             return Task.FromResult(_drive.Get(path)?.ToGoogleFile(path));
         }
 
-        public async IAsyncEnumerable<File> ListAsync(string rootFolderId, string? directory, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<File> ListAsync(string rootFolderId, string? directory, bool supportsAllDrives, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await foreach (var entry in _drive.List(directory, cancellationToken))
             {

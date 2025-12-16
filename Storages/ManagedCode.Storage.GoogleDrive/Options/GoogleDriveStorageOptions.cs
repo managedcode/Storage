@@ -13,4 +13,6 @@ public class GoogleDriveStorageOptions : IStorageOptions
     public string RootFolderId { get; set; } = "root";
 
     public bool CreateContainerIfNotExists { get; set; } = true;
+
+    public bool SupportsAllDrives { get; set; }
 }
