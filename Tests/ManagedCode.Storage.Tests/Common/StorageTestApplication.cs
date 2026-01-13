@@ -41,6 +41,7 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
     {
         _azuriteContainer = new AzuriteBuilder()
             .WithImage(ContainerImages.Azurite)
+            .WithCommand("--skipApiVersionCheck")
             .Build();
 
         _localStackContainer = new LocalStackBuilder()

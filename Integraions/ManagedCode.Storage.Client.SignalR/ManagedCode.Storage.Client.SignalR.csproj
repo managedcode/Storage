@@ -20,9 +20,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.MimeTypes" Version="1.0.7" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Http.Connections.Client" Version="10.0.0" />
+        <PackageReference Include="ManagedCode.MimeTypes" Version="10.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Connections.Client" Version="10.0.1" />
     </ItemGroup>
 
     <ItemGroup>

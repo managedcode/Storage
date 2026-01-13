@@ -14,6 +14,6 @@
   <ItemGroup>
     <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
     <PackageReference Include="ManagedCode.MimeTypes" Version="10.0.1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.73.0.3987" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.73.0.3996" />
   </ItemGroup>
 </Project>

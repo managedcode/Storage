@@ -49,7 +49,13 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         await EnsureContainerExist(cancellationToken);
 
-        await foreach (var item in StorageClient.GetBlobsAsync(prefix: directory, cancellationToken: cancellationToken)
+        var listOptions = new GetBlobsOptions
+        {
+            Prefix = directory,
+            Traits = BlobTraits.Metadata
+        };
+
+        await foreach (var item in StorageClient.GetBlobsAsync(listOptions, cancellationToken)
                            .AsPages()
                            .WithCancellation(cancellationToken))
         {
@@ -202,7 +208,11 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
     {
         try
         {
-            var blobs = StorageClient.GetBlobs(prefix: directory, cancellationToken: cancellationToken);
+            var listOptions = new GetBlobsOptions
+            {
+                Prefix = directory
+            };
+            var blobs = StorageClient.GetBlobs(listOptions, cancellationToken);
 
             foreach (var blobClient in blobs.Select(blob => StorageClient.GetBlobClient(blob.Name)))
             {

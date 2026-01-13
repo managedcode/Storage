@@ -33,6 +33,16 @@ public sealed class EmptyContainer : IContainer
         return 0;
     }
 
+    public string GetConnectionString(ConnectionMode connectionMode)
+    {
+        throw new ConnectionStringProviderNotConfiguredException();
+    }
+
+    public string GetConnectionString(string name, ConnectionMode connectionMode)
+    {
+        throw new ConnectionStringProviderNotConfiguredException();
+    }
+
     public IReadOnlyDictionary<ushort, ushort> GetMappedPublicPorts()
     {
         return new Dictionary<ushort, ushort>();

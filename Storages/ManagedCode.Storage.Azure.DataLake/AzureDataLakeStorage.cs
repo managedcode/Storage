@@ -78,7 +78,12 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var item in StorageClient.GetPathsAsync(directory, cancellationToken: cancellationToken))
+        var listOptions = new DataLakeGetPathsOptions
+        {
+            Path = directory
+        };
+
+        await foreach (var item in StorageClient.GetPathsAsync(listOptions, cancellationToken))
         {
             if (item is not null)
             {
