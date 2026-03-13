@@ -8,6 +8,8 @@ namespace ManagedCode.Storage.FileSystem
 {
     public class FileSystemStorageProvider(IServiceProvider serviceProvider, FileSystemStorageOptions defaultOptions) : IStorageProvider
     {
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
+
         public Type StorageOptionsType => typeof(FileSystemStorageOptions);
 
         public TStorage CreateStorage<TStorage, TOptions>(TOptions options)

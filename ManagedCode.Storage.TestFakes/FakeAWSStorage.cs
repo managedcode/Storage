@@ -16,7 +16,7 @@ public class FakeAWSStorage : FileSystemStorage, IAWSStorage
     {
     }
 
-    public IAmazonS3 StorageClient { get; }
+    public new IAmazonS3 StorageClient { get; } = null!;
 
     public Task<Result> SetStorageOptions(AWSStorageOptions options, CancellationToken cancellationToken = default)
     {

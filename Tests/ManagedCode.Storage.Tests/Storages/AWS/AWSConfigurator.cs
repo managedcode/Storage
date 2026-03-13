@@ -1,4 +1,4 @@
-﻿using Amazon.S3;
+using Amazon.S3;
 using ManagedCode.Storage.Aws.Extensions;
 using ManagedCode.Storage.Aws.Options;
 using Microsoft.Extensions.DependencyInjection;

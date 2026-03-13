@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Server.Extensions;
 using ManagedCode.Storage.Tests.Common.TestApp.Controllers;

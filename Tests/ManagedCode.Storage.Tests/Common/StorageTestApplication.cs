@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Amazon.S3;
@@ -39,17 +39,14 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
 
     public StorageTestApplication()
     {
-        _azuriteContainer = new AzuriteBuilder()
-            .WithImage(ContainerImages.Azurite)
+        _azuriteContainer = new AzuriteBuilder(ContainerImages.Azurite)
             .WithCommand("--skipApiVersionCheck")
             .Build();
 
-        _localStackContainer = new LocalStackBuilder()
-            .WithImage(ContainerImages.LocalStack)
+        _localStackContainer = new LocalStackBuilder(ContainerImages.LocalStack)
             .Build();
 
-        _gcpContainer = new FakeGcsServerBuilder()
-            .WithImage(ContainerImages.FakeGCSServer)
+        _gcpContainer = new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
             .Build();
 
         Task.WaitAll(
@@ -129,7 +126,10 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
             _azuriteContainer.DisposeAsync().AsTask(),
             _localStackContainer.DisposeAsync().AsTask(),
             _gcpContainer.DisposeAsync().AsTask()
-        );
+        ).ConfigureAwait(false);
+
+        await base.DisposeAsync().ConfigureAwait(false);
+        GC.SuppressFinalize(this);
     }
 
     public StorageSignalRClient CreateSignalRClient(Action<StorageSignalRClientOptions>? configure = null)

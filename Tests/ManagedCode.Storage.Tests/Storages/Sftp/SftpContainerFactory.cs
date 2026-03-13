@@ -1,3 +1,4 @@
+using ManagedCode.Storage.Tests.Common;
 using Testcontainers.Sftp;
 
 namespace ManagedCode.Storage.Tests.Storages.Sftp;
@@ -10,7 +11,7 @@ internal static class SftpContainerFactory
 
     public static SftpContainer Create()
     {
-        return new SftpBuilder()
+        return new SftpBuilder(ContainerImages.Sftp)
             .WithUsername(Username)
             .WithPassword(Password)
             .WithUploadDirectory(RemoteDirectory)

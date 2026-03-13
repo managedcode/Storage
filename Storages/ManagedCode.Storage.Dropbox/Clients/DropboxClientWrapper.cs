@@ -22,6 +22,7 @@ public class DropboxClientWrapper : IDropboxClientWrapper, IDisposable
     public void Dispose()
     {
         _client.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public async Task EnsureRootAsync(string rootPath, bool createIfNotExists, CancellationToken cancellationToken)
@@ -171,6 +172,6 @@ public class DropboxClientWrapper : IDropboxClientWrapper, IDisposable
             return normalizedRoot;
         }
 
-        return normalizedRoot.EndsWith("/") ? normalizedRoot + normalizedPath : normalizedRoot + "/" + normalizedPath;
+        return normalizedRoot.EndsWith('/') ? normalizedRoot + normalizedPath : normalizedRoot + "/" + normalizedPath;
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -128,7 +129,7 @@ public class StorageClientChunkTests
                 var json = JsonSerializer.Serialize(new
                 {
                     isSuccess = true,
-                    value = expectedChecksum.ToString()
+                    value = expectedChecksum.ToString(CultureInfo.InvariantCulture)
                 });
 
                 return Task.FromResult(CreateJsonResponse(HttpStatusCode.OK, json));

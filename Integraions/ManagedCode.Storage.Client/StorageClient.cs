@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -119,8 +120,8 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
         {
             using var response = await httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
             var localFile = path is null
-                ? await LocalFile.FromStreamAsync(response, fileName)
-                : await LocalFile.FromStreamAsync(response, path, fileName);
+                ? await LocalFile.FromStreamAsync(response, fileName, cancellationToken)
+                : await LocalFile.FromStreamAsync(response, path, fileName, cancellationToken);
             return Result<LocalFile>.Succeed(localFile);
         }
         catch (HttpRequestException e) when (e.StatusCode != null)
@@ -177,10 +178,10 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
             formData.Add(new StringContent(uploadId), "Payload.UploadId");
             formData.Add(new StringContent(resolvedFileName), "Payload.FileName");
             formData.Add(new StringContent(contentType), "Payload.ContentType");
-            formData.Add(new StringContent((totalBytes > 0 ? totalBytes : 0).ToString()), "Payload.FileSize");
-            formData.Add(new StringContent(chunkIndex.ToString()), "Payload.ChunkIndex");
-            formData.Add(new StringContent(bytesRead.ToString()), "Payload.ChunkSize");
-            formData.Add(new StringContent(totalChunks.ToString()), "Payload.TotalChunks");
+            formData.Add(new StringContent((totalBytes > 0 ? totalBytes : 0).ToString(CultureInfo.InvariantCulture)), "Payload.FileSize");
+            formData.Add(new StringContent(chunkIndex.ToString(CultureInfo.InvariantCulture)), "Payload.ChunkIndex");
+            formData.Add(new StringContent(bytesRead.ToString(CultureInfo.InvariantCulture)), "Payload.ChunkSize");
+            formData.Add(new StringContent(totalChunks.ToString(CultureInfo.InvariantCulture)), "Payload.TotalChunks");
 
             using (var response = await httpClient.PostAsync(uploadApiUrl, formData, cancellationToken))
             {

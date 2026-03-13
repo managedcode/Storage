@@ -16,21 +16,20 @@ public class LocalFile : IDisposable, IAsyncDisposable
     {
         path ??= Path.GetTempFileName();
 
-        string? directory;
         KeepAlive = keepAlive;
+        var resolvedPath = path;
 
         if (string.IsNullOrEmpty(Path.GetExtension(path)))
         {
-            directory = Path.GetDirectoryName(path);
+            var directoryPath = Path.GetDirectoryName(path);
             var name = Path.GetFileName(path);
-            if (directory != null)
-                FilePath = Path.Combine(directory, $"{name}.tmp");
+            resolvedPath = directoryPath is null
+                ? Path.Combine(Path.GetTempPath(), $"{name}.tmp")
+                : Path.Combine(directoryPath, $"{name}.tmp");
         }
-        else
-        {
-            directory = Path.GetDirectoryName(path);
-            FilePath = path;
-        }
+
+        FilePath = resolvedPath;
+        var directory = Path.GetDirectoryName(FilePath);
 
         if (!Directory.Exists(directory))
             Directory.CreateDirectory(directory ?? throw new InvalidOperationException());
@@ -62,8 +61,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
             {
                 CloseFileStream();
 
-                if (_disposed)
-                    throw new ObjectDisposedException(FilePath);
+                ObjectDisposedException.ThrowIf(_disposed, this);
 
                 if (!FileInfo.Exists)
                     throw new FileNotFoundException(FilePath);
@@ -77,6 +75,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
     public ValueTask DisposeAsync()
     {
         Dispose();
+        GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }
 
@@ -100,6 +99,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
             finally
             {
                 _disposed = true;
+                GC.SuppressFinalize(this);
             }
         }
     }
@@ -430,18 +430,19 @@ public class LocalFile : IDisposable, IAsyncDisposable
         {
             if (_disposed)
             {
-                await ValueTask.CompletedTask;
+                await base.DisposeAsync().ConfigureAwait(false);
                 return;
             }
 
-            await _stream.DisposeAsync();
+            await _stream.DisposeAsync().ConfigureAwait(false);
 
             if (_disposeOwner)
             {
-                await _owner.DisposeAsync();
+                await _owner.DisposeAsync().ConfigureAwait(false);
             }
 
             _disposed = true;
+            await base.DisposeAsync().ConfigureAwait(false);
         }
     }
 }

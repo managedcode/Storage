@@ -7,6 +7,7 @@
   <Folder Name="/Integraions/">
     <Project Path="Integraions/ManagedCode.Storage.Client.SignalR/ManagedCode.Storage.Client.SignalR.csproj" />
     <Project Path="Integraions/ManagedCode.Storage.Client/ManagedCode.Storage.Client.csproj" />
+    <Project Path="Integraions/ManagedCode.Storage.Orleans/ManagedCode.Storage.Orleans.csproj" />
     <Project Path="Integraions/ManagedCode.Storage.Server/ManagedCode.Storage.Server.csproj" />
   </Folder>
   <Folder Name="/Storages/">

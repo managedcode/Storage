@@ -16,7 +16,7 @@ public class FakeGoogleStorage : FileSystemStorage, IGCPStorage
     {
     }
 
-    public StorageClient StorageClient { get; }
+    public new StorageClient StorageClient { get; } = null!;
 
     public Task<Result> SetStorageOptions(GCPStorageOptions options, CancellationToken cancellationToken = default)
     {

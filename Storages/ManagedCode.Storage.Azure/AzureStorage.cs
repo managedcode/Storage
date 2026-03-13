@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -130,7 +130,10 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
 
     public async Task<Result> SetStorageOptions(IStorageOptions options, CancellationToken cancellationToken = default)
     {
-        StorageOptions = options as IAzureStorageOptions;
+        if (options is not IAzureStorageOptions azureOptions)
+            return Result.Fail(new InvalidOperationException($"Options must implement {nameof(IAzureStorageOptions)}."));
+
+        StorageOptions = azureOptions;
 
         StorageClient = CreateStorageClient();
         return await CreateContainerAsync(cancellationToken);
@@ -141,8 +144,11 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
         var type = options.GetType()
             .GetGenericArguments()[0];
 
-        StorageOptions = JsonSerializer.Deserialize(JsonSerializer.Serialize(StorageOptions), type) as IAzureStorageOptions;
+        var clonedOptions = JsonSerializer.Deserialize(JsonSerializer.Serialize(StorageOptions), type) as IAzureStorageOptions;
+        if (clonedOptions is null)
+            return Result.Fail(new InvalidOperationException($"Unable to clone {nameof(IAzureStorageOptions)}."));
 
+        StorageOptions = clonedOptions;
         options.Invoke(StorageOptions);
 
         StorageClient = CreateStorageClient();
@@ -164,7 +170,10 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
 
             AzureStorageCredentialsOptions azureStorageCredentialsOptions => new BlobContainerClient(
                 new Uri($"https://{azureStorageCredentialsOptions.AccountName}.blob.core.windows.net/{azureStorageCredentialsOptions.ContainerName}"),
-                azureStorageCredentialsOptions.Credentials, azureStorageCredentialsOptions.OriginalOptions)
+                azureStorageCredentialsOptions.Credentials ?? throw new InvalidOperationException($"{nameof(AzureStorageCredentialsOptions.Credentials)} must be provided."),
+                azureStorageCredentialsOptions.OriginalOptions),
+
+            _ => throw new InvalidOperationException($"Unsupported options type '{StorageOptions.GetType().FullName}'.")
         };
     }
 

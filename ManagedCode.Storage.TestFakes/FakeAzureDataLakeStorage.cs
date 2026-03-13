@@ -17,7 +17,7 @@ public class FakeAzureDataLakeStorage : FileSystemStorage, IAzureDataLakeStorage
     {
     }
 
-    public DataLakeFileSystemClient StorageClient { get; }
+    public new DataLakeFileSystemClient StorageClient { get; } = null!;
 
     public Task<Result> SetStorageOptions(AzureDataLakeStorageOptions options, CancellationToken cancellationToken = default)
     {

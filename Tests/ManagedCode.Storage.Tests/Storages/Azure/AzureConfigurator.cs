@@ -1,4 +1,4 @@
-﻿using ManagedCode.Storage.Azure.Extensions;
+using ManagedCode.Storage.Azure.Extensions;
 using ManagedCode.Storage.Azure.Options;
 using Microsoft.Extensions.DependencyInjection;
 

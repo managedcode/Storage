@@ -7,10 +7,10 @@ namespace ManagedCode.Storage.Azure.Options;
 
 public class AzureStorageCredentialsOptions : IAzureStorageOptions
 {
-    public string AccountName { get; set; }
-    public string ContainerName { get; set; }
+    public string AccountName { get; set; } = string.Empty;
+    public string ContainerName { get; set; } = string.Empty;
 
-    public TokenCredential Credentials { get; set; }
+    public TokenCredential? Credentials { get; set; }
 
     public string? Container { get; set; }
     public PublicAccessType PublicAccessType { get; set; }

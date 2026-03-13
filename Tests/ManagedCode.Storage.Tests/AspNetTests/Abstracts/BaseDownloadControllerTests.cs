@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Globalization;
 using System.Net;
 using System.Threading.Tasks;
 using Shouldly;
@@ -18,7 +19,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
 
     protected BaseDownloadControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
-        _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
+        _uploadEndpoint = string.Format(CultureInfo.InvariantCulture, ApiEndpoints.Base.UploadFile, ApiEndpoint);
         _downloadEndpoint = $"{ApiEndpoint}/download";
         _downloadBytesEndpoint = $"{ApiEndpoint}/download-bytes";
     }

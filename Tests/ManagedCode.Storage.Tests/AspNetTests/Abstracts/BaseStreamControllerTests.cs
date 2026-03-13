@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
     protected BaseStreamControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
         _streamEndpoint = $"{ApiEndpoint}/stream";
-        _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
+        _uploadEndpoint = string.Format(CultureInfo.InvariantCulture, ApiEndpoints.Base.UploadFile, ApiEndpoint);
     }
 
     [Fact]

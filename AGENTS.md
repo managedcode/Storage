@@ -1,196 +1,315 @@
-ManagedCode.Storage — .NET 10
+Project: ManagedCode.Storage
+Stack: .NET 10 / C# / xUnit / VSTest / Coverlet / GitHub Pages docs
 
 Follows [MCAF](https://mcaf.managed-code.com/)
 
 ---
 
+## Purpose
+
+This file defines how AI agents work in this solution.
+
+- Root `AGENTS.md` holds the global workflow, shared commands, cross-cutting rules, maintainability limits, and global skill catalog.
+- Every `.csproj` root in this multi-project solution keeps a local `AGENTS.md` with project-specific entry points, boundaries, commands, risks, and applicable skills.
+- Local `AGENTS.md` files may tighten root rules, but they must not weaken them silently.
+
+## Solution Topology
+
+- Solution root: `ManagedCode.Storage.slnx`
+- Projects or modules with local `AGENTS.md` files:
+  - `ManagedCode.Storage.Core/`
+  - `ManagedCode.Storage.TestFakes/`
+  - `ManagedCode.Storage.VirtualFileSystem/`
+  - `Integraions/ManagedCode.Storage.Client/`
+  - `Integraions/ManagedCode.Storage.Client.SignalR/`
+  - `Integraions/ManagedCode.Storage.Orleans/`
+  - `Integraions/ManagedCode.Storage.Server/`
+  - `Storages/ManagedCode.Storage.Aws/`
+  - `Storages/ManagedCode.Storage.Azure/`
+  - `Storages/ManagedCode.Storage.Azure.DataLake/`
+  - `Storages/ManagedCode.Storage.CloudKit/`
+  - `Storages/ManagedCode.Storage.Dropbox/`
+  - `Storages/ManagedCode.Storage.FileSystem/`
+  - `Storages/ManagedCode.Storage.Google/`
+  - `Storages/ManagedCode.Storage.GoogleDrive/`
+  - `Storages/ManagedCode.Storage.OneDrive/`
+  - `Storages/ManagedCode.Storage.Sftp/`
+  - `Tests/ManagedCode.Storage.Tests/`
+
+## Rule Precedence
+
+1. Read the solution-root `AGENTS.md` first.
+2. Read the nearest local `AGENTS.md` for the area you will edit.
+3. Apply the stricter rule when both files speak to the same topic.
+4. Local `AGENTS.md` files may refine or tighten root rules, but they must not silently weaken them.
+5. If a local rule needs an exception, document it explicitly in the nearest local `AGENTS.md`, ADR, or feature doc.
+
 ## Conversations (Self-Learning)
 
-Learn the user's habits, preferences, and working style. Extract rules from conversations, save to "## Rules to follow", and generate code according to the user's personal rules.
+Learn the user's stable habits, preferences, and corrections. Record durable rules here instead of relying on chat history.
 
-**Update requirement (core mechanism):**
+Before doing any non-trivial task, evaluate the latest user message.
+If it contains a durable rule, correction, preference, or workflow change, update `AGENTS.md` first.
+If it is only task-local scope, do not turn it into a lasting rule.
 
-Before doing ANY task, evaluate the latest user message.  
-If you detect a new rule, correction, preference, or change → update `AGENTS.md` first.  
-Only after updating the file you may produce the task output.  
-If no new rule is detected → do not update the file.
+Update this file when the user gives:
 
-**When to extract rules:**
+- a repeated correction
+- a permanent requirement
+- a lasting preference
+- a workflow change
+- a high-signal frustration that indicates a rule was missed
 
-- prohibition words (never, don't, stop, avoid) or similar → add NEVER rule
-- requirement words (always, must, make sure, should) or similar → add ALWAYS rule
-- memory words (remember, keep in mind, note that) or similar → add rule
-- process words (the process is, the workflow is, we do it like) or similar → add to workflow
-- convincing argument about approach → capture as a rule (include why)
-- future words (from now on, going forward) or similar → add permanent rule
+Extract rules aggressively when the user says things equivalent to:
 
-**Preferences → add to Preferences section:**
+- "never", "don't", "stop", "avoid"
+- "always", "must", "make sure", "should"
+- "remember", "keep in mind", "note that"
+- "from now on", "going forward"
+- "the workflow is", "we do it like this"
 
-- positive (I like, I prefer, this is better) or similar → Likes
-- negative (I don't like, I hate, this is bad) or similar → Dislikes
-- comparison (prefer X over Y, use X instead of Y) or similar → preference rule
+Preferences belong in `## Preferences`:
 
-**Corrections → update or add rule:**
+- positive preferences go under `Likes`
+- negative preferences go under `Dislikes`
+- comparisons should become explicit rules or preferences
 
-- error indication (this is wrong, incorrect, broken) or similar → fix and add rule
-- repetition frustration (don't do this again, you ignored, you missed) or similar → emphatic rule
-- manual fixes by user → extract what changed and why
+Corrections should update an existing rule when possible instead of creating duplicates.
 
-**Strong signal (add IMMEDIATELY):**
+Treat these as strong signals and record them immediately:
 
-- swearing, frustration, anger, sarcasm → critical rule
-- ALL CAPS, excessive punctuation (!!!, ???) → high priority
-- same mistake twice → permanent emphatic rule
-- user undoes your changes → understand why, prevent
+- anger, swearing, sarcasm, or explicit frustration
+- ALL CAPS, repeated punctuation, or "don't do this again"
+- the same mistake happening twice
+- the user manually undoing or rejecting a recurring pattern
 
-**Ignore (do NOT add):**
+Do not record:
 
-- temporary scope (only for now, just this time, for this task) or similar
-- one-off exceptions
-- context-specific instructions for current task only
+- one-off instructions for the current task
+- temporary exceptions
+- requirements that are already captured elsewhere without change
 
-**Rule format:**
+Rule format:
 
-- One instruction per bullet
-- Tie to category (Testing, Code, Docs, etc.)
-- Capture WHY, not just what
-- Remove obsolete rules when superseded
+- one instruction per bullet
+- place it in the right section
+- capture the why, not only the literal wording
+- remove obsolete rules when a better one replaces them
 
----
+## Global Skills
 
-## Rules to follow (Mandatory, no exceptions)
+List only the skills this solution actually uses.
+
+- `mcaf-solution-governance` — use when bootstrapping or refining root and local `AGENTS.md`, maintainability limits, rule precedence, or solution topology.
+- `mcaf-architecture-overview` — use when creating or updating `docs/Architecture.md` after module, boundary, or contract changes.
+- `mcaf-documentation` — use for durable docs, docs-site synchronization, Mermaid-heavy docs updates, and repo documentation structure changes.
+- `mcaf-adr-writing` — use when documenting cross-cutting architectural or standards decisions in `docs/ADR/`.
+- `mcaf-feature-spec` — use when documenting non-trivial feature behavior in `docs/Features/`.
+- `mcaf-dotnet` — entry skill for .NET work and routing to specialized `.NET` skills.
+- `mcaf-dotnet-analyzer-config` — use when the repo-root `.editorconfig` or analyzer severity ownership changes.
+- `mcaf-dotnet-code-analysis` — use when SDK analyzer policy in `Directory.Build.props` or project files changes.
+- `mcaf-dotnet-features` — use when modern C# or .NET 10 feature choices matter.
+- `mcaf-testing` — use for scenario coverage planning and verification strategy.
+- `mcaf-dotnet-netarchtest` — use when architecture dependency rules in `Tests/ManagedCode.Storage.Tests/Architecture/` change.
+- `mcaf-dotnet-xunit` — use for xUnit tests in `Tests/ManagedCode.Storage.Tests/`.
+- `mcaf-dotnet-quality-ci` — use for the repo quality pass and CI-aligned verification.
+- `mcaf-dotnet-complexity` — use when work risks breaching file, type, function, or nesting limits.
+- `mcaf-dotnet-coverlet` — use when coverage commands, thresholds, or coverage tooling change.
+- `mcaf-dotnet-format` — use when formatter or analyzer command wiring changes.
+- `mcaf-solid-maintainability` — use when reshaping responsibilities or SOLID boundaries.
+- `mcaf-ci-cd` — use for GitHub Actions, branch protection, and `build-and-test` workflow changes.
+
+If the stack is `.NET`, follow these skill-management rules explicitly:
+
+- `mcaf-dotnet` is the entry skill and routes to specialized `.NET` skills.
+- Keep exactly one framework skill: this repo uses `mcaf-dotnet-xunit`.
+- Add tool-specific `.NET` skills only when the repository actually uses those tools in CI or local verification.
+- Keep only `mcaf-*` skills in repository-local agent skill directories.
+- When upgrading skills, recheck `restore`, `build`, `test`, `format`, and `coverage` commands against the repo toolchain.
+
+## Rules to Follow (Mandatory, no Exceptions)
 
 ### Commands
 
-- restore: `dotnet restore ManagedCode.Storage.slnx`
-- build: `dotnet build ManagedCode.Storage.slnx`
-- test: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release`
-- coverage: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
-- format: `dotnet format ManagedCode.Storage.slnx`
+- `restore`: `dotnet restore ManagedCode.Storage.slnx`
+- `build`: `dotnet build ManagedCode.Storage.slnx`
+- `test`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release`
+- `coverage`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
+- `format`: `dotnet format ManagedCode.Storage.slnx`
 
-### Task Delivery (ALL TASKS)
+Toolchain notes:
 
-- Read assignment, inspect code and docs before planning
-- Write multi-step plan before implementation
-- Implement code and tests together
-- Run tests in layers: new → related suite → broader regressions
-- After all tests pass: run format, then build
-- Summarize changes and test results before marking complete
-- Always run required builds and tests yourself; do not ask the user to execute them (explicit user directive)
+- Tests run on `xUnit` over `VSTest` via `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio`.
+- `format` intentionally applies fixes instead of running in verify-only mode.
+- CI verifies formatting with `dotnet format ManagedCode.Storage.slnx --verify-no-changes`.
+- `coverage` uses `coverlet.msbuild` through `dotnet test` MSBuild properties.
+- Architecture dependency rules use `NetArchTest.Rules` inside `Tests/ManagedCode.Storage.Tests/Architecture/` and run through the normal `test` command.
+- Explicit `LangVersion` should only be introduced if a project intentionally differs from the SDK default.
 
-### Documentation (ALL TASKS)
+### Project AGENTS Policy
 
-- Docs live in `docs/` and `README.md`
-- Keep a GitHub Pages docs site in sync with `docs/`, using `DOCS-EXAMPLE/` as the reference template for structure and CI/pipeline
-- When adding new docs pages under `docs/Features/`, `docs/ADR/`, or `docs/API/`, also update the corresponding `index.md` to link the page so it’s discoverable in the docs catalog/navigation (the site generator will still publish the page even without the link)
-- Docs site navigation: do not include a `Templates` page (keep templates in-repo, but don’t surface a dedicated docs-site section for them)
-- Docs content: when referencing repo file paths (e.g. `Tests/.../X.cs`), make them clickable by linking to the corresponding GitHub `blob/tree` URL
-- Update docs when behaviour changes
-- Update configuration examples when required
-- Documentation must include clear schemas/diagrams (prefer Mermaid) for every non-trivial feature and integration so GitHub users can understand flows quickly
-- When adding new projects/providers, ensure `README.md` clearly documents installation, DI wiring, and basic usage examples
-- Where feasible, prefer provider options that can build vendor SDK clients from credentials (to reduce consumer boilerplate) while still allowing client injection for advanced scenarios
-- Avoid "ownership flags" like `ownsClient`; prefer a clear swap point (wrapper/factory) so lifetime and disposal rules stay simple and predictable
-- For providers that rely on vendor SDK clients (Graph/Drive/Dropbox/etc.), document how to obtain credentials/keys/tokens and include a minimal code snippet that builds the required SDK client instance
-- CloudKit docs: explicitly clarify that `ContainerId` is a CloudKit container identifier (not a secret) tied to an Apple App ID, and document the optional `HttpClient`/`ICloudKitClient` injection points for advanced HTTP customization and testing
-- Credentials docs: keep provider sections consistent (What you need → Typical steps → Minimal SDK/DI snippet → Suggested configuration keys) so consumers can wire providers without guesswork
-- Docs: keep the testing strategy discoverable from `docs/Development/setup.md` (link or embedded section) so users find how/why tests run during initial setup
-- Docs: validate all Mermaid diagrams render on the docs site (Mermaid v10.9.5) and fix any syntax errors before shipping docs changes
-- Docs site: include `sitemap.xml` and reference it from `robots.txt` so search engines can discover all pages after every rebuild
-- Docs site: display the project version from `Directory.Build.props` (not CI run numbers) and keep the footer copyright line slightly smaller than the rest for a cleaner visual hierarchy
-- Docs site footer: keep copyright/license/sitemap/version compact (prefer a single-line layout with separators) so it doesn’t look like a tall multi-line block
-- Docs site: display the short project name `Storage` in the site title/nav (keep `ManagedCode.Storage` in content where it refers to package IDs)
-- Docs: do not add ADRs for docs-site generation/pipeline changes; document the docs-site build, SEO, and GitHub Pages workflow under `docs/Development/` instead
-- Docs site: do not generate redirect/alias pages like `/Storage/`; keep a single canonical home URL (`/`) and remove unused routes
-- Docs site: after changing the generator/workflow/layout, smoke-check the built HTML is not empty (e.g., `/` contains the README H1 and `/setup/` contains a real doc heading), not just that Jekyll exits successfully
+- Multi-project solutions MUST keep one root `AGENTS.md` plus one local `AGENTS.md` in each project root.
+- Each local `AGENTS.md` MUST document:
+  - project purpose
+  - entry points
+  - boundaries
+  - local commands
+  - applicable skills
+  - local risks or protected areas
+- Keep provider and integration local files focused on public DI extensions, public contracts, and boundary-specific risks.
+- If a project grows enough that the root file becomes vague, add or tighten the local `AGENTS.md` before continuing implementation.
 
-### Testing (ALL TASKS)
+### Maintainability Limits
 
-- Every behaviour change needs sufficient automated tests to cover its cases; one is the minimum, not the target
-- Each public API endpoint has at least one test; complex endpoints have tests for different inputs and errors
-- Integration tests must exercise real flows end-to-end, not just call endpoints in isolation
-- Prefer integration/API tests over unit tests
-- Keep mocks to an absolute minimum; prefer real flows using fakes/containers where possible
-- Never write tests that only validate mocked interactions; every test must assert concrete, observable behaviour (state, output, errors, side-effects)
-- When faking external APIs, match the official API docs (endpoints, status codes, error payloads, and field naming) and prefer `HttpMessageHandler`-based fakes over ad-hoc mocks
-- No mocks for internal systems (DB, queues, caches) — use containers/fakes as appropriate
-- Mocks only for external third-party systems
-- Never delete or weaken a test to make it pass
-- Each test verifies a real flow or scenario; tests without meaningful assertions are forbidden
-- Check coverage to find gaps, not to chase numbers
-- Tests use xUnit + Shouldly; choose `[Fact]` for atomic cases and `[Theory]` for data-driven permutations
-- Place provider suites under `Tests/ManagedCode.Storage.Tests/Storages/` and reuse `Tests/ManagedCode.Storage.Tests/Common/` helpers to spin up Testcontainers (Azurite, LocalStack, FakeGcsServer)
-- Add fakes or harnesses in `ManagedCode.Storage.TestFakes/` when introducing new providers
+- `file_max_loc`: `400`
+- `type_max_loc`: `200`
+- `function_max_loc`: `50`
+- `max_nesting_depth`: `3`
+- `exception_policy`: `Document any justified exception in the nearest ADR, feature doc, or local AGENTS.md with the reason, scope, and removal or refactor plan.`
 
-### Storage Platform (ALL TASKS)
+### Task Delivery
 
-- Ensure storage-related changes keep broad automated coverage around 85-90% using generic, provider-agnostic tests across file systems, storages, and integrations
-- Deliver ASP.NET integrations that expose upload/download controllers, SignalR streaming, and matching HTTP and SignalR clients built on the storage layer for files, streams, and chunked transfers
-- Provide base ASP.NET controllers with minimal routing so consumers can inherit and customize routes, authorization, and behaviors without rigid defaults
-- Favor controller extension patterns and optionally expose interfaces to guide consumers on recommended actions so they can implement custom endpoints easily
-- For comprehensive storage platform upgrades, follow the nine-step flow: solidify SignalR streaming hub/client with logging and tests, harden controller upload paths (standard/stream/chunked) with large-file coverage, add keyed DI registrations and cross-provider sync fixtures, extend VFS with keyed support and >1 GB trials, create streamed large-file/CRC helpers, run end-to-end suites (controllers, SignalR, VFS, cross-provider), verify Blazor upload extensions, expand docs with VFS + provider identity guidance + keyed samples, and finish by running the full preview-enabled test suite addressing warnings
-- Normalise MIME lookups through `MimeHelper`; avoid ad-hoc MIME resolution helpers so all content-type logic flows through its APIs
+- Read the assignment, inspect code and docs, and define scope before planning.
+- Start from `docs/Architecture.md` and the nearest local `AGENTS.md`.
+- Treat `docs/Architecture.md` as the architecture map for every non-trivial task.
+- If the architecture map is missing, stale, or diagram-free, update it before implementation.
+- Define scope before coding:
+  - in scope
+  - out of scope
+- For non-trivial work, create a root-level `<slug>.plan.md` file before making code or doc changes.
+- Keep the plan file current until the task is complete; it must track ordered steps, risks, baseline failures, verification steps, and done criteria.
+- Write a multi-step plan before implementation.
+- Implement code and tests together.
+- Run verification in layers:
+  - changed tests
+  - related suite
+  - broader regressions
+- After all required tests pass, run `format`, then `build`.
+- Summarize changes, risks, and test results before marking the task complete.
+- Always run required builds and tests yourself; do not ask the user to execute them.
+
+### Documentation
+
+- Docs live in `docs/` and `README.md`.
+- `docs/Architecture.md` is the required global map and the first stop for agents.
+- Keep a GitHub Pages docs site in sync with `docs/`, using `DOCS-EXAMPLE/` as the reference template for structure and CI or pipeline behavior.
+- Keep `docs/templates/ADR-Template.md` and `docs/templates/Feature-Template.md` aligned with the current MCAF references.
+- When adding new docs pages under `docs/Features/`, `docs/ADR/`, or `docs/API/`, also update the corresponding `index.md` so the page is discoverable in the docs catalog and navigation.
+- Docs site navigation must not include a `Templates` page.
+- When referencing repo file paths in docs, make them clickable with the corresponding GitHub `blob` or `tree` URL.
+- Update docs when behavior changes.
+- Update configuration examples when required.
+- Documentation must include clear schemas or diagrams, preferably Mermaid, for every non-trivial feature and integration.
+- When adding new projects or providers, ensure `README.md` clearly documents installation, DI wiring, and basic usage examples.
+- Where feasible, prefer provider options that can build vendor SDK clients from credentials while still allowing client injection for advanced scenarios.
+- Avoid ownership flags like `ownsClient`; prefer a clear wrapper or factory boundary so lifetime and disposal rules stay predictable.
+- For providers that rely on vendor SDK clients, document how to obtain credentials, keys, or tokens and include a minimal code snippet that builds the required SDK client instance.
+- CloudKit docs must explicitly clarify that `ContainerId` is a CloudKit container identifier, not a secret, and document the optional `HttpClient` and `ICloudKitClient` injection points.
+- Credentials docs should keep provider sections consistent: What you need, Typical steps, Minimal SDK or DI snippet, Suggested configuration keys.
+- Keep the testing strategy discoverable from `docs/Development/setup.md`.
+- Validate all Mermaid diagrams against the docs site renderer version `10.9.5` and fix any syntax errors before shipping docs changes.
+- Docs site must include `sitemap.xml` and reference it from `robots.txt`.
+- Docs site must display the project version from `Directory.Build.props`, not CI run numbers.
+- Docs site footer should keep copyright, license, sitemap, and version compact and preferably single-line.
+- Docs site should display the short project name `Storage` in the site title or nav while keeping `ManagedCode.Storage` in package-name content.
+- Do not add ADRs for docs-site generation or pipeline changes; document docs-site build, SEO, and GitHub Pages workflow details under `docs/Development/` instead.
+- Docs site must not generate redirect or alias pages like `/Storage/`; keep a single canonical home URL.
+- After changing the generator, workflow, or layout, smoke-check the built HTML is not empty.
+
+### Testing
+
+- Every behavior change needs sufficient automated tests to cover its cases; one test is the minimum, not the target.
+- Each public API endpoint has at least one test; complex endpoints need tests for different inputs and errors.
+- Integration tests must exercise real flows end-to-end, not just call endpoints in isolation.
+- Prefer integration or API tests over isolated unit tests.
+- Keep mocks to an absolute minimum; prefer real flows using fakes or containers where possible.
+- Never write tests that only validate mocked interactions; every test must assert concrete, observable behavior such as state, output, errors, or side effects.
+- When faking external APIs, match the official API docs for endpoints, status codes, payloads, and field naming, and prefer `HttpMessageHandler`-based fakes over ad-hoc mocks.
+- No mocks for internal systems such as databases, queues, or caches; use containers or fakes as appropriate.
+- Mocks are allowed only for external third-party systems.
+- Never delete or weaken a test to make it pass.
+- Each test must verify a real flow or scenario; tests without meaningful assertions are forbidden.
+- Check coverage to find gaps, not to chase a number.
+- Tests use `xUnit` + `Shouldly`; choose `[Fact]` for atomic cases and `[Theory]` for data-driven permutations.
+- Tests run on `VSTest`; do not mix in `Microsoft.Testing.Platform` assumptions.
+- Coverage uses the repo-defined `coverlet.msbuild` flow and must not regress without a written exception.
+- Place provider suites under `Tests/ManagedCode.Storage.Tests/Storages/` and reuse `Tests/ManagedCode.Storage.Tests/Common/` helpers for Testcontainers infrastructure such as Azurite, LocalStack, and FakeGcsServer.
+- Add fakes or harnesses in `ManagedCode.Storage.TestFakes/` when introducing new providers.
+
+### Storage Platform
+
+- Ensure storage-related changes keep broad automated coverage around 85-90% using generic, provider-agnostic tests across file systems, storages, and integrations.
+- Deliver ASP.NET integrations that expose upload or download controllers, SignalR streaming, and matching HTTP and SignalR clients built on the storage layer for files, streams, and chunked transfers.
+- Provide base ASP.NET controllers with minimal routing so consumers can inherit and customize routes, authorization, and behavior without rigid defaults.
+- Favor controller extension patterns and optionally expose interfaces to guide consumers toward recommended controller actions.
+- For comprehensive storage-platform upgrades, follow the nine-step flow: harden SignalR streaming, harden controller upload paths, add keyed DI registrations and cross-provider sync fixtures, extend VFS with keyed support and large-file trials, create streamed large-file or CRC helpers, run end-to-end suites, verify Blazor upload extensions, expand docs with VFS and provider identity guidance, and finish with the full preview-enabled test suite.
+- Normalize MIME lookups through `MimeHelper`; avoid ad-hoc MIME resolution helpers so all content-type logic flows through its APIs.
 
 ### Project Structure
 
-- `ManagedCode.Storage.slnx` orchestrates the .NET 10 projects
-- Core abstractions: `ManagedCode.Storage.Core/`
-- Virtual file system: `ManagedCode.Storage.VirtualFileSystem/`
-- Providers: `Storages/ManagedCode.Storage.*` (one project per cloud target: Azure, AWS, GCP, FileSystem, Sftp)
-- Integrations (ASP.NET server + client SDKs): `Integraions/`
-- Test doubles: `ManagedCode.Storage.TestFakes/`
-- Test suites: `Tests/ManagedCode.Storage.Tests/` (ASP.NET flows, provider runs, shared helpers)
-- Keep shared assets such as `logo.png` at repository root
+- `ManagedCode.Storage.slnx` orchestrates the .NET 10 projects.
+- Keep the canonical `AGENTS.md` in the repository root; for multi-project solutions add or update local `AGENTS.md` files per project so project-specific guidance stays close to each codebase slice.
+- Core abstractions live in `ManagedCode.Storage.Core/`.
+- The virtual file system lives in `ManagedCode.Storage.VirtualFileSystem/`.
+- Providers live in `Storages/ManagedCode.Storage.*`.
+- Integrations live in `Integraions/`.
+- Test doubles live in `ManagedCode.Storage.TestFakes/`.
+- Tests live in `Tests/ManagedCode.Storage.Tests/`.
+- Keep shared assets such as `logo.png` at the repository root.
 
 ### Autonomy
 
-- Start work immediately — no permission seeking
-- Questions only for architecture blockers not covered by ADR
-- Report only when task is complete
+- Start work immediately with no permission-seeking.
+- Ask questions only for architecture blockers not covered by docs or ADRs.
+- Report only when the task is complete.
+
+### Tooling
+
+- When installing or updating MCAF assets, install only current skills with the `mcaf-` prefix so repository automation stays aligned with the maintained MCAF skill set and avoids stale skill drift.
 
 ### Code Style
 
-- Style rules: `.editorconfig`
-- Follow standard C# conventions: 4-space indentation, PascalCase types, camelCase locals
-- Nullability is enabled: annotate optional members; avoid `!` unless justified
-- Suffix async APIs with `Async`; keep test names aligned with existing patterns (e.g., `DownloadFile_WhenFileExists_ReturnsSuccess`)
-- Remove unused usings and let analyzers guide layout
-- When a `foreach` loop’s first step is just transforming the iteration variable (e.g., `var y = Map(x)`), prefer mapping the sequence explicitly with `.Select(...)` so intent is clearer and analyzers stay quiet
-- Avoid buffering whole files into `MemoryStream` in product code (assume multi‑GB files); stream directly to the destination (response stream / file stream) and use incremental hashing/CRC when you need verification
-- No magic literals — extract to constants, enums, or config when it improves clarity
+- The repo-root `.editorconfig` is the source of truth for formatting, naming, style, and analyzer severity.
+- Use NuGet Central Package Management via `Directory.Packages.props`; keep package versions out of individual `.csproj` files so versions stay aligned across the repository.
+- Follow standard C# conventions: 4-space indentation, PascalCase types, camelCase locals.
+- Nullability is enabled: annotate optional members and avoid `!` unless justified.
+- Suffix async APIs with `Async`; keep test names aligned with existing patterns such as `DownloadFile_WhenFileExists_ReturnsSuccess`.
+- Remove unused usings and let analyzers guide layout.
+- When a `foreach` loop starts by transforming the iteration variable, prefer mapping the sequence explicitly with `.Select(...)` so the intent is clearer.
+- Avoid buffering whole files into `MemoryStream` in product code; assume multi-GB files and stream directly to the destination while using incremental hashing or CRC when verification is needed.
+- No magic literals; extract them to constants, enums, configuration, or dedicated value types when it improves clarity.
 
-### Git & PRs
+### Git And PRs
 
-- Write commit subjects in the imperative mood (`add ftp retry policy`) and keep them provider-scoped
-- Group related edits in one commit and avoid WIP spam
-- PRs should summarize impact, list touched projects, reference issues, and note new configuration or secrets
-- Include the `dotnet` commands you ran and add logs when CI needs context
-- Keep a required CI check named `build-and-test` running on every PR and push to `main` so branch protection always receives a status (it’s worse for merges if the check is missing/never reported than if it runs and fails)
+- Write commit subjects in the imperative mood such as `add ftp retry policy` and keep them provider-scoped.
+- Group related edits in one commit and avoid WIP spam.
+- PRs should summarize impact, list touched projects, reference issues, and note new configuration or secrets.
+- Include the `dotnet` commands you ran and add logs when CI needs context.
+- Keep a required CI check named `build-and-test` running on every PR and push to `main` so branch protection always receives a status.
 
-### Critical (NEVER violate)
+### Critical
 
-- Never commit secrets, keys, access tokens, or connection strings
-- Never commit `.trx` artifacts
-- Never mock internal systems in integration tests (DB, queues, caches) — use containers/fakes instead
-- Never skip tests to make PR green
-- Never force push to `main`
-- Never approve or merge (human decision)
+- Never commit secrets, keys, access tokens, or connection strings.
+- Never commit `.trx` artifacts.
+- Never mock internal systems in integration tests; use containers or fakes instead.
+- Never skip tests to make a branch green.
+- Never force-push to `main`.
+- Never approve or merge on behalf of a human maintainer.
 
 ### Boundaries
 
-**Always:**
+Always:
 
-- Read `AGENTS.md` and relevant docs before editing code
-- Run tests before commit
+- Read root and local `AGENTS.md` files before editing code.
+- Read the relevant docs before changing behavior or architecture.
+- Run the required verification commands yourself.
 
-**Ask first:**
+Ask first:
 
-- Changing public API contracts
-- Adding new dependencies
-- Modifying database schema
-- Deleting code files
-
----
+- changing public API contracts
+- adding new dependencies
+- modifying database schema
+- deleting code files
 
 ## Preferences
 

@@ -36,6 +36,7 @@ Cross-provider blob storage toolkit for .NET and ASP.NET streaming scenarios.
 - [Architecture](#architecture)
 - [Virtual File System (VFS)](#virtual-file-system-vfs)
 - [Dependency Injection & Keyed Registrations](#dependency-injection--keyed-registrations)
+- [Orleans Grain Persistence](#orleans-grain-persistence)
 - [ASP.NET Controllers & Streaming](#aspnet-controllers--streaming)
 - [Connection modes](#connection-modes)
 - [How to use](#how-to-use)
@@ -89,7 +90,7 @@ app.MapControllers(); // /api/storage/*
 app.MapStorageHub();  // /hubs/storage
 ```
 
-ManagedCode.Storage wraps vendor SDKs behind a single `IStorage` abstraction so uploads, downloads, metadata, streaming, and retention behave the same regardless of provider. Swap between Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, and a local file system without rewriting application code — and optionally use the Virtual File System (VFS) overlay for a file/directory API on top of any configured `IStorage`. Pair it with our ASP.NET controllers and SignalR client to deliver chunked uploads, ranged downloads, and progress notifications end to end.
+ManagedCode.Storage wraps vendor SDKs behind a single `IStorage` abstraction so uploads, downloads, metadata, streaming, and retention behave the same regardless of provider. Swap between Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, and a local file system without rewriting application code — and optionally use the Virtual File System (VFS) overlay for a file/directory API on top of any configured `IStorage`. Pair it with our ASP.NET controllers, SignalR client, and Orleans grain persistence provider to deliver chunked uploads, ranged downloads, real-time progress, and actor-state persistence end to end.
 
 ## Motivation
 
@@ -100,6 +101,7 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 - Unified `IStorage` abstraction covering upload, download, streaming, metadata, deletion, container management, and legal hold operations backed by `Result<T>` responses.
 - Provider coverage across Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive (Microsoft Graph), Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, and the local file system.
 - Keyed dependency-injection registrations plus default provider helpers to fan out files per tenant, region, or workload without manual service plumbing.
+- `ManagedCode.Storage.Orleans` lets Orleans grains persist `IPersistentState<TState>` through any registered ManagedCode `IStorage`, including typed and keyed DI setups.
 - ASP.NET storage controllers, chunk orchestration services, and a SignalR hub/client pair that deliver resumable uploads, ranged downloads, CRC32 validation, and real-time progress.
 - `ManagedCode.Storage.Client` brings streaming uploads/downloads, CRC32 helpers, and MIME discovery via `MimeHelper` to any .NET app.
 - Strongly typed option objects (`UploadOptions`, `DownloadOptions`, `DeleteOptions`, `MetadataOptions`, `LegalHoldOptions`, etc.) let you configure directories, metadata, and legal holds in one place.
@@ -374,10 +376,11 @@ var tenantStorage = app.Services.GetRequiredKeyedService<IStorage>("tenant-a");
 
 6. CloudKit Web Services impose size limits; keep files reasonably small and validate against your current CloudKit quotas.
 
-### ASP.NET & Clients
+### Integrations
 
 | Package | Latest | Description |
 | --- | --- | --- |
+| [ManagedCode.Storage.Orleans](https://www.nuget.org/packages/ManagedCode.Storage.Orleans) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Orleans.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Orleans) | Orleans grain persistence provider that stores grain state through any ManagedCode `IStorage` registration. |
 | [ManagedCode.Storage.Server](https://www.nuget.org/packages/ManagedCode.Storage.Server) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Server.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Server) | ASP.NET controllers, chunk orchestration services, and the SignalR storage hub. |
 | [ManagedCode.Storage.Client](https://www.nuget.org/packages/ManagedCode.Storage.Client) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Client.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Client) | .NET client SDK for uploads, downloads, metadata, and SignalR negotiations. |
 | [ManagedCode.Storage.Client.SignalR](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Client.SignalR.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Client.SignalR) | SignalR streaming client for browsers and native applications. |
@@ -587,6 +590,68 @@ logger.LogInformation("Backup CRC for {File} is {Crc}", fileName, crc);
 ```
 
 The test suite includes end-to-end scenarios that mirror payloads between Azure, AWS, the local file system, and virtual file systems; multi-gigabyte flows execute by default across every provider using 4 MB units per "GB" to keep runs fast while still exercising streaming paths.
+
+## Orleans Grain Persistence
+
+`ManagedCode.Storage.Orleans` plugs Orleans `IGrainStorage` into the same provider-agnostic `IStorage` surface as the rest of the repository. That means a grain can persist through FileSystem today, then move to Azure Blob Storage, S3, or another backend later without rewriting grain code.
+
+Typed DI registration resolves a specific storage service from the container:
+
+```csharp
+using ManagedCode.Storage.FileSystem;
+using ManagedCode.Storage.FileSystem.Extensions;
+using Orleans.Hosting;
+using Orleans.Runtime;
+
+builder.Services.AddFileSystemStorageAsDefault(options =>
+{
+    options.BaseFolder = Path.Combine(builder.Environment.ContentRootPath, "grain-state");
+});
+
+builder.UseOrleans(siloBuilder =>
+{
+    siloBuilder.AddGrainStorage<IFileSystemStorage>("profiles", options =>
+    {
+        options.StateDirectory = "orleans";
+        options.DeleteStateOnClear = true;
+    });
+});
+
+public sealed class ProfileGrain(
+    [PersistentState("profile", "profiles")] IPersistentState<ProfileState> profile)
+    : Grain, IProfileGrain
+{
+    public async Task SetNameAsync(string name)
+    {
+        profile.State.Name = name;
+        await profile.WriteStateAsync();
+    }
+}
+```
+
+If you already fan out storages via keyed DI, point Orleans at the keyed instance instead:
+
+```csharp
+using ManagedCode.Storage.FileSystem.Extensions;
+using Orleans.Hosting;
+
+builder.Services.AddFileSystemStorageAsDefault("tenant-a", options =>
+{
+    options.BaseFolder = Path.Combine(builder.Environment.ContentRootPath, "tenant-a-state");
+});
+
+builder.UseOrleans(siloBuilder =>
+{
+    siloBuilder.AddGrainStorage("profiles", "tenant-a", options =>
+    {
+        options.StateDirectory = "orleans";
+        options.PathBuilder = context =>
+            $"state/{context.ProviderName}/{context.StateName}/{context.GrainId}.state";
+    });
+});
+```
+
+Registration resolves backing storage in this order: `StorageFactory`, `StorageServiceType + StorageKey`, `StorageServiceType`, `StorageKey`, then default `IStorage`. The provider also stores a logical Orleans ETag alongside the serialized state and throws `InconsistentStateException` when a stale write is detected during its read-before-write check.
 
 ## ASP.NET Controllers & Streaming
 

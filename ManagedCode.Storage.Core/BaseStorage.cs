@@ -20,7 +20,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     protected BaseStorage(TOptions storageOptions)
     {
         Contract.Assert(storageOptions is not null);
-        StorageOptions = storageOptions!;
+        StorageOptions = storageOptions;
         // ReSharper disable once VirtualMemberCallInConstructor
         StorageClient = CreateStorageClient();
     }
@@ -338,5 +338,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
     {
         if (StorageClient is IDisposable disposable)
             disposable.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 }

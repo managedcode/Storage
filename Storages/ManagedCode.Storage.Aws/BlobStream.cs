@@ -21,6 +21,7 @@ public class BlobStream : Stream
 
     private Metadata _metadata = new();
     private readonly IAmazonS3 _s3;
+    private bool _disposed;
 
     public BlobStream(IAmazonS3 s3, string s3uri, long partLength = DEFAULT_PART_LENGTH) : this(s3, new Uri(s3uri), partLength)
     {
@@ -51,14 +52,19 @@ public class BlobStream : Stream
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
-            if (_metadata != null)
-            {
-                Flush(true);
-                CompleteUpload();
-            }
+        if (_disposed)
+        {
+            base.Dispose(disposing);
+            return;
+        }
 
-        _metadata = null;
+        if (disposing)
+        {
+            Flush(true);
+            CompleteUpload();
+        }
+
+        _disposed = true;
         base.Dispose(disposing);
     }
 
@@ -126,7 +132,8 @@ public class BlobStream : Stream
             var upload = Task.Run(async () =>
             {
                 var response = await _s3.UploadPartAsync(request);
-                _metadata.PartETags.AddOrUpdate(i, response.ETag, (n, s) => response.ETag);
+                var eTag = response.ETag ?? throw new InvalidOperationException("S3 multipart upload part did not return an ETag.");
+                _metadata.PartETags.AddOrUpdate(i, eTag, (_, _) => eTag);
                 request.InputStream.Dispose();
             });
             _metadata.Tasks.Add(upload);
@@ -145,7 +152,7 @@ public class BlobStream : Stream
                 PartETags = _metadata.PartETags
                         .Select(e => new PartETag(e.Key, e.Value))
                         .ToList(),
-                UploadId = _metadata.UploadId
+                UploadId = _metadata.UploadId ?? throw new InvalidOperationException("UploadId must be initialized before completing the upload.")
             })
                 .GetAwaiter()
                 .GetResult();
@@ -164,9 +171,10 @@ public class BlobStream : Stream
             if (_metadata.CurrentStream == null || _metadata.CurrentStream.Length >= _metadata.PartLength)
                 StartNewPart();
 
-            var remaining = _metadata.PartLength - _metadata.CurrentStream.Length;
+            var currentStream = _metadata.CurrentStream ?? throw new InvalidOperationException("Multipart upload stream was not initialized.");
+            var remaining = _metadata.PartLength - currentStream.Length;
             var w = Math.Min(c, (int)remaining);
-            _metadata.CurrentStream.Write(buffer, o, w);
+            currentStream.Write(buffer, o, w);
 
             _metadata.Position += w;
             c -= w;
@@ -176,9 +184,9 @@ public class BlobStream : Stream
 
     internal class Metadata
     {
-        public string BucketName;
-        public MemoryStream CurrentStream;
-        public string Key;
+        public string BucketName = string.Empty;
+        public MemoryStream? CurrentStream;
+        public string Key = string.Empty;
         public long Length; // based on bytes written or SetLength, whichever is larger (no truncation)
 
         public int PartCount;
@@ -188,6 +196,6 @@ public class BlobStream : Stream
         public long Position; // based on bytes written
 
         public List<Task> Tasks = new();
-        public string UploadId;
+        public string? UploadId;
     }
 }

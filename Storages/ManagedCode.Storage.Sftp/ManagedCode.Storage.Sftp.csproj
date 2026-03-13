@@ -17,10 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
-        <PackageReference Include="Humanizer.Core" Version="3.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
-        <PackageReference Include="SSH.NET" Version="2025.1.0" />
+        <PackageReference Include="ManagedCode.Communication" />
+        <PackageReference Include="Humanizer.Core" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+        <PackageReference Include="SSH.NET" />
     </ItemGroup>
 
 </Project>

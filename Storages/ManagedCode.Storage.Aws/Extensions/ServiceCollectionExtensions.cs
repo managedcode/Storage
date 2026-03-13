@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ManagedCode.Storage.Aws.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
@@ -56,7 +56,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAWSStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<AWSStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<AWSStorageOptions>(k);
             return new AWSStorage(opts);
         });
 
@@ -72,7 +72,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<AWSStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAWSStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<AWSStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<AWSStorageOptions>(k);
             return new AWSStorage(opts);
         });
         serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>

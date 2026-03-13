@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
@@ -21,13 +21,13 @@ namespace ManagedCode.Storage.Google;
 public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPStorage
 {
     private readonly ILogger<GCPStorage>? _logger;
-    private readonly UrlSigner urlSigner;
+    private readonly UrlSigner? _urlSigner;
 
     public GCPStorage(GCPStorageOptions options, ILogger<GCPStorage>? logger = null) : base(options)
     {
         _logger = logger;
         if (options.GoogleCredential != null)
-            urlSigner = UrlSigner.FromCredential(options.GoogleCredential);
+            _urlSigner = UrlSigner.FromCredential(options.GoogleCredential);
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
@@ -70,8 +70,8 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                     FullName = item.Name,
                     Uri = string.IsNullOrEmpty(item.MediaLink) ? null : new Uri(item.MediaLink),
                     Container = item.Bucket,
-                    CreatedOn = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => item.TimeCreatedDateTimeOffset, () => item.TimeCreated),
-                    LastModified = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => item.UpdatedDateTimeOffset, () => item.Updated),
+                    CreatedOn = GetCreatedOn(item),
+                    LastModified = GetLastModified(item),
                     MimeType = item.ContentType,
                     Length = item.Size ?? 0,
                     Metadata = item.Metadata?.ToDictionary(k => k.Key, v => v.Value) ?? new Dictionary<string, string>()
@@ -97,7 +97,7 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
         {
             await EnsureContainerExist(cancellationToken);
 
-            if (urlSigner == null)
+            if (_urlSigner == null)
             {
                 var tempFile = LocalFile.FromTempFile();
 
@@ -126,7 +126,7 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                 }
             }
 
-            var signedUrl = urlSigner.Sign(StorageOptions.BucketOptions.Bucket, fileName, TimeSpan.FromHours(1), HttpMethod.Get);
+            var signedUrl = _urlSigner.Sign(StorageOptions.BucketOptions.Bucket, fileName, TimeSpan.FromHours(1), HttpMethod.Get);
             cancellationToken.ThrowIfCancellationRequested();
 
             using var httpClient = new HttpClient();
@@ -319,8 +319,8 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                 Name = Path.GetFileName(obj.Name),
                 Uri = string.IsNullOrEmpty(obj.MediaLink) ? null : new Uri(obj.MediaLink),
                 Container = obj.Bucket,
-                CreatedOn = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => obj.TimeCreatedDateTimeOffset, () => obj.TimeCreated),
-                LastModified = GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => obj.UpdatedDateTimeOffset, () => obj.Updated),
+                CreatedOn = GetCreatedOn(obj),
+                LastModified = GetLastModified(obj),
                 MimeType = obj.ContentType,
                 Length = obj.Size ?? 0
             });
@@ -374,7 +374,21 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
         }
     }
 
-    public static T GetFirstSuccessfulValue<T>(T defaultValue, params Func<T?>[] getters) where T : struct
+    private static DateTimeOffset GetCreatedOn(global::Google.Apis.Storage.v1.Data.Object obj)
+    {
+#pragma warning disable CS0618
+        return GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => obj.TimeCreatedDateTimeOffset, () => obj.TimeCreated);
+#pragma warning restore CS0618
+    }
+
+    private static DateTimeOffset GetLastModified(global::Google.Apis.Storage.v1.Data.Object obj)
+    {
+#pragma warning disable CS0618
+        return GetFirstSuccessfulValue(DateTimeOffset.UtcNow, () => obj.UpdatedDateTimeOffset, () => obj.Updated);
+#pragma warning restore CS0618
+    }
+
+    private static T GetFirstSuccessfulValue<T>(T defaultValue, params Func<T?>[] getters) where T : struct
     {
         foreach (var getter in getters)
         {
@@ -388,10 +402,11 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
             }
             catch
             {
-                continue;
+                // Fake GCS responses can expose legacy timestamp formats.
             }
         }
 
         return defaultValue;
     }
+
 }

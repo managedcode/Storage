@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,8 +25,6 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         _logger = logger;
         _dataLakeServiceClient = new DataLakeServiceClient(options.ConnectionString);
     }
-
-    public DataLakeFileSystemClient StorageClient { get; }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
@@ -199,7 +197,7 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
             int count;
 
             while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
-                await fileStream.WriteAsync(buffer, 0, count, cancellationToken);
+                await fileStream.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
 
             await fileStream.FlushAsync(cancellationToken);
 

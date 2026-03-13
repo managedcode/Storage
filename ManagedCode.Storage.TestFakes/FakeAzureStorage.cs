@@ -18,7 +18,7 @@ public class FakeAzureStorage : FileSystemStorage, IAzureStorage
     {
     }
 
-    public BlobContainerClient StorageClient { get; }
+    public new BlobContainerClient StorageClient { get; } = null!;
 
     public Task<Result> SetStorageOptions(IStorageOptions options, CancellationToken cancellationToken = default)
     {

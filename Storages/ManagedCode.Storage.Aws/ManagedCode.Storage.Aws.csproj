@@ -17,10 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
-        <PackageReference Include="AWSSDK.S3" Version="4.0.17.1" />
-        <PackageReference Include="Humanizer.Core" Version="3.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
+        <PackageReference Include="ManagedCode.Communication" />
+        <PackageReference Include="AWSSDK.S3" />
+        <PackageReference Include="Humanizer.Core" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     </ItemGroup>
 
 

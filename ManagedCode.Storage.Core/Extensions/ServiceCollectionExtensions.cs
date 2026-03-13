@@ -1,4 +1,4 @@
-﻿using ManagedCode.Storage.Core.Providers;
+using ManagedCode.Storage.Core.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

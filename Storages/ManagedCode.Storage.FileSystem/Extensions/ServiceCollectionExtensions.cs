@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Providers;
 using ManagedCode.Storage.FileSystem.Options;
@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<FileSystemStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IFileSystemStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<FileSystemStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<FileSystemStorageOptions>(k);
             return new FileSystemStorage(opts);
         });
 
@@ -62,7 +62,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<FileSystemStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IFileSystemStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<FileSystemStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<FileSystemStorageOptions>(k);
             return new FileSystemStorage(opts);
         });
         serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>

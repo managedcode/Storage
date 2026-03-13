@@ -1,0 +1,55 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{g.cs,g.i.cs,Designer.cs,AssemblyInfo.cs}]
+generated_code = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.CA1501.severity = suggestion
+dotnet_diagnostic.CA1502.severity = suggestion
+dotnet_diagnostic.CA1505.severity = suggestion
+dotnet_diagnostic.CA1506.severity = suggestion
+dotnet_diagnostic.CA1001.severity = suggestion
+dotnet_diagnostic.CA1051.severity = suggestion
+dotnet_diagnostic.CA1061.severity = suggestion
+dotnet_diagnostic.CA1068.severity = suggestion
+dotnet_diagnostic.CA1707.severity = suggestion
+dotnet_diagnostic.CA1716.severity = suggestion
+dotnet_diagnostic.CA1805.severity = suggestion
+dotnet_diagnostic.CA1822.severity = suggestion
+dotnet_diagnostic.CA1835.severity = suggestion
+dotnet_diagnostic.CA1848.severity = suggestion
+dotnet_diagnostic.CA1852.severity = suggestion
+dotnet_diagnostic.CA1859.severity = suggestion
+dotnet_diagnostic.CA1861.severity = suggestion
+dotnet_diagnostic.CA1863.severity = suggestion
+dotnet_diagnostic.CA1869.severity = suggestion
+dotnet_diagnostic.CA1870.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
+
+[ManagedCode.Storage.TestFakes/**/*.cs]
+dotnet_diagnostic.CA1502.severity = suggestion
+dotnet_diagnostic.CA1506.severity = suggestion
+
+[Tests/**/*.cs]
+dotnet_diagnostic.CA1051.severity = none
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1711.severity = none
+dotnet_diagnostic.CA1502.severity = suggestion
+dotnet_diagnostic.CA1506.severity = suggestion
+
+[*.{csproj,props,targets,slnx}]
+indent_style = space
+indent_size = 4

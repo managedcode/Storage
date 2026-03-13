@@ -126,6 +126,7 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
     /// </summary>
     /// <param name="transferId">The transfer identifier previously returned by <see cref="BeginUploadStreamAsync"/>.</param>
     /// <param name="stream">Chunked byte stream supplied by the caller.</param>
+    /// <param name="cancellationToken">Cancellation token that aborts the upload stream.</param>
     /// <returns>A channel producing transfer status updates as the upload progresses.</returns>
     public virtual async IAsyncEnumerable<TransferStatus> UploadStreamContentAsync(
         string transferId,

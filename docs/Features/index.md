@@ -1,7 +1,7 @@
 ---
 title: Features
 description: "Documentation for major modules and providers in ManagedCode.Storage."
-keywords: "IStorage, providers, Azure Blob, AWS S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit, FileSystem, SFTP, Virtual File System, ASP.NET Server, SignalR"
+keywords: "IStorage, providers, Azure Blob, AWS S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit, FileSystem, SFTP, Virtual File System, ASP.NET Server, SignalR, Orleans"
 permalink: /features/
 nav_order: 5
 ---
@@ -33,6 +33,7 @@ flowchart LR
 
 ## Integrations
 
+- [Orleans grain persistence](integration-orleans.md)
 - [ASP.NET server (controllers + SignalR)](integration-aspnet-server.md)
 - [.NET HTTP client](integration-dotnet-client.md)
 - [.NET SignalR client](integration-signalr-client.md)

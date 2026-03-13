@@ -39,7 +39,8 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
     /// <param name="options">Preconfigured client options.</param>
     public StorageSignalRClient(StorageSignalRClientOptions options)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
+        _options = options;
     }
 
     /// <inheritdoc />
@@ -57,18 +58,12 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
     /// <inheritdoc />
     public async Task ConnectAsync(StorageSignalRClientOptions options, CancellationToken cancellationToken = default)
     {
-        if (options is null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         await _connectionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException(nameof(StorageSignalRClient));
-            }
+            ObjectDisposedException.ThrowIf(_disposed, this);
 
             _options = options;
 
@@ -141,15 +136,8 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
     /// <inheritdoc />
     public async Task<StorageTransferStatus> UploadAsync(Stream stream, StorageUploadStreamDescriptor descriptor, IProgress<StorageTransferStatus>? progress = null, CancellationToken cancellationToken = default)
     {
-        if (stream is null)
-        {
-            throw new ArgumentNullException(nameof(stream));
-        }
-
-        if (descriptor is null)
-        {
-            throw new ArgumentNullException(nameof(descriptor));
-        }
+        ArgumentNullException.ThrowIfNull(stream);
+        ArgumentNullException.ThrowIfNull(descriptor);
 
         var connection = EnsureConnected();
 
@@ -211,10 +199,7 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
             throw new ArgumentException("Blob name is required.", nameof(blobName));
         }
 
-        if (destination is null)
-        {
-            throw new ArgumentNullException(nameof(destination));
-        }
+        ArgumentNullException.ThrowIfNull(destination);
 
         var connection = EnsureConnected();
 
@@ -309,7 +294,10 @@ public sealed class StorageSignalRClient : IStorageSignalRClient
 
         _disposed = true;
         await DisconnectAsync().ConfigureAwait(false);
-        _connection?.DisposeAsync();
+        if (_connection is not null)
+        {
+            await _connection.DisposeAsync().ConfigureAwait(false);
+        }
         _connection = null;
         _connectionLock.Dispose();
     }

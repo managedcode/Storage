@@ -12,8 +12,7 @@ internal static class AwsContainerFactory
 
     public static LocalStackContainer Create()
     {
-        return new LocalStackBuilder()
-            .WithImage(ContainerImages.LocalStack)
+        return new LocalStackBuilder(ContainerImages.LocalStack)
             .WithEnvironment("SERVICES", "s3")
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .UntilHttpRequestIsSucceeded(request => request

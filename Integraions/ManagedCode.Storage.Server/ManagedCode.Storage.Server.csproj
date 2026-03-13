@@ -18,8 +18,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.MimeTypes" Version="10.0.1" />
-        <PackageReference Update="DotNet.ReproducibleBuilds" Version="1.2.25">
+        <PackageReference Include="ManagedCode.MimeTypes" />
+        <PackageReference Update="DotNet.ReproducibleBuilds">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

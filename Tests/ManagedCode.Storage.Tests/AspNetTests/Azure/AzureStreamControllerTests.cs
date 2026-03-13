@@ -1,4 +1,4 @@
-﻿using ManagedCode.Storage.Tests.AspNetTests.Abstracts;
+using ManagedCode.Storage.Tests.AspNetTests.Abstracts;
 using ManagedCode.Storage.Tests.Common;
 using ManagedCode.Storage.Tests.Constants;
 

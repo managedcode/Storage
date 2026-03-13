@@ -1,3 +1,4 @@
+using System;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Dropbox;
 using ManagedCode.Storage.Dropbox.Clients;
@@ -430,7 +431,7 @@ public class CloudDriveStorageTests
         private static string Normalize(string path)
         {
             var normalized = path.Replace("\\", "/");
-            if (!normalized.StartsWith('/'))
+            if (normalized.Length == 0 || normalized[0] != '/')
             {
                 normalized = "/" + normalized;
             }
@@ -447,7 +448,7 @@ public class CloudDriveStorageTests
                 return normalizedRoot;
             }
 
-            return normalizedRoot.EndsWith("/") ? normalizedRoot + normalizedPath : normalizedRoot + "/" + normalizedPath;
+            return normalizedRoot.EndsWith('/') ? normalizedRoot + normalizedPath : normalizedRoot + "/" + normalizedPath;
         }
     }
 
@@ -486,7 +487,7 @@ public class CloudDriveStorageTests
             }
 
             var keys = _entries.Keys
-                .Where(key => key == normalized || key.StartsWith(normalized + "/"))
+                .Where(key => string.Equals(key, normalized, StringComparison.Ordinal) || key.StartsWith(normalized + "/", StringComparison.Ordinal))
                 .ToList();
 
             foreach (var key in keys)
@@ -525,8 +526,8 @@ public class CloudDriveStorageTests
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (normalized == null
-                    || string.Equals(entry.Path, normalized)
-                    || entry.Path.StartsWith(normalized + "/"))
+                    || string.Equals(entry.Path, normalized, StringComparison.Ordinal)
+                    || entry.Path.StartsWith(normalized + "/", StringComparison.Ordinal))
                 {
                     yield return entry;
                 }

@@ -234,8 +234,7 @@ internal class VirtualFileSystemManager : IVirtualFileSystemManager
         if (string.IsNullOrWhiteSpace(mountPoint))
             throw new ArgumentException("Mount point cannot be null or empty", nameof(mountPoint));
 
-        if (storage == null)
-            throw new ArgumentNullException(nameof(storage));
+        ArgumentNullException.ThrowIfNull(storage);
 
         _logger.LogDebug("Mounting storage at: {MountPoint}", mountPoint);
 
@@ -312,14 +311,14 @@ internal class VirtualFileSystemManager : IVirtualFileSystemManager
             throw new ArgumentException("Path cannot be null or empty", nameof(path));
 
         // Normalize path
-        if (!path.StartsWith('/'))
+        if (path.Length == 0 || path[0] != '/')
             path = '/' + path;
 
         // Find the longest matching mount point
         var bestMatch = "";
         foreach (var mountPoint in _mounts.Keys.OrderByDescending(mp => mp.Length))
         {
-            if (path.StartsWith(mountPoint + "/") || path == mountPoint)
+            if (path.StartsWith(mountPoint + "/", StringComparison.Ordinal) || path == mountPoint)
             {
                 bestMatch = mountPoint;
                 break;

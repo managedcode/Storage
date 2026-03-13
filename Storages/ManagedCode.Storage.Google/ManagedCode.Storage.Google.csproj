@@ -17,12 +17,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Google.Api.Gax" Version="4.13.0" />
-        <PackageReference Include="Google.Api.Gax.Rest" Version="4.13.0" />
-        <PackageReference Include="Google.Apis.Storage.v1" Version="1.73.0.3974" />
-        <PackageReference Include="Google.Cloud.Storage.V1" Version="4.13.0" />
-        <PackageReference Include="ManagedCode.Communication" Version="10.0.0" />
-        <PackageReference Include="Humanizer.Core" Version="3.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
+        <PackageReference Include="Google.Api.Gax" />
+        <PackageReference Include="Google.Api.Gax.Rest" />
+        <PackageReference Include="Google.Apis.Storage.v1" />
+        <PackageReference Include="Google.Cloud.Storage.V1" />
+        <PackageReference Include="ManagedCode.Communication" />
+        <PackageReference Include="Humanizer.Core" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     </ItemGroup>
 </Project>

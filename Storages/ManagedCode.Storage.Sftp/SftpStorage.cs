@@ -208,7 +208,7 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
             authMethods.Add(new PrivateKeyAuthenticationMethod(StorageOptions.Username, keyFile));
         }
 
-        if (!authMethods.Any())
+        if (authMethods.Count == 0)
         {
             throw new ArgumentException("SFTP requires at least one authentication method (password or private key)");
         }
@@ -507,7 +507,7 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
             return normalizedFileName;
         }
 
-        return CurrentRoot.EndsWith("/")
+        return CurrentRoot.EndsWith('/')
             ? CurrentRoot + normalizedFileName
             : $"{CurrentRoot}/{normalizedFileName}";
     }

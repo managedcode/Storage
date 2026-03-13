@@ -1,0 +1,50 @@
+<Project>
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageVersion Include="AWSSDK.S3" Version="4.0.19" />
+        <PackageVersion Include="Azure.Identity" Version="1.19.0" />
+        <PackageVersion Include="Azure.Storage.Blobs" Version="12.27.0" />
+        <PackageVersion Include="Azure.Storage.Files.DataLake" Version="12.25.0" />
+        <PackageVersion Include="coverlet.collector" Version="8.0.0" />
+        <PackageVersion Include="coverlet.msbuild" Version="8.0.0" />
+        <PackageVersion Include="CsvHelper" Version="33.1.0" />
+        <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.25" />
+        <PackageVersion Include="Dropbox.Api" Version="7.0.0" />
+        <PackageVersion Include="Google.Api.Gax" Version="4.13.1" />
+        <PackageVersion Include="Google.Api.Gax.Rest" Version="4.13.1" />
+        <PackageVersion Include="Google.Apis.Drive.v3" Version="1.73.0.4068" />
+        <PackageVersion Include="Google.Apis.Storage.v1" Version="1.73.0.4052" />
+        <PackageVersion Include="Google.Cloud.Storage.V1" Version="4.14.0" />
+        <PackageVersion Include="Humanizer.Core" Version="3.0.10" />
+        <PackageVersion Include="ManagedCode.Communication" Version="10.0.1" />
+        <PackageVersion Include="ManagedCode.MimeTypes" Version="10.0.1" />
+        <PackageVersion Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
+        <PackageVersion Include="Microsoft.AspNetCore.Http.Connections.Client" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Graph" Version="5.103.0" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
+        <PackageVersion Include="Microsoft.Orleans.Runtime" Version="10.0.1" />
+        <PackageVersion Include="Microsoft.Orleans.TestingHost" Version="10.0.1" />
+        <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
+        <PackageVersion Include="Shouldly" Version="4.3.0" />
+        <PackageVersion Include="SSH.NET" Version="2025.1.0" />
+        <PackageVersion Include="Testcontainers" Version="4.11.0" />
+        <PackageVersion Include="Testcontainers.Azurite" Version="4.11.0" />
+        <PackageVersion Include="Testcontainers.FakeGcsServer" Version="4.11.0" />
+        <PackageVersion Include="Testcontainers.LocalStack" Version="4.11.0" />
+        <PackageVersion Include="Testcontainers.Sftp" Version="4.11.0" />
+        <PackageVersion Include="xunit" Version="2.9.3" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    </ItemGroup>
+</Project>

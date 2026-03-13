@@ -521,12 +521,12 @@ public class VirtualFileSystem : IVirtualFileSystem
         {
             _logger.LogDebug("Disposing VirtualFileSystem");
             _disposed = true;
+            GC.SuppressFinalize(this);
         }
     }
 
     private void ThrowIfDisposed()
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(VirtualFileSystem));
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 }

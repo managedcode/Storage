@@ -1,4 +1,4 @@
-﻿using ManagedCode.Storage.Aws;
+using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.DataLake;
 using ManagedCode.Storage.Core;

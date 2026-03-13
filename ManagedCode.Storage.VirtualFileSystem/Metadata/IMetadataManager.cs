@@ -150,11 +150,11 @@ internal class MetadataCacheEntry
 /// </summary>
 public abstract class BaseMetadataManager : IMetadataManager
 {
-    protected const string VFS_VERSION_KEY = "vfs-version";
-    protected const string VFS_CREATED_KEY = "vfs-created";
-    protected const string VFS_MODIFIED_KEY = "vfs-modified";
-    protected const string VFS_ATTRIBUTES_KEY = "vfs-attributes";
-    protected const string VFS_CUSTOM_PREFIX = "vfs-";
+    protected const string VfsVersionKey = "vfs-version";
+    protected const string VfsCreatedKey = "vfs-created";
+    protected const string VfsModifiedKey = "vfs-modified";
+    protected const string VfsAttributesKey = "vfs-attributes";
+    protected const string VfsCustomPrefix = "vfs-";
 
     protected abstract string MetadataPrefix { get; }
 
@@ -186,16 +186,16 @@ public abstract class BaseMetadataManager : IMetadataManager
     {
         var dict = new Dictionary<string, string>
         {
-            [$"{MetadataPrefix}{VFS_VERSION_KEY}"] = metadata.Version,
-            [$"{MetadataPrefix}{VFS_CREATED_KEY}"] = metadata.Created.ToString("O"),
-            [$"{MetadataPrefix}{VFS_MODIFIED_KEY}"] = metadata.Modified.ToString("O"),
-            [$"{MetadataPrefix}{VFS_ATTRIBUTES_KEY}"] = ((int)metadata.Attributes).ToString()
+            [$"{MetadataPrefix}{VfsVersionKey}"] = metadata.Version,
+            [$"{MetadataPrefix}{VfsCreatedKey}"] = metadata.Created.ToString("O"),
+            [$"{MetadataPrefix}{VfsModifiedKey}"] = metadata.Modified.ToString("O"),
+            [$"{MetadataPrefix}{VfsAttributesKey}"] = ((int)metadata.Attributes).ToString(System.Globalization.CultureInfo.InvariantCulture)
         };
 
         // Add VFS custom metadata
         foreach (var kvp in metadata.CustomMetadata)
         {
-            dict[$"{MetadataPrefix}{VFS_CUSTOM_PREFIX}{kvp.Key}"] = kvp.Value;
+            dict[$"{MetadataPrefix}{VfsCustomPrefix}{kvp.Key}"] = kvp.Value;
         }
 
         // Add additional custom metadata
@@ -203,7 +203,7 @@ public abstract class BaseMetadataManager : IMetadataManager
         {
             foreach (var kvp in customMetadata)
             {
-                if (!kvp.Key.StartsWith(MetadataPrefix))
+                if (!kvp.Key.StartsWith(MetadataPrefix, StringComparison.Ordinal))
                 {
                     dict[$"{MetadataPrefix}{kvp.Key}"] = kvp.Value;
                 }
@@ -222,14 +222,14 @@ public abstract class BaseMetadataManager : IMetadataManager
     /// </summary>
     protected VfsMetadata? ParseVfsMetadata(IDictionary<string, string> storageMetadata)
     {
-        var versionKey = $"{MetadataPrefix}{VFS_VERSION_KEY}";
+        var versionKey = $"{MetadataPrefix}{VfsVersionKey}";
         if (!storageMetadata.TryGetValue(versionKey, out var version))
             return null; // Not VFS metadata
 
         var metadata = new VfsMetadata { Version = version };
 
         // Parse created date
-        var createdKey = $"{MetadataPrefix}{VFS_CREATED_KEY}";
+        var createdKey = $"{MetadataPrefix}{VfsCreatedKey}";
         if (storageMetadata.TryGetValue(createdKey, out var createdStr) &&
             DateTimeOffset.TryParse(createdStr, out var created))
         {
@@ -237,7 +237,7 @@ public abstract class BaseMetadataManager : IMetadataManager
         }
 
         // Parse modified date
-        var modifiedKey = $"{MetadataPrefix}{VFS_MODIFIED_KEY}";
+        var modifiedKey = $"{MetadataPrefix}{VfsModifiedKey}";
         if (storageMetadata.TryGetValue(modifiedKey, out var modifiedStr) &&
             DateTimeOffset.TryParse(modifiedStr, out var modified))
         {
@@ -245,7 +245,7 @@ public abstract class BaseMetadataManager : IMetadataManager
         }
 
         // Parse attributes
-        var attributesKey = $"{MetadataPrefix}{VFS_ATTRIBUTES_KEY}";
+        var attributesKey = $"{MetadataPrefix}{VfsAttributesKey}";
         if (storageMetadata.TryGetValue(attributesKey, out var attributesStr) &&
             int.TryParse(attributesStr, out var attributes))
         {
@@ -253,10 +253,10 @@ public abstract class BaseMetadataManager : IMetadataManager
         }
 
         // Parse custom metadata
-        var customPrefix = $"{MetadataPrefix}{VFS_CUSTOM_PREFIX}";
+        var customPrefix = $"{MetadataPrefix}{VfsCustomPrefix}";
         foreach (var kvp in storageMetadata)
         {
-            if (kvp.Key.StartsWith(customPrefix))
+            if (kvp.Key.StartsWith(customPrefix, StringComparison.Ordinal))
             {
                 var customKey = kvp.Key[customPrefix.Length..];
                 metadata.CustomMetadata[customKey] = kvp.Value;
@@ -275,14 +275,14 @@ public abstract class BaseMetadataManager : IMetadataManager
 
         foreach (var kvp in storageMetadata)
         {
-            if (kvp.Key.StartsWith(MetadataPrefix))
+            if (kvp.Key.StartsWith(MetadataPrefix, StringComparison.Ordinal))
             {
                 // Skip VFS system metadata
-                if (kvp.Key.EndsWith(VFS_VERSION_KEY) ||
-                    kvp.Key.EndsWith(VFS_CREATED_KEY) ||
-                    kvp.Key.EndsWith(VFS_MODIFIED_KEY) ||
-                    kvp.Key.EndsWith(VFS_ATTRIBUTES_KEY) ||
-                    kvp.Key.Contains($"{VFS_CUSTOM_PREFIX}"))
+                if (kvp.Key.EndsWith(VfsVersionKey, StringComparison.Ordinal) ||
+                    kvp.Key.EndsWith(VfsCreatedKey, StringComparison.Ordinal) ||
+                    kvp.Key.EndsWith(VfsModifiedKey, StringComparison.Ordinal) ||
+                    kvp.Key.EndsWith(VfsAttributesKey, StringComparison.Ordinal) ||
+                    kvp.Key.Contains(VfsCustomPrefix, StringComparison.Ordinal))
                 {
                     continue;
                 }

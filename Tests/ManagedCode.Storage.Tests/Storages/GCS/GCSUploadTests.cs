@@ -11,7 +11,7 @@ public class GCSUploadTests : UploadTests<FakeGcsServerContainer>
 {
     protected override FakeGcsServerContainer Build()
     {
-        return new FakeGcsServerBuilder().WithImage(ContainerImages.FakeGCSServer)
+        return new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
             .Build();
     }
 

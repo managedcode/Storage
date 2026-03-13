@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -336,15 +336,17 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
                     return Result.Fail(file.Problem);
 
                 var fileStream = File.OpenRead(file.Value!.FilePath);
-                if (Environment.OSVersion.Platform != PlatformID.MacOSX)
+                if (!OperatingSystem.IsMacOS())
                     fileStream.Lock(0, fileStream.Length);
 
                 _lockedFiles.Add(filePath, fileStream);
             }
-            else if (!hasLegalHold && _lockedFiles.ContainsKey(filePath))
+            else if (!hasLegalHold && _lockedFiles.TryGetValue(filePath, out var lockedFile))
             {
-                _lockedFiles[filePath].Unlock(0, _lockedFiles[filePath].Length);
-                _lockedFiles[filePath].Dispose();
+                if (!OperatingSystem.IsMacOS())
+                    lockedFile.Unlock(0, lockedFile.Length);
+
+                lockedFile.Dispose();
                 _lockedFiles.Remove(filePath);
             }
 
@@ -375,7 +377,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
     private string GetPathFromOptions(BaseOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.FileName))
-            throw new ArgumentException("File name cannot be null or empty", nameof(options.FileName));
+            throw new ArgumentException("File name cannot be null or empty", nameof(options));
 
         var (directoryFromFileName, fileNameOnly) = SplitDirectoryFromFileName(options.FileName);
 

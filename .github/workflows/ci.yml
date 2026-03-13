@@ -26,6 +26,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ManagedCode.Storage.slnx
 
+    - name: Verify formatting
+      run: dotnet format ManagedCode.Storage.slnx --verify-no-changes --no-restore
+
     - name: Build
       run: dotnet build ManagedCode.Storage.slnx --configuration Release --no-restore
 

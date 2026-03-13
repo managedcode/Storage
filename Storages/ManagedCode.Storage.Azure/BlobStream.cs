@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
@@ -194,7 +195,7 @@ public class BlobStream : Stream
     {
         _pageBlob.SetMetadata(new Dictionary<string, string>
         {
-            [MetadataLengthKey] = newLength.ToString()
+            [MetadataLengthKey] = newLength.ToString(CultureInfo.InvariantCulture)
         });
     }
 }

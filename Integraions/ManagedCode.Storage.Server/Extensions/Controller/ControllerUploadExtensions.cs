@@ -79,7 +79,7 @@ public static class ControllerUploadExtensions
             return result.Value!;
         }
 
-        await using var stream = file.OpenReadStream();
+        await using var stream = file.OpenReadStream(serverOptions.InMemoryUploadThresholdBytes, cancellationToken);
         var uploadResult = await storage.UploadAsync(stream, uploadOptions, cancellationToken);
         uploadResult.ThrowIfFail();
         return uploadResult.Value!;

@@ -6,6 +6,7 @@ using ManagedCode.Storage.GoogleDrive.Options;
 using Shouldly;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -353,7 +354,7 @@ public class GoogleDriveClientHttpTests
                 mimeType = entry.MimeType,
                 createdTime = entry.Created.ToString("O"),
                 modifiedTime = entry.Modified.ToString("O"),
-                size = entry.MimeType == FolderMimeType ? null : entry.Content.LongLength.ToString()
+                size = entry.MimeType == FolderMimeType ? null : entry.Content.LongLength.ToString(CultureInfo.InvariantCulture)
             };
         }
     }

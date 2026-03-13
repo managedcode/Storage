@@ -25,7 +25,7 @@ public static class StorageBrowserFileExtensions
             return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         }
 
-        await using (var stream = formFile.OpenReadStream())
+        await using (var stream = formFile.OpenReadStream(cancellationToken: cancellationToken))
         {
             return await storage.UploadAsync(stream, options, cancellationToken);
         }
@@ -45,7 +45,7 @@ public static class StorageBrowserFileExtensions
             return await storage.UploadAsync(localFile.FileInfo, newOptions, cancellationToken);
         }
 
-        await using (var stream = formFile.OpenReadStream())
+        await using (var stream = formFile.OpenReadStream(cancellationToken: cancellationToken))
         {
             return await storage.UploadAsync(stream, newOptions, cancellationToken);
         }

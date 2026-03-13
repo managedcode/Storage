@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -21,8 +22,8 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
     protected BaseUploadControllerTests(StorageTestApplication testApplication, string apiEndpoint) : base(testApplication, apiEndpoint)
     {
-        _uploadEndpoint = string.Format(ApiEndpoints.Base.UploadFile, ApiEndpoint);
-        _uploadLargeFile = string.Format(ApiEndpoints.Base.UploadLargeFile, ApiEndpoint);
+        _uploadEndpoint = string.Format(CultureInfo.InvariantCulture, ApiEndpoints.Base.UploadFile, ApiEndpoint);
+        _uploadLargeFile = string.Format(CultureInfo.InvariantCulture, ApiEndpoints.Base.UploadLargeFile, ApiEndpoint);
     }
 
     [Fact]

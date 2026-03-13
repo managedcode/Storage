@@ -27,25 +27,16 @@ public static class LargeFileTestHelper
     /// <returns>Total bytes to generate for the test case.</returns>
     public static long ResolveSizeBytes(int gigabyteUnits)
     {
-        if (gigabyteUnits <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(gigabyteUnits));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(gigabyteUnits);
 
         return gigabyteUnits * LargeFileUnitBytes;
     }
 
     public static async Task<LocalFile> CreateRandomFileAsync(long sizeBytes, string extension = ".bin", int bufferSize = 4 * 1024 * 1024, CancellationToken cancellationToken = default)
     {
-        if (sizeBytes <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(sizeBytes));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sizeBytes);
 
-        if (bufferSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(bufferSize));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bufferSize);
 
         var directory = Path.Combine(Environment.CurrentDirectory, "large-file-tests");
         Directory.CreateDirectory(directory);

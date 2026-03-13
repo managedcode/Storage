@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using ManagedCode.Storage.Client;
 using ManagedCode.Storage.Tests.Common;
 using Xunit;

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Title>ManagedCode.Storage.Orleans</Title>
+        <PackageId>ManagedCode.Storage.Orleans</PackageId>
+        <Description>Orleans grain persistence provider backed by ManagedCode.Storage IStorage implementations.</Description>
+        <PackageTags>managedcode, storage, orleans, grain storage, persistence, actor model</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ManagedCode.Communication" />
+        <PackageReference Include="Microsoft.Orleans.Runtime" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    </ItemGroup>
+
+</Project>

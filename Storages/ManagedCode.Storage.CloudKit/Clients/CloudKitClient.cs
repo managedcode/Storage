@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -418,7 +419,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
             return;
         }
 
-        var date = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        var date = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
         var bodyHash = Convert.ToBase64String(SHA256.HashData(body));
         var signatureData = $"{date}:{bodyHash}:{subpath}";
         var signatureBytes = _signingKey.SignData(Encoding.UTF8.GetBytes(signatureData), HashAlgorithmName.SHA256);

@@ -1,4 +1,4 @@
-﻿using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core;
 
 namespace ManagedCode.Storage.FileSystem.Options;
 

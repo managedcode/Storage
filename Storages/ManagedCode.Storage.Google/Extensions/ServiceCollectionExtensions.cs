@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
 using ManagedCode.Storage.Core.Providers;
@@ -57,7 +57,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IGCPStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<GCPStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<GCPStorageOptions>(k);
             return new GCPStorage(opts);
         });
 
@@ -73,7 +73,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<GCPStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IGCPStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<GCPStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<GCPStorageOptions>(k);
             return new GCPStorage(opts);
         });
         serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>

@@ -26,7 +26,6 @@ public class VirtualDirectory : IVirtualDirectory
     private readonly VfsPath _path;
 
     private VfsMetadata? _vfsMetadata;
-    private bool _metadataLoaded;
 
     /// <summary>
     /// Initializes a new instance of VirtualDirectory
@@ -79,7 +78,6 @@ public class VirtualDirectory : IVirtualDirectory
             _vfsMetadata = await _metadataManager.GetVfsMetadataAsync(markerKey, cancellationToken);
         }
 
-        _metadataLoaded = true;
     }
 
     /// <inheritdoc />

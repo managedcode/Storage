@@ -1,4 +1,4 @@
-﻿using Shouldly;
+using Shouldly;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.FileSystem;
 using Microsoft.Extensions.DependencyInjection;

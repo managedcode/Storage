@@ -18,8 +18,7 @@ public sealed class AzureVirtualFileSystemFixture : IVirtualFileSystemFixture, I
 
     public async Task InitializeAsync()
     {
-        _container = new AzuriteBuilder()
-            .WithImage(ContainerImages.Azurite)
+        _container = new AzuriteBuilder(ContainerImages.Azurite)
             .WithCommand("--skipApiVersionCheck")
             .Build();
 

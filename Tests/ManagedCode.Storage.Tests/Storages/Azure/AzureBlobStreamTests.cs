@@ -17,8 +17,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
 {
     protected override AzuriteContainer Build()
     {
-        return new AzuriteBuilder()
-            .WithImage(ContainerImages.Azurite)
+        return new AzuriteBuilder(ContainerImages.Azurite)
             .WithCommand("--skipApiVersionCheck")
             .Build();
     }

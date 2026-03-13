@@ -1,4 +1,4 @@
-﻿using ManagedCode.Storage.Tests.Common;
+using ManagedCode.Storage.Tests.Common;
 using ManagedCode.Storage.Tests.Storages.Abstracts;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.FakeGcsServer;
@@ -11,7 +11,7 @@ public class GCSBlobTests : BlobTests<FakeGcsServerContainer>
 {
     protected override FakeGcsServerContainer Build()
     {
-        return new FakeGcsServerBuilder().WithImage(ContainerImages.FakeGCSServer)
+        return new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
             .Build();
     }
 

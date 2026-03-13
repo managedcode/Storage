@@ -1,4 +1,4 @@
-﻿// using ManagedCode.Storage.Azure.DataLake.Extensions;
+// using ManagedCode.Storage.Azure.DataLake.Extensions;
 // using Microsoft.Extensions.DependencyInjection;
 //
 // namespace ManagedCode.Storage.Tests.Azure;

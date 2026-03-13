@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Shouldly;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Extensions;

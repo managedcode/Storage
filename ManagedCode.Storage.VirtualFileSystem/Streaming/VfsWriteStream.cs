@@ -209,7 +209,6 @@ internal class VfsWriteStream : Stream
 
     private void ThrowIfDisposed()
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(VfsWriteStream));
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 }

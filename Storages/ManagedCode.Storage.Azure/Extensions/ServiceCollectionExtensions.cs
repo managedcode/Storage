@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
@@ -76,7 +76,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<AzureStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<AzureStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<AzureStorageOptions>(k);
             return new AzureStorage(opts);
         });
 
@@ -92,7 +92,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<AzureStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<AzureStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<AzureStorageOptions>(k);
             return new AzureStorage(opts);
         });
         serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>

@@ -20,8 +20,7 @@ public sealed class GcsVirtualFileSystemFixture : IVirtualFileSystemFixture, IAs
 
     public async Task InitializeAsync()
     {
-        _container = new FakeGcsServerBuilder()
-            .WithImage(ContainerImages.FakeGCSServer)
+        _container = new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
             .Build();
 
         await _container.StartAsync();

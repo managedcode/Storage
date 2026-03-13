@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ManagedCode.Storage.Azure.DataLake.Options;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Exceptions;
@@ -57,7 +57,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureDataLakeStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<AzureDataLakeStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<AzureDataLakeStorageOptions>(k);
             return new AzureDataLakeStorage(opts);
         });
 
@@ -73,7 +73,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddKeyedSingleton<AzureDataLakeStorageOptions>(key, options);
         serviceCollection.AddKeyedSingleton<IAzureDataLakeStorage>(key, (sp, k) =>
         {
-            var opts = sp.GetKeyedService<AzureDataLakeStorageOptions>(k);
+            var opts = sp.GetRequiredKeyedService<AzureDataLakeStorageOptions>(k);
             return new AzureDataLakeStorage(opts);
         });
         serviceCollection.AddKeyedSingleton<IStorage>(key, (sp, k) =>

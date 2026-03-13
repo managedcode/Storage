@@ -130,5 +130,7 @@ public class FileSystemSecurityTests : IDisposable
         {
             // Ignore cleanup errors
         }
+
+        GC.SuppressFinalize(this);
     }
 }

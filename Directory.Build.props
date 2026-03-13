@@ -4,6 +4,8 @@
         <TargetFramework>net10.0</TargetFramework>
         <LangVersion>14</LangVersion>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
+        <AnalysisMode>Recommended</AnalysisMode>
         <DebugType>embedded</DebugType>
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -27,8 +29,8 @@
         <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
         <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
         <Product>Managed Code - Storage</Product>
-        <Version>10.0.2</Version>
-        <PackageVersion>10.0.2</PackageVersion>
+        <Version>10.0.3</Version>
+        <PackageVersion>10.0.3</PackageVersion>
 
     </PropertyGroup>
 
@@ -40,7 +42,10 @@
         <None Include="$(SolutionDir)\README.md" Pack="true" Visible="false" PackagePath="\"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Update="DotNet.ReproducibleBuilds" Version="1.2.25">
+        <AdditionalFiles Include="$(MSBuildThisFileDirectory)CodeMetricsConfig.txt" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Update="DotNet.ReproducibleBuilds">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
