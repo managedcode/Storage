@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Reflection;
 using ManagedCode.Storage.Azure;
+using ManagedCode.Storage.Browser;
 using ManagedCode.Storage.Client;
 using ManagedCode.Storage.Client.SignalR;
 using ManagedCode.Storage.Core;
@@ -23,6 +24,7 @@ public sealed class CoreAndProductionDependencyRulesTests
             "ManagedCode.Storage.Aws",
             "ManagedCode.Storage.Azure",
             "ManagedCode.Storage.Azure.DataLake",
+            "ManagedCode.Storage.Browser",
             "ManagedCode.Storage.CloudKit",
             "ManagedCode.Storage.Client",
             "ManagedCode.Storage.Client.SignalR",
@@ -54,6 +56,7 @@ public sealed class CoreAndProductionDependencyRulesTests
             typeof(StorageController).Assembly,
             typeof(ManagedCodeGrainStorage).Assembly,
             typeof(IVirtualFileSystem).Assembly,
+            typeof(IBrowserStorage).Assembly,
             typeof(IAzureStorage).Assembly
         };
 

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Title>ManagedCode.Storage.Browser</Title>
+        <PackageId>ManagedCode.Storage.Browser</PackageId>
+        <Description>ManagedCode browser storage provider with IndexedDB metadata, OPFS-backed payloads, and Blazor or MVC integration helpers.</Description>
+        <PackageTags>managedcode,browser,indexeddb,opfs,blazor,mvc,storage</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+        <PackageReference Include="Microsoft.JSInterop" />
+    </ItemGroup>
+
+</Project>

@@ -25,6 +25,7 @@ This file defines how AI agents work in this solution.
   - `Integraions/ManagedCode.Storage.Orleans/`
   - `Integraions/ManagedCode.Storage.Server/`
   - `Storages/ManagedCode.Storage.Aws/`
+  - `Storages/ManagedCode.Storage.Browser/`
   - `Storages/ManagedCode.Storage.Azure/`
   - `Storages/ManagedCode.Storage.Azure.DataLake/`
   - `Storages/ManagedCode.Storage.CloudKit/`
@@ -35,6 +36,8 @@ This file defines how AI agents work in this solution.
   - `Storages/ManagedCode.Storage.OneDrive/`
   - `Storages/ManagedCode.Storage.Sftp/`
   - `Tests/ManagedCode.Storage.Tests/`
+  - `Tests/ManagedCode.Storage.BrowserServerHost/`
+  - `Tests/ManagedCode.Storage.BrowserWasmHost/`
 
 ## Rule Precedence
 
@@ -222,11 +225,13 @@ Toolchain notes:
 - Each public API endpoint has at least one test; complex endpoints need tests for different inputs and errors.
 - Integration tests must exercise real flows end-to-end, not just call endpoints in isolation.
 - Prefer integration or API tests over isolated unit tests.
-- Keep mocks to an absolute minimum; prefer real flows using fakes or containers where possible.
+- Do not use fakes in automated tests; validate behavior through real runtimes, browser sessions, or containerized dependencies.
+- For browser-storage scenarios, verify through handwritten Razor-based test apps in both Blazor WebAssembly and Interactive Server, driven by Playwright against real browser state.
+- When browser storage behavior could race across pages or tabs, add explicit concurrency coverage.
 - Never write tests that only validate mocked interactions; every test must assert concrete, observable behavior such as state, output, errors, or side effects.
-- When faking external APIs, match the official API docs for endpoints, status codes, payloads, and field naming, and prefer `HttpMessageHandler`-based fakes over ad-hoc mocks.
-- No mocks for internal systems such as databases, queues, or caches; use containers or fakes as appropriate.
-- Mocks are allowed only for external third-party systems.
+- When third-party systems must be simulated, prefer real protocol-compatible test infrastructure over in-process fakes.
+- No mocks for internal systems such as databases, queues, caches, or browser runtimes.
+- Mocks are allowed only as a last resort for external third-party systems when no real or containerized alternative exists, and that exception must be called out explicitly in the task summary.
 - Never delete or weaken a test to make it pass.
 - Each test must verify a real flow or scenario; tests without meaningful assertions are forbidden.
 - Check coverage to find gaps, not to chase a number.
@@ -234,7 +239,7 @@ Toolchain notes:
 - Tests run on `VSTest`; do not mix in `Microsoft.Testing.Platform` assumptions.
 - Coverage uses the repo-defined `coverlet.msbuild` flow and must not regress without a written exception.
 - Place provider suites under `Tests/ManagedCode.Storage.Tests/Storages/` and reuse `Tests/ManagedCode.Storage.Tests/Common/` helpers for Testcontainers infrastructure such as Azurite, LocalStack, and FakeGcsServer.
-- Add fakes or harnesses in `ManagedCode.Storage.TestFakes/` when introducing new providers.
+- For browser providers, put end-to-end Playwright coverage in `Tests/ManagedCode.Storage.Tests/Storages/Browser/` and keep the executable test hosts under `Tests/ManagedCode.Storage.BrowserServerHost/` and `Tests/ManagedCode.Storage.BrowserWasmHost/`.
 
 ### Storage Platform
 
@@ -277,6 +282,7 @@ Toolchain notes:
 - Remove unused usings and let analyzers guide layout.
 - When a `foreach` loop starts by transforming the iteration variable, prefer mapping the sequence explicitly with `.Select(...)` so the intent is clearer.
 - Avoid buffering whole files into `MemoryStream` in product code; assume multi-GB files and stream directly to the destination while using incremental hashing or CRC when verification is needed.
+- Stream capability properties such as `CanSeek`, `CanWrite`, `Length`, and `Position` must reflect the real backing stream or selected strategy; do not hardcode capability flags in a way that changes stream semantics silently.
 - No magic literals; extract them to constants, enums, configuration, or dedicated value types when it improves clarity.
 
 ### Git And PRs
@@ -315,4 +321,9 @@ Ask first:
 
 ### Likes
 
+- Repository-facing docs, especially `README.md`, should stay in English and describe only the current supported behavior, not transitional legacy or fallback paths.
+
 ### Dislikes
+
+- Template-generated scaffolding in tests; keep test hosts and verification surfaces minimal, hand-written, and purpose-built.
+- Unnecessary product-code fallbacks; prefer one clear production path unless backward compatibility is an explicit requirement for the task.

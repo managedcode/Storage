@@ -28,6 +28,7 @@
         <PackageReference Include="Microsoft.AspNetCore.Http" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Microsoft.Extensions.Logging" />
+        <PackageReference Include="Microsoft.Playwright" />
         <PackageReference Include="Microsoft.Orleans.TestingHost" />
         <PackageReference Include="NetArchTest.Rules" />
         <PackageReference Include="Testcontainers" />
@@ -53,13 +54,14 @@
         <ProjectReference Include="..\..\ManagedCode.Storage.Core\ManagedCode.Storage.Core.csproj" />
         <ProjectReference Include="..\..\ManagedCode.Storage.VirtualFileSystem\ManagedCode.Storage.VirtualFileSystem.csproj" />
         <ProjectReference Include="..\..\ManagedCode.Storage.TestFakes\ManagedCode.Storage.TestFakes.csproj" />
+        <ProjectReference Include="..\ManagedCode.Storage.BrowserServerHost\ManagedCode.Storage.BrowserServerHost.csproj" />
+        <ProjectReference Include="..\ManagedCode.Storage.BrowserWasmHost\ManagedCode.Storage.BrowserWasmHost.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Azure\ManagedCode.Storage.Azure.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Sftp\ManagedCode.Storage.Sftp.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.GoogleDrive\ManagedCode.Storage.GoogleDrive.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.OneDrive\ManagedCode.Storage.OneDrive.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Dropbox\ManagedCode.Storage.Dropbox.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Browser\ManagedCode.Storage.Browser.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.CloudKit\ManagedCode.Storage.CloudKit.csproj" />
     </ItemGroup>
-
-
 </Project>

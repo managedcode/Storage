@@ -26,11 +26,17 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ManagedCode.Storage.slnx
 
+    - name: Restore .NET tools
+      run: dotnet tool restore
+
     - name: Verify formatting
       run: dotnet format ManagedCode.Storage.slnx --verify-no-changes --no-restore
 
     - name: Build
       run: dotnet build ManagedCode.Storage.slnx --configuration Release --no-restore
+
+    - name: Install Playwright browser
+      run: dotnet playwright -p Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj install chromium
 
     - name: Test
       run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"

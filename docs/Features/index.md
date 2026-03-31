@@ -1,7 +1,7 @@
 ---
 title: Features
 description: "Documentation for major modules and providers in ManagedCode.Storage."
-keywords: "IStorage, providers, Azure Blob, AWS S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit, FileSystem, SFTP, Virtual File System, ASP.NET Server, SignalR, Orleans"
+keywords: "IStorage, providers, Azure Blob, AWS S3, Google Cloud Storage, browser storage, IndexedDB, OPFS, Blazor, OneDrive, Google Drive, Dropbox, CloudKit, FileSystem, SFTP, Virtual File System, ASP.NET Server, SignalR, Orleans"
 permalink: /features/
 nav_order: 5
 ---
@@ -45,6 +45,7 @@ flowchart LR
 - [Azure Data Lake Gen2](provider-azure-datalake.md)
 - [Amazon S3](provider-aws-s3.md)
 - [Google Cloud Storage](provider-google-cloud-storage.md)
+- [Browser storage](provider-browser-storage.md)
 - [File system](provider-filesystem.md)
 - [SFTP](provider-sftp.md)
 - [OneDrive (Microsoft Graph)](provider-onedrive.md)

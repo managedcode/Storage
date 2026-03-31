@@ -1,0 +1,291 @@
+@using System.Linq
+@using System.Text
+@inject IVirtualFileSystem FileSystem
+
+<hr />
+
+<section style="display:grid;gap:12px;">
+    <h2>Browser VFS playground</h2>
+
+    <label for="vfs-directory-input">VFS directory</label>
+    <input id="vfs-directory-input" @bind="vfsDirectory" />
+
+    <label for="vfs-file-name-input">VFS file name</label>
+    <input id="vfs-file-name-input" @bind="vfsFileName" />
+
+    <label for="vfs-moved-file-name-input">VFS moved file name</label>
+    <input id="vfs-moved-file-name-input" @bind="vfsMovedFileName" />
+
+    <label for="vfs-content-input">VFS content</label>
+    <textarea id="vfs-content-input" rows="4" @bind="vfsContent"></textarea>
+
+    <label for="vfs-size-mib-input">VFS large payload size (MiB)</label>
+    <input id="vfs-size-mib-input" type="number" min="1" @bind="vfsSizeMiB" />
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button id="vfs-save-text-button" @onclick="SaveVfsTextAsync">VFS Save Text</button>
+        <button id="vfs-load-text-button" @onclick="LoadVfsTextAsync">VFS Load Text</button>
+        <button id="vfs-save-large-button" @onclick="SaveVfsLargeAsync">VFS Save Large</button>
+        <button id="vfs-load-large-button" @onclick="LoadVfsLargeAsync">VFS Load Large</button>
+        <button id="vfs-list-button" @onclick="ListVfsAsync">VFS List</button>
+        <button id="vfs-move-button" @onclick="MoveVfsAsync">VFS Move</button>
+        <button id="vfs-delete-button" @onclick="DeleteVfsAsync">VFS Delete</button>
+    </div>
+</section>
+
+<section>
+    <h2>VFS status</h2>
+    <pre id="vfs-status-output">@vfsStatus</pre>
+</section>
+
+<section>
+    <h2>VFS loaded content</h2>
+    <pre id="vfs-loaded-output">@vfsLoadedContent</pre>
+</section>
+
+<section>
+    <h2>VFS large payload</h2>
+    <pre id="vfs-large-output">@vfsLargeOutput</pre>
+</section>
+
+<section>
+    <h2>VFS entries</h2>
+    <ul id="vfs-entry-list">
+        @foreach (var entry in vfsEntries)
+        {
+            <li>@entry</li>
+        }
+    </ul>
+</section>
+
+@code {
+    private List<string> vfsEntries = [];
+    private string vfsContent = "playwright-browser-vfs-seed";
+    private string vfsDirectory = "browser-vfs-tests";
+    private string vfsFileName = "playwright-browser-vfs.txt";
+    private string vfsMovedFileName = "playwright-browser-vfs-moved.txt";
+    private string vfsLargeOutput = "idle";
+    private string vfsLoadedContent = string.Empty;
+    private int vfsSizeMiB = 24;
+    private string vfsStatus = "ready";
+
+    private async Task SaveVfsTextAsync()
+    {
+        try
+        {
+            var path = GetVfsFilePath();
+            var file = await FileSystem.GetFileAsync(path);
+            await file.WriteAllTextAsync(vfsContent);
+            vfsStatus = $"vfs-saved:{path.Value}";
+        }
+        catch (Exception ex)
+        {
+            vfsStatus = $"vfs-save-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task LoadVfsTextAsync()
+    {
+        try
+        {
+            var path = GetVfsFilePath();
+            var file = await FileSystem.GetFileAsync(path);
+            await using var stream = await file.OpenReadAsync();
+            using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: false);
+            vfsLoadedContent = await reader.ReadToEndAsync();
+            vfsStatus = $"vfs-loaded:{path.Value}";
+        }
+        catch (Exception ex)
+        {
+            vfsLoadedContent = string.Empty;
+            vfsStatus = $"vfs-load-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task SaveVfsLargeAsync()
+    {
+        try
+        {
+            vfsStatus = "vfs-large-saving";
+            vfsLargeOutput = "saving";
+            await InvokeAsync(StateHasChanged);
+
+            var path = GetVfsFilePath();
+            var file = await FileSystem.GetFileAsync(path);
+            await using var stream = await file.OpenWriteAsync();
+            var (length, crc) = await WriteDeterministicPayloadAsync(stream, vfsSizeMiB, $"{vfsDirectory}|{vfsFileName}|{vfsSizeMiB}|vfs");
+            vfsLargeOutput = $"expected:{length}:{crc}";
+            vfsStatus = $"vfs-large-saved:{length}:{crc}";
+        }
+        catch (Exception ex)
+        {
+            vfsLargeOutput = "error";
+            vfsStatus = $"vfs-large-save-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task LoadVfsLargeAsync()
+    {
+        try
+        {
+            vfsStatus = "vfs-large-loading";
+            vfsLargeOutput = "loading";
+            await InvokeAsync(StateHasChanged);
+
+            var file = await FileSystem.GetFileAsync(GetVfsFilePath());
+            await using var stream = await file.OpenReadAsync();
+            var (length, crc) = await ComputeStreamDigestAsync(stream);
+            vfsLargeOutput = $"actual:{length}:{crc}";
+            vfsStatus = $"vfs-large-loaded:{length}:{crc}";
+        }
+        catch (Exception ex)
+        {
+            vfsLargeOutput = "error";
+            vfsStatus = $"vfs-large-load-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task ListVfsAsync()
+    {
+        try
+        {
+            var entries = new List<string>();
+            await foreach (var entry in FileSystem.ListAsync(GetVfsDirectoryPath()))
+                entries.Add(entry.Path.Value);
+
+            vfsEntries = entries.OrderBy(item => item, StringComparer.Ordinal).ToList();
+            vfsStatus = $"vfs-listed:{vfsEntries.Count}";
+        }
+        catch (Exception ex)
+        {
+            vfsEntries = [];
+            vfsStatus = $"vfs-list-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task MoveVfsAsync()
+    {
+        try
+        {
+            var source = GetVfsFilePath();
+            var destination = GetVfsMovedFilePath();
+            await FileSystem.MoveAsync(source, destination, new ManagedCode.Storage.VirtualFileSystem.Options.MoveOptions
+            {
+                Overwrite = true
+            });
+            vfsFileName = vfsMovedFileName;
+            vfsStatus = $"vfs-moved:{source.Value}->{destination.Value}";
+        }
+        catch (Exception ex)
+        {
+            vfsStatus = $"vfs-move-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task DeleteVfsAsync()
+    {
+        try
+        {
+            var file = await FileSystem.GetFileAsync(GetVfsFilePath());
+            var deleted = await file.DeleteAsync();
+            if (deleted)
+            {
+                vfsLoadedContent = string.Empty;
+                vfsLargeOutput = "idle";
+            }
+
+            vfsStatus = $"vfs-deleted:{deleted}";
+        }
+        catch (Exception ex)
+        {
+            vfsStatus = $"vfs-delete-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private VfsPath GetVfsDirectoryPath()
+    {
+        var normalizedDirectory = NormalizeVfsDirectory(vfsDirectory);
+        return string.IsNullOrWhiteSpace(normalizedDirectory)
+            ? new VfsPath("/")
+            : new VfsPath($"/{normalizedDirectory}");
+    }
+
+    private VfsPath GetVfsFilePath()
+    {
+        return BuildVfsPath(vfsDirectory, vfsFileName);
+    }
+
+    private VfsPath GetVfsMovedFilePath()
+    {
+        return BuildVfsPath(vfsDirectory, vfsMovedFileName);
+    }
+
+    private static VfsPath BuildVfsPath(string directoryPath, string filePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        var normalizedDirectory = NormalizeVfsDirectory(directoryPath);
+        var normalizedFileName = filePath.Replace('\\', '/').Trim('/');
+
+        return string.IsNullOrWhiteSpace(normalizedDirectory)
+            ? new VfsPath($"/{normalizedFileName}")
+            : new VfsPath($"/{normalizedDirectory}/{normalizedFileName}");
+    }
+
+    private static string NormalizeVfsDirectory(string directoryPath)
+    {
+        return string.IsNullOrWhiteSpace(directoryPath)
+            ? string.Empty
+            : directoryPath.Replace('\\', '/').Trim('/');
+    }
+
+    private static async Task<(long Length, uint Crc)> WriteDeterministicPayloadAsync(Stream stream, int sizeInMiB, string seedInput)
+    {
+        const int BufferSize = 64 * 1024;
+        var totalLength = (long)Math.Max(sizeInMiB, 1) * 1024 * 1024;
+        var remaining = totalLength;
+        var buffer = new byte[BufferSize];
+        var random = new Random(ComputeSeed(seedInput));
+        var crc = Crc32Helper.Begin();
+
+        while (remaining > 0)
+        {
+            var bytesToWrite = (int)Math.Min(buffer.Length, remaining);
+            random.NextBytes(buffer.AsSpan(0, bytesToWrite));
+            await stream.WriteAsync(buffer.AsMemory(0, bytesToWrite));
+            crc = Crc32Helper.Update(crc, buffer.AsSpan(0, bytesToWrite));
+            remaining -= bytesToWrite;
+        }
+
+        await stream.FlushAsync();
+        return (totalLength, Crc32Helper.Complete(crc));
+    }
+
+    private static int ComputeSeed(string seedInput)
+    {
+        var seed = 17;
+
+        foreach (var ch in seedInput)
+            seed = unchecked(seed * 31 + ch);
+
+        return seed;
+    }
+
+    private static async Task<(long Length, uint Crc)> ComputeStreamDigestAsync(Stream stream)
+    {
+        var buffer = new byte[64 * 1024];
+        long totalLength = 0;
+        var crc = Crc32Helper.Begin();
+
+        while (true)
+        {
+            var bytesRead = await stream.ReadAsync(buffer);
+            if (bytesRead == 0)
+                break;
+
+            totalLength += bytesRead;
+            crc = Crc32Helper.Update(crc, buffer.AsSpan(0, bytesRead));
+        }
+
+        return (totalLength, Crc32Helper.Complete(crc));
+    }
+}

@@ -90,7 +90,7 @@ app.MapControllers(); // /api/storage/*
 app.MapStorageHub();  // /hubs/storage
 ```
 
-ManagedCode.Storage wraps vendor SDKs behind a single `IStorage` abstraction so uploads, downloads, metadata, streaming, and retention behave the same regardless of provider. Swap between Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, and a local file system without rewriting application code — and optionally use the Virtual File System (VFS) overlay for a file/directory API on top of any configured `IStorage`. Pair it with our ASP.NET controllers, SignalR client, and Orleans grain persistence provider to deliver chunked uploads, ranged downloads, real-time progress, and actor-state persistence end to end.
+ManagedCode.Storage wraps vendor SDKs behind a single `IStorage` abstraction so uploads, downloads, metadata, streaming, and retention behave the same regardless of provider. Swap between Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive, Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, browser storage with IndexedDB metadata and OPFS-backed payloads, and a local file system without rewriting application code — and optionally use the Virtual File System (VFS) overlay for a file/directory API on top of any configured `IStorage`. Pair it with our ASP.NET controllers, SignalR client, and Orleans grain persistence provider to deliver chunked uploads, ranged downloads, real-time progress, and actor-state persistence end to end.
 
 ## Motivation
 
@@ -99,14 +99,14 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 ## Features
 
 - Unified `IStorage` abstraction covering upload, download, streaming, metadata, deletion, container management, and legal hold operations backed by `Result<T>` responses.
-- Provider coverage across Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive (Microsoft Graph), Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, and the local file system.
+- Provider coverage across Azure Blob Storage, Azure Data Lake, Amazon S3, Google Cloud Storage, OneDrive (Microsoft Graph), Google Drive, Dropbox, CloudKit (iCloud app data), SFTP, browser storage with IndexedDB metadata plus OPFS-backed payloads, and the local file system.
 - Keyed dependency-injection registrations plus default provider helpers to fan out files per tenant, region, or workload without manual service plumbing.
 - `ManagedCode.Storage.Orleans` lets Orleans grains persist `IPersistentState<TState>` through any registered ManagedCode `IStorage`, including typed and keyed DI setups.
 - ASP.NET storage controllers, chunk orchestration services, and a SignalR hub/client pair that deliver resumable uploads, ranged downloads, CRC32 validation, and real-time progress.
 - `ManagedCode.Storage.Client` brings streaming uploads/downloads, CRC32 helpers, and MIME discovery via `MimeHelper` to any .NET app.
 - Strongly typed option objects (`UploadOptions`, `DownloadOptions`, `DeleteOptions`, `MetadataOptions`, `LegalHoldOptions`, etc.) let you configure directories, metadata, and legal holds in one place.
-- Virtual File System package provides a file/directory API (`IVirtualFileSystem`) on top of the configured `IStorage` and can cache metadata for faster repeated operations.
-- Comprehensive automated test suite with cross-provider sync fixtures, multi-gigabyte streaming simulations (4 MB units per "GB"), ASP.NET controller harnesses, and SFTP/local filesystem coverage.
+- Virtual File System package provides a file/directory API (`IVirtualFileSystem`) on top of the configured `IStorage` and can cache metadata for faster repeated operations, including browser storage verified through real Playwright flows in both Blazor WebAssembly and Interactive Server hosts.
+- Comprehensive automated test suite with cross-provider sync fixtures, multi-gigabyte streaming simulations (4 MB units per "GB"), ASP.NET controller harnesses, SFTP/local filesystem coverage, and Playwright browser verification for browser storage small-file overwrites, concurrent tabs, VFS flows, and `1 GiB` round-trips in both Interactive Server and Blazor WebAssembly hosts.
 - ManagedCode.Storage.TestFakes package plus Testcontainers-based fixtures make it easy to run offline or CI tests without touching real cloud accounts.
 
 ## Packages
@@ -127,8 +127,9 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 | [ManagedCode.Storage.Azure.DataLake](https://www.nuget.org/packages/ManagedCode.Storage.Azure.DataLake) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Azure.DataLake.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Azure.DataLake) | Azure Data Lake Gen2 provider on top of the unified abstraction. |
 | [ManagedCode.Storage.Aws](https://www.nuget.org/packages/ManagedCode.Storage.Aws) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Aws.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Aws) | Amazon S3 provider with Object Lock and legal hold operations. |
 | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | Google Cloud Storage integration built on official SDKs. |
+| [ManagedCode.Storage.Browser](https://www.nuget.org/packages/ManagedCode.Storage.Browser) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Browser.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Browser) | Browser storage provider with Blazor DI helpers, MVC/static-asset helpers, IndexedDB metadata, and OPFS-backed payload streaming. |
 | [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | Local file system implementation for hybrid or on-premises workloads. |
-| [ManagedCode.Storage.Sftp](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Sftp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | SFTP provider powered by SSH.NET for legacy and air-gapped environments. |
+| [ManagedCode.Storage.Sftp](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Sftp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | SFTP provider powered by SSH.NET for regulated and air-gapped environments. |
 | [ManagedCode.Storage.OneDrive](https://www.nuget.org/packages/ManagedCode.Storage.OneDrive) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.OneDrive.svg)](https://www.nuget.org/packages/ManagedCode.Storage.OneDrive) | OneDrive provider built on Microsoft Graph. |
 | [ManagedCode.Storage.GoogleDrive](https://www.nuget.org/packages/ManagedCode.Storage.GoogleDrive) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.GoogleDrive.svg)](https://www.nuget.org/packages/ManagedCode.Storage.GoogleDrive) | Google Drive provider built on the Google Drive API. |
 | [ManagedCode.Storage.Dropbox](https://www.nuget.org/packages/ManagedCode.Storage.Dropbox) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Dropbox.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Dropbox) | Dropbox provider built on the Dropbox API. |
@@ -704,6 +705,8 @@ Each provider supports two DI patterns:
 
 Cloud-drive providers (OneDrive, Google Drive, Dropbox) and CloudKit are configured in [Configuring OneDrive, Google Drive, Dropbox, and CloudKit](#configuring-onedrive-google-drive-dropbox-and-cloudkit); the same default/provider-specific rules apply.
 
+The Blazor browser-local provider follows the same `Add*StorageAsDefault(...)` and `Add*Storage(...)` pattern, but it is `Scoped` because it relies on Blazor `IJSRuntime`.
+
 ### Azure
 
 Default mode connection:
@@ -899,6 +902,84 @@ public class MyService
 ```
 
 > Need parallel S3 buckets? Register them with <code>AddAWSStorage("aws-backup", ...)</code> and inject via <code>[FromKeyedServices("aws-backup")]</code>.
+
+</details>
+
+<details>
+  <summary>Browser Storage (Click here to expand)</summary>
+
+### Browser Storage
+
+Default mode connection:
+
+```cs
+// Program.cs
+builder.Services.AddBrowserStorageAsDefault(options =>
+{
+    options.ContainerName = "drafts";
+    options.DatabaseName = "managedcode-storage";
+    options.ChunkSizeBytes = 4 * 1024 * 1024;
+    options.ChunkBatchSize = 4;
+});
+```
+
+Recommended tuning for large browser-local files:
+
+- `ChunkSizeBytes = 4 * 1024 * 1024` keeps browser read windows reasonable without forcing giant single-message allocations.
+- `ChunkBatchSize = 4` lets uploads and reads move `4` contiguous chunks per JS interop window instead of one-by-one.
+- In Blazor Server or Interactive Server, keep `HubOptions.MaximumReceiveMessageSize >= 32 * 1024 * 1024` when using the `4 MiB x 4` read window.
+- For the heaviest browser-local media workflows, prefer Blazor WebAssembly because it avoids the SignalR hop on reads.
+
+Using in default mode:
+
+```cs
+// DraftService.cs
+public sealed class DraftService
+{
+    private readonly IStorage _storage;
+
+    public DraftService(IStorage storage)
+    {
+        _storage = storage;
+    }
+}
+```
+
+Provider-specific mode connection:
+
+```cs
+// Program.cs
+builder.Services.AddBrowserStorage(options =>
+{
+    options.ContainerName = "drafts";
+    options.DatabaseName = "managedcode-storage";
+    options.ChunkSizeBytes = 4 * 1024 * 1024;
+    options.ChunkBatchSize = 4;
+});
+```
+
+Using in provider-specific mode:
+
+```cs
+// DraftService.cs
+public sealed class DraftService
+{
+    private readonly IBrowserStorage _storage;
+
+    public DraftService(IBrowserStorage storage)
+    {
+        _storage = storage;
+    }
+}
+```
+
+If an MVC or Razor Pages application needs the packaged browser module path for custom JavaScript integration, use `ManagedCode.Storage.Browser.Mvc.BrowserStorageStaticAssetPaths.ModulePath`.
+
+> Browser caveats: use this provider only after the app becomes interactive. In Blazor Server, don't call it during prerendering and keep `HubOptions.MaximumReceiveMessageSize` aligned with your effective read window, not just a single chunk. With `ChunkSizeBytes = 4 MiB` and `ChunkBatchSize = 4`, keep the receive limit at `32 MiB` or higher. Prefer WebAssembly for the heaviest client-local media workflows. Treat browser storage as user-visible and user-modifiable.
+
+> Browser payloads use the browser Origin Private File System (OPFS). IndexedDB stays in the design only for blob metadata and list or lookup operations. If OPFS is unavailable in the current browser, uploads fail fast instead of silently falling back to a second payload backend.
+
+> The real Playwright browser hosts in this repo verify small-file saves and overwrites, concurrent tabs, VFS flows, and `1 GiB` round-trips in both Blazor WebAssembly and Interactive Server. The large-file flows emit progress logs every `100 MiB`, and both the small-file and large-file paths assert that payload storage resolves to OPFS.
 
 </details>
 

@@ -1,0 +1,278 @@
+@page "/storage-playground"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using System.Linq
+@using System.Diagnostics
+@using System.Text
+@using ManagedCode.Storage.BrowserServerHost
+@inject IBrowserStorage Storage
+@inject ILogger<StoragePlayground> Logger
+
+<PageTitle>Storage Playground</PageTitle>
+
+<main style="padding:24px;font-family:sans-serif;display:grid;gap:16px;max-width:960px;">
+    <h1>Browser Storage playground</h1>
+
+    <label for="directory-input">Directory</label>
+    <input id="directory-input" @bind="directory" />
+
+    <label for="file-name-input">File name</label>
+    <input id="file-name-input" @bind="fileName" />
+
+    <label for="content-input">Content</label>
+    <textarea id="content-input" rows="6" @bind="content"></textarea>
+
+    <label for="size-mib-input">Large payload size (MiB)</label>
+    <input id="size-mib-input" type="number" min="1" @bind="sizeMiB" />
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button id="save-text-button" @onclick="SaveTextAsync">Save Text</button>
+        <button id="load-text-button" @onclick="LoadTextAsync">Load Text</button>
+        <button id="save-large-button" @onclick="SaveLargeAsync">Save Large</button>
+        <button id="load-large-button" @onclick="LoadLargeAsync">Load Large</button>
+        <button id="exists-button" @onclick="CheckExistsAsync">Exists</button>
+        <button id="list-button" @onclick="ListAsync">List</button>
+        <button id="delete-button" @onclick="DeleteAsync">Delete</button>
+    </div>
+
+    <section>
+        <h2>Status</h2>
+        <pre id="status-output">@status</pre>
+    </section>
+
+    <section>
+        <h2>Exists</h2>
+        <pre id="exists-output">@existsOutput</pre>
+    </section>
+
+    <section>
+        <h2>Loaded content</h2>
+        <pre id="loaded-output">@loadedContent</pre>
+    </section>
+
+    <section>
+        <h2>Large payload</h2>
+        <pre id="large-output">@largeOutput</pre>
+    </section>
+
+    <section>
+        <h2>Files</h2>
+        <ul id="blob-list">
+            @foreach (var blob in blobs)
+            {
+                <li>@blob.FullName (@blob.Length bytes)</li>
+            }
+        </ul>
+    </section>
+
+    <VfsPlayground />
+</main>
+
+@code {
+    private const long ProgressLogIntervalBytes = 100L * 1024 * 1024;
+    private List<BlobMetadata> blobs = [];
+    private string content = "playwright-browser-storage-seed";
+    private string directory = "browser-storage-tests";
+    private string existsOutput = "unknown";
+    private string fileName = "playwright-browser-storage.txt";
+    private string largeOutput = "idle";
+    private string loadedContent = string.Empty;
+    private int sizeMiB = 20;
+    private string status = "ready";
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return Task.CompletedTask;
+
+        status = "interactive-ready";
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async Task SaveTextAsync()
+    {
+        var result = await Storage.UploadAsync(content, new UploadOptions { FileName = fileName, Directory = directory });
+        status = result.IsSuccess ? $"saved:{result.Value!.FullName}" : $"save-failed:{result.Problem?.Detail}";
+    }
+
+    private async Task LoadTextAsync()
+    {
+        var result = await Storage.GetStreamAsync(GetResolvedFileName());
+        if (result.IsFailed || result.Value is null)
+        {
+            loadedContent = string.Empty;
+            status = $"load-failed:{result.Problem?.Detail}";
+            return;
+        }
+
+        await using var stream = result.Value;
+        using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: false);
+        loadedContent = await reader.ReadToEndAsync();
+        status = $"loaded:{GetResolvedFileName()}";
+    }
+
+    private async Task SaveLargeAsync()
+    {
+        try
+        {
+            status = "large-saving";
+            largeOutput = "saving";
+            await InvokeAsync(StateHasChanged);
+
+            var totalLength = (long)Math.Max(sizeMiB, 1) * 1024 * 1024;
+            var resolvedFileName = GetResolvedFileName();
+            var startedAt = Stopwatch.StartNew();
+            await using var stream = new DeterministicPayloadStream(
+                totalLength,
+                ComputeSeed($"{directory}|{fileName}|{sizeMiB}|storage"),
+                ProgressLogIntervalBytes,
+                bytesProcessed => ReportLargeSaveProgress(resolvedFileName, bytesProcessed, totalLength));
+            var result = await Storage.UploadAsync(stream, new UploadOptions
+            {
+                FileName = fileName,
+                Directory = directory,
+                MimeType = "application/octet-stream"
+            });
+
+            if (!stream.IsCompleted)
+            {
+                largeOutput = $"generated:{stream.Position}";
+                status = $"large-save-failed:UnexpectedLength:{stream.Position}";
+                return;
+            }
+
+            var length = stream.Position;
+            var crc = stream.CompletedCrc;
+
+            largeOutput = $"expected:{length}:{crc}";
+            status = result.IsSuccess ? $"large-saved:{length}:{crc}" : $"large-save-failed:{result.Problem?.Detail}";
+            Logger.LogInformation("Completed browser storage save for {FileName} ({Bytes} bytes, crc {Crc}) in {ElapsedMilliseconds} ms.",
+                resolvedFileName,
+                length,
+                crc,
+                startedAt.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            largeOutput = "error";
+            status = $"large-save-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task LoadLargeAsync()
+    {
+        try
+        {
+            status = "large-loading";
+            largeOutput = "loading";
+            await InvokeAsync(StateHasChanged);
+
+            var resolvedFileName = GetResolvedFileName();
+            var startedAt = Stopwatch.StartNew();
+            var result = await Storage.GetStreamAsync(GetResolvedFileName());
+            if (result.IsFailed || result.Value is null)
+            {
+                largeOutput = "error";
+                status = $"large-load-failed:{result.Problem?.Detail}";
+                return;
+            }
+
+            await using var stream = result.Value;
+            var (length, crc) = await ComputeStreamDigestAsync(stream, bytesProcessed => ReportLargeLoadProgress(resolvedFileName, bytesProcessed));
+            largeOutput = $"actual:{length}:{crc}";
+            status = $"large-loaded:{length}:{crc}";
+            Logger.LogInformation("Completed browser storage load for {FileName} ({Bytes} bytes, crc {Crc}) in {ElapsedMilliseconds} ms.",
+                resolvedFileName,
+                length,
+                crc,
+                startedAt.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            largeOutput = "error";
+            status = $"large-load-failed:{ex.GetType().Name}:{ex.Message}";
+        }
+    }
+
+    private async Task CheckExistsAsync()
+    {
+        var result = await Storage.ExistsAsync(new ExistOptions { FileName = fileName, Directory = directory });
+        existsOutput = result.IsSuccess ? result.Value.ToString() : "error";
+        status = result.IsSuccess ? $"exists:{result.Value}" : $"exists-failed:{result.Problem?.Detail}";
+    }
+
+    private async Task ListAsync()
+    {
+        blobs = await Storage.GetBlobMetadataListAsync(directory).ToListAsync();
+        status = $"listed:{blobs.Count}";
+    }
+
+    private async Task DeleteAsync()
+    {
+        var result = await Storage.DeleteAsync(new DeleteOptions { FileName = fileName, Directory = directory });
+        status = result.IsSuccess ? $"deleted:{result.Value}" : $"delete-failed:{result.Problem?.Detail}";
+    }
+
+    private string GetResolvedFileName()
+    {
+        return string.IsNullOrWhiteSpace(directory) ? fileName : $"{directory}/{fileName}";
+    }
+
+    private static int ComputeSeed(string seedInput)
+    {
+        var seed = 17;
+
+        foreach (var ch in seedInput)
+            seed = unchecked(seed * 31 + ch);
+
+        return seed;
+    }
+
+    private void ReportLargeSaveProgress(string resolvedFileName, long bytesProcessed, long totalLength)
+    {
+        Logger.LogInformation("Browser storage save progress for {FileName}: {ProcessedMiB}/{TotalMiB} MiB.",
+            resolvedFileName,
+            ToMiB(bytesProcessed),
+            ToMiB(totalLength));
+        status = $"large-saving:{ToMiB(bytesProcessed)}MiB";
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ReportLargeLoadProgress(string resolvedFileName, long bytesProcessed)
+    {
+        Logger.LogInformation("Browser storage load progress for {FileName}: {ProcessedMiB} MiB.", resolvedFileName, ToMiB(bytesProcessed));
+        status = $"large-loading:{ToMiB(bytesProcessed)}MiB";
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private static async Task<(long Length, uint Crc)> ComputeStreamDigestAsync(Stream stream, Action<long>? progressCallback = null)
+    {
+        var buffer = new byte[64 * 1024];
+        long totalLength = 0;
+        var crc = Crc32Helper.Begin();
+        var nextProgressReportBytes = ProgressLogIntervalBytes;
+
+        while (true)
+        {
+            var bytesRead = await stream.ReadAsync(buffer);
+            if (bytesRead == 0)
+                break;
+
+            totalLength += bytesRead;
+            crc = Crc32Helper.Update(crc, buffer.AsSpan(0, bytesRead));
+
+            while (progressCallback is not null && totalLength >= nextProgressReportBytes)
+            {
+                progressCallback(nextProgressReportBytes);
+                nextProgressReportBytes += ProgressLogIntervalBytes;
+            }
+        }
+
+        return (totalLength, Crc32Helper.Complete(crc));
+    }
+
+    private static long ToMiB(long bytes)
+    {
+        return bytes / (1024L * 1024L);
+    }
+}

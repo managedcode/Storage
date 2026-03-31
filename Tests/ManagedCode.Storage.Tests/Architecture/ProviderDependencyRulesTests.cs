@@ -5,6 +5,7 @@ using System.Reflection;
 using ManagedCode.Storage.Aws;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.DataLake;
+using ManagedCode.Storage.Browser;
 using ManagedCode.Storage.CloudKit;
 using ManagedCode.Storage.Dropbox;
 using ManagedCode.Storage.FileSystem;
@@ -45,6 +46,7 @@ public sealed class ProviderDependencyRulesTests
             (typeof(IAWSStorage).Assembly, typeof(IAWSStorage).Assembly.GetName().Name!),
             (typeof(IAzureStorage).Assembly, typeof(IAzureStorage).Assembly.GetName().Name!),
             (typeof(IAzureDataLakeStorage).Assembly, typeof(IAzureDataLakeStorage).Assembly.GetName().Name!),
+            (typeof(IBrowserStorage).Assembly, typeof(IBrowserStorage).Assembly.GetName().Name!),
             (typeof(ICloudKitStorage).Assembly, typeof(ICloudKitStorage).Assembly.GetName().Name!),
             (typeof(IDropboxStorage).Assembly, typeof(IDropboxStorage).Assembly.GetName().Name!),
             (typeof(IFileSystemStorage).Assembly, typeof(IFileSystemStorage).Assembly.GetName().Name!),

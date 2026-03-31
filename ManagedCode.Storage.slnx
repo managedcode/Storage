@@ -12,6 +12,7 @@
   </Folder>
   <Folder Name="/Storages/">
     <Project Path="Storages/ManagedCode.Storage.Aws/ManagedCode.Storage.Aws.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Browser/ManagedCode.Storage.Browser.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Azure.DataLake/ManagedCode.Storage.Azure.DataLake.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Azure/ManagedCode.Storage.Azure.csproj" />
     <Project Path="Storages/ManagedCode.Storage.FileSystem/ManagedCode.Storage.FileSystem.csproj" />
@@ -23,6 +24,8 @@
     <Project Path="Storages/ManagedCode.Storage.CloudKit/ManagedCode.Storage.CloudKit.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="Tests/ManagedCode.Storage.BrowserServerHost/ManagedCode.Storage.BrowserServerHost.csproj" />
+    <Project Path="Tests/ManagedCode.Storage.BrowserWasmHost/ManagedCode.Storage.BrowserWasmHost.csproj" />
     <Project Path="Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj" />
   </Folder>
   <Project Path="ManagedCode.Storage.Core/ManagedCode.Storage.Core.csproj" />
