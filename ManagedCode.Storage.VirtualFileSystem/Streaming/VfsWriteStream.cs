@@ -11,9 +11,6 @@ using ManagedCode.Storage.VirtualFileSystem.Options;
 
 namespace ManagedCode.Storage.VirtualFileSystem.Streaming;
 
-/// <summary>
-/// Write stream implementation for VFS that buffers data and uploads on dispose
-/// </summary>
 internal class VfsWriteStream : Stream
 {
     private readonly IStorage _storage;
@@ -56,36 +53,12 @@ internal class VfsWriteStream : Stream
     public override bool CanWrite => !_disposed && _bufferStream.CanWrite;
     public override long Length => _bufferStream.Length;
 
-    public override long Position
-    {
-        get => _bufferStream.Position;
-        set => _bufferStream.Position = value;
-    }
-
-    public override void Flush()
-    {
-        _bufferStream.Flush();
-    }
-
-    public override async Task FlushAsync(CancellationToken cancellationToken)
-    {
-        await _bufferStream.FlushAsync(cancellationToken);
-    }
-
-    public override int Read(byte[] buffer, int offset, int count)
-    {
-        throw new NotSupportedException("Read operations are not supported on write streams");
-    }
-
-    public override long Seek(long offset, SeekOrigin origin)
-    {
-        return _bufferStream.Seek(offset, origin);
-    }
-
-    public override void SetLength(long value)
-    {
-        _bufferStream.SetLength(value);
-    }
+    public override long Position { get => _bufferStream.Position; set => _bufferStream.Position = value; }
+    public override void Flush() => _bufferStream.Flush();
+    public override Task FlushAsync(CancellationToken cancellationToken) => _bufferStream.FlushAsync(cancellationToken);
+    public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException("Read operations are not supported on write streams");
+    public override long Seek(long offset, SeekOrigin origin) => _bufferStream.Seek(offset, origin);
+    public override void SetLength(long value) => _bufferStream.SetLength(value);
 
     public override void Write(byte[] buffer, int offset, int count)
     {
@@ -99,16 +72,16 @@ internal class VfsWriteStream : Stream
         _bufferStream.Write(buffer);
     }
 
-    public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
-        await _bufferStream.WriteAsync(buffer, offset, count, cancellationToken);
+        return _bufferStream.WriteAsync(buffer, offset, count, cancellationToken);
     }
 
-    public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        await _bufferStream.WriteAsync(buffer, cancellationToken);
+        return _bufferStream.WriteAsync(buffer, cancellationToken);
     }
 
     protected override void Dispose(bool disposing)
@@ -117,7 +90,6 @@ internal class VfsWriteStream : Stream
         {
             try
             {
-                // Upload the buffered data
                 UploadBufferedDataAsync().GetAwaiter().GetResult();
             }
             catch (Exception ex)
@@ -137,23 +109,22 @@ internal class VfsWriteStream : Stream
 
     public override async ValueTask DisposeAsync()
     {
-        if (!_disposed)
+        if (_disposed) { await base.DisposeAsync(); return; }
+
+        try
         {
-            try
-            {
-                await UploadBufferedDataAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error uploading data during stream dispose: {BlobKey}", _blobKey);
-                throw;
-            }
-            finally
-            {
-                await _bufferStream.DisposeAsync();
-                await _bufferFile.DisposeAsync();
-                _disposed = true;
-            }
+            await UploadBufferedDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading data during stream dispose: {BlobKey}", _blobKey);
+            throw;
+        }
+        finally
+        {
+            await _bufferStream.DisposeAsync();
+            await _bufferFile.DisposeAsync();
+            _disposed = true;
         }
 
         await base.DisposeAsync();
@@ -161,11 +132,7 @@ internal class VfsWriteStream : Stream
 
     private async Task UploadBufferedDataAsync()
     {
-        if (_bufferStream.Length == 0)
-        {
-            _logger.LogDebug("No data to upload for: {BlobKey}", _blobKey);
-            return;
-        }
+        if (_bufferStream.Length == 0) { _logger.LogDebug("No data to upload for: {BlobKey}", _blobKey); return; }
 
         _logger.LogDebug("Uploading buffered data: {BlobKey}, size: {Size}", _blobKey, _bufferStream.Length);
 
@@ -181,34 +148,28 @@ internal class VfsWriteStream : Stream
             };
 
             var result = await _storage.UploadAsync(_bufferStream, uploadOptions);
-
             if (!result.IsSuccess)
-            {
                 throw new VfsOperationException($"Failed to upload data for: {_blobKey}. Error: {result.Problem}");
-            }
 
-            // Invalidate cache after successful upload
-            if (_vfsOptions.EnableCache)
-            {
-                var existsKey = $"file_exists:{_vfsOptions.DefaultContainer}:{_blobKey}";
-                _cache.Remove(existsKey);
-                var metadataCacheKey = $"file_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}";
-                _cache.Remove(metadataCacheKey);
-                var customKey = $"file_custom_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}";
-                _cache.Remove(customKey);
-            }
-
+            InvalidateCache();
             _logger.LogDebug("Successfully uploaded data: {BlobKey}", _blobKey);
         }
-        catch (Exception ex) when (!(ex is VfsOperationException))
+        catch (Exception ex) when (ex is not VfsOperationException)
         {
             _logger.LogError(ex, "Error uploading buffered data: {BlobKey}", _blobKey);
             throw new VfsOperationException($"Failed to upload data for: {_blobKey}", ex);
         }
     }
 
-    private void ThrowIfDisposed()
+    private void InvalidateCache()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_vfsOptions.EnableCache)
+            return;
+
+        _cache.Remove($"file_exists:{_vfsOptions.DefaultContainer}:{_blobKey}");
+        _cache.Remove($"file_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}");
+        _cache.Remove($"file_custom_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}");
     }
+
+    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 }
