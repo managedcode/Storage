@@ -1,4 +1,5 @@
 const sessions = new Map();
+const maxWriteBlockBytes = 1024 * 1024;
 
 self.onmessage = async (event) => {
   const { id, command, payload } = event.data ?? {};
@@ -59,12 +60,7 @@ async function appendChunksAsync(databaseName, blobKey, chunks) {
 
   for (const chunk of Array.isArray(chunks) ? chunks : []) {
     const data = chunk.data instanceof Uint8Array ? chunk.data : new Uint8Array(chunk.data ?? []);
-    const written = session.accessHandle.write(data, { at: session.position });
-    if (written !== data.byteLength) {
-      throw new Error(`Short OPFS write for ${blobKey}: wrote ${written} of ${data.byteLength} bytes.`);
-    }
-
-    session.position += written;
+    writeAllBytes(session, blobKey, data);
   }
 }
 
@@ -154,6 +150,37 @@ function getSession(databaseName, blobKey) {
 
 function getSessionKey(databaseName, blobKey) {
   return `${databaseName}::${blobKey}`;
+}
+
+function writeAllBytes(session, blobKey, data) {
+  let offset = 0;
+
+  while (offset < data.byteLength) {
+    const bytesRemaining = data.byteLength - offset;
+    const bytesToWrite = Math.min(bytesRemaining, maxWriteBlockBytes);
+    const slice = data.subarray(offset, offset + bytesToWrite);
+    const written = normalizeBytesWritten(
+      session.accessHandle.write(slice, { at: session.position }),
+      bytesToWrite,
+      blobKey,
+      session.position);
+
+    offset += written;
+    session.position += written;
+  }
+}
+
+function normalizeBytesWritten(value, expectedBytes, blobKey, position) {
+  if (!Number.isFinite(value)) {
+    throw new Error(`Invalid OPFS write result for ${blobKey} at ${position}: ${String(value)}.`);
+  }
+
+  const written = Math.trunc(value);
+  if (written <= 0 || written > expectedBytes) {
+    throw new Error(`Invalid OPFS write result for ${blobKey} at ${position}: wrote ${written} of ${expectedBytes} bytes.`);
+  }
+
+  return written;
 }
 
 async function getDatabaseDirectoryAsync(databaseName, create) {

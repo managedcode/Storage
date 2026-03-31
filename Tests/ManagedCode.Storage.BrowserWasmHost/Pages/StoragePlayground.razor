@@ -133,6 +133,13 @@
                 MimeType = "application/octet-stream"
             });
 
+            if (result.IsFailed)
+            {
+                largeOutput = $"generated:{stream.Position}";
+                status = $"large-save-failed:{result.Problem?.Detail}";
+                return;
+            }
+
             if (!stream.IsCompleted)
             {
                 largeOutput = $"generated:{stream.Position}";
@@ -144,7 +151,7 @@
             var crc = stream.CompletedCrc;
 
             largeOutput = $"expected:{length}:{crc}";
-            status = result.IsSuccess ? $"large-saved:{length}:{crc}" : $"large-save-failed:{result.Problem?.Detail}";
+            status = $"large-saved:{length}:{crc}";
             Logger.LogInformation("Completed browser storage save for {FileName} ({Bytes} bytes, crc {Crc}) in {ElapsedMilliseconds} ms.",
                 resolvedFileName,
                 length,
