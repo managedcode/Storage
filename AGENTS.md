@@ -322,6 +322,7 @@ Ask first:
 ### Likes
 
 - Repository-facing docs, especially `README.md`, should stay in English and describe only the current supported behavior, not transitional legacy or fallback paths.
+- Temporary root-level `*.plan.md` files should be removed once a task is complete and their contents are no longer needed.
 
 ### Dislikes
 

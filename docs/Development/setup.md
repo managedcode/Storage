@@ -56,5 +56,6 @@ dotnet format ManagedCode.Storage.slnx
 ## Notes
 
 - Start Docker Desktop (or your Docker daemon) before running the full test suite.
+- AWS and Orleans integration tests intentionally pin LocalStack to `localstack/localstack:4.14.0`; do not switch them back to `latest`, because the end-of-March 2026 `latest` image became auth-gated and breaks CI without a token.
 - Never commit secrets (cloud keys, OAuth tokens, connection strings). Use environment variables or user secrets.
 - Credentials for cloud-drive providers are documented in `docs/Development/credentials.md`.

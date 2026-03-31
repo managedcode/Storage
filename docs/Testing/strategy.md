@@ -45,6 +45,7 @@ Tests are grouped by “surface” and provider:
 Where possible, tests run without real cloud accounts:
 
 - Azure/AWS/GCS/SFTP suites use **Testcontainers** (Azurite, LocalStack, FakeGcsServer, SFTP container).
+- The LocalStack-backed AWS and Orleans flows are pinned to `localstack/localstack:4.14.0` because the end-of-March 2026 `latest` image became auth-gated and is no longer safe for anonymous CI runs.
 - Browser-local coverage uses Playwright against `Tests/ManagedCode.Storage.BrowserServerHost/` and `Tests/ManagedCode.Storage.BrowserWasmHost/` so `ManagedCode.Storage.Browser` is exercised through real Chromium flows with IndexedDB metadata and OPFS payloads in both Interactive Server and standalone WASM modes.
 - Those same hosts also wire `ManagedCode.Storage.VirtualFileSystem` over the browser provider, so browser VFS write, read, move, delete, large-file, small-file overwrite, and multi-tab concurrency flows are verified end to end in the browser rather than through in-process fakes.
 - The Interactive Server host explicitly raises `HubOptions.MaximumReceiveMessageSize` so browser-to-server chunk reads can exceed the default 32 KB SignalR limit during large-stream verification.
