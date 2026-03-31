@@ -56,6 +56,7 @@ Where possible, tests run without real cloud accounts:
 Some tests are marked as “large file” to validate streaming behaviour:
 
 - `[Trait("Category", "LargeFile")]`
+- Browser-hosted `1 GiB` stress flows also carry `[Trait("Category", "BrowserStress")]`.
 
 Run everything (canonical):
 
@@ -76,6 +77,20 @@ Skip large-file tests when iterating:
 ```bash
 dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=LargeFile"
 ```
+
+Skip the hosted-browser stress lane while still running the default fast browser coverage:
+
+```bash
+dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"
+```
+
+Run only the hosted-browser `1 GiB` stress lane locally when you explicitly need it:
+
+```bash
+dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category=BrowserStress"
+```
+
+GitHub-hosted `build-and-test` and `Release` workflows intentionally exclude `Category=BrowserStress` so mainline CI stays near the historical runtime instead of spending 30+ minutes on Chromium-hosted `1 GiB` OPFS stress flows that are not stable on shared runners.
 
 ## Quality Rules
 

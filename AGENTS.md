@@ -327,4 +327,5 @@ Ask first:
 ### Dislikes
 
 - Template-generated scaffolding in tests; keep test hosts and verification surfaces minimal, hand-written, and purpose-built.
+- CI regressions that inflate `build-and-test` far beyond the historical baseline; browser large-file coverage must stay meaningful without turning the default GitHub Actions path into a 30+ minute run.
 - Unnecessary product-code fallbacks; prefer one clear production path unless backward compatibility is an explicit requirement for the task.
