@@ -6,7 +6,7 @@ using static Microsoft.Playwright.Assertions;
 
 namespace ManagedCode.Storage.Tests.Storages.Browser;
 
-[Collection(nameof(BrowserWasmHostCollection))]
+[Collection(BrowserIntegrationCollection.Name)]
 public sealed class BrowserWasmStorageIntegrationTests(BrowserWasmHostFixture fixture)
 {
     [Fact]
@@ -58,23 +58,21 @@ public sealed class BrowserWasmStorageIntegrationTests(BrowserWasmHostFixture fi
     [Fact]
     [Trait("Category", "LargeFile")]
     [Trait("Category", "BrowserStress")]
-    public async Task BrowserStorage_WasmHost_LargeFlow_ShouldPersistAcrossPages()
+    public async Task BrowserStorage_WasmHost_StressFlow_ShouldPersistAcrossPages()
     {
-        const int chunkedPayloadSizeMiB = 1024;
-        const long expectedLengthBytes = 1024L * 1024L * 1024L;
-        const float largeTimeoutMs = 900000;
+        const long expectedLengthBytes = BrowserLargeFileTestSettings.StressPayloadSizeMiB * BrowserLargeFileTestSettings.BytesPerMiB;
 
         await using var context = await fixture.CreateContextAsync();
         var firstPage = await context.NewPageAsync();
-        var directory = "wasm-browser-storage-large";
+        var directory = $"wasm-browser-storage-large-{Guid.NewGuid():N}";
         var fileName = $"large-{Guid.NewGuid():N}.bin";
 
         await BrowserStoragePage.OpenPlaygroundAsync(firstPage);
         await BrowserStoragePage.FillInputsAsync(firstPage, directory, fileName, "ignored");
-        await BrowserStoragePage.FillSizeAsync(firstPage, chunkedPayloadSizeMiB);
+        await BrowserStoragePage.FillSizeAsync(firstPage, BrowserLargeFileTestSettings.StressPayloadSizeMiB);
         await firstPage.ClickAsync("#save-large-button");
-        await Expect(firstPage.Locator("#status-output")).ToContainTextAsync("large-saved:", new() { Timeout = largeTimeoutMs });
-        await Expect(firstPage.Locator("#large-output")).ToContainTextAsync($"expected:{expectedLengthBytes}:", new() { Timeout = largeTimeoutMs });
+        await Expect(firstPage.Locator("#status-output")).ToContainTextAsync("large-saved:", new() { Timeout = BrowserLargeFileTestSettings.StressTimeoutMs });
+        await Expect(firstPage.Locator("#large-output")).ToContainTextAsync($"expected:{expectedLengthBytes}:", new() { Timeout = BrowserLargeFileTestSettings.StressTimeoutMs });
 
         var expected = await BrowserStoragePage.ReadTextAsync(firstPage, "#large-output");
         expected.StartsWith($"expected:{expectedLengthBytes}:", StringComparison.Ordinal).ShouldBeTrue();
@@ -84,17 +82,57 @@ public sealed class BrowserWasmStorageIntegrationTests(BrowserWasmHostFixture fi
         var secondPage = await context.NewPageAsync();
         await BrowserStoragePage.OpenPlaygroundAsync(secondPage);
         await BrowserStoragePage.FillInputsAsync(secondPage, directory, fileName, "ignored");
-        await BrowserStoragePage.FillSizeAsync(secondPage, chunkedPayloadSizeMiB);
+        await secondPage.ClickAsync("#exists-button");
+        await Expect(secondPage.Locator("#exists-output")).ToContainTextAsync("True");
+        var actual = await BrowserStoragePage.ReadPayloadDigestAsync(secondPage, fixture, $"{directory}/{fileName}");
+        actual.ShouldNotBeNull();
+        actual.StartsWith($"actual:{expectedLengthBytes}:", StringComparison.Ordinal).ShouldBeTrue();
+        actual.ShouldBe(expected.Replace("expected:", "actual:", StringComparison.Ordinal));
+        var reloadedPayloadStore = await BrowserStoragePage.ReadPayloadStoreAsync(secondPage, fixture, $"{directory}/{fileName}");
+        reloadedPayloadStore.ShouldBe("opfs");
+        await secondPage.ClickAsync("#delete-button");
+        await Expect(secondPage.Locator("#status-output")).ToContainTextAsync("deleted:True");
+    }
+
+    [Fact]
+    [Trait("Category", "LargeFile")]
+    public async Task BrowserStorage_WasmHost_LargeFlow_ShouldPersistAcrossPages()
+    {
+        const long expectedLengthBytes = BrowserLargeFileTestSettings.DefaultLargePayloadSizeMiB * BrowserLargeFileTestSettings.BytesPerMiB;
+
+        await using var context = await fixture.CreateContextAsync();
+        var firstPage = await context.NewPageAsync();
+        var directory = $"wasm-browser-storage-large-{Guid.NewGuid():N}";
+        var fileName = $"large-{Guid.NewGuid():N}.bin";
+
+        await BrowserStoragePage.OpenPlaygroundAsync(firstPage);
+        await BrowserStoragePage.FillInputsAsync(firstPage, directory, fileName, "ignored");
+        await BrowserStoragePage.FillSizeAsync(firstPage, BrowserLargeFileTestSettings.DefaultLargePayloadSizeMiB);
+        await firstPage.ClickAsync("#save-large-button");
+        await Expect(firstPage.Locator("#status-output")).ToContainTextAsync("large-saved:", new() { Timeout = BrowserLargeFileTestSettings.DefaultLargeTimeoutMs });
+        await Expect(firstPage.Locator("#large-output")).ToContainTextAsync($"expected:{expectedLengthBytes}:", new() { Timeout = BrowserLargeFileTestSettings.DefaultLargeTimeoutMs });
+
+        var expected = await BrowserStoragePage.ReadTextAsync(firstPage, "#large-output");
+        expected.StartsWith($"expected:{expectedLengthBytes}:", StringComparison.Ordinal).ShouldBeTrue();
+        var payloadStore = await BrowserStoragePage.ReadPayloadStoreAsync(firstPage, fixture, $"{directory}/{fileName}");
+        payloadStore.ShouldBe("opfs");
+
+        var secondPage = await context.NewPageAsync();
+        await BrowserStoragePage.OpenPlaygroundAsync(secondPage);
+        await BrowserStoragePage.FillInputsAsync(secondPage, directory, fileName, "ignored");
+        await BrowserStoragePage.FillSizeAsync(secondPage, BrowserLargeFileTestSettings.DefaultLargePayloadSizeMiB);
         await secondPage.ClickAsync("#load-large-button");
         await Expect(secondPage.Locator("#status-output")).ToContainTextAsync("large-loading", new() { Timeout = 10000 });
-        await Expect(secondPage.Locator("#status-output")).ToContainTextAsync("large-loaded:", new() { Timeout = largeTimeoutMs });
-        await Expect(secondPage.Locator("#large-output")).ToContainTextAsync($"actual:{expectedLengthBytes}:", new() { Timeout = largeTimeoutMs });
+        await Expect(secondPage.Locator("#status-output")).ToContainTextAsync("large-loaded:", new() { Timeout = BrowserLargeFileTestSettings.DefaultLargeTimeoutMs });
+        await Expect(secondPage.Locator("#large-output")).ToContainTextAsync($"actual:{expectedLengthBytes}:", new() { Timeout = BrowserLargeFileTestSettings.DefaultLargeTimeoutMs });
 
         var actual = await BrowserStoragePage.ReadTextAsync(secondPage, "#large-output");
         actual.StartsWith($"actual:{expectedLengthBytes}:", StringComparison.Ordinal).ShouldBeTrue();
         actual.ShouldBe(expected.Replace("expected:", "actual:", StringComparison.Ordinal));
         var reloadedPayloadStore = await BrowserStoragePage.ReadPayloadStoreAsync(secondPage, fixture, $"{directory}/{fileName}");
         reloadedPayloadStore.ShouldBe("opfs");
+        await secondPage.ClickAsync("#delete-button");
+        await Expect(secondPage.Locator("#status-output")).ToContainTextAsync("deleted:True");
     }
 
     [Fact]

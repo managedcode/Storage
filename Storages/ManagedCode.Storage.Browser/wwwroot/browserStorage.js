@@ -3,6 +3,7 @@ import {
   appendPayloadChunksInternal,
   beginPayloadWriteInternal,
   completePayloadWriteInternal,
+  getPayloadDigestInternal,
   opfsFileExistsInternal,
   readPayloadRangeInternal,
   tryDeletePayloadFileInternal
@@ -209,6 +210,20 @@ export async function getPayloadStoreByFullName(databaseName, fullName) {
   return null;
 }
 
+export async function getPayloadDigestByFullName(databaseName, fullName) {
+  const blob = (await getAllBlobs(databaseName)).find((item) => item.fullName === fullName);
+  if (!blob) {
+    return null;
+  }
+
+  const payloadKey = resolvePayloadKey(blob);
+  if (!payloadKey) {
+    return null;
+  }
+
+  return await getPayloadDigestInternal(databaseName, payloadKey);
+}
+
 const browserStorageApi = {
   containerExists,
   createContainer,
@@ -224,7 +239,8 @@ const browserStorageApi = {
   completePayloadWrite,
   abortPayloadWrite,
   readPayloadRange,
-  getPayloadStoreByFullName
+  getPayloadStoreByFullName,
+  getPayloadDigestByFullName
 };
 
 if (typeof window !== "undefined") {

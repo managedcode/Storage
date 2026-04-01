@@ -1,5 +1,7 @@
 const sessions = new Map();
 const maxWriteBlockBytes = 1024 * 1024;
+const maxDigestReadBlockBytes = 4 * 1024 * 1024;
+const crc32Table = buildCrc32Table();
 
 self.onmessage = async (event) => {
   const { id, command, payload } = event.data ?? {};
@@ -31,6 +33,8 @@ async function dispatchAsync(command, payload) {
       return true;
     case "readRange":
       return await readRangeAsync(payload.databaseName, payload.blobKey, payload.offset, payload.count);
+    case "getFileDigest":
+      return await getFileDigestAsync(payload.databaseName, payload.blobKey);
     case "deleteFile":
       return await deleteFileAsync(payload.databaseName, payload.blobKey);
     case "fileExists":
@@ -126,6 +130,41 @@ async function deleteFileAsync(databaseName, blobKey) {
   }
 }
 
+async function getFileDigestAsync(databaseName, blobKey) {
+  const fileHandle = await getBlobFileHandleAsync(databaseName, blobKey, false);
+  const accessHandle = await fileHandle.createSyncAccessHandle();
+
+  try {
+    const size = accessHandle.getSize();
+    if (size <= 0) {
+      return { length: 0, crc: 0 };
+    }
+
+    const buffer = new Uint8Array(Math.min(maxDigestReadBlockBytes, size));
+    let offset = 0;
+    let crc = 0xffffffff;
+
+    while (offset < size) {
+      const bytesToRead = Math.min(buffer.byteLength, size - offset);
+      const bytesRead = normalizeBytesRead(
+        accessHandle.read(buffer.subarray(0, bytesToRead), { at: offset }),
+        bytesToRead,
+        blobKey,
+        offset);
+
+      crc = updateCrc32(crc, buffer, bytesRead);
+      offset += bytesRead;
+    }
+
+    return {
+      length: Number(size),
+      crc: completeCrc32(crc)
+    };
+  } finally {
+    accessHandle.close();
+  }
+}
+
 async function fileExistsAsync(databaseName, blobKey) {
   try {
     await getBlobFileHandleAsync(databaseName, blobKey, false);
@@ -183,6 +222,19 @@ function normalizeBytesWritten(value, expectedBytes, blobKey, position) {
   return written;
 }
 
+function normalizeBytesRead(value, expectedBytes, blobKey, position) {
+  if (!Number.isFinite(value)) {
+    throw new Error(`Invalid OPFS read result for ${blobKey} at ${position}: ${String(value)}.`);
+  }
+
+  const bytesRead = Math.trunc(value);
+  if (bytesRead <= 0 || bytesRead > expectedBytes) {
+    throw new Error(`Invalid OPFS read result for ${blobKey} at ${position}: read ${bytesRead} of ${expectedBytes} bytes.`);
+  }
+
+  return bytesRead;
+}
+
 async function getDatabaseDirectoryAsync(databaseName, create) {
   const root = await navigator.storage.getDirectory();
   return await root.getDirectoryHandle(getDatabaseDirectoryName(databaseName), { create });
@@ -199,4 +251,34 @@ function getDatabaseDirectoryName(databaseName) {
 
 function getBlobFileName(blobKey) {
   return encodeURIComponent(blobKey);
+}
+
+function buildCrc32Table() {
+  const table = new Uint32Array(256);
+
+  for (let index = 0; index < table.length; index++) {
+    let value = index;
+
+    for (let bit = 0; bit < 8; bit++) {
+      value = (value & 1) === 0 ? value >>> 1 : (value >>> 1) ^ 0xedb88320;
+    }
+
+    table[index] = value >>> 0;
+  }
+
+  return table;
+}
+
+function updateCrc32(crc, buffer, length) {
+  let current = crc >>> 0;
+
+  for (let index = 0; index < length; index++) {
+    current = (current >>> 8) ^ crc32Table[(current ^ buffer[index]) & 0xff];
+  }
+
+  return current >>> 0;
+}
+
+function completeCrc32(crc) {
+  return (crc ^ 0xffffffff) >>> 0;
 }

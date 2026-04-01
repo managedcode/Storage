@@ -38,7 +38,7 @@ Canonical commands (see `AGENTS.md`):
 ```bash
 dotnet restore ManagedCode.Storage.slnx
 dotnet build ManagedCode.Storage.slnx --configuration Release
-dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release
+dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"
 ```
 
 ## Testing Strategy
@@ -57,6 +57,6 @@ dotnet format ManagedCode.Storage.slnx
 
 - Start Docker Desktop (or your Docker daemon) before running the full test suite.
 - AWS and Orleans integration tests intentionally pin LocalStack to `localstack/localstack:4.14.0`; do not switch them back to `latest`, because the end-of-March 2026 `latest` image became auth-gated and breaks CI without a token.
-- GitHub Actions `build-and-test` and `Release` intentionally exclude `Category=BrowserStress`; run that browser-hosted `1 GiB` stress lane locally with `dotnet test ... --filter "Category=BrowserStress"` when you specifically need it.
+- GitHub Actions now use tiered browser large-file coverage: `build-and-test` keeps a fast `128 MiB` browser large-file lane in the default suite, while a separate `browser-stress` lane runs the heavier `256 MiB` browser stress checks automatically for CI and release gating.
 - Never commit secrets (cloud keys, OAuth tokens, connection strings). Use environment variables or user secrets.
 - Credentials for cloud-drive providers are documented in `docs/Development/credentials.md`.

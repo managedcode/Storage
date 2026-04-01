@@ -12,6 +12,7 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -57,9 +58,40 @@ jobs:
         path: ./artifacts/*.nupkg
         retention-days: 5
 
+  browser-stress:
+    name: Browser Stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ManagedCode.Storage.slnx
+
+    - name: Restore .NET tools
+      run: dotnet tool restore
+
+    - name: Build
+      run: dotnet build ManagedCode.Storage.slnx --configuration Release --no-restore
+
+    - name: Install Playwright browser
+      run: dotnet playwright -p Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj install chromium
+
+    - name: Browser stress test
+      run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build --verbosity normal --filter "Category=BrowserStress"
+
   publish-nuget:
     name: Publish to NuGet
-    needs: build
+    needs:
+    - build
+    - browser-stress
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
