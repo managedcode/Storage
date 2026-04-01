@@ -136,8 +136,9 @@ If the stack is `.NET`, follow these skill-management rules explicitly:
 
 - `restore`: `dotnet restore ManagedCode.Storage.slnx`
 - `build`: `dotnet build ManagedCode.Storage.slnx`
-- `test`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release`
-- `coverage`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
+- `test`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"`
+- `browser-stress`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category=BrowserStress"`
+- `coverage`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress" /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
 - `format`: `dotnet format ManagedCode.Storage.slnx`
 
 Toolchain notes:
@@ -240,6 +241,7 @@ Toolchain notes:
 - Coverage uses the repo-defined `coverlet.msbuild` flow and must not regress without a written exception.
 - Place provider suites under `Tests/ManagedCode.Storage.Tests/Storages/` and reuse `Tests/ManagedCode.Storage.Tests/Common/` helpers for Testcontainers infrastructure such as Azurite, LocalStack, and FakeGcsServer.
 - For browser providers, put end-to-end Playwright coverage in `Tests/ManagedCode.Storage.Tests/Storages/Browser/` and keep the executable test hosts under `Tests/ManagedCode.Storage.BrowserServerHost/` and `Tests/ManagedCode.Storage.BrowserWasmHost/`.
+- Keep browser large-file verification tiered: the default `test` path keeps the fast browser large-file lane, while `browser-stress` runs the heavier explicit browser stress checks separately and must stay automated in CI and release.
 
 ### Storage Platform
 
@@ -323,9 +325,11 @@ Ask first:
 
 - Repository-facing docs, especially `README.md`, should stay in English and describe only the current supported behavior, not transitional legacy or fallback paths.
 - Temporary root-level `*.plan.md` files should be removed once a task is complete and their contents are no longer needed.
+- Browser large-file coverage should use tiered automation: a fast default CI lane plus an explicit stress lane, so merge confidence stays high without accepting 30+ minute default runs.
 
 ### Dislikes
 
 - Template-generated scaffolding in tests; keep test hosts and verification surfaces minimal, hand-written, and purpose-built.
 - CI regressions that inflate `build-and-test` far beyond the historical baseline; browser large-file coverage must stay meaningful without turning the default GitHub Actions path into a 30+ minute run.
+- Disabling meaningful regression tests in default CI or release flows just to hide performance or flakiness problems; fix the runtime cost, or move them into a separate explicit required lane instead of silently dropping coverage.
 - Unnecessary product-code fallbacks; prefer one clear production path unless backward compatibility is an explicit requirement for the task.

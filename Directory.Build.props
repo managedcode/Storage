@@ -29,8 +29,8 @@
         <RepositoryUrl>https://github.com/managedcode/Storage</RepositoryUrl>
         <PackageProjectUrl>https://github.com/managedcode/Storage</PackageProjectUrl>
         <Product>Managed Code - Storage</Product>
-        <Version>10.0.4</Version>
-        <PackageVersion>10.0.4</PackageVersion>
+        <Version>10.0.5</Version>
+        <PackageVersion>10.0.5</PackageVersion>
 
     </PropertyGroup>
 

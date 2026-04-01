@@ -25,8 +25,9 @@ Parent: `../../AGENTS.md`
 ## Project Commands
 
 - `build`: `dotnet build ManagedCode.Storage.Tests.csproj`
-- `test`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release`
-- `coverage`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
+- `test`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"`
+- `browser-stress`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category=BrowserStress"`
+- `coverage`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress" /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
 - `format`: `dotnet format ../../ManagedCode.Storage.slnx`
 - Active test framework: `xUnit`
 - Runner model: `VSTest`
@@ -54,3 +55,4 @@ Parent: `../../AGENTS.md`
 - Every new public behavior needs integration coverage that asserts observable outcomes, not only successful method calls.
 - Keep architecture dependency rules in `Architecture/` focused on durable package boundaries so they stay stable as implementation details move.
 - Do not weaken assertions or skip suites to get a green run; fix the real regression or document an explicit exception.
+- Browser stress tests are an explicit lane, not hidden debt: keep them automated via the dedicated `browser-stress` command or workflow instead of folding them into the fast default test path.

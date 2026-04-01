@@ -13,6 +13,7 @@ jobs:
   build-and-test:
     name: build-and-test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
     - name: Checkout
@@ -47,3 +48,32 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./**/coverage.cobertura.xml
         fail_ci_if_error: false
+
+  browser-stress:
+    name: browser-stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ManagedCode.Storage.slnx
+
+    - name: Restore .NET tools
+      run: dotnet tool restore
+
+    - name: Build
+      run: dotnet build ManagedCode.Storage.slnx --configuration Release --no-restore
+
+    - name: Install Playwright browser
+      run: dotnet playwright -p Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj install chromium
+
+    - name: Browser stress test
+      run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build --verbosity normal --filter "Category=BrowserStress"

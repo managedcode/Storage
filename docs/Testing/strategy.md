@@ -56,12 +56,12 @@ Where possible, tests run without real cloud accounts:
 Some tests are marked as “large file” to validate streaming behaviour:
 
 - `[Trait("Category", "LargeFile")]`
-- Browser-hosted `1 GiB` stress flows also carry `[Trait("Category", "BrowserStress")]`.
+- Browser-hosted stress flows also carry `[Trait("Category", "BrowserStress")]`.
 
-Run everything (canonical):
+Run the default fast suite:
 
 ```bash
-dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release
+dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"
 ```
 
 Install the Playwright browser for the browser-local tests:
@@ -84,13 +84,19 @@ Skip the hosted-browser stress lane while still running the default fast browser
 dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"
 ```
 
-Run only the hosted-browser `1 GiB` stress lane locally when you explicitly need it:
+Run only the hosted-browser stress lane locally when you explicitly need it:
 
 ```bash
 dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category=BrowserStress"
 ```
 
-GitHub-hosted `build-and-test` and `Release` workflows intentionally exclude `Category=BrowserStress` so mainline CI stays near the historical runtime instead of spending 30+ minutes on Chromium-hosted `1 GiB` OPFS stress flows that are not stable on shared runners.
+Tiered browser large-file coverage now works like this:
+
+- default `build-and-test` still includes a real end-to-end browser large-file lane, but at a fast `128 MiB` size so `Storage.GetStreamAsync` stays covered in the normal PR path
+- `Category=BrowserStress` runs a heavier `256 MiB` cross-page integrity check for both Interactive Server and WASM, using a worker-side OPFS digest so the stress lane proves persistence without paying the old full `.NET` read-back cost
+- the `browser-stress` CI job and the `Release` workflow both run that explicit stress lane automatically
+
+The earlier `1 GiB` browser target was removed from automated CI because Chromium-backed WASM verification hit an unstable OPFS write boundary around `512 MiB`, so `256 MiB` became the stable automated stress target.
 
 ## Quality Rules
 

@@ -106,7 +106,7 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 - `ManagedCode.Storage.Client` brings streaming uploads/downloads, CRC32 helpers, and MIME discovery via `MimeHelper` to any .NET app.
 - Strongly typed option objects (`UploadOptions`, `DownloadOptions`, `DeleteOptions`, `MetadataOptions`, `LegalHoldOptions`, etc.) let you configure directories, metadata, and legal holds in one place.
 - Virtual File System package provides a file/directory API (`IVirtualFileSystem`) on top of the configured `IStorage` and can cache metadata for faster repeated operations, including browser storage verified through real Playwright flows in both Blazor WebAssembly and Interactive Server hosts.
-- Comprehensive automated test suite with cross-provider sync fixtures, multi-gigabyte streaming simulations (4 MB units per "GB"), ASP.NET controller harnesses, SFTP/local filesystem coverage, and Playwright browser verification for browser storage small-file overwrites, concurrent tabs, VFS flows, and `1 GiB` round-trips in both Interactive Server and Blazor WebAssembly hosts.
+- Comprehensive automated test suite with cross-provider sync fixtures, multi-gigabyte streaming simulations (4 MB units per "GB"), ASP.NET controller harnesses, SFTP/local filesystem coverage, and Playwright browser verification for browser storage small-file overwrites, concurrent tabs, VFS flows, a fast `128 MiB` browser large-file lane, and a separate `256 MiB` browser stress lane in both Interactive Server and Blazor WebAssembly hosts.
 - ManagedCode.Storage.TestFakes package plus Testcontainers-based fixtures make it easy to run offline or CI tests without touching real cloud accounts.
 
 ## Packages
@@ -979,7 +979,7 @@ If an MVC or Razor Pages application needs the packaged browser module path for 
 
 > Browser payloads use the browser Origin Private File System (OPFS). IndexedDB stays in the design only for blob metadata and list or lookup operations. If OPFS is unavailable in the current browser, uploads fail fast instead of silently falling back to a second payload backend.
 
-> The real Playwright browser hosts in this repo verify small-file saves and overwrites, concurrent tabs, VFS flows, and `1 GiB` round-trips in both Blazor WebAssembly and Interactive Server. The large-file flows emit progress logs every `100 MiB`, and both the small-file and large-file paths assert that payload storage resolves to OPFS.
+> The real Playwright browser hosts in this repo verify small-file saves and overwrites, concurrent tabs, VFS flows, a default `128 MiB` large-file path, and a separate `256 MiB` browser stress lane in both Blazor WebAssembly and Interactive Server. The large-file flows emit progress logs every `100 MiB`, and both the small-file and large-file paths assert that payload storage resolves to OPFS.
 
 </details>
 

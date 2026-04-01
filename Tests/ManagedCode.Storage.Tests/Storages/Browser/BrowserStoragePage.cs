@@ -72,6 +72,20 @@ internal static class BrowserStoragePage
             });
     }
 
+    public static Task<string?> ReadPayloadDigestAsync(IPage page, BrowserPlaywrightHostFixtureBase fixture, string fullName)
+    {
+        return page.EvaluateAsync<string?>(
+            @"async ({ databaseName, fullName }) => {
+                const digest = await window.ManagedCodeStorageBrowser.getPayloadDigestByFullName(databaseName, fullName);
+                return digest ? `actual:${digest.length}:${digest.crc}` : null;
+            }",
+            new
+            {
+                databaseName = fixture.DatabaseName,
+                fullName
+            });
+    }
+
     public static Task<int> ReadOpfsPayloadFileCountAsync(IPage page, BrowserPlaywrightHostFixtureBase fixture, string blobKeyPrefix)
     {
         return page.EvaluateAsync<int>(

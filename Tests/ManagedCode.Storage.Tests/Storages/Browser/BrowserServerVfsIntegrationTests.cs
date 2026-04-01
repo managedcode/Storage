@@ -6,7 +6,7 @@ using static Microsoft.Playwright.Assertions;
 
 namespace ManagedCode.Storage.Tests.Storages.Browser;
 
-[Collection(nameof(BrowserServerHostCollection))]
+[Collection(BrowserIntegrationCollection.Name)]
 public sealed class BrowserServerVfsIntegrationTests(BrowserServerHostFixture fixture)
 {
     [Fact]

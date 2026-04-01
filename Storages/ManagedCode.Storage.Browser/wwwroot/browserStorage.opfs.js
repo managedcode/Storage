@@ -100,6 +100,14 @@ export async function readPayloadRangeInternal(databaseName, blobKey, offset, co
   return result ? normalizeBytes(result) : null;
 }
 
+export async function getPayloadDigestInternal(databaseName, blobKey) {
+  if (!supportsOpfs()) {
+    return null;
+  }
+
+  return await postToOpfsWorker("getFileDigest", { databaseName, blobKey });
+}
+
 export async function opfsFileExistsInternal(databaseName, blobKey) {
   if (!supportsOpfs()) {
     return false;
