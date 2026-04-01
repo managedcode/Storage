@@ -57,6 +57,7 @@ public sealed class BrowserWasmStorageIntegrationTests(BrowserWasmHostFixture fi
 
     [Fact]
     [Trait("Category", "LargeFile")]
+    [Trait("Category", "BrowserStress")]
     public async Task BrowserStorage_WasmHost_LargeFlow_ShouldPersistAcrossPages()
     {
         const int chunkedPayloadSizeMiB = 1024;

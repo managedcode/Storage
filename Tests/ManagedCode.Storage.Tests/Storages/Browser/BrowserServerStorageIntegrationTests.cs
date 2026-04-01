@@ -57,6 +57,7 @@ public sealed class BrowserServerStorageIntegrationTests(BrowserServerHostFixtur
 
     [Fact]
     [Trait("Category", "LargeFile")]
+    [Trait("Category", "BrowserStress")]
     public async Task BrowserStorage_ServerHost_LargeFlow_ShouldPersistAcrossPages()
     {
         const int chunkedPayloadSizeMiB = 1024;
