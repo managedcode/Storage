@@ -653,3 +653,7 @@ MigrationBackup/
 
 # Jekyll / GitHub Pages build output
 _site/
+
+
+#plans
+*.plan.md
