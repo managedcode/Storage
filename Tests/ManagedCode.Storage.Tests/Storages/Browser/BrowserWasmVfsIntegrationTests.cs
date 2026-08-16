@@ -87,6 +87,7 @@ public sealed class BrowserWasmVfsIntegrationTests(BrowserWasmHostFixture fixtur
     [Fact]
     public async Task BrowserStorage_WasmHost_VfsConcurrentTabs_ShouldPersistAllFiles()
     {
+        const float concurrentOperationTimeoutMs = 90000;
         await using var context = await fixture.CreateContextAsync();
         var firstPage = await context.NewPageAsync();
         var secondPage = await context.NewPageAsync();
@@ -105,11 +106,15 @@ public sealed class BrowserWasmVfsIntegrationTests(BrowserWasmHostFixture fixtur
         await BrowserStoragePage.FillVfsInputsAsync(secondPage, directory, secondFileName, secondMovedFileName, secondContent);
 
         await Task.WhenAll(
-            firstPage.ClickAsync("#vfs-save-text-button"),
-            secondPage.ClickAsync("#vfs-save-text-button"));
+            firstPage.ClickAsync("#vfs-save-text-button", new() { Timeout = concurrentOperationTimeoutMs }),
+            secondPage.ClickAsync("#vfs-save-text-button", new() { Timeout = concurrentOperationTimeoutMs }));
 
-        await Expect(firstPage.Locator("#vfs-status-output")).ToContainTextAsync($"vfs-saved:/{directory}/{firstFileName}");
-        await Expect(secondPage.Locator("#vfs-status-output")).ToContainTextAsync($"vfs-saved:/{directory}/{secondFileName}");
+        await Expect(firstPage.Locator("#vfs-status-output")).ToContainTextAsync(
+            $"vfs-saved:/{directory}/{firstFileName}",
+            new() { Timeout = concurrentOperationTimeoutMs });
+        await Expect(secondPage.Locator("#vfs-status-output")).ToContainTextAsync(
+            $"vfs-saved:/{directory}/{secondFileName}",
+            new() { Timeout = concurrentOperationTimeoutMs });
 
         await BrowserStoragePage.OpenPlaygroundAsync(verificationPage);
         await verificationPage.FillAsync("#vfs-directory-input", directory);

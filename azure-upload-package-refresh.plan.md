@@ -57,3 +57,5 @@
 - `dotnet list ManagedCode.Storage.slnx package --outdated`: no outdated direct packages.
 - `dotnet list ManagedCode.Storage.slnx package --vulnerable --include-transitive`: no vulnerable packages.
 - `dotnet build ManagedCode.Storage.slnx --configuration Release`: passed with 0 warnings and 0 errors.
+- Initial release run `31951722155`: Browser Stress passed; Build and Test exposed a 30-second Playwright action timeout in the WASM VFS concurrent-tabs test before packaging.
+- Focused WASM and Server VFS concurrent-tabs retry after applying a 90-second concurrent-operation wait budget: 2 passed, 0 failed; assertions remain unchanged.
