@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Images;
+using DotNet.Testcontainers.Networks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -77,6 +78,16 @@ public sealed class EmptyContainer : IContainer
     public Task UnpauseAsync(CancellationToken ct = default)
     {
         return Task.FromException(new NotImplementedException());
+    }
+
+    public Task ConnectAsync(string network, CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task ConnectAsync(INetwork network, CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
     }
 
     public async Task CopyAsync(byte[] fileContent, string filePath, uint uid = 0, uint gid = 0,

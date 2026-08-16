@@ -175,14 +175,14 @@ public sealed class ManagedCodeOrleansClusterFixture : IAsyncLifetime
 
 internal static class ManagedCodeOrleansClusterTestMatrix
 {
-    public static readonly TheoryData<string> AllProviders =
-    [
+    public static readonly TheoryData<string> AllProviders = new()
+    {
         ManagedCodeOrleansProviderNames.FileSystem,
         ManagedCodeOrleansProviderNames.Azure,
         ManagedCodeOrleansProviderNames.Aws,
         ManagedCodeOrleansProviderNames.Gcp,
         ManagedCodeOrleansProviderNames.Sftp
-    ];
+    };
 }
 
 internal sealed record ManagedCodeOrleansClusterSettingsSnapshot(

@@ -241,6 +241,9 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
         CancellationToken cancellationToken = default)
     {
         var blobClient = StorageClient.GetBlobClient(options.FullPath);
+        var contentLength = stream.CanSeek
+            ? checked((ulong)(stream.Length - stream.Position))
+            : 0;
 
         var uploadOptions = new BlobUploadOptions
         {
@@ -248,7 +251,8 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
             HttpHeaders = new BlobHttpHeaders
             {
                 ContentType = options.MimeType
-            }
+            },
+            ProgressHandler = stream.CanSeek ? null : new UploadLengthProgress()
         };
 
         uploadOptions.TransferOptions = ResolveUploadTransferOptions();
@@ -259,10 +263,23 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
             cancellationToken.ThrowIfCancellationRequested();
             var blobInfo = await blobClient.UploadAsync(stream, uploadOptions, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            var metadataOptions = MetadataOptions.FromBaseOptions(options);
-            metadataOptions.ETag = blobInfo.Value?.ETag.ToString() ?? string.Empty;
+            contentLength = stream.CanSeek
+                ? contentLength
+                : ((UploadLengthProgress)uploadOptions.ProgressHandler!).BytesTransferred;
+            var lastModified = blobInfo.Value.LastModified;
 
-            return await GetBlobMetadataInternalAsync(metadataOptions, cancellationToken);
+            return Result<BlobMetadata>.Succeed(new BlobMetadata
+            {
+                FullName = blobClient.Name,
+                Name = Path.GetFileName(blobClient.Name),
+                Uri = blobClient.Uri,
+                Container = blobClient.BlobContainerName,
+                Length = contentLength,
+                CreatedOn = lastModified,
+                LastModified = lastModified,
+                Metadata = options.Metadata?.ToDictionary(pair => pair.Key, pair => pair.Value),
+                MimeType = options.MimeType
+            });
         }
         catch (Exception ex)
         {
