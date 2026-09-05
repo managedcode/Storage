@@ -51,6 +51,7 @@ builder.Services.AddAzureStorageAsDefault(options =>
 - Supports container creation when `CreateContainerIfNotExists = true`.
 - Uses Azure SDK transfer options when configured (`UploadTransferOptions`).
 - Builds the upload result from the successful Azure upload response and the caller's options, without issuing a second blob-properties request that can race with deletion or lifecycle processing.
+- Returns a failed metadata result for an absent blob without logging the expected Azure `404 BlobNotFound` response as an unhandled exception; other metadata failures retain error logging.
 
 ## Tests
 

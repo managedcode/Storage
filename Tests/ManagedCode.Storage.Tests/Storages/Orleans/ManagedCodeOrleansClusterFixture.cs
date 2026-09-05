@@ -132,7 +132,8 @@ public sealed class ManagedCodeOrleansClusterFixture : IAsyncLifetime
 
     public IServiceProvider GetSiloServiceProvider()
     {
-        return Cluster.GetSiloServiceProvider(Cluster.Primary.SiloAddress);
+        var primary = Cluster.Primary ?? throw new InvalidOperationException("The test cluster has no primary silo.");
+        return Cluster.GetSiloServiceProvider(primary.SiloAddress);
     }
 
     public IManagedCodeStorageBackedGrain GetGrain(string providerName, string grainKey)

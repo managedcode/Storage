@@ -146,6 +146,7 @@ public class ManagedCodeGrainStorageTests
 
             reloaded.RecordExists.ShouldBeTrue();
             reloaded.ETag.ShouldBe(state.ETag);
+            reloaded.State.ShouldNotBeNull();
             reloaded.State.Name.ShouldBe("initial");
             reloaded.State.Count.ShouldBe(3);
 
@@ -200,6 +201,7 @@ public class ManagedCodeGrainStorageTests
 
             var latest = new GrainState<TestState>();
             await grainStorage.ReadStateAsync("profile", grainId, latest);
+            latest.State.ShouldNotBeNull();
             latest.State.Name = "latest";
             await grainStorage.WriteStateAsync("profile", grainId, latest);
 
@@ -284,7 +286,7 @@ public class ManagedCodeGrainStorageTests
 
         private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
-        public BinaryData Serialize<T>(T input)
+        public BinaryData Serialize<T>(T? input)
         {
             return new BinaryData(JsonSerializer.SerializeToUtf8Bytes(input, SerializerOptions));
         }

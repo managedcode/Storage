@@ -3,23 +3,23 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.102.1" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.102.5" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.1" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.2" />
     <PackageVersion Include="Azure.Storage.Files.DataLake" Version="12.27.1" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="coverlet.msbuild" Version="10.0.1" />
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
-    <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.25" />
+    <PackageVersion Include="DotNet.ReproducibleBuilds" Version="2.0.5" />
     <PackageVersion Include="Dropbox.Api" Version="7.2.0" />
-    <PackageVersion Include="Google.Api.Gax" Version="4.14.0" />
-    <PackageVersion Include="Google.Api.Gax.Rest" Version="4.14.0" />
-    <PackageVersion Include="Google.Apis.Drive.v3" Version="1.75.0.4218" />
-    <PackageVersion Include="Google.Apis.Storage.v1" Version="1.75.0.4193" />
+    <PackageVersion Include="Google.Api.Gax" Version="4.15.0" />
+    <PackageVersion Include="Google.Api.Gax.Rest" Version="4.15.0" />
+    <PackageVersion Include="Google.Apis.Drive.v3" Version="1.76.0.4252" />
+    <PackageVersion Include="Google.Apis.Storage.v1" Version="1.76.0.4250" />
     <PackageVersion Include="Google.Cloud.Storage.V1" Version="4.15.0" />
     <PackageVersion Include="Humanizer.Core" Version="3.0.10" />
-    <PackageVersion Include="ManagedCode.Communication" Version="10.1.1" />
-    <PackageVersion Include="ManagedCode.MimeTypes" Version="10.0.10" />
+    <PackageVersion Include="ManagedCode.Communication" Version="10.2.2" />
+    <PackageVersion Include="ManagedCode.MimeTypes" Version="10.1.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Http" Version="2.3.12" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Connections.Client" Version="10.0.11" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
@@ -33,12 +33,12 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Graph" Version="6.5.0" />
+    <PackageVersion Include="Microsoft.Graph" Version="6.6.0" />
     <PackageVersion Include="Microsoft.JSInterop" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.62.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
-    <PackageVersion Include="Microsoft.Orleans.Runtime" Version="10.2.2" />
-    <PackageVersion Include="Microsoft.Orleans.TestingHost" Version="10.2.2" />
+    <PackageVersion Include="Microsoft.Orleans.Runtime" Version="10.3.1" />
+    <PackageVersion Include="Microsoft.Orleans.TestingHost" Version="10.3.1" />
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />

@@ -79,8 +79,8 @@ public class VirtualFileSystem : IVirtualFileSystem
 
         try
         {
-            var blobInfo = await _metadataManager.GetBlobInfoAsync(path.ToBlobKey(), cancellationToken);
-            var exists = blobInfo != null;
+            var result = await _storage.ExistsAsync(path.ToBlobKey(), cancellationToken);
+            var exists = result.IsSuccess && result.Value;
 
             if (_options.EnableCache)
             {

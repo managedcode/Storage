@@ -58,7 +58,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         metadataManager.ResetCounters();
         var firstCheck = await vfs.FileExistsAsync(path);
         firstCheck.ShouldBeTrue();
-        metadataManager.BlobInfoRequests.ShouldBe(1);
+        metadataManager.BlobInfoRequests.ShouldBe(0);
 
         metadataManager.ResetCounters();
         var secondCheck = await vfs.FileExistsAsync(path);
@@ -123,12 +123,25 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
 
         var existsAfterDelete = await vfs.FileExistsAsync(path);
         existsAfterDelete.ShouldBeFalse();
-        metadataManager.BlobInfoRequests.ShouldBe(1);
+        metadataManager.BlobInfoRequests.ShouldBe(0);
 
         metadataManager.ResetCounters();
         var secondCheck = await vfs.FileExistsAsync(path);
         secondCheck.ShouldBeFalse();
         metadataManager.BlobInfoRequests.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task FileExistsAsync_WhenFileIsMissing_ShouldNotReadMetadata()
+    {
+        await using var context = await CreateContextAsync();
+        var path = new VfsPath($"/missing/{Guid.NewGuid():N}.txt");
+
+        context.MetadataManager.ResetCounters();
+        var exists = await context.FileSystem.FileExistsAsync(path);
+
+        exists.ShouldBeFalse();
+        context.MetadataManager.BlobInfoRequests.ShouldBe(0);
     }
 
     [Fact]

@@ -394,6 +394,10 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                 MimeType = properties.Value.ContentType
             });
         }
+        catch (RequestFailedException ex) when (ex.Status is 404)
+        {
+            return Result<BlobMetadata>.Fail(ex);
+        }
         catch (Exception ex)
         {
             logger.LogException(ex);
