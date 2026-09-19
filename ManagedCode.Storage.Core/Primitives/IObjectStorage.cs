@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ManagedCode.Storage.Core.Objects;
+namespace ManagedCode.Storage.Core.Primitives;
 
 /// <summary>Optional atomic object operations. Providers must enforce conditions server-side.</summary>
 public interface IObjectStorage
