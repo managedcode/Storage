@@ -7,6 +7,7 @@ namespace ManagedCode.Storage.Azure.Options;
 
 public class AzureStorageCredentialsOptions : IAzureStorageOptions
 {
+    public System.Uri? ServiceUri { get; set; }
     public string AccountName { get; set; } = string.Empty;
     public string ContainerName { get; set; } = string.Empty;
 

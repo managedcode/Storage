@@ -132,8 +132,6 @@ internal class VfsWriteStream : Stream
 
     private async Task UploadBufferedDataAsync()
     {
-        if (_bufferStream.Length == 0) { _logger.LogDebug("No data to upload for: {BlobKey}", _blobKey); return; }
-
         _logger.LogDebug("Uploading buffered data: {BlobKey}, size: {Size}", _blobKey, _bufferStream.Length);
 
         try

@@ -13,6 +13,35 @@ Single source of truth: keep this doc navigational and coarse. Detailed behavior
 - **Entry points:** DI extension methods, `IStorage` and `IStorageFactory`, ASP.NET controllers and hubs, HTTP and SignalR clients, Orleans `IGrainStorage`, and the xUnit test suite.
 - **Dependencies:** providers implement the Core contracts; VFS and integrations consume `IStorage` or `IStorageFactory`; tests compose the real packages plus `ManagedCode.Storage.TestFakes/`.
 
+## Atomic object capabilities
+
+`IStorage` retains its existing portable API. AzureStorage additionally implements
+`IObjectStorage` and `IMultipartObjectStorage` from Core. Consumers acquire these
+capabilities with `RequireObjectStorage` / `RequireMultipartStorage`; unsupported
+providers fail explicitly rather than approximating atomic conditions. No Azure
+SDK models appear in these capability contracts. `AzureStorageConnection.Create`
+constructs scoped storage from a connection string or authenticated HTTPS origin.
+
+```mermaid
+flowchart LR
+  Consumer["Consumer / VFS"] --> Core["IStorage / IObjectStorage / IMultipartObjectStorage"]
+  Core --> Provider["AzureStorage"]
+  Provider --> Operations["AzureObjectOperations"]
+  Operations --> SDK["Azure Blob SDK"]
+```
+
+Object conditions (`IfAbsent`, `IfMatch`) are enforced by the service for writes,
+metadata updates and reads. Read ranges use a fixed ETag and stream data without
+loading the object into memory. Multipart part IDs are opaque base64 identifiers
+of equal decoded length, and the supplied commit order determines the result;
+callers persist their part IDs for recovery. Listings return one bounded page and
+an opaque continuation token. Container metadata writes do not support ETag
+conditions because Azure does not offer that condition for this operation.
+Provider failures become `StorageOperationException` with a status code; task
+cancellation propagates normally. These optional streaming capabilities follow
+the VFS exception model; existing `IStorage` result contracts are unchanged.
+VFS writes persist zero-byte files and truncate existing files on empty overwrite.
+
 ## Scoping (read first)
 
 - **In scope:** storage abstractions, provider DI registration, transport integrations, VFS behavior, Orleans persistence wiring, and the test harnesses that prove those flows.

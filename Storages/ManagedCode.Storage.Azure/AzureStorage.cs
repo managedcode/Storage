@@ -19,8 +19,8 @@ using Microsoft.Extensions.Logging;
 
 namespace ManagedCode.Storage.Azure;
 
-public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? logger = default)
-    : BaseStorage<BlobContainerClient, IAzureStorageOptions>(options), IAzureStorage
+public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? logger = default)
+    : BaseStorage<BlobContainerClient, IAzureStorageOptions>(options), IAzureStorage, ManagedCode.Storage.Core.Objects.IMultipartObjectStorage
 {
     private static readonly StorageTransferOptions DefaultUploadTransferOptions = new()
     {
@@ -169,7 +169,7 @@ public class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? l
                 azureStorageOptions.OriginalOptions),
 
             AzureStorageCredentialsOptions azureStorageCredentialsOptions => new BlobContainerClient(
-                new Uri($"https://{azureStorageCredentialsOptions.AccountName}.blob.core.windows.net/{azureStorageCredentialsOptions.ContainerName}"),
+                new Uri(azureStorageCredentialsOptions.ServiceUri ?? new Uri($"https://{azureStorageCredentialsOptions.AccountName}.blob.core.windows.net/"), azureStorageCredentialsOptions.ContainerName),
                 azureStorageCredentialsOptions.Credentials ?? throw new InvalidOperationException($"{nameof(AzureStorageCredentialsOptions.Credentials)} must be provided."),
                 azureStorageCredentialsOptions.OriginalOptions),
 

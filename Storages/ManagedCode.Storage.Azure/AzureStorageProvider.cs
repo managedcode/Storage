@@ -34,6 +34,7 @@ namespace ManagedCode.Storage.Azure
             {
                 AzureStorageCredentialsOptions credentialsOptions => new AzureStorageCredentialsOptions
                 {
+                    ServiceUri = credentialsOptions.ServiceUri,
                     AccountName = credentialsOptions.AccountName,
                     ContainerName = credentialsOptions.ContainerName,
                     Credentials = credentialsOptions.Credentials,
