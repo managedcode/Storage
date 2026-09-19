@@ -51,3 +51,5 @@ Parent: `../AGENTS.md`
 - Treat `IStorage`, `IStorageProvider`, and factory abstractions as public contracts; changing them is an ask-first API change.
 - Keep shared helpers vendor-agnostic; SDK-specific behavior belongs in provider projects, not in Core.
 - Preserve keyed and default storage resolution semantics because VFS, server integrations, and Orleans depend on them.
+
+- Shared low-level storage contracts and value types belong in `ManagedCode.Storage.Core.Primitives`; do not introduce a generic `Objects` namespace.

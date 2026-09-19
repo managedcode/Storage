@@ -20,7 +20,7 @@ using Microsoft.Extensions.Logging;
 namespace ManagedCode.Storage.Azure;
 
 public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureStorage>? logger = default)
-    : BaseStorage<BlobContainerClient, IAzureStorageOptions>(options), IAzureStorage, ManagedCode.Storage.Core.Objects.IMultipartObjectStorage
+    : BaseStorage<BlobContainerClient, IAzureStorageOptions>(options), IAzureStorage, ManagedCode.Storage.Core.Primitives.IMultipartObjectStorage
 {
     private static readonly StorageTransferOptions DefaultUploadTransferOptions = new()
     {

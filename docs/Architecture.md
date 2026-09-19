@@ -16,7 +16,7 @@ Single source of truth: keep this doc navigational and coarse. Detailed behavior
 ## Atomic object capabilities
 
 `IStorage` retains its existing portable API. AzureStorage additionally implements
-`IObjectStorage` and `IMultipartObjectStorage` from Core. Consumers acquire these
+`IObjectStorage` and `IMultipartObjectStorage` from `ManagedCode.Storage.Core.Primitives`. Consumers acquire these
 capabilities with `RequireObjectStorage` / `RequireMultipartStorage`; unsupported
 providers fail explicitly rather than approximating atomic conditions. No Azure
 SDK models appear in these capability contracts. `AzureStorageConnection.Create`

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ManagedCode.Storage.Core.Objects;
+namespace ManagedCode.Storage.Core.Primitives;
 
 public sealed record StorageContainerInfo(string ETag, bool IsPrivate, IReadOnlyDictionary<string, string> Metadata);
 

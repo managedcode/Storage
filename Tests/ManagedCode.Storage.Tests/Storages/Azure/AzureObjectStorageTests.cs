@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Options;
-using ManagedCode.Storage.Core.Objects;
+using ManagedCode.Storage.Core.Primitives;
 using ManagedCode.Storage.Tests.Common;
 using ManagedCode.Storage.VirtualFileSystem.Extensions;
 using ManagedCode.Storage.VirtualFileSystem.Core;

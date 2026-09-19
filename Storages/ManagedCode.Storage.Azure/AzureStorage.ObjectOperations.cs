@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using ManagedCode.Storage.Core.Objects;
+using ManagedCode.Storage.Core.Primitives;
 
 namespace ManagedCode.Storage.Azure;
 
