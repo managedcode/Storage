@@ -115,8 +115,8 @@ public class GoogleDriveStorage : BaseStorage<IGoogleDriveClient, GoogleDriveSto
             var path = BuildFullPath(options.FullPath);
             var remoteStream = await StorageClient.DownloadAsync(StorageOptions.RootFolderId, path, StorageOptions.SupportsAllDrives, cancellationToken);
 
+            var fileStream = localFile.FileStream;
             await using (remoteStream)
-            await using (var fileStream = localFile.FileStream)
             {
                 await remoteStream.CopyToAsync(fileStream, cancellationToken);
                 fileStream.Position = 0;

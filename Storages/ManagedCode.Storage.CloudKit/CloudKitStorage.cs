@@ -99,8 +99,8 @@ public class CloudKitStorage : BaseStorage<ICloudKitClient, CloudKitStorageOptio
             var remoteStream = await StorageClient.DownloadAsync(recordName, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
+            var fileStream = localFile.FileStream;
             await using (remoteStream)
-            await using (var fileStream = localFile.FileStream)
             {
                 await remoteStream.CopyToAsync(fileStream, cancellationToken);
                 fileStream.Position = 0;

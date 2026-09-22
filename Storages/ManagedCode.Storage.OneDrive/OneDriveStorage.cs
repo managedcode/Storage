@@ -121,8 +121,8 @@ public class OneDriveStorage : BaseStorage<IOneDriveClient, OneDriveStorageOptio
             var remoteStream = await StorageClient.DownloadAsync(StorageOptions.DriveId, path, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
+            var fileStream = localFile.FileStream;
             await using (remoteStream)
-            await using (var fileStream = localFile.FileStream)
             {
                 await remoteStream.CopyToAsync(fileStream, cancellationToken);
                 fileStream.Position = 0;
