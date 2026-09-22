@@ -57,6 +57,9 @@ public static class VerifiedObjectUpload
             if (info.Length != expectedLength ||
                 (options.ContentType is not null &&
                  !string.Equals(info.ContentType, options.ContentType, StringComparison.OrdinalIgnoreCase)) ||
+                (options.ContentEncoding is not null &&
+                 !string.Equals(info.ContentEncoding, options.ContentEncoding, StringComparison.OrdinalIgnoreCase)) ||
+                (options.Metadata is not null && !MetadataMatches(options.Metadata, info.Metadata)) ||
                 !await MatchesExistingAsync(multipart, path, info.ETag, expectedLength,
                     inputHash, cancellationToken).ConfigureAwait(false))
             {
@@ -136,6 +139,42 @@ public static class VerifiedObjectUpload
         transferId.CopyTo(value, 0);
         BitConverter.TryWriteBytes(value.AsSpan(8), index);
         return Convert.ToBase64String(value);
+    }
+
+    private static bool MetadataMatches(IReadOnlyDictionary<string, string> expected,
+        IReadOnlyDictionary<string, string> actual)
+    {
+        if (expected.Count != actual.Count)
+        {
+            return false;
+        }
+
+        foreach (var item in expected)
+        {
+            var found = false;
+            foreach (var stored in actual)
+            {
+                if (!string.Equals(item.Key, stored.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(item.Value, stored.Value, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+                found = true;
+                break;
+            }
+
+            if (!found)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static async Task<bool> MatchesExistingAsync(IObjectStorage storage, string path,

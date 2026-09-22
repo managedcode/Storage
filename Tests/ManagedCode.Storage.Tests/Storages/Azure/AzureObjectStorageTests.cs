@@ -78,13 +78,18 @@ public sealed class AzureObjectStorageTests : IAsyncLifetime
         using var storage = CreateStorage();
         var objects = storage.RequireObjectStorage();
         await objects.CreatePrivateContainerAsync();
+        var metadata = new Dictionary<string, string>
+        {
+            ["owner"] = "company-a",
+            ["generation"] = "1"
+        };
         using var firstContent = Content("original");
         var first = await objects.WriteIfAbsentOrSameAsync("file.txt", firstContent, 8,
-            new StorageWriteOptions { ContentType = "text/plain" });
+            new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata });
         first.ReusedExisting.ShouldBeFalse();
         using var retryContent = Content("original");
         var retry = await objects.WriteIfAbsentOrSameAsync("file.txt", retryContent, 8,
-            new StorageWriteOptions { ContentType = "text/plain" });
+            new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata });
         retry.ReusedExisting.ShouldBeTrue();
         retry.Info.ETag.ShouldBe(first.Info.ETag);
         retry.Sha256.ShouldBe(first.Sha256);
@@ -92,6 +97,18 @@ public sealed class AzureObjectStorageTests : IAsyncLifetime
         (await Should.ThrowAsync<StorageOperationException>(() =>
             objects.WriteIfAbsentOrSameAsync("file.txt", wrongType, 8,
                 new StorageWriteOptions { ContentType = "application/json" }))).IsConflict.ShouldBeTrue();
+        using var wrongOwner = Content("original");
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            objects.WriteIfAbsentOrSameAsync("file.txt", wrongOwner, 8,
+                new StorageWriteOptions
+                {
+                    ContentType = "text/plain",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["owner"] = "company-b",
+                        ["generation"] = "1"
+                    }
+                }))).IsConflict.ShouldBeTrue();
         using var differentContent = Content("different");
         (await Should.ThrowAsync<StorageOperationException>(() =>
             objects.WriteIfAbsentOrSameAsync("file.txt", differentContent, 9))).IsConflict.ShouldBeTrue();
