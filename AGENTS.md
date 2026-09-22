@@ -245,6 +245,8 @@ Toolchain notes:
 
 ### Storage Platform
 
+- Keep reusable upload streaming, length verification, digesting, and immutable retry reconciliation in ManagedCode.Storage. Consumers supply domain authorization and expected file metadata, then call the library capability instead of implementing their own blob transfer algorithms.
+
 - Ensure storage-related changes keep broad automated coverage around 85-90% using generic, provider-agnostic tests across file systems, storages, and integrations.
 - Deliver ASP.NET integrations that expose upload or download controllers, SignalR streaming, and matching HTTP and SignalR clients built on the storage layer for files, streams, and chunked transfers.
 - Provide base ASP.NET controllers with minimal routing so consumers can inherit and customize routes, authorization, and behavior without rigid defaults.

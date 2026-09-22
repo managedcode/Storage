@@ -73,6 +73,50 @@ public sealed class AzureObjectStorageTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task VerifiedUpload_RetryWithSameContentReusesRevision_AndDifferentContentConflicts()
+    {
+        using var storage = CreateStorage();
+        var objects = storage.RequireObjectStorage();
+        await objects.CreatePrivateContainerAsync();
+        using var firstContent = Content("original");
+        var first = await objects.WriteIfAbsentOrSameAsync("file.txt", firstContent, 8,
+            new StorageWriteOptions { ContentType = "text/plain" });
+        first.ReusedExisting.ShouldBeFalse();
+        using var retryContent = Content("original");
+        var retry = await objects.WriteIfAbsentOrSameAsync("file.txt", retryContent, 8,
+            new StorageWriteOptions { ContentType = "text/plain" });
+        retry.ReusedExisting.ShouldBeTrue();
+        retry.Info.ETag.ShouldBe(first.Info.ETag);
+        retry.Sha256.ShouldBe(first.Sha256);
+        using var wrongType = Content("original");
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            objects.WriteIfAbsentOrSameAsync("file.txt", wrongType, 8,
+                new StorageWriteOptions { ContentType = "application/json" }))).IsConflict.ShouldBeTrue();
+        using var differentContent = Content("different");
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            objects.WriteIfAbsentOrSameAsync("file.txt", differentContent, 9))).IsConflict.ShouldBeTrue();
+        await using var stored = await objects.OpenObjectReadAsync("file.txt");
+        using var reader = new StreamReader(stored);
+        (await reader.ReadToEndAsync()).ShouldBe("original");
+    }
+
+    [Fact]
+    public async Task VerifiedUpload_DeclaredLengthMismatchFailsWithoutAcceptingContent()
+    {
+        using var storage = CreateStorage();
+        var objects = storage.RequireObjectStorage();
+        await objects.CreatePrivateContainerAsync();
+        using var tooLong = Content("too long");
+        (await Should.ThrowAsync<StorageUploadLengthException>(() =>
+            objects.WriteIfAbsentOrSameAsync("too-long.txt", tooLong, 3))).TooLarge.ShouldBeTrue();
+        using var tooShort = Content("short");
+        (await Should.ThrowAsync<StorageUploadLengthException>(() =>
+            objects.WriteIfAbsentOrSameAsync("too-short.txt", tooShort, 9))).TooLarge.ShouldBeFalse();
+        (await objects.ObjectExistsAsync("too-long.txt")).ShouldBeFalse();
+        (await objects.ObjectExistsAsync("too-short.txt")).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task MetadataPaginationAndDeletion_PreserveContainerBoundary()
     {
         using var storage = CreateStorage();

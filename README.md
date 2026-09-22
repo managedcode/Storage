@@ -436,6 +436,8 @@ flowchart LR
 
 Keyed provider registrations let you resolve multiple named instances from dependency injection while reusing the same abstraction across Azure, AWS, Google Cloud Storage, Google Drive, OneDrive, Dropbox, CloudKit, SFTP, and local file system storage.
 
+Immutable uploads can call `WriteIfAbsentOrSameAsync` on `IObjectStorage` with a declared length. The operation streams and verifies the content, and an identical retry returns the existing object revision. A different payload keeps the storage conflict.
+
 ### ASP.NET Streaming Controllers
 
 Controllers in `ManagedCode.Storage.Server` expose minimal routes that stream directly between HTTP clients and blob providers. Uploads arrive as multipart forms or raw streams, flow through the unified `IStorage` abstraction, and land in whichever provider is registered. Downloads return `FileStreamResult` responses so browsers, SDKs, or background jobs can read blobs without buffering the whole payload in memory.
