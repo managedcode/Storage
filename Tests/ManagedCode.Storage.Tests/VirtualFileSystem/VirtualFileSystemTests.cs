@@ -67,6 +67,23 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     }
 
     [Fact]
+    public async Task StorageFileExistsAsync_BypassesCachedAbsence()
+    {
+        await using var context = await CreateContextAsync();
+        var path = new VfsPath($"/fresh/{Guid.NewGuid():N}.txt");
+        (await context.FileSystem.FileExistsAsync(path)).ShouldBeFalse();
+
+        var upload = await context.Storage.UploadAsync("created externally", new UploadOptions
+        {
+            FileName = path.ToBlobKey()
+        });
+        upload.ThrowIfProblem();
+
+        (await context.FileSystem.StorageFileExistsAsync(path)).ShouldBeTrue();
+        (await context.FileSystem.FileExistsAsync(path)).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task ListAsync_ShouldEnumerateAllEntries()
     {
         if (!Capabilities.SupportsListing)

@@ -7,12 +7,18 @@ using ManagedCode.Storage.Azure;
 using ManagedCode.Storage.Azure.Options;
 using ManagedCode.Storage.Core.Primitives;
 using ManagedCode.Storage.Tests.Common;
+using ManagedCode.Storage.Tests.VirtualFileSystem.Fixtures;
 using ManagedCode.Storage.VirtualFileSystem.Extensions;
 using ManagedCode.Storage.VirtualFileSystem.Core;
+using ManagedCode.Storage.VirtualFileSystem.Options;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Shouldly;
 using Testcontainers.Azurite;
 using Xunit;
+using VfsImplementation = ManagedCode.Storage.VirtualFileSystem.Implementations.VirtualFileSystem;
 
 namespace ManagedCode.Storage.Tests.Storages.Azure;
 
@@ -166,6 +172,37 @@ public sealed class AzureObjectStorageTests : IAsyncLifetime
             objects.WriteIfAbsentOrSameAsync("too-short.txt", tooShort, 9))).TooLarge.ShouldBeFalse();
         (await objects.ObjectExistsAsync("too-long.txt")).ShouldBeFalse();
         (await objects.ObjectExistsAsync("too-short.txt")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ImmutableVfsBytes_AreAtomicAndInvalidateExistenceCache()
+    {
+        using var storage = CreateStorage();
+        await storage.RequireObjectStorage().CreatePrivateContainerAsync();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        await using var fileSystem = new VfsImplementation(storage,
+            new TestMetadataManager(storage), Options.Create(new VfsOptions { EnableCache = true }),
+            cache, NullLogger<VfsImplementation>.Instance);
+        var path = new VfsPath("/commands/payload.json");
+        (await fileSystem.FileExistsAsync(path)).ShouldBeFalse();
+        var metadata = new Dictionary<string, string> { ["owner"] = "one" };
+        var options = new StorageWriteOptions { ContentType = "application/json", Metadata = metadata };
+        var bytes = Encoding.UTF8.GetBytes("{\"ok\":true}");
+
+        var first = await fileSystem.WriteBytesIfAbsentOrSameAsync(path, bytes, options);
+        first.ReusedExisting.ShouldBeFalse();
+        (await fileSystem.FileExistsAsync(path)).ShouldBeTrue();
+
+        var retry = await fileSystem.WriteBytesIfAbsentOrSameAsync(path, bytes, options);
+        retry.ReusedExisting.ShouldBeTrue();
+        retry.Info.ETag.ShouldBe(first.Info.ETag);
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            fileSystem.WriteBytesIfAbsentOrSameAsync(path,
+                Encoding.UTF8.GetBytes("{\"ok\":false}"), options))).IsConflict.ShouldBeTrue();
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            fileSystem.WriteBytesIfAbsentOrSameAsync(path, bytes,
+                options with { Metadata = new Dictionary<string, string> { ["owner"] = "two" } })))
+            .IsConflict.ShouldBeTrue();
     }
 
     [Fact]

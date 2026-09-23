@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
+using ManagedCode.Storage.Core.Primitives;
 using ManagedCode.Storage.VirtualFileSystem.Options;
 
 namespace ManagedCode.Storage.VirtualFileSystem.Core;
@@ -44,6 +46,26 @@ public interface IVirtualFileSystem : IAsyncDisposable
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if the file exists</returns>
     ValueTask<bool> FileExistsAsync(VfsPath path, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Checks the backing storage directly, bypassing the VFS cache and propagating storage failures.
+    /// Use for authorization, conflict, and recovery decisions that require a current answer.
+    /// </summary>
+    async ValueTask<bool> StorageFileExistsAsync(VfsPath path, CancellationToken cancellationToken = default)
+    {
+        var result = await Storage.ExistsAsync(path.ToBlobKey(), cancellationToken).ConfigureAwait(false);
+        result.ThrowIfProblem();
+        return result.Value;
+    }
+
+    /// <summary>Atomically writes immutable bytes, accepting a retry only when content and metadata match.</summary>
+    Task<VerifiedObjectUploadResult> WriteBytesIfAbsentOrSameAsync(
+        VfsPath path,
+        ReadOnlyMemory<byte> content,
+        StorageWriteOptions? options = null,
+        CancellationToken cancellationToken = default) =>
+        Storage.RequireObjectStorage().WriteBytesIfAbsentOrSameAsync(
+            path.ToBlobKey(), content, options, cancellationToken);
 
     /// <summary>
     /// Deletes a file

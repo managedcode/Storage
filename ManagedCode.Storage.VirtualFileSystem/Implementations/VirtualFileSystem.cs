@@ -17,7 +17,7 @@ namespace ManagedCode.Storage.VirtualFileSystem.Implementations;
 /// <summary>
 /// Main implementation of virtual file system
 /// </summary>
-public class VirtualFileSystem : IVirtualFileSystem
+public partial class VirtualFileSystem : IVirtualFileSystem
 {
     private readonly IStorage _storage;
     private readonly VfsOptions _options;
@@ -95,6 +95,15 @@ public class VirtualFileSystem : IVirtualFileSystem
             _logger.LogWarning(ex, "Error checking file existence: {Path}", path);
             return false;
         }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<bool> StorageFileExistsAsync(VfsPath path, CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var result = await _storage.ExistsAsync(path.ToBlobKey(), cancellationToken).ConfigureAwait(false);
+        result.ThrowIfProblem();
+        return result.Value;
     }
 
     /// <inheritdoc />

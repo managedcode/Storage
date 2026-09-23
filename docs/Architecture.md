@@ -43,6 +43,16 @@ Provider failures become `StorageOperationException` with a status code; task
 cancellation propagates normally. These optional streaming capabilities follow
 the VFS exception model; existing `IStorage` result contracts are unchanged.
 VFS writes persist zero-byte files and truncate existing files on empty overwrite.
+`FileExistsAsync` remains a cached, best-effort convenience query. Consumers that
+make conflict, authorization, or recovery decisions use
+`IVirtualFileSystem.StorageFileExistsAsync`, which reads the backing provider and
+propagates failures. `WriteBytesIfAbsentOrSameAsync` uses the optional atomic
+`IObjectStorage` capability; the library VFS invalidates its existence and
+metadata cache after a successful write or verified retry. Providers without
+atomic object writes reject that operation rather than silently using a
+check-then-upload sequence. Core also owns `VerifiedContentSnapshot` for a
+bounded, file-backed SHA-256 read and `VerifiedObjectUpload` for immutable
+stream or byte writes with exact retry comparison.
 
 ## Scoping (read first)
 

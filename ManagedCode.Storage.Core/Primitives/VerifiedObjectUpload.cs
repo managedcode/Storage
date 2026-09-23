@@ -15,7 +15,7 @@ public sealed class StorageUploadLengthException(bool tooLarge)
     public bool TooLarge { get; } = tooLarge;
 }
 
-public static class VerifiedObjectUpload
+public static partial class VerifiedObjectUpload
 {
     private const int PartBytes = 4 * 1024 * 1024;
 
