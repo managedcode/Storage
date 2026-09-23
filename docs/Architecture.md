@@ -52,7 +52,8 @@ metadata cache after a successful write or verified retry. Providers without
 atomic object writes reject that operation rather than silently using a
 check-then-upload sequence. Core also owns `VerifiedContentSnapshot` for a
 bounded, file-backed SHA-256 read and `VerifiedObjectUpload` for immutable
-stream or byte writes with exact retry comparison.
+stream or byte writes with exact retry comparison, including reconciliation
+after a write commits but its response is lost.
 
 ## Scoping (read first)
 

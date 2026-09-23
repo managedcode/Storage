@@ -51,7 +51,7 @@ public static partial class VerifiedObjectUpload
             info = await multipart.CommitPartsAsync(path, partIds,
                 options with { IfAbsent = true }, cancellationToken).ConfigureAwait(false);
         }
-        catch (StorageOperationException conflict) when (conflict.IsConflict)
+        catch (IOException) when (!cancellationToken.IsCancellationRequested)
         {
             info = await multipart.GetObjectInfoAsync(path, cancellationToken).ConfigureAwait(false);
             if (info.Length != expectedLength ||

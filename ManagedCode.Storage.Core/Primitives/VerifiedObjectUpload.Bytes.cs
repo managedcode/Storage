@@ -32,7 +32,7 @@ public static partial class VerifiedObjectUpload
             info = await storage.WriteObjectAsync(path, source, options with { IfAbsent = true },
                 cancellationToken).ConfigureAwait(false);
         }
-        catch (StorageOperationException conflict) when (conflict.IsConflict)
+        catch (IOException) when (!cancellationToken.IsCancellationRequested)
         {
             info = await storage.GetObjectInfoAsync(path, cancellationToken).ConfigureAwait(false);
             if (info.Length != content.Length ||
