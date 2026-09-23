@@ -436,7 +436,7 @@ flowchart LR
 
 Keyed provider registrations let you resolve multiple named instances from dependency injection while reusing the same abstraction across Azure, AWS, Google Cloud Storage, Google Drive, OneDrive, Dropbox, CloudKit, SFTP, and local file system storage.
 
-Immutable uploads can call `WriteIfAbsentOrSameAsync` on `IObjectStorage` with a declared length. The operation streams and verifies the content, and an identical retry returns the existing object revision. A different payload keeps the storage conflict.
+Immutable uploads can call `WriteIfAbsentOrSameAsync` on `IObjectStorage` with a declared length. The operation streams and verifies the content, and an identical retry with matching content type, encoding, and metadata returns the existing object revision. A different payload or placement metadata keeps the storage conflict.
 
 ### ASP.NET Streaming Controllers
 

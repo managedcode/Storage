@@ -30,7 +30,7 @@ flowchart LR
   Operations --> SDK["Azure Blob SDK"]
 ```
 
-For immutable uploads, `WriteIfAbsentOrSameAsync` streams an expected-length request through SHA-256, retries a conflicting write by reading the current ETag-pinned object, and accepts only byte-identical content. It returns the stored ETag, digest, and whether the object was reused; mismatched content keeps the provider conflict. Neither input nor stored content is buffered as a whole.
+For immutable uploads, `WriteIfAbsentOrSameAsync` streams an expected-length request through SHA-256, retries a conflicting write by reading the current ETag-pinned object, and accepts only byte-identical content with matching content type, encoding, and metadata. It returns the stored ETag, digest, and whether the object was reused; a mismatch keeps the provider conflict. Neither input nor stored content is buffered as a whole.
 
 Object conditions (`IfAbsent`, `IfMatch`) are enforced by the service for writes,
 metadata updates and reads. Read ranges use a fixed ETag and stream data without

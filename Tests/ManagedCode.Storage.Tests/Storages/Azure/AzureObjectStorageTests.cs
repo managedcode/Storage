@@ -78,23 +78,75 @@ public sealed class AzureObjectStorageTests : IAsyncLifetime
         using var storage = CreateStorage();
         var objects = storage.RequireObjectStorage();
         await objects.CreatePrivateContainerAsync();
+        var metadata = new Dictionary<string, string>
+        {
+            ["owner"] = "company-a",
+            ["generation"] = "1"
+        };
         using var firstContent = Content("original");
         var first = await objects.WriteIfAbsentOrSameAsync("file.txt", firstContent, 8,
-            new StorageWriteOptions { ContentType = "text/plain" });
+            new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata });
         first.ReusedExisting.ShouldBeFalse();
         using var retryContent = Content("original");
         var retry = await objects.WriteIfAbsentOrSameAsync("file.txt", retryContent, 8,
-            new StorageWriteOptions { ContentType = "text/plain" });
+            new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata });
         retry.ReusedExisting.ShouldBeTrue();
         retry.Info.ETag.ShouldBe(first.Info.ETag);
         retry.Sha256.ShouldBe(first.Sha256);
+        using var differentlyCasedMetadata = Content("original");
+        var sameMetadata = await objects.WriteIfAbsentOrSameAsync("file.txt", differentlyCasedMetadata, 8,
+            new StorageWriteOptions
+            {
+                ContentType = "text/plain",
+                Metadata = new Dictionary<string, string>
+                {
+                    ["Owner"] = "company-a",
+                    ["Generation"] = "1"
+                }
+            });
+        sameMetadata.ReusedExisting.ShouldBeTrue();
+        sameMetadata.Info.ETag.ShouldBe(first.Info.ETag);
         using var wrongType = Content("original");
         (await Should.ThrowAsync<StorageOperationException>(() =>
             objects.WriteIfAbsentOrSameAsync("file.txt", wrongType, 8,
                 new StorageWriteOptions { ContentType = "application/json" }))).IsConflict.ShouldBeTrue();
-        using var differentContent = Content("different");
+        using var wrongOwner = Content("original");
         (await Should.ThrowAsync<StorageOperationException>(() =>
-            objects.WriteIfAbsentOrSameAsync("file.txt", differentContent, 9))).IsConflict.ShouldBeTrue();
+            objects.WriteIfAbsentOrSameAsync("file.txt", wrongOwner, 8,
+                new StorageWriteOptions
+                {
+                    ContentType = "text/plain",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["owner"] = "company-b",
+                        ["generation"] = "1"
+                    }
+                }))).IsConflict.ShouldBeTrue();
+        using var wrongMetadataCount = Content("original");
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            objects.WriteIfAbsentOrSameAsync("file.txt", wrongMetadataCount, 8,
+                new StorageWriteOptions
+                {
+                    Metadata = new Dictionary<string, string> { ["owner"] = "company-a" }
+                }))).IsConflict.ShouldBeTrue();
+        using var wrongMetadataKey = Content("original");
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            objects.WriteIfAbsentOrSameAsync("file.txt", wrongMetadataKey, 8,
+                new StorageWriteOptions
+                {
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["tenant"] = "company-a",
+                        ["generation"] = "1"
+                    }
+                }))).IsConflict.ShouldBeTrue();
+        using var wrongEncoding = Content("original");
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            objects.WriteIfAbsentOrSameAsync("file.txt", wrongEncoding, 8,
+                new StorageWriteOptions { ContentEncoding = "gzip" }))).IsConflict.ShouldBeTrue();
+        using var differentContent = Content("altered!");
+        (await Should.ThrowAsync<StorageOperationException>(() =>
+            objects.WriteIfAbsentOrSameAsync("file.txt", differentContent, 8))).IsConflict.ShouldBeTrue();
         await using var stored = await objects.OpenObjectReadAsync("file.txt");
         using var reader = new StreamReader(stored);
         (await reader.ReadToEndAsync()).ShouldBe("original");
