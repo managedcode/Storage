@@ -275,22 +275,20 @@ public abstract class BaseMetadataManager : IMetadataManager
 
         foreach (var kvp in storageMetadata)
         {
-            if (kvp.Key.StartsWith(MetadataPrefix, StringComparison.Ordinal))
+            if (!kvp.Key.StartsWith(MetadataPrefix, StringComparison.Ordinal))
             {
-                // Skip VFS system metadata
-                if (kvp.Key.EndsWith(VfsVersionKey, StringComparison.Ordinal) ||
-                    kvp.Key.EndsWith(VfsCreatedKey, StringComparison.Ordinal) ||
-                    kvp.Key.EndsWith(VfsModifiedKey, StringComparison.Ordinal) ||
-                    kvp.Key.EndsWith(VfsAttributesKey, StringComparison.Ordinal) ||
-                    kvp.Key.Contains(VfsCustomPrefix, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                // Include other custom metadata
-                var key = kvp.Key[MetadataPrefix.Length..];
-                result[key] = kvp.Value;
+                result[kvp.Key] = kvp.Value;
+                continue;
             }
+
+            var key = kvp.Key[MetadataPrefix.Length..];
+            if (key is VfsVersionKey or VfsCreatedKey or VfsModifiedKey or VfsAttributesKey ||
+                key.StartsWith(VfsCustomPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            result[key] = kvp.Value;
         }
 
         return result;

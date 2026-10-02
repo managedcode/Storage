@@ -30,6 +30,17 @@ flowchart TD
 
 - Directory listing is implemented by prefix-listing blob metadata via `IStorage.GetBlobMetadataListAsync(...)`.
 
+### Immutable content and metadata
+
+`IVirtualFileSystem.WriteBytesIfAbsentOrSameAsync` stores the provided portable
+object metadata alongside the exact immutable bytes. `IVirtualFile.GetMetadataAsync`
+returns those user fields from both fresh handles and handles which previously
+cached a missing file. This includes ASCII and Unicode values. Legacy user fields
+stored under the metadata manager's VFS prefix are exposed with that prefix
+removed. Only the overlay's reserved version, timestamp, attribute and internal
+custom-state fields are filtered; a user field merely containing those names is
+preserved. A matching retry retains the existing object and ETag.
+
 ## Components
 
 Key files:

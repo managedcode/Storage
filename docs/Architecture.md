@@ -104,6 +104,13 @@ flowchart LR
 
 ### 2.2 Interfaces / contracts map
 
+VFS immutable writes carry the caller's portable object metadata without rewriting
+its keys. A fresh `IVirtualFile.GetMetadataAsync` must return those fields as well
+as legacy VFS-prefixed custom fields. VFS version, timestamps, attributes and
+internal custom-state entries remain reserved and are excluded from this public
+custom-metadata view. The same contract applies with caching enabled or disabled;
+an immutable write invalidates previous absence and metadata cache entries.
+
 ```mermaid
 flowchart LR
   Providers["Provider Packages"]
