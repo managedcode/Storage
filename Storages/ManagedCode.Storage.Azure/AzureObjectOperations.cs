@@ -20,18 +20,18 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
     {
         var value = (await container.GetPropertiesAsync(cancellationToken: cancellationToken)).Value;
         return new StorageContainerInfo(value.ETag.ToString(), value.PublicAccess == PublicAccessType.None,
-            new Dictionary<string, string>(value.Metadata));
+            AzureMetadataTransport.Decode(value.Metadata));
     });
 
     public Task CreatePrivateContainerAsync(IReadOnlyDictionary<string, string>? metadata = null, CancellationToken cancellationToken = default) => ExecuteAsync(async () =>
     {
-        await container.CreateIfNotExistsAsync(PublicAccessType.None, Copy(metadata), cancellationToken: cancellationToken);
+        await container.CreateIfNotExistsAsync(PublicAccessType.None, AzureMetadataTransport.Encode(metadata), cancellationToken: cancellationToken);
         return true;
     });
 
     public Task SetContainerMetadataAsync(IReadOnlyDictionary<string, string> metadata, CancellationToken cancellationToken = default) => ExecuteAsync(async () =>
     {
-        await container.SetMetadataAsync(Copy(metadata), cancellationToken: cancellationToken);
+        await container.SetMetadataAsync(AzureMetadataTransport.Encode(metadata), cancellationToken: cancellationToken);
         return true;
     });
 
@@ -74,7 +74,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
         {
             Conditions = Conditions(options),
             HttpHeaders = Headers(options),
-            Metadata = Copy(options.Metadata),
+            Metadata = AzureMetadataTransport.Encode(options.Metadata),
             TransferOptions = new global::Azure.Storage.StorageTransferOptions { MaximumConcurrency = 1, InitialTransferSize = 4 * 1024 * 1024, MaximumTransferSize = 4 * 1024 * 1024 }
         }, cancellationToken);
         return await ReadWrittenInfoAsync(path, response.Value.ETag, cancellationToken);
@@ -82,7 +82,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
 
     public Task SetObjectMetadataAsync(string path, IReadOnlyDictionary<string, string> metadata, string? ifMatch = null, CancellationToken cancellationToken = default) => ExecuteAsync(async () =>
     {
-        await container.GetBlobClient(path).SetMetadataAsync(Copy(metadata), new BlobRequestConditions { IfMatch = ETagOrNull(ifMatch) }, cancellationToken);
+        await container.GetBlobClient(path).SetMetadataAsync(AzureMetadataTransport.Encode(metadata), new BlobRequestConditions { IfMatch = ETagOrNull(ifMatch) }, cancellationToken);
         return true;
     });
 
@@ -100,7 +100,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
             return new StorageObjectPage(page.Values.Select(item => new StorageObjectInfo(item.Name,
                 item.Properties.ETag?.ToString() ?? throw new InvalidDataException("Object listing returned no ETag."),
                 item.Properties.ContentLength ?? throw new InvalidDataException("Object listing returned no length."),
-                item.Properties.ContentType, item.Properties.ContentEncoding, new Dictionary<string, string>(item.Metadata), item.Properties.LastModified)).ToArray(), page.ContinuationToken);
+                item.Properties.ContentType, item.Properties.ContentEncoding, AzureMetadataTransport.Decode(item.Metadata), item.Properties.LastModified)).ToArray(), page.ContinuationToken);
         }
         return new StorageObjectPage([], null);
     });
@@ -118,7 +118,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
         {
             Conditions = Conditions(options),
             HttpHeaders = Headers(options),
-            Metadata = Copy(options.Metadata)
+            Metadata = AzureMetadataTransport.Encode(options.Metadata)
         }, cancellationToken);
         return await ReadWrittenInfoAsync(path, response.Value.ETag, cancellationToken);
     });
@@ -127,7 +127,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
         Info(path, (await container.GetBlobClient(path).GetPropertiesAsync(new BlobRequestConditions { IfMatch = etag }, cancellationToken)).Value);
 
     private static StorageObjectInfo Info(string path, BlobProperties value) => new(path, value.ETag.ToString(), value.ContentLength,
-        value.ContentType, value.ContentEncoding, new Dictionary<string, string>(value.Metadata), value.LastModified);
+        value.ContentType, value.ContentEncoding, AzureMetadataTransport.Decode(value.Metadata), value.LastModified);
 
     private static BlobRequestConditions Conditions(StorageWriteOptions options)
     {
@@ -137,7 +137,6 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
 
     private static BlobHttpHeaders Headers(StorageWriteOptions options) => new() { ContentType = options.ContentType, ContentEncoding = options.ContentEncoding };
     private static ETag? ETagOrNull(string? value) => value is null ? null : new ETag(value);
-    private static Dictionary<string, string>? Copy(IReadOnlyDictionary<string, string>? value) => value is null ? null : new(value);
 
     private static async Task<T> ExecuteAsync<T>(Func<Task<T>> operation)
     {

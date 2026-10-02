@@ -74,7 +74,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
                     Uri = new Uri(StorageClient.Uri, $"{StorageOptions.Container}/{blobItem.Name}"),
                     Container = StorageOptions.Container,
                     Length = (ulong)blobItem.Properties.ContentLength!.Value,
-                    Metadata = blobItem.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                    Metadata = AzureMetadataTransport.Decode(blobItem.Metadata),
                     LastModified = blobItem.Properties.LastModified!.Value,
                     CreatedOn = blobItem.Properties.CreatedOn!.Value,
                     MimeType = blobItem.Properties.ContentType
@@ -247,7 +247,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
 
         var uploadOptions = new BlobUploadOptions
         {
-            Metadata = options.Metadata,
+            Metadata = AzureMetadataTransport.Encode(options.Metadata),
             HttpHeaders = new BlobHttpHeaders
             {
                 ContentType = options.MimeType
@@ -315,7 +315,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
                 Length = (ulong)response.Value.ContentLength,
                 CreatedOn = response.Value.Details.LastModified,
                 LastModified = response.Value.Details.LastModified,
-                Metadata = response.Value.Details.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                Metadata = AzureMetadataTransport.Decode(response.Value.Details.Metadata),
                 MimeType = response.Value.ContentType
             };
 
@@ -390,7 +390,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
                 Length = (ulong)properties.Value.ContentLength,
                 CreatedOn = properties.Value.CreatedOn,
                 LastModified = properties.Value.LastModified,
-                Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
+                Metadata = AzureMetadataTransport.Decode(properties.Value.Metadata),
                 MimeType = properties.Value.ContentType
             });
         }

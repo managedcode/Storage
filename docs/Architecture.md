@@ -42,6 +42,11 @@ conditions because Azure does not offer that condition for this operation.
 Provider failures become `StorageOperationException` with a status code; task
 cancellation propagates normally. These optional streaming capabilities follow
 the VFS exception model; existing `IStorage` result contracts are unchanged.
+Azure metadata transport belongs exclusively to the provider: printable ASCII
+metadata stays native, while Unicode/control-character dictionaries use one
+versioned ASCII envelope decoded across all metadata reads. See the
+[Azure provider](Features/provider-azure-blob.md#metadata-transport) for its
+physical representation, collision handling and metadata-size constraints.
 VFS writes persist zero-byte files and truncate existing files on empty overwrite.
 `FileExistsAsync` remains a cached, best-effort convenience query. Consumers that
 make conflict, authorization, or recovery decisions use
