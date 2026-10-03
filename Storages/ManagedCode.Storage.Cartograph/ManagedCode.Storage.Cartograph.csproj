@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <Title>ManagedCode.Storage.Cartograph</Title>
+        <PackageId>ManagedCode.Storage.Cartograph</PackageId>
+        <Description>Read-only Storage provider for files inside Cartograph artifacts.</Description>
+        <PackageTags>managedcode, storage, cartograph, artifact, memory-mapped, archive</PackageTags>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../../ManagedCode.Storage.Core/ManagedCode.Storage.Core.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Cartograph.Catalog" />
+        <PackageReference Include="ManagedCode.Communication" />
+        <PackageReference Include="ManagedCode.MimeTypes" />
+    </ItemGroup>
+</Project>

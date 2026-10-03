@@ -60,6 +60,25 @@ bounded, file-backed SHA-256 read and `VerifiedObjectUpload` for immutable
 stream or byte writes with exact retry comparison, including reconciliation
 after a write commits but its response is lost.
 
+## Cartograph artifact provider
+
+`ManagedCode.Storage.Cartograph` is a separate provider for reading catalogued files
+inside a local immutable `.ctg` artifact. Typed, default, keyed, and factory registrations
+expose the existing `IStorage` contract. Each returned stream owns its mapped artifact
+and reads one checksummed record at a time; catalog metadata supplies file lookup and
+directory listings. Mutation operations fail explicitly. Core has no Cartograph dependency.
+
+```mermaid
+flowchart LR
+  Consumer["Consumer / VFS / server"] --> Storage["CartographStorage : ICartographStorage"]
+  Storage --> Reader["CartographArtifact / CartographReadStream"]
+  Reader --> SDK["Cartograph.Catalog / Cartograph.Format"]
+  SDK --> File["Immutable .ctg artifact"]
+```
+
+See [Cartograph provider](./Features/provider-cartograph.md) and its
+[module](https://github.com/managedcode/Storage/tree/main/Storages/ManagedCode.Storage.Cartograph).
+
 ## Scoping (read first)
 
 - **In scope:** storage abstractions, provider DI registration, transport integrations, VFS behavior, Orleans persistence wiring, and the test harnesses that prove those flows.

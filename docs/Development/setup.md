@@ -55,6 +55,7 @@ dotnet format ManagedCode.Storage.slnx
 
 ## Notes
 
+- Cartograph provider tests create real local artifacts and need no cloud credentials or Docker. Run them with `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "FullyQualifiedName~Cartograph"`; the default suite includes them automatically.
 - Start Docker Desktop (or your Docker daemon) before running the full test suite.
 - AWS and Orleans integration tests intentionally pin LocalStack to `localstack/localstack:4.14.0`; do not switch them back to `latest`, because the end-of-March 2026 `latest` image became auth-gated and breaks CI without a token.
 - GitHub Actions now use tiered browser large-file coverage: `build-and-test` keeps a fast `128 MiB` browser large-file lane in the default suite, while a separate `browser-stress` lane runs the heavier `256 MiB` browser stress checks automatically for CI and release gating.

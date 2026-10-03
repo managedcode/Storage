@@ -62,6 +62,7 @@
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.OneDrive\ManagedCode.Storage.OneDrive.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Dropbox\ManagedCode.Storage.Dropbox.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Browser\ManagedCode.Storage.Browser.csproj" />
+        <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Cartograph\ManagedCode.Storage.Cartograph.csproj" />
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.CloudKit\ManagedCode.Storage.CloudKit.csproj" />
     </ItemGroup>
 </Project>

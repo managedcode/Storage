@@ -33,6 +33,7 @@ Cross-provider blob storage toolkit for .NET and ASP.NET streaming scenarios.
 - [Motivation](#motivation)
 - [Features](#features)
 - [Packages](#packages)
+- [Cartograph artifacts](#cartograph-artifacts)
 - [Architecture](#architecture)
 - [Virtual File System (VFS)](#virtual-file-system-vfs)
 - [Dependency Injection & Keyed Registrations](#dependency-injection--keyed-registrations)
@@ -131,12 +132,45 @@ Cloud storage vendors expose distinct SDKs, option models, and authentication pa
 | [ManagedCode.Storage.Aws](https://www.nuget.org/packages/ManagedCode.Storage.Aws) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Aws.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Aws) | Amazon S3 provider with Object Lock and legal hold operations. |
 | [ManagedCode.Storage.Gcp](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Gcp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Gcp) | Google Cloud Storage integration built on official SDKs. |
 | [ManagedCode.Storage.Browser](https://www.nuget.org/packages/ManagedCode.Storage.Browser) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Browser.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Browser) | Browser storage provider with Blazor DI helpers, MVC/static-asset helpers, IndexedDB metadata, and OPFS-backed payload streaming. |
+| [ManagedCode.Storage.Cartograph](https://www.nuget.org/packages/ManagedCode.Storage.Cartograph) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Cartograph.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Cartograph) | Read-only provider for files inside immutable Cartograph artifacts, with mapped streaming, catalog metadata, and directory listings. |
 | [ManagedCode.Storage.FileSystem](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.FileSystem.svg)](https://www.nuget.org/packages/ManagedCode.Storage.FileSystem) | Local file system implementation for hybrid or on-premises workloads. |
 | [ManagedCode.Storage.Sftp](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Sftp.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Sftp) | SFTP provider powered by SSH.NET for regulated and air-gapped environments. |
 | [ManagedCode.Storage.OneDrive](https://www.nuget.org/packages/ManagedCode.Storage.OneDrive) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.OneDrive.svg)](https://www.nuget.org/packages/ManagedCode.Storage.OneDrive) | OneDrive provider built on Microsoft Graph. |
 | [ManagedCode.Storage.GoogleDrive](https://www.nuget.org/packages/ManagedCode.Storage.GoogleDrive) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.GoogleDrive.svg)](https://www.nuget.org/packages/ManagedCode.Storage.GoogleDrive) | Google Drive provider built on the Google Drive API. |
 | [ManagedCode.Storage.Dropbox](https://www.nuget.org/packages/ManagedCode.Storage.Dropbox) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.Dropbox.svg)](https://www.nuget.org/packages/ManagedCode.Storage.Dropbox) | Dropbox provider built on the Dropbox API. |
 | [ManagedCode.Storage.CloudKit](https://www.nuget.org/packages/ManagedCode.Storage.CloudKit) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Storage.CloudKit.svg)](https://www.nuget.org/packages/ManagedCode.Storage.CloudKit) | CloudKit (iCloud app data) provider built on CloudKit Web Services. |
+
+### Cartograph artifacts
+
+`ManagedCode.Storage.Cartograph` exposes files inside a [Cartograph](https://github.com/angelhernandezm/Cartograph) `.ctg` artifact through `IStorage`. Reads use Cartograph's mapped records and checksums without extracting or buffering the whole file.
+
+```bash
+dotnet add package ManagedCode.Storage.Cartograph
+```
+
+```csharp
+using ManagedCode.Storage.Cartograph.Extensions;
+using ManagedCode.Storage.Core;
+using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+services.AddCartographStorageAsDefault(options =>
+    options.ArtifactPath = Path.GetFullPath("documents.ctg"));
+
+await using var provider = services.BuildServiceProvider();
+var storage = provider.GetRequiredService<IStorage>();
+var result = await storage.GetStreamAsync("reports/annual.pdf");
+if (result.IsFailed)
+    throw new IOException(result.Problem?.Detail);
+
+await using var content = result.Value;
+await using var destination = File.Create("annual.pdf");
+await content.CopyToAsync(destination);
+```
+
+Use `AddCartographStorage` for `ICartographStorage`, keyed overloads for multiple artifacts, or `AddStorageFactory` with `CreateCartographStorage` to open artifacts dynamically. Metadata, recursive directory listings, existence checks, and `DownloadAsync` use the same Storage APIs. Returned streams are sequential, read-only, and own their artifact until disposed.
+
+The artifact must already contain a Cartograph file catalog. `CreateContainerAsync` validates it; upload, delete, container removal, and legal-hold operations return unsupported results because artifacts are immutable. The module uses the published `Cartograph.Catalog` `0.1.0-alpha` package and requires a 64-bit process. Keep artifacts unchanged while their streams are open. See the [Cartograph provider guide](docs/Features/provider-cartograph.md) for catalog requirements and full wiring examples.
 
 ### Configuring OneDrive, Google Drive, Dropbox, and CloudKit
 
@@ -418,6 +452,7 @@ flowchart LR
         GoogleDrive["Google Drive"]
         Dropbox["Dropbox"]
         CloudKit["CloudKit (iCloud app data)"]
+        Cartograph["Cartograph artifacts (read-only)"]
         Fs["File System"]
         Sftp["SFTP"]
     end
@@ -433,6 +468,7 @@ flowchart LR
     Factories --> GoogleDrive
     Factories --> Dropbox
     Factories --> CloudKit
+    Factories --> Cartograph
     Factories --> Fs
     Factories --> Sftp
 ```

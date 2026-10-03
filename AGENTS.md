@@ -26,6 +26,7 @@ This file defines how AI agents work in this solution.
   - `Integraions/ManagedCode.Storage.Server/`
   - `Storages/ManagedCode.Storage.Aws/`
   - `Storages/ManagedCode.Storage.Browser/`
+  - `Storages/ManagedCode.Storage.Cartograph/`
   - `Storages/ManagedCode.Storage.Azure/`
   - `Storages/ManagedCode.Storage.Azure.DataLake/`
   - `Storages/ManagedCode.Storage.CloudKit/`
@@ -46,6 +47,13 @@ This file defines how AI agents work in this solution.
 3. Apply the stricter rule when both files speak to the same topic.
 4. Local `AGENTS.md` files may refine or tighten root rules, but they must not silently weaken them.
 5. If a local rule needs an exception, document it explicitly in the nearest local `AGENTS.md`, ADR, or feature doc.
+
+## ManagedCode Dependency Ownership And Repair
+
+- `ManagedCode.*` projects and packages are maintained by us. Locate a defective dependency's owning repository alongside this checkout, read its `AGENTS.md`, and repair it there instead of replacing it, copying its implementation, or hiding the defect in a consumer workaround.
+- Deliver dependency repairs with focused regression tests, required repository checks, a canonical patch-version increment, a scoped commit, and a push to GitHub. These scoped version, commit, push, and release-trigger actions have standing user authorization; preserve unrelated work and never force-push or bypass protections.
+- Follow the owning repository's GitHub release workflow to success and verify the new version on the intended NuGet feed before updating a consumer reference and running consumer regressions. Diagnose publication failures in the owning repository; a pushed commit or green build alone is not delivery.
+- Do not claim delivery with unpublished local packages or temporary project references. Report the exact source, credentials, permissions, or release-infrastructure blocker when delivery cannot proceed.
 
 ## Conversations (Self-Learning)
 
@@ -291,6 +299,8 @@ Toolchain notes:
 
 ### Git And PRs
 
+- Never run `git stash` or enable automatic stashing; keep working-tree changes visible so concurrent work stays reviewable.
+- When the user requests committing all current changes, commit the full requested working-tree scope on the currently checked-out branch; do not silently omit existing changes or move them to another branch.
 - Write commit subjects in the imperative mood such as `add ftp retry policy` and keep them provider-scoped.
 - Group related edits in one commit and avoid WIP spam.
 - PRs should summarize impact, list touched projects, reference issues, and note new configuration or secrets.

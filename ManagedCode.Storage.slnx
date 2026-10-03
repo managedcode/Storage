@@ -13,6 +13,7 @@
   <Folder Name="/Storages/">
     <Project Path="Storages/ManagedCode.Storage.Aws/ManagedCode.Storage.Aws.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Browser/ManagedCode.Storage.Browser.csproj" />
+    <Project Path="Storages/ManagedCode.Storage.Cartograph/ManagedCode.Storage.Cartograph.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Azure.DataLake/ManagedCode.Storage.Azure.DataLake.csproj" />
     <Project Path="Storages/ManagedCode.Storage.Azure/ManagedCode.Storage.Azure.csproj" />
     <Project Path="Storages/ManagedCode.Storage.FileSystem/ManagedCode.Storage.FileSystem.csproj" />
