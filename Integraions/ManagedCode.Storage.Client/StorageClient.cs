@@ -120,7 +120,7 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
         {
             using var response = await httpClient.GetStreamAsync($"{apiUrl}/{fileName}", cancellationToken);
             var localFile = path is null
-                ? await LocalFile.FromStreamAsync(response, fileName, cancellationToken)
+                ? await LocalFile.FromStreamAsync(response, cancellationToken)
                 : await LocalFile.FromStreamAsync(response, path, fileName, cancellationToken);
             return Result<LocalFile>.Succeed(localFile);
         }

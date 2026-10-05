@@ -234,3 +234,7 @@ flowchart LR
 - Behavior specs: [./Features/index.md](./Features/index.md)
 - API docs: [./API/index.md](./API/index.md)
 - Setup and verification: [./Development/setup.md](./Development/setup.md), [./Testing/index.md](./Testing/index.md)
+
+### HTTP client download destinations
+
+`StorageClient.DownloadFile` allocates a unique temporary file when no destination path is provided. Same-named downloads retain independent contents and lifetimes. An explicit destination continues to use the caller-selected directory and filename. Callers dispose the returned `LocalFile` to remove temporary content.
