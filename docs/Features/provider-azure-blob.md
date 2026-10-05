@@ -50,6 +50,7 @@ builder.Services.AddAzureStorageAsDefault(options =>
 
 - Supports container creation when `CreateContainerIfNotExists = true`.
 - `IObjectStorage.ListObjectsAsync` returns one bounded page and preserves opaque nonempty continuation tokens. The final page returns `null`, including empty listings; Azure's empty terminal marker never becomes another continuation request.
+- Returned object/container ETags use the SDK header format, including quotes, across listing and properties reads. An unchanged object retains the same revision token; stale conditional mutations remain rejected.
 - Uses Azure SDK transfer options when configured (`UploadTransferOptions`).
 - Builds the upload result from the successful Azure upload response and the caller's options, without issuing a second blob-properties request that can race with deletion or lifecycle processing.
 - Returns a failed metadata result for an absent blob without logging the expected Azure `404 BlobNotFound` response as an unhandled exception; other metadata failures retain error logging.

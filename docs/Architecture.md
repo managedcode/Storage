@@ -32,6 +32,8 @@ flowchart LR
 
 For immutable uploads, `WriteIfAbsentOrSameAsync` streams an expected-length request through SHA-256, retries a conflicting write by reading the current ETag-pinned object, and accepts only byte-identical content with matching content type, encoding, and metadata. It returns the stored ETag, digest, and whether the object was reused; a mismatch keeps the provider conflict. Neither input nor stored content is buffered as a whole.
 
+Azure object ETags use the SDK header format across listing and properties reads, so the same revision has the same opaque token and can be compared before a conditional operation.
+
 Object conditions (`IfAbsent`, `IfMatch`) are enforced by the service for writes,
 metadata updates and reads. Read ranges use a fixed ETag and stream data without
 loading the object into memory. Multipart part IDs are opaque base64 identifiers

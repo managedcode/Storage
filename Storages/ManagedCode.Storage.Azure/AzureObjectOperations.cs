@@ -19,7 +19,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
     public Task<StorageContainerInfo> GetContainerInfoAsync(CancellationToken cancellationToken = default) => ExecuteAsync(async () =>
     {
         var value = (await container.GetPropertiesAsync(cancellationToken: cancellationToken)).Value;
-        return new StorageContainerInfo(value.ETag.ToString(), value.PublicAccess == PublicAccessType.None,
+        return new StorageContainerInfo(value.ETag.ToString("H"), value.PublicAccess == PublicAccessType.None,
             AzureMetadataTransport.Decode(value.Metadata));
     });
 
@@ -50,7 +50,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
         ArgumentOutOfRangeException.ThrowIfNegative(options.Offset);
         if (options.Length is <= 0) throw new ArgumentOutOfRangeException(nameof(options));
         var blob = container.GetBlobClient(path);
-        var etag = options.IfMatch ?? (await blob.GetPropertiesAsync(cancellationToken: cancellationToken)).Value.ETag.ToString();
+        var etag = options.IfMatch ?? (await blob.GetPropertiesAsync(cancellationToken: cancellationToken)).Value.ETag.ToString("H");
         if (options.Length is null)
         {
             return await blob.OpenReadAsync(new BlobOpenReadOptions(false)
@@ -98,7 +98,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
                            .AsPages(continuationToken, pageSize))
         {
             return new StorageObjectPage(page.Values.Select(item => new StorageObjectInfo(item.Name,
-                item.Properties.ETag?.ToString() ?? throw new InvalidDataException("Object listing returned no ETag."),
+                item.Properties.ETag?.ToString("H") ?? throw new InvalidDataException("Object listing returned no ETag."),
                 item.Properties.ContentLength ?? throw new InvalidDataException("Object listing returned no length."),
                 item.Properties.ContentType, item.Properties.ContentEncoding, AzureMetadataTransport.Decode(item.Metadata), item.Properties.LastModified)).ToArray(), string.IsNullOrEmpty(page.ContinuationToken) ? null : page.ContinuationToken);
         }
@@ -126,7 +126,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
     private async Task<StorageObjectInfo> ReadWrittenInfoAsync(string path, ETag etag, CancellationToken cancellationToken) =>
         Info(path, (await container.GetBlobClient(path).GetPropertiesAsync(new BlobRequestConditions { IfMatch = etag }, cancellationToken)).Value);
 
-    private static StorageObjectInfo Info(string path, BlobProperties value) => new(path, value.ETag.ToString(), value.ContentLength,
+    private static StorageObjectInfo Info(string path, BlobProperties value) => new(path, value.ETag.ToString("H"), value.ContentLength,
         value.ContentType, value.ContentEncoding, AzureMetadataTransport.Decode(value.Metadata), value.LastModified);
 
     private static BlobRequestConditions Conditions(StorageWriteOptions options)
