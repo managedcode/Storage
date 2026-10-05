@@ -100,7 +100,7 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
             return new StorageObjectPage(page.Values.Select(item => new StorageObjectInfo(item.Name,
                 item.Properties.ETag?.ToString() ?? throw new InvalidDataException("Object listing returned no ETag."),
                 item.Properties.ContentLength ?? throw new InvalidDataException("Object listing returned no length."),
-                item.Properties.ContentType, item.Properties.ContentEncoding, AzureMetadataTransport.Decode(item.Metadata), item.Properties.LastModified)).ToArray(), page.ContinuationToken);
+                item.Properties.ContentType, item.Properties.ContentEncoding, AzureMetadataTransport.Decode(item.Metadata), item.Properties.LastModified)).ToArray(), string.IsNullOrEmpty(page.ContinuationToken) ? null : page.ContinuationToken);
         }
         return new StorageObjectPage([], null);
     });

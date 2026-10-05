@@ -223,6 +223,9 @@ public sealed class AzureObjectStorageTests : IAsyncLifetime
         var next = await objects.ListObjectsAsync("files/", page.ContinuationToken, 2);
         next.Items.Count.ShouldBe(1);
         next.Items[0].Path.ShouldBe("files/2");
+        next.ContinuationToken.ShouldBeNull();
+        (await objects.ListObjectsAsync("files/", pageSize: 1000)).ContinuationToken.ShouldBeNull();
+        (await objects.ListObjectsAsync("absent/")).ContinuationToken.ShouldBeNull();
         var info = next.Items[0];
         await objects.SetObjectMetadataAsync(info.Path, new Dictionary<string, string> { ["hash"] = "value" }, info.ETag);
         (await objects.GetObjectInfoAsync(info.Path)).Metadata["hash"].ShouldBe("value");

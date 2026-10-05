@@ -37,7 +37,7 @@ metadata updates and reads. Read ranges use a fixed ETag and stream data without
 loading the object into memory. Multipart part IDs are opaque base64 identifiers
 of equal decoded length, and the supplied commit order determines the result;
 callers persist their part IDs for recovery. Listings return one bounded page and
-an opaque continuation token. Container metadata writes do not support ETag
+an opaque continuation token, or `null` after the final page (including empty listings). Container metadata writes do not support ETag
 conditions because Azure does not offer that condition for this operation.
 Provider failures become `StorageOperationException` with a status code; task
 cancellation propagates normally. These optional streaming capabilities follow
