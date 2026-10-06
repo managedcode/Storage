@@ -50,6 +50,7 @@ versioned ASCII envelope decoded across all metadata reads. See the
 [Azure provider](Features/provider-azure-blob.md#metadata-transport) for its
 physical representation, collision handling and metadata-size constraints.
 VFS writes persist zero-byte files and truncate existing files on empty overwrite.
+`IVirtualFile.RefreshAsync` invalidates cached existence after refreshing provider metadata, so externally committed or deleted objects are visible to subsequent existence checks and reads.
 `FileExistsAsync` remains a cached, best-effort convenience query. Consumers that
 make conflict, authorization, or recovery decisions use
 `IVirtualFileSystem.StorageFileExistsAsync`, which reads the backing provider and

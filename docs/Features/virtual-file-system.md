@@ -18,6 +18,8 @@ This is *not* a separate cloud provider. It is an abstraction layer that sits ab
 
 ### File operations
 
+After a write or deletion through the backing provider, call `IVirtualFile.RefreshAsync` on an existing file handle. It refreshes metadata and invalidates cached existence, including a cached miss before a multipart commit. The next existence check and read observe the committed object.
+
 ```mermaid
 flowchart TD
   A[Caller] --> VFS[IVirtualFileSystem]

@@ -95,6 +95,49 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
         });
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Refresh_AfterMultipartCommit_ExposesCommittedBytes(bool cache)
+    {
+        await using var provider = CreateProvider(cache);
+        await using var scope = provider.CreateAsyncScope();
+        var vfs = scope.ServiceProvider.GetRequiredService<IVirtualFileSystem>();
+        var path = new VfsPath("/learning/commands/output.zip");
+        var file = await vfs.GetFileAsync(path);
+        (await file.ExistsAsync()).ShouldBeFalse();
+        await file.RefreshAsync();
+        var bytes = Encoding.UTF8.GetBytes("committed archive bytes");
+        var multipart = vfs.Storage.RequireMultipartStorage();
+        await multipart.CreatePrivateContainerAsync();
+        var partId = Convert.ToBase64String(Encoding.UTF8.GetBytes("archive-part-0001"));
+        using var part = new MemoryStream(bytes);
+        await multipart.StagePartAsync(path.ToBlobKey(), partId, part);
+        await multipart.CommitPartsAsync(path.ToBlobKey(), [partId]);
+        await file.RefreshAsync();
+        file.Size.ShouldBe(bytes.LongLength);
+        (await file.ExistsAsync()).ShouldBeTrue();
+        (await file.ReadAllBytesAsync()).ShouldBe(bytes);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Refresh_AfterProviderDeletion_ReportsMissingFile(bool cache)
+    {
+        await using var provider = CreateProvider(cache);
+        await using var scope = provider.CreateAsyncScope();
+        var vfs = scope.ServiceProvider.GetRequiredService<IVirtualFileSystem>();
+        var path = new VfsPath("/learning/commands/deleted.zip");
+        var file = await vfs.GetFileAsync(path);
+        await file.WriteAllBytesAsync(Encoding.UTF8.GetBytes("previous archive bytes"));
+        (await file.ExistsAsync()).ShouldBeTrue();
+        (await vfs.Storage.RequireObjectStorage().DeleteObjectIfExistsAsync(path.ToBlobKey())).ShouldBeTrue();
+        await file.RefreshAsync();
+        file.Size.ShouldBe(0);
+        (await file.ExistsAsync()).ShouldBeFalse();
+    }
+
     private ServiceProvider CreateProvider(bool cache)
     {
         var services = new ServiceCollection();

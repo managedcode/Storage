@@ -98,6 +98,7 @@ public class VirtualFile : IVirtualFile
 
         if (_vfs.Options.EnableCache)
         {
+            _cache.Remove($"file_exists:{_vfs.ContainerName}:{_path}");
             var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
             var entry = new MetadataCacheEntry
             {
