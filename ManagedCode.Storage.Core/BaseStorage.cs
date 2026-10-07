@@ -297,6 +297,9 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
             return Result.Succeed()
                 .AsTask();
 
+        if (!StorageOptions.CreateContainerIfNotExists)
+            return Result.Succeed().AsTask();
+
         return CreateContainerAsync(cancellationToken);
     }
 

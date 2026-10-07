@@ -106,7 +106,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var filePath = GetPathFromOptions(new DownloadOptions { FileName = fileName });
+            var filePath = GetPathFromOptions(new DownloadOptions { FileName = fileName }, createDirectories: false);
             cancellationToken.ThrowIfCancellationRequested();
 
             return File.Exists(filePath)
@@ -205,7 +205,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var sourcePath = GetPathFromOptions(options);
+            var sourcePath = GetPathFromOptions(options, createDirectories: false);
             cancellationToken.ThrowIfCancellationRequested();
 
             if (!File.Exists(sourcePath))
@@ -248,7 +248,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var filePath = GetPathFromOptions(options);
+            var filePath = GetPathFromOptions(options, createDirectories: false);
             cancellationToken.ThrowIfCancellationRequested();
 
             if (!File.Exists(filePath))
@@ -270,7 +270,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var filePath = GetPathFromOptions(options);
+            var filePath = GetPathFromOptions(options, createDirectories: false);
             cancellationToken.ThrowIfCancellationRequested();
 
             return Result<bool>.Succeed(File.Exists(filePath));
@@ -289,7 +289,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            var filePath = GetPathFromOptions(options);
+            var filePath = GetPathFromOptions(options, createDirectories: false);
             cancellationToken.ThrowIfCancellationRequested();
 
             var fileInfo = new FileInfo(filePath);
@@ -323,7 +323,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
     {
         try
         {
-            var filePath = GetPathFromOptions(options);
+            var filePath = GetPathFromOptions(options, createDirectories: false);
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -362,7 +362,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
     {
         try
         {
-            var filePath = GetPathFromOptions(options);
+            var filePath = GetPathFromOptions(options, createDirectories: false);
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -374,7 +374,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
         }
     }
 
-    private string GetPathFromOptions(BaseOptions options)
+    private string GetPathFromOptions(BaseOptions options, bool createDirectories = true)
     {
         if (string.IsNullOrWhiteSpace(options.FileName))
             throw new ArgumentException("File name cannot be null or empty", nameof(options));
@@ -389,7 +389,10 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             ? SanitizeDirectory(combinedDirectory)
             : null;
 
-        if (sanitizedDirectory is not null)
+        if (createDirectories && !StorageOptions.CreateContainerIfNotExists && !Directory.Exists(StorageClient))
+            throw new DirectoryNotFoundException("The configured storage container does not exist and automatic creation is disabled.");
+
+        if (createDirectories && sanitizedDirectory is not null)
         {
             EnsureDirectoryExist(sanitizedDirectory);
         }
@@ -408,7 +411,8 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             throw new UnauthorizedAccessException($"Access to path '{options.FileName}' is denied. Path traversal detected.");
         }
 
-        EnsureDirectoryExist(Path.GetDirectoryName(fullPath)!);
+        if (createDirectories)
+            EnsureDirectoryExist(Path.GetDirectoryName(fullPath)!);
         return fullPath;
     }
 
