@@ -87,9 +87,9 @@ public sealed class CartographStorageRegistrationTests
         await using var scope = provider.CreateAsyncScope();
         var vfs = scope.ServiceProvider.GetRequiredService<IVirtualFileSystem>();
         var path = new VfsPath("/reports/nested/дані.txt");
-        (await vfs.FileExistsAsync(path)).ShouldBeTrue();
-        var file = await vfs.GetFileAsync(path);
-        (await file.ReadAllTextAsync()).ShouldBe(System.Text.Encoding.UTF8.GetString(fixture.Files["reports/nested/дані.txt"]));
+        (await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeTrue();
+        var file = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
+        (await file.ReadAllTextAsync(cancellationToken: TestContext.Current.CancellationToken)).ShouldBe(System.Text.Encoding.UTF8.GetString(fixture.Files["reports/nested/дані.txt"]));
     }
 
     private static async Task AssertReadAsync(IStorage storage, CartographArtifactFixture fixture)

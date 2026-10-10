@@ -9,8 +9,7 @@ public class GCSDownloadTests : DownloadTests<FakeGcsServerContainer>
 {
     protected override FakeGcsServerContainer Build()
     {
-        return new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
-            .Build();
+        return GcsContainerFactory.Create();
     }
 
     protected override ServiceProvider ConfigureServices()

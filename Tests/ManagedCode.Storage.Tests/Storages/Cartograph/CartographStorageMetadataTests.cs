@@ -16,7 +16,7 @@ public sealed class CartographStorageMetadataTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        var result = await storage.GetBlobMetadataAsync(new MetadataOptions { Directory = "reports/nested", FileName = "дані.txt" });
+        var result = await storage.GetBlobMetadataAsync(new MetadataOptions { Directory = "reports/nested", FileName = "дані.txt" }, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         var metadata = result.Value.ShouldNotBeNull();
         metadata.FullName.ShouldBe("reports/nested/дані.txt");
@@ -42,7 +42,7 @@ public sealed class CartographStorageMetadataTests
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
         var entries = new List<BlobMetadata>();
-        await foreach (var entry in storage.GetBlobMetadataListAsync(directory))
+        await foreach (var entry in storage.GetBlobMetadataListAsync(directory, TestContext.Current.CancellationToken))
             entries.Add(entry);
 
         entries.Count.ShouldBe(count);
@@ -60,7 +60,7 @@ public sealed class CartographStorageMetadataTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        var result = await storage.ExistsAsync(path);
+        var result = await storage.ExistsAsync(path, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(exists);
     }
@@ -83,10 +83,10 @@ public sealed class CartographStorageMetadataTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        await using var entries = storage.GetBlobMetadataListAsync().GetAsyncEnumerator();
+        await using var entries = storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken).GetAsyncEnumerator(TestContext.Current.CancellationToken);
         (await entries.MoveNextAsync()).ShouldBeTrue();
         var second = fixture.WriteArtifact("second.ctg");
-        (await storage.SetStorageOptions(options => options.ArtifactPath = second)).IsSuccess.ShouldBeTrue();
+        (await storage.SetStorageOptions(options => options.ArtifactPath = second, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
         (await entries.MoveNextAsync()).ShouldBeTrue();
         entries.Current.Container.ShouldBe(fixture.ArtifactPath);
         entries.Current.Uri.ShouldNotBeNull().LocalPath.ShouldBe(fixture.ArtifactPath);

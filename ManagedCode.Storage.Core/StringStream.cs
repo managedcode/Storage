@@ -30,7 +30,8 @@ namespace ManagedCode.Storage.Core
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            var length = Math.Min(count, Length - Position);
+            ValidateBufferArguments(buffer, offset, count);
+            var length = Math.Min(count, Math.Max(0, Length - Position));
             for (var i = 0; i < length; i++)
                 buffer[offset + i] = this[(int)Position++];
 

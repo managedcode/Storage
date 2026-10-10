@@ -46,8 +46,7 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
         _localStackContainer = new LocalStackBuilder(ContainerImages.LocalStack)
             .Build();
 
-        _gcpContainer = new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
-            .Build();
+        _gcpContainer = GcsContainerFactory.Create();
 
         Task.WaitAll(
             _azuriteContainer.StartAsync(),
@@ -55,6 +54,8 @@ public class StorageTestApplication : WebApplicationFactory<HttpHostProgram>, IC
             _gcpContainer.StartAsync()
         );
     }
+
+    protected override IHostBuilder CreateHostBuilder() => HttpHostProgram.CreateHostBuilder(Array.Empty<string>());
 
     protected override IHost CreateHost(IHostBuilder builder)
     {

@@ -39,7 +39,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
 
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var localFileStream = localFile.FileInfo.OpenRead();
-        var result = await storage.UploadAsync(localFileStream, options);
+        var result = await storage.UploadAsync(localFileStream, options, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
@@ -47,12 +47,12 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
 
         // Act
         using var streamReader = new StreamReader(blobStream);
-        var content = await streamReader.ReadToEndAsync();
+        var content = await streamReader.ReadToEndAsync(TestContext.Current.CancellationToken);
 
         // Assert
         await using var fileStream = localFile.FileInfo.OpenRead();
         using var fileReader = new StreamReader(fileStream);
-        var fileContent = await fileReader.ReadToEndAsync();
+        var fileContent = await fileReader.ReadToEndAsync(TestContext.Current.CancellationToken);
         content.ShouldNotBeNullOrEmpty();
         fileContent.ShouldNotBeNullOrEmpty();
         content.ShouldBe(fileContent);
@@ -70,7 +70,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
 
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var fileStream = localFile.FileInfo.OpenRead();
-        var result = await storage.UploadAsync(fileStream, options);
+        var result = await storage.UploadAsync(fileStream, options, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
@@ -81,8 +81,8 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         var chunk2 = new byte[chunkSize];
 
         // Act
-        var bytesReadForChunk1 = await blobStream.ReadAsync(chunk1, 0, chunkSize);
-        var bytesReadForChunk2 = await blobStream.ReadAsync(chunk2, 0, chunkSize);
+        var bytesReadForChunk1 = await blobStream.ReadAsync(chunk1, 0, chunkSize, TestContext.Current.CancellationToken);
+        var bytesReadForChunk2 = await blobStream.ReadAsync(chunk2, 0, chunkSize, TestContext.Current.CancellationToken);
 
         // Assert
         bytesReadForChunk1.ShouldBe(chunkSize);
@@ -101,14 +101,14 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         // Arrange
         var directory = "test-directory";
         var storage = (IAzureStorage)Storage;
-        await storage.CreateContainerAsync();
+        await storage.CreateContainerAsync(TestContext.Current.CancellationToken);
         var fullFileName = $"{directory}/{Guid.NewGuid()}.txt";
 
         await using var blobStream = storage.GetBlobStream(fullFileName);
         var chunk = new byte[4];
 
         // Act
-        var bytesRead = await blobStream.ReadAsync(chunk, 0, 4);
+        var bytesRead = await blobStream.ReadAsync(chunk, 0, 4, TestContext.Current.CancellationToken);
 
         // Assert
         bytesRead.ShouldBe(0);
@@ -129,25 +129,25 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
 
         var storage = (IAzureStorage)Storage;
 
-        await storage.CreateContainerAsync();
+        await storage.CreateContainerAsync(TestContext.Current.CancellationToken);
 
         // Act
         await using (var blobStream = storage.GetBlobStream(fullFileName))
         {
             await using (var localFileStream = localFile.FileStream)
             {
-                await localFileStream.CopyToAsync(blobStream);
+                await localFileStream.CopyToAsync(blobStream, TestContext.Current.CancellationToken);
             }
         }
 
         // Assert
-        var fileResult = await storage.DownloadAsync(fullFileName);
+        var fileResult = await storage.DownloadAsync(fullFileName, TestContext.Current.CancellationToken);
         fileResult.IsSuccess
             .ShouldBeTrue();
         var downloaded = fileResult.Value ?? throw new InvalidOperationException("Download result is null");
         await using var fileStream = downloaded.FileStream;
         using var streamReader = new StreamReader(fileStream);
-        var fileContent = await streamReader.ReadLineAsync();
+        var fileContent = await streamReader.ReadLineAsync(TestContext.Current.CancellationToken);
         fileContent.ShouldNotBeNullOrEmpty();
     }
 
@@ -163,7 +163,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
 
         UploadOptions options = new() { FileName = localFile.Name, Directory = directory };
         await using var localFileStream = localFile.FileInfo.OpenRead();
-        var result = await storage.UploadAsync(localFileStream, options);
+        var result = await storage.UploadAsync(localFileStream, options, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
@@ -173,13 +173,13 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         var seekInPosition = fileSizeInBytes / 2;
         blobStream.Seek(seekInPosition, SeekOrigin.Current);
         var buffer = new byte[seekInPosition];
-        var bytesRead = await blobStream.ReadAsync(buffer);
+        var bytesRead = await blobStream.ReadAsync(buffer, TestContext.Current.CancellationToken);
 
         // Assert
         bytesRead.ShouldBe(seekInPosition);
         await using var fileStream = localFile.FileInfo.OpenRead();
         using var fileReader = new StreamReader(fileStream);
-        var fileContent = await fileReader.ReadToEndAsync();
+        var fileContent = await fileReader.ReadToEndAsync(TestContext.Current.CancellationToken);
         var content = Encoding.UTF8.GetString(buffer);
         content.ShouldNotBeNullOrEmpty();
         var trimmedFileContent = fileContent.Remove(0, seekInPosition);

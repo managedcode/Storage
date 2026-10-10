@@ -18,8 +18,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         var fileList = await UploadTestFileListAsync();
 
         // Act
-        var result = await Storage.GetBlobMetadataListAsync()
-            .ToListAsync();
+        var result = await Storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.Count
@@ -30,7 +29,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
             var file = result.FirstOrDefault(f => f.Name == item.Name);
             file.ShouldNotBeNull();
 
-            await Storage.DeleteAsync(item.Name);
+            await Storage.DeleteAsync(item.Name, TestContext.Current.CancellationToken);
         }
     }
 
@@ -41,7 +40,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         var fileInfo = await UploadTestFileAsync();
 
         // Act
-        var result = await Storage.GetBlobMetadataAsync(fileInfo.Name);
+        var result = await Storage.GetBlobMetadataAsync(fileInfo.Name, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -51,7 +50,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         result.Value!.Name
             .ShouldBe(fileInfo.Name);
 
-        await Storage.DeleteAsync(fileInfo.Name);
+        await Storage.DeleteAsync(fileInfo.Name, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -61,7 +60,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         var file = await UploadTestFileAsync();
 
         // Act
-        var result = await Storage.DeleteAsync(file.Name);
+        var result = await Storage.DeleteAsync(file.Name, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -78,7 +77,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
             .ToString();
 
         // Act
-        var result = await Storage.DeleteAsync(blob);
+        var result = await Storage.DeleteAsync(blob, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -96,7 +95,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         DeleteOptions options = new() { FileName = file.Name, Directory = directory };
 
         // Act
-        var result = await Storage.DeleteAsync(options);
+        var result = await Storage.DeleteAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -118,7 +117,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         };
 
         // Act
-        var result = await Storage.DeleteAsync(options);
+        var result = await Storage.DeleteAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -134,7 +133,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         var fileInfo = await UploadTestFileAsync();
 
         // Act
-        var result = await Storage.ExistsAsync(fileInfo.Name);
+        var result = await Storage.ExistsAsync(fileInfo.Name, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -142,7 +141,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         result.Value
             .ShouldBeTrue();
 
-        await Storage.DeleteAsync(fileInfo.Name);
+        await Storage.DeleteAsync(fileInfo.Name, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -154,7 +153,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         ExistOptions options = new() { FileName = fileInfo.Name, Directory = directory };
 
         // Act
-        var result = await Storage.ExistsAsync(options);
+        var result = await Storage.ExistsAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -162,7 +161,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         result.Value
             .ShouldBeTrue();
 
-        await Storage.DeleteAsync(fileInfo.Name);
+        await Storage.DeleteAsync(fileInfo.Name, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -170,7 +169,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
     {
         // Act
         var result = await Storage.ExistsAsync(Guid.NewGuid()
-            .ToString());
+            .ToString(), TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -188,7 +187,7 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         ExistOptions options = new() { FileName = fileInfo.Name, Directory = "another-directory" };
 
         // Act
-        var result = await Storage.ExistsAsync(options);
+        var result = await Storage.ExistsAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -196,6 +195,6 @@ public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
         result.Value
             .ShouldBeFalse();
 
-        await Storage.DeleteAsync(fileInfo.Name);
+        await Storage.DeleteAsync(fileInfo.Name, TestContext.Current.CancellationToken);
     }
 }

@@ -22,8 +22,8 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
     private readonly AzuriteContainer _container = new AzuriteBuilder(ContainerImages.Azurite)
         .WithCommand("--skipApiVersionCheck").Build();
 
-    public Task InitializeAsync() => _container.StartAsync();
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public ValueTask InitializeAsync() => new(_container.StartAsync());
+    public ValueTask DisposeAsync() => _container.DisposeAsync();
 
     [Fact]
     public async Task PortableUpload_PreservesUnicodeMetadataAcrossReadsAndDownload()
@@ -36,20 +36,20 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
             FileName = "material.txt",
             MimeType = "text/plain",
             Metadata = metadata
-        });
+        }, TestContext.Current.CancellationToken);
         upload.IsSuccess.ShouldBeTrue();
         AssertMetadata(upload.Value!.Metadata!, metadata);
-        var stored = await storage.GetBlobMetadataAsync("material.txt");
+        var stored = await storage.GetBlobMetadataAsync("material.txt", TestContext.Current.CancellationToken);
         stored.IsSuccess.ShouldBeTrue();
         AssertMetadata(stored.Value!.Metadata!, metadata);
-        var listed = await storage.GetBlobMetadataListAsync().ToListAsync();
+        var listed = await storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         AssertMetadata(listed.Single().Metadata!, metadata);
-        var downloaded = await storage.DownloadAsync("material.txt");
+        var downloaded = await storage.DownloadAsync("material.txt", TestContext.Current.CancellationToken);
         downloaded.IsSuccess.ShouldBeTrue();
         using var file = downloaded.Value!;
         AssertMetadata(file.BlobMetadata!.Metadata!, metadata);
-        (await File.ReadAllTextAsync(file.FileInfo.FullName)).ShouldBe("unchanged material");
-        var native = await NativeContainer(storage).GetBlobClient("material.txt").GetPropertiesAsync();
+        (await File.ReadAllTextAsync(file.FileInfo.FullName, TestContext.Current.CancellationToken)).ShouldBe("unchanged material");
+        var native = await NativeContainer(storage).GetBlobClient("material.txt").GetPropertiesAsync(cancellationToken: TestContext.Current.CancellationToken);
         native.Value.Metadata.Values.All(value => value.All(c => c is >= ' ' and <= '~')).ShouldBeTrue();
     }
 
@@ -59,31 +59,29 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
         using var storage = CreateStorage();
         var objects = storage.RequireObjectStorage();
         var metadata = UnicodeMetadata();
-        await objects.CreatePrivateContainerAsync(metadata);
-        AssertMetadata((await objects.GetContainerInfoAsync()).Metadata, metadata);
+        await objects.CreatePrivateContainerAsync(metadata, TestContext.Current.CancellationToken);
+        AssertMetadata((await objects.GetContainerInfoAsync(TestContext.Current.CancellationToken)).Metadata, metadata);
         var replacement = new Dictionary<string, string> { ["owner"] = "Компанія" };
-        await objects.SetContainerMetadataAsync(replacement);
-        AssertMetadata((await objects.GetContainerInfoAsync()).Metadata, replacement);
+        await objects.SetContainerMetadataAsync(replacement, TestContext.Current.CancellationToken);
+        AssertMetadata((await objects.GetContainerInfoAsync(TestContext.Current.CancellationToken)).Metadata, replacement);
         using var content = Content("unchanged evidence");
-        var first = await objects.WriteIfAbsentOrSameAsync("evidence", content, content.Length,
-            new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata });
+        var first = await objects.WriteIfAbsentOrSameAsync("evidence", content, content.Length, new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata }, cancellationToken: TestContext.Current.CancellationToken);
         AssertMetadata(first.Info.Metadata, metadata);
         using var retry = Content("unchanged evidence");
-        var reused = await objects.WriteIfAbsentOrSameAsync("evidence", retry, retry.Length,
-            new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata });
+        var reused = await objects.WriteIfAbsentOrSameAsync("evidence", retry, retry.Length, new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata }, cancellationToken: TestContext.Current.CancellationToken);
         reused.ReusedExisting.ShouldBeTrue();
         reused.Info.ETag.ShouldBe(first.Info.ETag);
-        AssertMetadata((await objects.ListObjectsAsync()).Items.Single().Metadata, metadata);
-        await objects.SetObjectMetadataAsync("evidence", replacement, first.Info.ETag);
-        var second = await objects.GetObjectInfoAsync("evidence");
+        AssertMetadata((await objects.ListObjectsAsync(cancellationToken: TestContext.Current.CancellationToken)).Items.Single().Metadata, metadata);
+        await objects.SetObjectMetadataAsync("evidence", replacement, first.Info.ETag, TestContext.Current.CancellationToken);
+        var second = await objects.GetObjectInfoAsync("evidence", TestContext.Current.CancellationToken);
         AssertMetadata(second.Metadata, replacement);
         second.ETag.ShouldNotBe(first.Info.ETag);
         var stale = await Should.ThrowAsync<StorageOperationException>(() =>
             objects.SetObjectMetadataAsync("evidence", metadata, first.Info.ETag));
         stale.IsConflict.ShouldBeTrue();
-        await using var stream = await objects.OpenObjectReadAsync("evidence", new StorageReadOptions { IfMatch = second.ETag });
+        await using var stream = await objects.OpenObjectReadAsync("evidence", new StorageReadOptions { IfMatch = second.ETag }, TestContext.Current.CancellationToken);
         using var reader = new StreamReader(stream);
-        (await reader.ReadToEndAsync()).ShouldBe("unchanged evidence");
+        (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("unchanged evidence");
     }
 
     [Fact]
@@ -91,22 +89,22 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
     {
         using var storage = CreateStorage();
         var objects = storage.RequireMultipartStorage();
-        await objects.CreatePrivateContainerAsync();
+        await objects.CreatePrivateContainerAsync(cancellationToken: TestContext.Current.CancellationToken);
         var metadata = UnicodeMetadata();
         var partId = Convert.ToBase64String(Encoding.UTF8.GetBytes("0001"));
         using var content = Content("multipart material");
-        await objects.StagePartAsync("multipart", partId, content);
-        var committed = await objects.CommitPartsAsync("multipart", [partId], new StorageWriteOptions { Metadata = metadata });
+        await objects.StagePartAsync("multipart", partId, content, TestContext.Current.CancellationToken);
+        var committed = await objects.CommitPartsAsync("multipart", [partId], new StorageWriteOptions { Metadata = metadata }, TestContext.Current.CancellationToken);
         AssertMetadata(committed.Metadata, metadata);
-        var native = await NativeContainer(storage).GetBlobClient("multipart").GetPropertiesAsync();
+        var native = await NativeContainer(storage).GetBlobClient("multipart").GetPropertiesAsync(cancellationToken: TestContext.Current.CancellationToken);
         var marker = native.Value.Metadata.Single();
         var collision = new Dictionary<string, string> { [marker.Key] = marker.Value };
         using var collidingContent = Content("caller marker");
-        await objects.WriteObjectAsync("collision", collidingContent, new StorageWriteOptions { Metadata = collision });
-        AssertMetadata((await objects.GetObjectInfoAsync("collision")).Metadata, collision);
-        await using var stream = await objects.OpenObjectReadAsync("multipart");
+        await objects.WriteObjectAsync("collision", collidingContent, new StorageWriteOptions { Metadata = collision }, TestContext.Current.CancellationToken);
+        AssertMetadata((await objects.GetObjectInfoAsync("collision", TestContext.Current.CancellationToken)).Metadata, collision);
+        await using var stream = await objects.OpenObjectReadAsync("multipart", cancellationToken: TestContext.Current.CancellationToken);
         using var reader = new StreamReader(stream);
-        (await reader.ReadToEndAsync()).ShouldBe("multipart material");
+        (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("multipart material");
     }
 
     [Theory]
@@ -116,11 +114,11 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
     {
         using var storage = CreateStorage();
         var objects = storage.RequireObjectStorage();
-        await objects.CreatePrivateContainerAsync();
+        await objects.CreatePrivateContainerAsync(cancellationToken: TestContext.Current.CancellationToken);
         using var content = Content("material");
-        await objects.WriteObjectAsync("invalid", content, new StorageWriteOptions { Metadata = UnicodeMetadata() });
+        await objects.WriteObjectAsync("invalid", content, new StorageWriteOptions { Metadata = UnicodeMetadata() }, TestContext.Current.CancellationToken);
         var blob = NativeContainer(storage).GetBlobClient("invalid");
-        var encoded = (await blob.GetPropertiesAsync()).Value.Metadata.Single();
+        var encoded = (await blob.GetPropertiesAsync(cancellationToken: TestContext.Current.CancellationToken)).Value.Metadata.Single();
         var prefix = encoded.Value[..(encoded.Value.IndexOf(':') + 1)];
         var invalid = new Dictionary<string, string>
         {
@@ -128,9 +126,9 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
         };
         if (mixedMetadata)
             invalid["unexpected"] = "sibling";
-        await blob.SetMetadataAsync(invalid);
+        await blob.SetMetadataAsync(invalid, cancellationToken: TestContext.Current.CancellationToken);
         await Should.ThrowAsync<InvalidDataException>(() => objects.GetObjectInfoAsync("invalid"));
-        (await storage.GetBlobMetadataAsync("invalid")).IsFailed.ShouldBeTrue();
+        (await storage.GetBlobMetadataAsync("invalid", TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
     }
 
     [Fact]
@@ -138,19 +136,18 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
     {
         using var storage = CreateStorage();
         var objects = storage.RequireObjectStorage();
-        await objects.CreatePrivateContainerAsync();
+        await objects.CreatePrivateContainerAsync(cancellationToken: TestContext.Current.CancellationToken);
         var metadata = new Dictionary<string, string>
         {
             ["name"] = "%D0%BC.txt",
             ["literal"] = "utf8-json-base64:eyJmb28iOiJiYXIifQ=="
         };
         using var nativeContent = Content("native bytes");
-        await NativeContainer(storage).GetBlobClient("native").UploadAsync(nativeContent,
-            new global::Azure.Storage.Blobs.Models.BlobUploadOptions { Metadata = metadata });
-        AssertMetadata((await objects.GetObjectInfoAsync("native")).Metadata, metadata);
+        await NativeContainer(storage).GetBlobClient("native").UploadAsync(nativeContent, new global::Azure.Storage.Blobs.Models.BlobUploadOptions { Metadata = metadata }, TestContext.Current.CancellationToken);
+        AssertMetadata((await objects.GetObjectInfoAsync("native", TestContext.Current.CancellationToken)).Metadata, metadata);
         using var content = Content("provider bytes");
-        await objects.WriteObjectAsync("provider", content, new StorageWriteOptions { Metadata = metadata });
-        var native = await NativeContainer(storage).GetBlobClient("provider").GetPropertiesAsync();
+        await objects.WriteObjectAsync("provider", content, new StorageWriteOptions { Metadata = metadata }, TestContext.Current.CancellationToken);
+        var native = await NativeContainer(storage).GetBlobClient("provider").GetPropertiesAsync(cancellationToken: TestContext.Current.CancellationToken);
         AssertMetadata(native.Value.Metadata, metadata);
     }
 

@@ -27,7 +27,7 @@ Parent: `../../AGENTS.md`
 - `build`: `dotnet build ManagedCode.Storage.Tests.csproj`
 - `test`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"`
 - `browser-stress`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category=BrowserStress"`
-- `coverage`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress" /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
+- `coverage`: `dotnet test ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress" /p:CollectCoverage=true`
 - `format`: `dotnet format ../../ManagedCode.Storage.slnx`
 - Active test framework: `xUnit`
 - Runner model: `VSTest`
@@ -56,3 +56,11 @@ Parent: `../../AGENTS.md`
 - Keep architecture dependency rules in `Architecture/` focused on durable package boundaries so they stay stable as implementation details move.
 - Do not weaken assertions or skip suites to get a green run; fix the real regression or document an explicit exception.
 - Browser stress tests are an explicit lane, not hidden debt: keep them automated via the dedicated `browser-stress` command or workflow instead of folding them into the fast default test path.
+
+## External Data Lake Protocol Test Exception
+
+- ADLS Gen2 tests may use the file-backed Kestrel protocol host in `Storages/DataLake/` because Azurite does not implement the DFS hierarchical-namespace protocol and no hosted test account is configured. Exercise the real Azure SDK over HTTP, assert stored bytes and failure results, and keep this exception limited to the external Azure service. This is SDK/provider contract evidence; hosted Azure authentication and service behavior require separate qualification.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- existing provider and controller test bases affected by the framework migration already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

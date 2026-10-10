@@ -31,27 +31,27 @@ public class CloudKitStorageTests
         {
             options.Directory = "dir";
             options.FileName = "file.txt";
-        });
+        }, TestContext.Current.CancellationToken);
 
         upload.IsSuccess.ShouldBeTrue();
         upload.Value.FullName.ShouldBe("dir/file.txt");
         upload.Value.Container.ShouldBe("iCloud.com.example.app");
 
-        var download = await storage.DownloadAsync("dir/file.txt");
+        var download = await storage.DownloadAsync("dir/file.txt", TestContext.Current.CancellationToken);
         download.IsSuccess.ShouldBeTrue();
         using (var reader = new StreamReader(download.Value.FileStream, Encoding.UTF8))
         {
-            (await reader.ReadToEndAsync()).ShouldBe("storage payload");
+            (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("storage payload");
         }
 
-        var existsBeforeDelete = await storage.ExistsAsync("dir/file.txt");
+        var existsBeforeDelete = await storage.ExistsAsync("dir/file.txt", TestContext.Current.CancellationToken);
         existsBeforeDelete.IsSuccess.ShouldBeTrue();
         existsBeforeDelete.Value.ShouldBeTrue();
 
-        var deleteDir = await storage.DeleteDirectoryAsync("dir");
+        var deleteDir = await storage.DeleteDirectoryAsync("dir", TestContext.Current.CancellationToken);
         deleteDir.IsSuccess.ShouldBeTrue();
 
-        var existsAfterDelete = await storage.ExistsAsync("dir/file.txt");
+        var existsAfterDelete = await storage.ExistsAsync("dir/file.txt", TestContext.Current.CancellationToken);
         existsAfterDelete.IsSuccess.ShouldBeTrue();
         existsAfterDelete.Value.ShouldBeFalse();
     }

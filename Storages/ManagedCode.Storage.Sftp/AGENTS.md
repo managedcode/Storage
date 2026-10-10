@@ -50,3 +50,7 @@ Parent: `../../AGENTS.md`
 - Keep default and keyed DI registrations aligned with StorageFactory conventions and the provider-specific interface exposure.
 - Do not leak vendor SDK types outside provider-specific options, interfaces, or client wrappers.
 - Keep SSH connection and remote-path handling inside the provider and preserve stream-oriented uploads and downloads.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- `SftpStorage` already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

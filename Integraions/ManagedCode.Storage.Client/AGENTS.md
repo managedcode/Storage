@@ -48,3 +48,7 @@ Parent: `../../AGENTS.md`
 - Keep the client contract aligned with `ManagedCode.Storage.Server/Controllers/IStorageController.cs`.
 - Do not introduce provider-specific branches; this client stays storage-agnostic.
 - Preserve stream-first transfer and cancellation behavior so large-file flows remain viable.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- `StorageClient`, including its existing chunk transfer method already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

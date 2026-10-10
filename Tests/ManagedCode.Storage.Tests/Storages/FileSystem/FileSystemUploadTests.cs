@@ -45,7 +45,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
         {
             options.FileName = filenameToUse;
             options.Directory = temporaryDirectory;
-        });
+        }, TestContext.Current.CancellationToken);
 
         firstResult.IsSuccess.ShouldBeTrue();
 
@@ -54,7 +54,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
         {
             options.FileName = filenameToUse;
             options.Directory = temporaryDirectory;
-        });
+        }, TestContext.Current.CancellationToken);
         downloadedResult.IsSuccess.ShouldBeTrue();
         // size
         downloadedResult.Value!.FileInfo.Length.ShouldBe(90 * 1024);
@@ -64,7 +64,7 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
         {
             options.FileName = filenameToUse;
             options.Directory = temporaryDirectory;
-        });
+        }, TestContext.Current.CancellationToken);
 
         secondResult.IsSuccess.ShouldBeTrue();
 
@@ -73,14 +73,14 @@ public class FileSystemUploadTests : UploadTests<EmptyContainer>
         {
             options.FileName = filenameToUse;
             options.Directory = temporaryDirectory;
-        });
+        }, TestContext.Current.CancellationToken);
         downloadedResult.IsSuccess.ShouldBeTrue();
         // size
         downloadedResult.Value!.FileInfo.Length.ShouldBe(512);
 
         // content
         using var ms = new MemoryStream();
-        await downloadedResult.Value!.FileStream.CopyToAsync(ms);
+        await downloadedResult.Value!.FileStream.CopyToAsync(ms, TestContext.Current.CancellationToken);
         ms.ToArray().ShouldBe(zeroByteBuffer);
     }
 }

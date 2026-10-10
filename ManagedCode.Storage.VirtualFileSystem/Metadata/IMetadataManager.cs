@@ -256,7 +256,9 @@ public abstract class BaseMetadataManager : IMetadataManager
         var customPrefix = $"{MetadataPrefix}{VfsCustomPrefix}";
         foreach (var kvp in storageMetadata)
         {
-            if (kvp.Key.StartsWith(customPrefix, StringComparison.Ordinal))
+            if (kvp.Key.StartsWith(customPrefix, StringComparison.Ordinal) &&
+                kvp.Key != versionKey && kvp.Key != createdKey &&
+                kvp.Key != modifiedKey && kvp.Key != attributesKey)
             {
                 var customKey = kvp.Key[customPrefix.Length..];
                 metadata.CustomMetadata[customKey] = kvp.Value;

@@ -20,17 +20,17 @@ public class StorageClientDownloadTests
         using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://localhost") };
         var client = new StorageClient(httpClient);
 
-        var firstResult = await client.DownloadFile("shared.bin", "/download");
+        var firstResult = await client.DownloadFile("shared.bin", "/download", cancellationToken: TestContext.Current.CancellationToken);
         firstResult.IsSuccess.ShouldBeTrue();
         await using var first = firstResult.Value!;
 
-        var secondResult = await client.DownloadFile("shared.bin", "/download");
+        var secondResult = await client.DownloadFile("shared.bin", "/download", cancellationToken: TestContext.Current.CancellationToken);
         secondResult.IsSuccess.ShouldBeTrue();
         await using var second = secondResult.Value!;
 
         first.FilePath.ShouldNotBe(second.FilePath);
-        (await File.ReadAllTextAsync(first.FilePath)).ShouldBe("first payload");
-        (await File.ReadAllTextAsync(second.FilePath)).ShouldBe("second payload");
+        (await File.ReadAllTextAsync(first.FilePath, TestContext.Current.CancellationToken)).ShouldBe("first payload");
+        (await File.ReadAllTextAsync(second.FilePath, TestContext.Current.CancellationToken)).ShouldBe("second payload");
     }
 
     private sealed class DownloadHandler : HttpMessageHandler

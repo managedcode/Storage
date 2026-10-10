@@ -50,3 +50,7 @@ Parent: `../../AGENTS.md`
 - Keep default and keyed DI registrations aligned with StorageFactory conventions and the provider-specific interface exposure.
 - Do not leak vendor SDK types outside provider-specific options, interfaces, or client wrappers.
 - Keep S3 bucket and object-key semantics explicit and avoid leaking AWS SDK details outside the provider boundary.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- `AWSStorage` and `BlobStream` already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects; the stream validation additions in `BlobStream` are included in this exception. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

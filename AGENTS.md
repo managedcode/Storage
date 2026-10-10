@@ -146,15 +146,15 @@ If the stack is `.NET`, follow these skill-management rules explicitly:
 - `build`: `dotnet build ManagedCode.Storage.slnx`
 - `test`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress"`
 - `browser-stress`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category=BrowserStress"`
-- `coverage`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress" /p:CollectCoverage=true /p:CoverletOutput=coverage /p:CoverletOutputFormat=opencover`
+- `coverage`: `dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --filter "Category!=BrowserStress" /p:CollectCoverage=true`
 - `format`: `dotnet format ManagedCode.Storage.slnx`
 
 Toolchain notes:
 
-- Tests run on `xUnit` over `VSTest` via `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio`.
+- Tests run on xUnit.net Core Framework v3 4.0.2 using `xunit.v3.mtp-off`, over `VSTest` via `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio` 4.0.1. MTP is intentionally disabled for the canonical Coverlet MSBuild flow.
 - `format` intentionally applies fixes instead of running in verify-only mode.
 - CI verifies formatting with `dotnet format ManagedCode.Storage.slnx --verify-no-changes`.
-- `coverage` uses `coverlet.msbuild` through `dotnet test` MSBuild properties.
+- `coverage` uses only `coverlet.msbuild`, identically locally and in CI. It writes JSON, Cobertura, and OpenCover to `artifacts/coverage/coverage.*` and enforces total production-package line coverage >=85% and branch coverage >=70%. Only the two executable browser test-host assemblies are excluded; all 19 published packages, including Browser and TestFakes, remain in the metric.
 - Architecture dependency rules use `NetArchTest.Rules` inside `Tests/ManagedCode.Storage.Tests/Architecture/` and run through the normal `test` command.
 - Explicit `LangVersion` should only be introduced if a project intentionally differs from the SDK default.
 

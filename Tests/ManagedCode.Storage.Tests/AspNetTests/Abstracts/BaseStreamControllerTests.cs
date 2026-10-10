@@ -34,12 +34,12 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         FileHelper.GenerateLocalFileWithData(localFile, 100); // Generate file with actual data
         var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
         await using var uploadStream = localFile.FileStream; // Get stream once
-        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
+        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
         uploadFileBlob.IsSuccess.ShouldBeTrue();
         var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         // Act
-        var streamFileResult = await storageClient.GetFileStream(uploadedMetadata.FullName, _streamEndpoint);
+        var streamFileResult = await storageClient.GetFileStream(uploadedMetadata.FullName, _streamEndpoint, TestContext.Current.CancellationToken);
 
         // Assert
         streamFileResult.IsSuccess
@@ -48,7 +48,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
 
         await using var stream = streamedValue;
         await using var newLocalFile = await LocalFile.FromStreamAsync(stream, Environment.CurrentDirectory, Guid.NewGuid()
-            .ToString("N") + extension);
+            .ToString("N") + extension, TestContext.Current.CancellationToken);
 
         var streamedFileCRC = Crc32Helper.CalculateFileCrc(newLocalFile.FilePath);
         streamedFileCRC.ShouldBe(fileCRC);
@@ -62,7 +62,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
 
         // Act
         var streamFileResult = await storageClient.GetFileStream(Guid.NewGuid()
-            .ToString(), _streamEndpoint);
+            .ToString(), _streamEndpoint, TestContext.Current.CancellationToken);
 
         // Assert
         streamFileResult.IsFailed

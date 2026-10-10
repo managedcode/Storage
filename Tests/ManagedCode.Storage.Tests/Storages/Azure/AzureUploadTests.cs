@@ -49,7 +49,7 @@ public class AzureUploadTests : UploadTests<AzuriteContainer>
     [InlineData(false)]
     public async Task UploadAsync_ReturnsCompleteMetadata_WithoutReadingBlobProperties(bool seekable)
     {
-        var createResult = await Storage.CreateContainerAsync();
+        var createResult = await Storage.CreateContainerAsync(TestContext.Current.CancellationToken);
         createResult.IsSuccess.ShouldBeTrue();
         _requestPolicy.Reset();
 
@@ -65,7 +65,7 @@ public class AzureUploadTests : UploadTests<AzuriteContainer>
             Metadata = new Dictionary<string, string> { ["purpose"] = "regression" }
         };
 
-        var result = await Storage.UploadAsync(source, options);
+        var result = await Storage.UploadAsync(source, options, TestContext.Current.CancellationToken);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldNotBeNull();

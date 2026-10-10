@@ -40,14 +40,25 @@ jobs:
       run: dotnet playwright -p Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj install chromium
 
     - name: Test
-      run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build --verbosity normal --filter "Category!=BrowserStress" --collect:"XPlat Code Coverage"
+      run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build --verbosity normal --filter "Category!=BrowserStress" /p:CollectCoverage=true --logger "trx;LogFileName=storage-tests.trx"
+
+    - name: Preserve coverage and test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: storage-quality-results
+        path: |
+          artifacts/coverage/coverage.*
+          Tests/ManagedCode.Storage.Tests/*.trx
+        if-no-files-found: error
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./**/coverage.cobertura.xml
-        fail_ci_if_error: false
+        files: artifacts/coverage/coverage.cobertura.xml
+        disable_search: true
+        fail_ci_if_error: true
 
   browser-stress:
     name: browser-stress

@@ -348,6 +348,7 @@ public class VirtualDirectory : IVirtualDirectory
         {
             if (entry.Type == VfsEntryType.File && entry is IVirtualFile file)
             {
+                await file.RefreshAsync(cancellationToken);
                 fileCount++;
                 totalSize += file.Size;
 

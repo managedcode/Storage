@@ -35,12 +35,12 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         FileHelper.GenerateLocalFileWithData(localFile, 100); // Generate file with actual data
         var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
         await using var uploadStream = localFile.FileStream; // Get stream once
-        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
+        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
         uploadFileBlob.IsSuccess.ShouldBeTrue();
         var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         // Act
-        var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadEndpoint);
+        var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadEndpoint, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         downloadedFileResult.IsSuccess
@@ -61,12 +61,12 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         FileHelper.GenerateLocalFileWithData(localFile, 100); // Generate file with actual data
         var fileCRC = Crc32Helper.CalculateFileCrc(localFile.FilePath); // Calculate CRC from file path
         await using var uploadStream = localFile.FileStream; // Get stream once
-        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName);
+        var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
         uploadFileBlob.IsSuccess.ShouldBeTrue();
         var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
 
         // Act
-        var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadBytesEndpoint);
+        var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadBytesEndpoint, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         downloadedFileResult.IsSuccess.ShouldBeTrue();
@@ -83,7 +83,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
 
         // Act
         var downloadedFileResult = await storageClient.DownloadFile(Guid.NewGuid()
-            .ToString(), _downloadEndpoint);
+            .ToString(), _downloadEndpoint, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         downloadedFileResult.IsFailed

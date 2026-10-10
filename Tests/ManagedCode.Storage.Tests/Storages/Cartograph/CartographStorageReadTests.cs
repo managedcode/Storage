@@ -20,8 +20,8 @@ public sealed class CartographStorageReadTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        (await storage.CreateContainerAsync()).IsSuccess.ShouldBeTrue();
-        var result = await storage.GetStreamAsync(path);
+        (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        var result = await storage.GetStreamAsync(path, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         await using var stream = result.Value.ShouldNotBeNull();
         stream.CanRead.ShouldBeTrue();
@@ -30,7 +30,7 @@ public sealed class CartographStorageReadTests
         stream.Length.ShouldBe(fixture.Files[path].LongLength);
         stream.Position.ShouldBe(0);
         using var output = new MemoryStream();
-        await stream.CopyToAsync(output, bufferSize: 997);
+        await stream.CopyToAsync(output, bufferSize: 997, cancellationToken: TestContext.Current.CancellationToken);
         output.ToArray().ShouldBe(fixture.Files[path]);
         stream.Position.ShouldBe(stream.Length);
         stream.ReadByte().ShouldBe(-1);
@@ -41,7 +41,7 @@ public sealed class CartographStorageReadTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        using var stream = (await storage.GetStreamAsync("reports/large.bin")).Value.ShouldNotBeNull();
+        using var stream = (await storage.GetStreamAsync("reports/large.bin", TestContext.Current.CancellationToken)).Value.ShouldNotBeNull();
         var actual = new byte[fixture.Files["reports/large.bin"].Length];
         stream.ReadExactly(actual);
         actual.ShouldBe(fixture.Files["reports/large.bin"]);
@@ -74,7 +74,7 @@ public sealed class CartographStorageReadTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        var stream = (await storage.GetStreamAsync("root.txt")).Value.ShouldNotBeNull();
+        var stream = (await storage.GetStreamAsync("root.txt", TestContext.Current.CancellationToken)).Value.ShouldNotBeNull();
         stream.ReadByte().ShouldBe(fixture.Files["root.txt"][0]);
         await stream.DisposeAsync();
         stream.CanRead.ShouldBeFalse();
@@ -94,10 +94,10 @@ public sealed class CartographStorageReadTests
             Directory = "reports",
             FileName = "large.bin",
             LocalPath = explicitPath ? fixture.DestinationPath : null
-        });
+        }, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         var file = result.Value.ShouldNotBeNull();
-        (await File.ReadAllBytesAsync(file.FilePath)).ShouldBe(fixture.Files["reports/large.bin"]);
+        (await File.ReadAllBytesAsync(file.FilePath, TestContext.Current.CancellationToken)).ShouldBe(fixture.Files["reports/large.bin"]);
         file.BlobMetadata.ShouldNotBeNull().FullName.ShouldBe("reports/large.bin");
         var path = file.FilePath;
         await file.DisposeAsync();
@@ -114,7 +114,7 @@ public sealed class CartographStorageReadTests
         var result = await storage.GetStreamAsync("root.txt", cancellation.Token);
         result.IsFailed.ShouldBeTrue();
         result.Problem.ShouldNotBeNull().Title.ShouldBe(nameof(OperationCanceledException));
-        await using var stream = (await storage.GetStreamAsync("root.txt")).Value.ShouldNotBeNull();
+        await using var stream = (await storage.GetStreamAsync("root.txt", TestContext.Current.CancellationToken)).Value.ShouldNotBeNull();
         await Should.ThrowAsync<OperationCanceledException>(async () => await stream.ReadExactlyAsync(new byte[1], cancellation.Token));
         stream.Position.ShouldBe(0);
     }

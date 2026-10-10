@@ -21,8 +21,8 @@ public sealed class CartographStorageValidationTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        (await storage.GetStreamAsync(path)).IsFailed.ShouldBeTrue();
-        (await storage.ExistsAsync(path)).IsFailed.ShouldBeTrue();
+        (await storage.GetStreamAsync(path, TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
+        (await storage.ExistsAsync(path, TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
     }
 
     [Fact]
@@ -30,10 +30,10 @@ public sealed class CartographStorageValidationTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        (await storage.GetStreamAsync("missing.txt")).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(FileNotFoundException));
-        (await storage.DownloadAsync("missing.txt")).IsFailed.ShouldBeTrue();
-        (await storage.GetBlobMetadataAsync("missing.txt")).IsFailed.ShouldBeTrue();
-        (await storage.ExistsAsync("missing.txt")).Value.ShouldBeFalse();
+        (await storage.GetStreamAsync("missing.txt", TestContext.Current.CancellationToken)).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(FileNotFoundException));
+        (await storage.DownloadAsync("missing.txt", TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
+        (await storage.GetBlobMetadataAsync("missing.txt", TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
+        (await storage.ExistsAsync("missing.txt", TestContext.Current.CancellationToken)).Value.ShouldBeFalse();
     }
 
     [Theory]
@@ -67,8 +67,8 @@ public sealed class CartographStorageValidationTests
                 entries.Add(entry);
         });
         using var storage = fixture.CreateStorage(path);
-        (await storage.CreateContainerAsync()).IsFailed.ShouldBeTrue();
-        (await storage.GetStreamAsync("root.txt")).IsFailed.ShouldBeTrue();
+        (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
+        (await storage.GetStreamAsync("root.txt", TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
     }
 
     [Fact]
@@ -77,12 +77,12 @@ public sealed class CartographStorageValidationTests
         using var fixture = new CartographArtifactFixture();
         fixture.CorruptFirstPayload();
         using var storage = fixture.CreateStorage();
-        (await storage.GetBlobMetadataAsync("root.txt")).IsSuccess.ShouldBeTrue();
-        var result = await storage.GetStreamAsync("root.txt");
+        (await storage.GetBlobMetadataAsync("root.txt", TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        var result = await storage.GetStreamAsync("root.txt", TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         await using var stream = result.Value.ShouldNotBeNull();
         await Should.ThrowAsync<CartographFormatException>(async () => await stream.ReadExactlyAsync(new byte[1]));
-        (await storage.DownloadAsync("root.txt")).IsFailed.ShouldBeTrue();
+        (await storage.DownloadAsync("root.txt", TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
     }
 
     [Fact]
@@ -91,36 +91,36 @@ public sealed class CartographStorageValidationTests
         using var fixture = new CartographArtifactFixture();
         var missing = fixture.ArtifactPath + ".missing";
         using var storage = fixture.CreateStorage(missing);
-        (await storage.CreateContainerAsync()).IsFailed.ShouldBeTrue();
+        (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
         File.Exists(missing).ShouldBeFalse();
-        await File.WriteAllTextAsync(missing, "not a Cartograph artifact");
-        (await storage.CreateContainerAsync()).IsFailed.ShouldBeTrue();
-        (await File.ReadAllTextAsync(missing)).ShouldBe("not a Cartograph artifact");
+        await File.WriteAllTextAsync(missing, "not a Cartograph artifact", TestContext.Current.CancellationToken);
+        (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
+        (await File.ReadAllTextAsync(missing, TestContext.Current.CancellationToken)).ShouldBe("not a Cartograph artifact");
     }
 
     [Fact]
     public async Task DownloadAsync_WhenDestinationIsArtifact_LeavesSourceUnchanged()
     {
         using var fixture = new CartographArtifactFixture();
-        var original = await File.ReadAllBytesAsync(fixture.ArtifactPath);
+        var original = await File.ReadAllBytesAsync(fixture.ArtifactPath, TestContext.Current.CancellationToken);
         using var storage = fixture.CreateStorage();
-        var result = await storage.DownloadAsync(new DownloadOptions { FileName = "root.txt", LocalPath = fixture.ArtifactPath });
+        var result = await storage.DownloadAsync(new DownloadOptions { FileName = "root.txt", LocalPath = fixture.ArtifactPath }, TestContext.Current.CancellationToken);
         result.IsFailed.ShouldBeTrue();
-        (await File.ReadAllBytesAsync(fixture.ArtifactPath)).ShouldBe(original);
+        (await File.ReadAllBytesAsync(fixture.ArtifactPath, TestContext.Current.CancellationToken)).ShouldBe(original);
     }
 
     [Fact]
     public async Task MutationOperations_WhenCalled_ReturnUnsupportedAndPreserveArtifact()
     {
         using var fixture = new CartographArtifactFixture();
-        var original = await File.ReadAllBytesAsync(fixture.ArtifactPath);
+        var original = await File.ReadAllBytesAsync(fixture.ArtifactPath, TestContext.Current.CancellationToken);
         using var storage = fixture.CreateStorage();
-        (await storage.UploadAsync("replacement", new UploadOptions { FileName = "root.txt" })).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
-        (await storage.DeleteAsync("root.txt")).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
-        (await storage.DeleteDirectoryAsync("reports")).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
-        (await storage.RemoveContainerAsync()).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
-        (await storage.SetLegalHoldAsync(true, "root.txt")).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
-        (await storage.HasLegalHoldAsync("root.txt")).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
-        (await File.ReadAllBytesAsync(fixture.ArtifactPath)).ShouldBe(original);
+        (await storage.UploadAsync("replacement", new UploadOptions { FileName = "root.txt" }, TestContext.Current.CancellationToken)).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
+        (await storage.DeleteAsync("root.txt", TestContext.Current.CancellationToken)).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
+        (await storage.DeleteDirectoryAsync("reports", TestContext.Current.CancellationToken)).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
+        (await storage.RemoveContainerAsync(TestContext.Current.CancellationToken)).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
+        (await storage.SetLegalHoldAsync(true, "root.txt", TestContext.Current.CancellationToken)).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
+        (await storage.HasLegalHoldAsync("root.txt", TestContext.Current.CancellationToken)).Problem.ShouldNotBeNull().Title.ShouldBe(nameof(NotSupportedException));
+        (await File.ReadAllBytesAsync(fixture.ArtifactPath, TestContext.Current.CancellationToken)).ShouldBe(original);
     }
 }

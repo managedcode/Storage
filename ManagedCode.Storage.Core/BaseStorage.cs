@@ -27,9 +27,11 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
 
     public async Task<Result> CreateContainerAsync(CancellationToken cancellationToken = default)
     {
+        var acquired = false;
         try
         {
             await _semaphoreSlim.WaitAsync(cancellationToken);
+            acquired = true;
             cancellationToken.ThrowIfCancellationRequested();
 
             var result = await CreateContainerInternalAsync(cancellationToken);
@@ -43,7 +45,7 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         }
         finally
         {
-            _semaphoreSlim.Release();
+            if (acquired) _semaphoreSlim.Release();
         }
     }
 

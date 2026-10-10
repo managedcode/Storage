@@ -19,7 +19,7 @@ public class LocalFile : IDisposable, IAsyncDisposable
         KeepAlive = keepAlive;
         var resolvedPath = path;
 
-        if (string.IsNullOrEmpty(Path.GetExtension(path)))
+        if (!File.Exists(path) && string.IsNullOrEmpty(Path.GetExtension(path)))
         {
             var directoryPath = Path.GetDirectoryName(path);
             var name = Path.GetFileName(path);

@@ -18,7 +18,7 @@ public class FileSystemUnicodeSanitizerTests
         Directory.CreateDirectory(directory);
 
         var expectedFilePath = Path.Combine(directory, "лист-привіт.txt");
-        await File.WriteAllTextAsync(expectedFilePath, "Привіт");
+        await File.WriteAllTextAsync(expectedFilePath, "Привіт", TestContext.Current.CancellationToken);
 
         var storage = new FileSystemStorage(new FileSystemStorageOptions
         {
@@ -28,11 +28,11 @@ public class FileSystemUnicodeSanitizerTests
 
         try
         {
-            var exists = await storage.ExistsAsync("international/Українська-папка/лист-привіт.txt");
+            var exists = await storage.ExistsAsync("international/Українська-папка/лист-привіт.txt", TestContext.Current.CancellationToken);
             exists.IsSuccess.ShouldBeTrue();
             exists.Value.ShouldBeTrue();
 
-            var metadata = await storage.GetBlobMetadataAsync("international/Українська-папка/лист-привіт.txt");
+            var metadata = await storage.GetBlobMetadataAsync("international/Українська-папка/лист-привіт.txt", TestContext.Current.CancellationToken);
             metadata.IsSuccess.ShouldBeTrue(metadata.Problem?.ToString());
             metadata.Value!.FullName.ShouldBe("international/Українська-папка/лист-привіт.txt");
         }

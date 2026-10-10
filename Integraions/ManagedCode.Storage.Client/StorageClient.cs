@@ -190,6 +190,15 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
                     var message = await response.Content.ReadAsStringAsync(cancellationToken);
                     return Result<uint>.Fail(response.StatusCode, message);
                 }
+                if (response.Content.Headers.ContentType?.MediaType == "application/json")
+                {
+                    var chunkResult = await response.Content.ReadFromJsonAsync<Result?>(cancellationToken: cancellationToken);
+                    if (chunkResult is null || chunkResult.Value.IsFailed)
+                    {
+                        return Result<uint>.Fail((HttpStatusCode)(chunkResult?.Problem?.StatusCode ?? 500),
+                            chunkResult?.Problem?.Title ?? "Chunk upload response is missing");
+                    }
+                }
             }
 
             transmitted += bytesRead;

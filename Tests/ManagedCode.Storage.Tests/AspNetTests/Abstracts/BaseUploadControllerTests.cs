@@ -37,7 +37,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         FileHelper.GenerateLocalFile(localFile, 1);
 
         // Act
-        var result = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
+        var result = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -46,18 +46,27 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
             .ShouldNotBeNull();
     }
 
-    [Fact(Skip = "There is no forbidden logic")]
+    [Fact]
     public async Task UploadFileFromStream_WhenFileSizeIsForbidden_ReturnFail()
     {
         // Arrange
-        var storageClient = GetStorageClient();
+        using var application = TestApplication.WithWebHostBuilder(builder =>
+            builder.ConfigureServices(services =>
+            {
+                Microsoft.Extensions.DependencyInjection.OptionsServiceCollectionExtensions.PostConfigure<Microsoft.AspNetCore.Http.Features.FormOptions>(
+                    services, options => options.MultipartBodyLengthLimit = 128);
+                Microsoft.Extensions.DependencyInjection.OptionsServiceCollectionExtensions.PostConfigure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(
+                    services, options => options.SuppressModelStateInvalidFilter = false);
+            }));
+        using var httpClient = application.CreateClient();
+        var storageClient = new ManagedCode.Storage.Client.StorageClient(httpClient);
         var contentName = "file";
 
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
         FileHelper.GenerateLocalFile(localFile, 200);
 
         // Act
-        var result = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName);
+        var result = await storageClient.UploadFile(localFile.FileStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsFailed
@@ -78,7 +87,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         FileHelper.GenerateLocalFile(localFile, 1);
 
         // Act
-        var result = await storageClient.UploadFile(localFile.FileInfo, _uploadEndpoint, contentName);
+        var result = await storageClient.UploadFile(localFile.FileInfo, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -96,10 +105,10 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
         FileHelper.GenerateLocalFile(localFile, 1);
 
-        var fileAsBytes = await localFile.ReadAllBytesAsync();
+        var fileAsBytes = await localFile.ReadAllBytesAsync(TestContext.Current.CancellationToken);
 
         // Act
-        var result = await storageClient.UploadFile(fileAsBytes, _uploadEndpoint, contentName);
+        var result = await storageClient.UploadFile(fileAsBytes, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -118,11 +127,11 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         await using var localFile = LocalFile.FromRandomNameWithExtension(".txt");
         FileHelper.GenerateLocalFile(localFile, 1);
 
-        var fileAsBytes = await localFile.ReadAllBytesAsync();
+        var fileAsBytes = await localFile.ReadAllBytesAsync(TestContext.Current.CancellationToken);
         var fileAsString64 = Convert.ToBase64String(fileAsBytes);
 
         // Act
-        var result = await storageClient.UploadFile(fileAsString64, _uploadEndpoint, contentName);
+        var result = await storageClient.UploadFile(fileAsString64, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -143,7 +152,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         storageClient.SetChunkSize(4096000);
 
         // Act
-        var result = await storageClient.UploadLargeFile(localFile.FileStream, _uploadLargeFile + "/upload", _uploadLargeFile + "/complete", null);
+        var result = await storageClient.UploadLargeFile(localFile.FileStream, _uploadLargeFile + "/upload", _uploadLargeFile + "/complete", null, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -163,7 +172,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         var downloadEndpoint = $"{ApiEndpoint}/download";
         var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
 
-        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin", cancellationToken: TestContext.Current.CancellationToken);
         var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
 
         await using (var readStream = File.OpenRead(localFile.FilePath))
@@ -200,7 +209,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
 
         var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
 
-        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin", cancellationToken: TestContext.Current.CancellationToken);
         var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
 
         var fileName = Path.GetFileName(localFile.FilePath);

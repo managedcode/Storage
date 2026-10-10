@@ -47,7 +47,7 @@ public class DropboxClientWrapperHttpTests
         await using (var downloaded = await wrapper.DownloadAsync("/apps/demo", "file.json", CancellationToken.None))
         using (var reader = new StreamReader(downloaded, Encoding.UTF8))
         {
-            (await reader.ReadToEndAsync()).ShouldBe("dropbox payload");
+            (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("dropbox payload");
         }
 
         var items = new List<DropboxItemMetadata>();
@@ -81,17 +81,17 @@ public class DropboxClientWrapperHttpTests
             CreateContainerIfNotExists = true
         });
 
-        (await storage.UploadAsync("dropbox payload", options => options.FileName = "file.json")).IsSuccess.ShouldBeTrue();
+        (await storage.UploadAsync("dropbox payload", options => options.FileName = "file.json", TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
-        var exists = await storage.ExistsAsync("file.json");
+        var exists = await storage.ExistsAsync("file.json", TestContext.Current.CancellationToken);
         exists.IsSuccess.ShouldBeTrue();
         exists.Value.ShouldBeTrue();
 
-        var download = await storage.DownloadAsync("file.json");
+        var download = await storage.DownloadAsync("file.json", TestContext.Current.CancellationToken);
         download.IsSuccess.ShouldBeTrue();
         using (var reader = new StreamReader(download.Value.FileStream, Encoding.UTF8))
         {
-            (await reader.ReadToEndAsync()).ShouldBe("dropbox payload");
+            (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("dropbox payload");
         }
     }
 

@@ -199,6 +199,23 @@ public partial class VirtualFileSystem : IVirtualFileSystem
         }
     }
 
+    private void InvalidateDeletedFileCaches(string blobKey)
+    {
+        if (!_options.EnableCache) return;
+
+        var path = new VfsPath(blobKey);
+        _cache.Remove($"file_exists:{ContainerName}:{path}");
+        _cache.Remove($"file_metadata:{ContainerName}:{path}");
+        _cache.Remove($"file_custom_metadata:{ContainerName}:{path}");
+        var parent = path.GetParent();
+        while (!parent.IsRoot)
+        {
+            _cache.Remove($"dir_exists:{ContainerName}:{parent}");
+            parent = parent.GetParent();
+        }
+        _cache.Remove($"dir_exists:{ContainerName}:{parent}");
+    }
+
     /// <inheritdoc />
     public async Task<DeleteDirectoryResult> DeleteDirectoryAsync(
         VfsPath path,
@@ -244,6 +261,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
                     if (deleteResult.IsSuccess && deleteResult.Value)
                     {
                         result.FilesDeleted++;
+                        InvalidateDeletedFileCaches(fileName);
                     }
                     else
                     {

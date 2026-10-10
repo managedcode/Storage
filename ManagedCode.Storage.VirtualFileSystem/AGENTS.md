@@ -51,3 +51,7 @@ Parent: `../AGENTS.md`
 - Keep VFS layered on `IStorage` and `IStorageFactory`; do not add direct dependencies on provider internals.
 - Preserve the separation between metadata management and byte-stream operations.
 - Any keyed-storage behavior here must stay compatible with the StorageFactory conventions used across the repo.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- `VirtualDirectory`, `VirtualFileSystem` and the existing `VirtualFile` type already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

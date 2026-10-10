@@ -50,3 +50,7 @@ Parent: `../../AGENTS.md`
 - Keep default and keyed DI registrations aligned with StorageFactory conventions and the provider-specific interface exposure.
 - Do not leak vendor SDK types outside provider-specific options, interfaces, or client wrappers.
 - Keep Azure container and blob semantics explicit and preserve incremental blob streaming behavior.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- the existing AzureStorage type already exceeds the inherited size limits. This repair keeps public signatures stable and changes only defects captured by real-runtime regressions. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider semantics and be reviewed separately.

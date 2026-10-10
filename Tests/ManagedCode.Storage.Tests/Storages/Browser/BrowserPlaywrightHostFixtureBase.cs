@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 using Xunit;
@@ -15,6 +16,7 @@ public abstract class BrowserPlaywrightHostFixtureBase(string relativeProjectPat
     private readonly StringBuilder _hostOutput = new();
     private Process? _hostProcess;
     private IPlaywright? _playwright;
+    private readonly bool _isServerHost = relativeProjectPath.Contains("BrowserServerHost", StringComparison.Ordinal);
 
     public string BaseUrl { get; private set; } = string.Empty;
 
@@ -26,7 +28,7 @@ public abstract class BrowserPlaywrightHostFixtureBase(string relativeProjectPat
 
     public string ContainerKey => $"managedcode.browser.indexeddb::{ContainerName}";
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         BaseUrl = $"http://127.0.0.1:{GetAvailablePort()}";
         _hostProcess = StartHostProcess(BaseUrl, relativeProjectPath);
@@ -39,13 +41,14 @@ public abstract class BrowserPlaywrightHostFixtureBase(string relativeProjectPat
         });
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (Browser is not null)
             await Browser.DisposeAsync();
 
         _playwright?.Dispose();
-        StopHostProcess();
+        await StopHostProcessAsync();
+        GC.SuppressFinalize(this);
     }
 
     public Task<IBrowserContext> CreateContextAsync()
@@ -77,7 +80,9 @@ public abstract class BrowserPlaywrightHostFixtureBase(string relativeProjectPat
 
         var startInfo = new ProcessStartInfo("dotnet")
         {
-            Arguments = $"run --project \"{projectPath}\" --configuration Release --no-build --no-launch-profile",
+            Arguments = _isServerHost
+                ? $"\"{Path.Combine(AppContext.BaseDirectory, "ManagedCode.Storage.BrowserServerHost.dll")}\""
+                : $"run --project \"{projectPath}\" --configuration Release --no-build --no-launch-profile",
             WorkingDirectory = workingDirectory,
             RedirectStandardError = true,
             RedirectStandardOutput = true,
@@ -157,15 +162,30 @@ public abstract class BrowserPlaywrightHostFixtureBase(string relativeProjectPat
         }
     }
 
-    private void StopHostProcess()
+    private async Task StopHostProcessAsync()
     {
         if (_hostProcess is null)
             return;
 
-        if (!_hostProcess.HasExited)
-            _hostProcess.Kill(entireProcessTree: true);
-
-        _hostProcess.Dispose();
-        _hostProcess = null;
+        try
+        {
+            if (!_hostProcess.HasExited && _isServerHost)
+            {
+                using var client = new HttpClient { BaseAddress = new Uri(BaseUrl), Timeout = TimeSpan.FromSeconds(5) };
+                using var response = await client.PostAsync("/__test/shutdown", null);
+                response.EnsureSuccessStatusCode();
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                await _hostProcess.WaitForExitAsync(timeout.Token);
+                if (_hostProcess.ExitCode != 0)
+                    throw new InvalidOperationException($"Browser host failed during shutdown.{Environment.NewLine}{GetHostOutput()}");
+            }
+        }
+        finally
+        {
+            if (!_hostProcess.HasExited)
+                _hostProcess.Kill(entireProcessTree: true);
+            _hostProcess.Dispose();
+            _hostProcess = null;
+        }
     }
 }

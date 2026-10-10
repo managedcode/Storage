@@ -9,6 +9,8 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Storages\ManagedCode.Storage.Browser\ManagedCode.Storage.Browser.csproj" />
         <ProjectReference Include="..\..\ManagedCode.Storage.VirtualFileSystem\ManagedCode.Storage.VirtualFileSystem.csproj" />
+        <ProjectReference Include="../../Integraions/ManagedCode.Storage.Server/ManagedCode.Storage.Server.csproj" />
+        <ProjectReference Include="../../Storages/ManagedCode.Storage.FileSystem/ManagedCode.Storage.FileSystem.csproj" />
     </ItemGroup>
 
 </Project>

@@ -21,8 +21,8 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
     private readonly AzuriteContainer _container = new AzuriteBuilder(ContainerImages.Azurite)
         .WithCommand("--skipApiVersionCheck").Build();
 
-    public Task InitializeAsync() => _container.StartAsync();
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public ValueTask InitializeAsync() => new(_container.StartAsync());
+    public ValueTask DisposeAsync() => _container.DisposeAsync();
 
     [Theory]
     [InlineData(false, "material.txt")]
@@ -35,9 +35,9 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
         await using var scope = provider.CreateAsyncScope();
         var vfs = scope.ServiceProvider.GetRequiredService<IVirtualFileSystem>();
         var path = new VfsPath("/learning/material/content");
-        var previous = await vfs.GetFileAsync(path);
-        (await previous.GetMetadataAsync()).ShouldBeEmpty();
-        (await vfs.FileExistsAsync(path)).ShouldBeFalse();
+        var previous = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
+        (await previous.GetMetadataAsync(TestContext.Current.CancellationToken)).ShouldBeEmpty();
+        (await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeFalse();
         var bytes = Encoding.UTF8.GetBytes("exact immutable author bytes");
         var metadata = new Dictionary<string, string>
         {
@@ -46,22 +46,22 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
             ["contentType"] = "text/plain"
         };
         var options = new StorageWriteOptions { ContentType = "text/plain", Metadata = metadata };
-        var written = await vfs.WriteBytesIfAbsentOrSameAsync(path, bytes, options);
+        var written = await vfs.WriteBytesIfAbsentOrSameAsync(path, bytes, options, TestContext.Current.CancellationToken);
         written.ReusedExisting.ShouldBeFalse();
-        AssertMetadata(await previous.GetMetadataAsync(), metadata);
-        (await vfs.FileExistsAsync(path)).ShouldBeTrue();
-        var fresh = await vfs.GetFileAsync(path);
-        await fresh.RefreshAsync();
+        AssertMetadata(await previous.GetMetadataAsync(TestContext.Current.CancellationToken), metadata);
+        (await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeTrue();
+        var fresh = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
+        await fresh.RefreshAsync(TestContext.Current.CancellationToken);
         fresh.Size.ShouldBe(bytes.LongLength);
-        AssertMetadata(await fresh.GetMetadataAsync(), metadata);
-        await using var stream = await fresh.OpenReadAsync();
+        AssertMetadata(await fresh.GetMetadataAsync(TestContext.Current.CancellationToken), metadata);
+        await using var stream = await fresh.OpenReadAsync(cancellationToken: TestContext.Current.CancellationToken);
         using var content = new MemoryStream();
-        await stream.CopyToAsync(content);
+        await stream.CopyToAsync(content, TestContext.Current.CancellationToken);
         content.ToArray().ShouldBe(bytes);
-        var replay = await vfs.WriteBytesIfAbsentOrSameAsync(path, bytes, options);
+        var replay = await vfs.WriteBytesIfAbsentOrSameAsync(path, bytes, options, TestContext.Current.CancellationToken);
         replay.ReusedExisting.ShouldBeTrue();
         replay.Info.ETag.ShouldBe(written.Info.ETag);
-        AssertMetadata(await fresh.GetMetadataAsync(), metadata);
+        AssertMetadata(await fresh.GetMetadataAsync(TestContext.Current.CancellationToken), metadata);
     }
 
     [Fact]
@@ -82,12 +82,11 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
             ["x-vfs-vfs-attributes"] = "0",
             ["x-vfs-vfs-internal"] = "private-vfs-state"
         };
-        await storage.RequireObjectStorage().CreatePrivateContainerAsync();
+        await storage.RequireObjectStorage().CreatePrivateContainerAsync(cancellationToken: TestContext.Current.CancellationToken);
         using var bytes = new MemoryStream(Encoding.UTF8.GetBytes("legacy bytes"));
-        await storage.RequireObjectStorage().WriteObjectAsync("legacy/content", bytes,
-            new StorageWriteOptions { Metadata = metadata });
-        var file = await vfs.GetFileAsync("/legacy/content");
-        AssertMetadata(await file.GetMetadataAsync(), new Dictionary<string, string>
+        await storage.RequireObjectStorage().WriteObjectAsync("legacy/content", bytes, new StorageWriteOptions { Metadata = metadata }, TestContext.Current.CancellationToken);
+        var file = await vfs.GetFileAsync("/legacy/content", TestContext.Current.CancellationToken);
+        AssertMetadata(await file.GetMetadataAsync(TestContext.Current.CancellationToken), new Dictionary<string, string>
         {
             ["ownerUserId"] = "exact-owner",
             ["reviewer"] = "legacy-custom",
@@ -104,20 +103,20 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
         await using var scope = provider.CreateAsyncScope();
         var vfs = scope.ServiceProvider.GetRequiredService<IVirtualFileSystem>();
         var path = new VfsPath("/learning/commands/output.zip");
-        var file = await vfs.GetFileAsync(path);
-        (await file.ExistsAsync()).ShouldBeFalse();
-        await file.RefreshAsync();
+        var file = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
+        (await file.ExistsAsync(TestContext.Current.CancellationToken)).ShouldBeFalse();
+        await file.RefreshAsync(TestContext.Current.CancellationToken);
         var bytes = Encoding.UTF8.GetBytes("committed archive bytes");
         var multipart = vfs.Storage.RequireMultipartStorage();
-        await multipart.CreatePrivateContainerAsync();
+        await multipart.CreatePrivateContainerAsync(cancellationToken: TestContext.Current.CancellationToken);
         var partId = Convert.ToBase64String(Encoding.UTF8.GetBytes("archive-part-0001"));
         using var part = new MemoryStream(bytes);
-        await multipart.StagePartAsync(path.ToBlobKey(), partId, part);
-        await multipart.CommitPartsAsync(path.ToBlobKey(), [partId]);
-        await file.RefreshAsync();
+        await multipart.StagePartAsync(path.ToBlobKey(), partId, part, TestContext.Current.CancellationToken);
+        await multipart.CommitPartsAsync(path.ToBlobKey(), [partId], cancellationToken: TestContext.Current.CancellationToken);
+        await file.RefreshAsync(TestContext.Current.CancellationToken);
         file.Size.ShouldBe(bytes.LongLength);
-        (await file.ExistsAsync()).ShouldBeTrue();
-        (await file.ReadAllBytesAsync()).ShouldBe(bytes);
+        (await file.ExistsAsync(TestContext.Current.CancellationToken)).ShouldBeTrue();
+        (await file.ReadAllBytesAsync(TestContext.Current.CancellationToken)).ShouldBe(bytes);
     }
 
     [Theory]
@@ -129,13 +128,13 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
         await using var scope = provider.CreateAsyncScope();
         var vfs = scope.ServiceProvider.GetRequiredService<IVirtualFileSystem>();
         var path = new VfsPath("/learning/commands/deleted.zip");
-        var file = await vfs.GetFileAsync(path);
-        await file.WriteAllBytesAsync(Encoding.UTF8.GetBytes("previous archive bytes"));
-        (await file.ExistsAsync()).ShouldBeTrue();
-        (await vfs.Storage.RequireObjectStorage().DeleteObjectIfExistsAsync(path.ToBlobKey())).ShouldBeTrue();
-        await file.RefreshAsync();
+        var file = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
+        await file.WriteAllBytesAsync(Encoding.UTF8.GetBytes("previous archive bytes"), cancellationToken: TestContext.Current.CancellationToken);
+        (await file.ExistsAsync(TestContext.Current.CancellationToken)).ShouldBeTrue();
+        (await vfs.Storage.RequireObjectStorage().DeleteObjectIfExistsAsync(path.ToBlobKey(), cancellationToken: TestContext.Current.CancellationToken)).ShouldBeTrue();
+        await file.RefreshAsync(TestContext.Current.CancellationToken);
         file.Size.ShouldBe(0);
-        (await file.ExistsAsync()).ShouldBeFalse();
+        (await file.ExistsAsync(TestContext.Current.CancellationToken)).ShouldBeFalse();
     }
 
     private ServiceProvider CreateProvider(bool cache)

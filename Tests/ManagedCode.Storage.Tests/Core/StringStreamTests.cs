@@ -134,7 +134,7 @@ public class StringStreamTests
 
         // Act
         var buffer = new byte[stream.Length];
-        var bytesRead = await stream.ReadAsync(buffer);
+        var bytesRead = await stream.ReadAsync(buffer, TestContext.Current.CancellationToken);
 
         // Assert
         bytesRead.ShouldBe(expectedBytes.Length);

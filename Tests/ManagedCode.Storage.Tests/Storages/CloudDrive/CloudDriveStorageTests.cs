@@ -35,28 +35,28 @@ public class CloudDriveStorageTests
             RootPath = "root"
         });
 
-        var uploadResult = await storage.UploadAsync("hello world", options => options.FileName = "text.txt");
+        var uploadResult = await storage.UploadAsync("hello world", options => options.FileName = "text.txt", TestContext.Current.CancellationToken);
         uploadResult.IsSuccess.ShouldBeTrue();
         uploadResult.Value.FullName.ShouldBe("text.txt");
         uploadResult.Value.Container.ShouldBe("drive");
 
-        var exists = await storage.ExistsAsync("text.txt");
+        var exists = await storage.ExistsAsync("text.txt", TestContext.Current.CancellationToken);
         exists.IsSuccess.ShouldBeTrue();
         exists.Value.ShouldBeTrue();
 
-        var metadata = await storage.GetBlobMetadataAsync("text.txt");
+        var metadata = await storage.GetBlobMetadataAsync("text.txt", TestContext.Current.CancellationToken);
         metadata.IsSuccess.ShouldBeTrue();
         metadata.Value.Name.ShouldBe("text.txt");
         metadata.Value.FullName.ShouldBe("text.txt");
         metadata.Value.Container.ShouldBe("drive");
 
-        var download = await storage.DownloadAsync("text.txt");
+        var download = await storage.DownloadAsync("text.txt", TestContext.Current.CancellationToken);
         download.IsSuccess.ShouldBeTrue();
         using var reader = new StreamReader(download.Value.FileStream);
-        (await reader.ReadToEndAsync()).ShouldBe("hello world");
+        (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("hello world");
 
         var listed = new List<BlobMetadata>();
-        await foreach (var item in storage.GetBlobMetadataListAsync())
+        await foreach (var item in storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken))
         {
             listed.Add(item);
         }
@@ -75,7 +75,7 @@ public class CloudDriveStorageTests
             RootPath = "root"
         });
 
-        var result = await storage.RemoveContainerAsync();
+        var result = await storage.RemoveContainerAsync(TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeFalse();
     }
 
@@ -89,27 +89,27 @@ public class CloudDriveStorageTests
             RootFolderId = "root"
         });
 
-        var uploadResult = await storage.UploadAsync("drive content", options => options.FileName = "data.bin");
+        var uploadResult = await storage.UploadAsync("drive content", options => options.FileName = "data.bin", TestContext.Current.CancellationToken);
         uploadResult.IsSuccess.ShouldBeTrue();
         uploadResult.Value.FullName.ShouldBe("data.bin");
         uploadResult.Value.Container.ShouldBe("root");
 
-        var exists = await storage.ExistsAsync("data.bin");
+        var exists = await storage.ExistsAsync("data.bin", TestContext.Current.CancellationToken);
         exists.IsSuccess.ShouldBeTrue();
         exists.Value.ShouldBeTrue();
 
-        var metadata = await storage.GetBlobMetadataAsync("data.bin");
+        var metadata = await storage.GetBlobMetadataAsync("data.bin", TestContext.Current.CancellationToken);
         metadata.IsSuccess.ShouldBeTrue();
         metadata.Value.FullName.ShouldBe("data.bin");
         metadata.Value.Container.ShouldBe("root");
 
-        var download = await storage.DownloadAsync("data.bin");
+        var download = await storage.DownloadAsync("data.bin", TestContext.Current.CancellationToken);
         download.IsSuccess.ShouldBeTrue();
         using var reader = new StreamReader(download.Value.FileStream);
-        (await reader.ReadToEndAsync()).ShouldBe("drive content");
+        (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("drive content");
 
         var listed = new List<BlobMetadata>();
-        await foreach (var item in storage.GetBlobMetadataListAsync())
+        await foreach (var item in storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken))
         {
             listed.Add(item);
         }
@@ -127,30 +127,30 @@ public class CloudDriveStorageTests
             RootPath = "/apps/demo"
         });
 
-        var uploadResult = await storage.UploadAsync("dropbox payload", options => options.FileName = "file.json");
+        var uploadResult = await storage.UploadAsync("dropbox payload", options => options.FileName = "file.json", TestContext.Current.CancellationToken);
         uploadResult.IsSuccess.ShouldBeTrue();
         uploadResult.Value.FullName.ShouldBe("file.json");
         uploadResult.Value.Container.ShouldBe("/apps/demo");
         uploadResult.Value.MimeType.ShouldBe("application/json");
 
-        var exists = await storage.ExistsAsync("file.json");
+        var exists = await storage.ExistsAsync("file.json", TestContext.Current.CancellationToken);
         exists.IsSuccess.ShouldBeTrue();
         exists.Value.ShouldBeTrue();
 
-        var metadata = await storage.GetBlobMetadataAsync("file.json");
+        var metadata = await storage.GetBlobMetadataAsync("file.json", TestContext.Current.CancellationToken);
         metadata.IsSuccess.ShouldBeTrue();
         metadata.Value.Name.ShouldBe("file.json");
         metadata.Value.FullName.ShouldBe("file.json");
         metadata.Value.Container.ShouldBe("/apps/demo");
         metadata.Value.MimeType.ShouldBe("application/json");
 
-        var download = await storage.DownloadAsync("file.json");
+        var download = await storage.DownloadAsync("file.json", TestContext.Current.CancellationToken);
         download.IsSuccess.ShouldBeTrue();
         using var reader = new StreamReader(download.Value.FileStream);
-        (await reader.ReadToEndAsync()).ShouldBe("dropbox payload");
+        (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("dropbox payload");
 
         var listed = new List<BlobMetadata>();
-        await foreach (var item in storage.GetBlobMetadataListAsync())
+        await foreach (var item in storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken))
         {
             listed.Add(item);
         }
@@ -173,29 +173,29 @@ public class CloudDriveStorageTests
         {
             options.Directory = "dir";
             options.FileName = "a.txt";
-        })).IsSuccess.ShouldBeTrue();
+        }, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
         (await storage.UploadAsync("dir-2", options =>
         {
             options.Directory = "dir";
             options.FileName = "b.txt";
-        })).IsSuccess.ShouldBeTrue();
+        }, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
-        (await storage.UploadAsync("keep", options => options.FileName = "keep.txt")).IsSuccess.ShouldBeTrue();
+        (await storage.UploadAsync("keep", options => options.FileName = "keep.txt", TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
-        var deleteResult = await storage.DeleteDirectoryAsync("dir");
+        var deleteResult = await storage.DeleteDirectoryAsync("dir", TestContext.Current.CancellationToken);
         deleteResult.IsSuccess.ShouldBeTrue();
 
-        var dirAExists = await storage.ExistsAsync("dir/a.txt");
+        var dirAExists = await storage.ExistsAsync("dir/a.txt", TestContext.Current.CancellationToken);
         dirAExists.IsSuccess.ShouldBeTrue();
         dirAExists.Value.ShouldBeFalse();
 
-        var keepExists = await storage.ExistsAsync("keep.txt");
+        var keepExists = await storage.ExistsAsync("keep.txt", TestContext.Current.CancellationToken);
         keepExists.IsSuccess.ShouldBeTrue();
         keepExists.Value.ShouldBeTrue();
 
         var listed = new List<BlobMetadata>();
-        await foreach (var item in storage.GetBlobMetadataListAsync("dir"))
+        await foreach (var item in storage.GetBlobMetadataListAsync("dir", TestContext.Current.CancellationToken))
         {
             listed.Add(item);
         }
@@ -217,29 +217,29 @@ public class CloudDriveStorageTests
         {
             options.Directory = "dir";
             options.FileName = "a.txt";
-        })).IsSuccess.ShouldBeTrue();
+        }, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
         (await storage.UploadAsync("dir-2", options =>
         {
             options.Directory = "dir";
             options.FileName = "b.txt";
-        })).IsSuccess.ShouldBeTrue();
+        }, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
-        (await storage.UploadAsync("keep", options => options.FileName = "keep.txt")).IsSuccess.ShouldBeTrue();
+        (await storage.UploadAsync("keep", options => options.FileName = "keep.txt", TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
-        var deleteResult = await storage.DeleteDirectoryAsync("dir");
+        var deleteResult = await storage.DeleteDirectoryAsync("dir", TestContext.Current.CancellationToken);
         deleteResult.IsSuccess.ShouldBeTrue();
 
-        var dirAExists = await storage.ExistsAsync("dir/a.txt");
+        var dirAExists = await storage.ExistsAsync("dir/a.txt", TestContext.Current.CancellationToken);
         dirAExists.IsSuccess.ShouldBeTrue();
         dirAExists.Value.ShouldBeFalse();
 
-        var keepExists = await storage.ExistsAsync("keep.txt");
+        var keepExists = await storage.ExistsAsync("keep.txt", TestContext.Current.CancellationToken);
         keepExists.IsSuccess.ShouldBeTrue();
         keepExists.Value.ShouldBeTrue();
 
         var listed = new List<BlobMetadata>();
-        await foreach (var item in storage.GetBlobMetadataListAsync("dir"))
+        await foreach (var item in storage.GetBlobMetadataListAsync("dir", TestContext.Current.CancellationToken))
         {
             listed.Add(item);
         }
@@ -261,29 +261,29 @@ public class CloudDriveStorageTests
         {
             options.Directory = "dir";
             options.FileName = "a.txt";
-        })).IsSuccess.ShouldBeTrue();
+        }, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
         (await storage.UploadAsync("dir-2", options =>
         {
             options.Directory = "dir";
             options.FileName = "b.txt";
-        })).IsSuccess.ShouldBeTrue();
+        }, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
-        (await storage.UploadAsync("keep", options => options.FileName = "keep.txt")).IsSuccess.ShouldBeTrue();
+        (await storage.UploadAsync("keep", options => options.FileName = "keep.txt", TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
 
-        var deleteResult = await storage.DeleteDirectoryAsync("dir");
+        var deleteResult = await storage.DeleteDirectoryAsync("dir", TestContext.Current.CancellationToken);
         deleteResult.IsSuccess.ShouldBeTrue();
 
-        var dirAExists = await storage.ExistsAsync("dir/a.txt");
+        var dirAExists = await storage.ExistsAsync("dir/a.txt", TestContext.Current.CancellationToken);
         dirAExists.IsSuccess.ShouldBeTrue();
         dirAExists.Value.ShouldBeFalse();
 
-        var keepExists = await storage.ExistsAsync("keep.txt");
+        var keepExists = await storage.ExistsAsync("keep.txt", TestContext.Current.CancellationToken);
         keepExists.IsSuccess.ShouldBeTrue();
         keepExists.Value.ShouldBeTrue();
 
         var listed = new List<BlobMetadata>();
-        await foreach (var item in storage.GetBlobMetadataListAsync("dir"))
+        await foreach (var item in storage.GetBlobMetadataListAsync("dir", TestContext.Current.CancellationToken))
         {
             listed.Add(item);
         }

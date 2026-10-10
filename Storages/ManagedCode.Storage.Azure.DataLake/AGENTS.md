@@ -50,3 +50,7 @@ Parent: `../../AGENTS.md`
 - Keep default and keyed DI registrations aligned with StorageFactory conventions and the provider-specific interface exposure.
 - Do not leak vendor SDK types outside provider-specific options, interfaces, or client wrappers.
 - Preserve Data Lake filesystem and path hierarchy semantics; do not flatten them into blob-style assumptions.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- `AzureDataLakeStorage` already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

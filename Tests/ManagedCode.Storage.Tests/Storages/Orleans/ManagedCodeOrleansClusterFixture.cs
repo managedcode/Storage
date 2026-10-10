@@ -53,7 +53,7 @@ public sealed class ManagedCodeOrleansClusterFixture : IAsyncLifetime
 
     public TestCluster Cluster { get; private set; } = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _fileSystemRoot = Path.Combine(
             Path.GetTempPath(),
@@ -66,8 +66,7 @@ public sealed class ManagedCodeOrleansClusterFixture : IAsyncLifetime
             .Build();
 
         _localStackContainer = AwsContainerFactory.Create();
-        _gcpContainer = new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
-            .Build();
+        _gcpContainer = GcsContainerFactory.Create();
         _sftpContainer = SftpContainerFactory.Create();
 
         await Task.WhenAll(
@@ -95,7 +94,7 @@ public sealed class ManagedCodeOrleansClusterFixture : IAsyncLifetime
         await EnsureContainersCreatedAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         ManagedCodeOrleansClusterSettings.Reset();
 

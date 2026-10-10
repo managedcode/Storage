@@ -15,7 +15,7 @@ public abstract class DownloadTests<T> : BaseContainer<T> where T : IContainer
         var fileInfo = await UploadTestFileAsync();
 
         // Act
-        var result = await Storage.DownloadAsync(fileInfo.Name);
+        var result = await Storage.DownloadAsync(fileInfo.Name, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -24,6 +24,6 @@ public abstract class DownloadTests<T> : BaseContainer<T> where T : IContainer
             .Length
             .ShouldBe(fileInfo.Length);
 
-        await Storage.DeleteAsync(fileInfo.Name);
+        await Storage.DeleteAsync(fileInfo.Name, TestContext.Current.CancellationToken);
     }
 }

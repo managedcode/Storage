@@ -13,20 +13,20 @@ public sealed class FileSystemVirtualFileSystemFixture : IVirtualFileSystemFixtu
 
     public VirtualFileSystemCapabilities Capabilities { get; } = new();
 
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
         Directory.CreateDirectory(_rootPath);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         if (Directory.Exists(_rootPath))
         {
             Directory.Delete(_rootPath, recursive: true);
         }
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     public async Task<VirtualFileSystemTestContext> CreateContextAsync()
