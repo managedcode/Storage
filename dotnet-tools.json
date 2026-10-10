@@ -8,6 +8,13 @@
         "playwright"
       ],
       "rollForward": false
+    },
+    "roslynk": {
+      "version": "2.1.0",
+      "commands": [
+        "roslynk"
+      ],
+      "rollForward": false
     }
   }
 }
