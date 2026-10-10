@@ -24,13 +24,13 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var uploadContent = FileHelper.GenerateRandomFileContent();
 
         // Act
-        var result = await Storage.UploadAsync(uploadContent);
+        var result = await Storage.UploadAsync(uploadContent, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
             .ShouldBeTrue();
 
-        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
+        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name, TestContext.Current.CancellationToken);
         downloadedResult.IsSuccess
             .ShouldBeTrue();
     }
@@ -44,13 +44,13 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         using var stream = new MemoryStream(byteArray);
 
         // Act
-        var result = await Storage.UploadAsync(stream);
+        var result = await Storage.UploadAsync(stream, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
             .ShouldBeTrue();
 
-        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name);
+        var downloadedResult = await Storage.DownloadAsync(result.Value!.Name, TestContext.Current.CancellationToken);
         downloadedResult.IsSuccess
             .ShouldBeTrue();
     }
@@ -60,7 +60,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     {
         var file = await GetTestFileAsync();
         await using var stream = file.OpenRead();
-        var uploadResult = await Storage.UploadAsync(stream);
+        var uploadResult = await Storage.UploadAsync(stream, TestContext.Current.CancellationToken);
         uploadResult.IsSuccess
             .ShouldBeTrue();
     }
@@ -69,8 +69,8 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     public async Task ArrayUploadAsyncTest()
     {
         var file = await GetTestFileAsync();
-        var bytes = await File.ReadAllBytesAsync(file.FullName);
-        var uploadResult = await Storage.UploadAsync(bytes);
+        var bytes = await File.ReadAllBytesAsync(file.FullName, TestContext.Current.CancellationToken);
+        var uploadResult = await Storage.UploadAsync(bytes, TestContext.Current.CancellationToken);
         uploadResult.IsSuccess
             .ShouldBeTrue();
     }
@@ -79,8 +79,8 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     public async Task StringUploadAsyncTest()
     {
         var file = await GetTestFileAsync();
-        var text = await File.ReadAllTextAsync(file.FullName);
-        var uploadResult = await Storage.UploadAsync(text);
+        var text = await File.ReadAllTextAsync(file.FullName, TestContext.Current.CancellationToken);
+        var uploadResult = await Storage.UploadAsync(text, TestContext.Current.CancellationToken);
         uploadResult.IsSuccess
             .ShouldBeTrue();
     }
@@ -89,11 +89,11 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
     public async Task FileInfoUploadAsyncTest()
     {
         var file = await GetTestFileAsync();
-        var uploadResult = await Storage.UploadAsync(file);
+        var uploadResult = await Storage.UploadAsync(file, TestContext.Current.CancellationToken);
         uploadResult.IsSuccess
             .ShouldBeTrue();
 
-        var downloadResult = await Storage.DownloadAsync(uploadResult.Value!.Name);
+        var downloadResult = await Storage.DownloadAsync(uploadResult.Value!.Name, TestContext.Current.CancellationToken);
         downloadResult.IsSuccess
             .ShouldBeTrue();
     }
@@ -110,8 +110,8 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         using var stream = new MemoryStream(byteArray);
 
         // Act
-        var result = await Storage.UploadAsync(stream, new UploadOptions { FileName = fileName, Directory = directory });
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
+        var result = await Storage.UploadAsync(stream, new UploadOptions { FileName = fileName, Directory = directory }, TestContext.Current.CancellationToken);
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory }, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -131,8 +131,8 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var byteArray = Encoding.ASCII.GetBytes(uploadContent);
 
         // Act
-        var result = await Storage.UploadAsync(byteArray, new UploadOptions { FileName = fileName, Directory = directory });
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
+        var result = await Storage.UploadAsync(byteArray, new UploadOptions { FileName = fileName, Directory = directory }, TestContext.Current.CancellationToken);
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory }, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -140,7 +140,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         downloadedResult.IsSuccess
             .ShouldBeTrue();
 
-        await Storage.DeleteAsync(fileName);
+        await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -152,8 +152,8 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var fileName = FileHelper.GenerateRandomFileName();
 
         // Act
-        var result = await Storage.UploadAsync(uploadContent, new UploadOptions { FileName = fileName, Directory = directory });
-        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory });
+        var result = await Storage.UploadAsync(uploadContent, new UploadOptions { FileName = fileName, Directory = directory }, TestContext.Current.CancellationToken);
+        var downloadedResult = await Storage.DownloadAsync(new DownloadOptions { FileName = fileName, Directory = directory }, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess
@@ -161,7 +161,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         downloadedResult.IsSuccess
             .ShouldBeTrue();
 
-        await Storage.DeleteAsync(fileName);
+        await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
     }
 
     [Theory]
@@ -177,7 +177,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         var containerResult = await Storage.CreateContainerAsync(CancellationToken.None);
         containerResult.IsSuccess.ShouldBeTrue();
 
-        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin", cancellationToken: TestContext.Current.CancellationToken);
         var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
         var fileName = Path.GetFileName(localFile.FilePath);
 
@@ -273,7 +273,7 @@ public abstract class UploadTests<T> : BaseContainer<T> where T : IContainer
         {
             Thread.Sleep(50);
             cts.Cancel();
-        });
+        }, TestContext.Current.CancellationToken);
         var uploadTask = Storage.UploadAsync(stream, cancellationToken: cts.Token);
 
         await Task.WhenAll(uploadTask, cancellationTask);

@@ -19,7 +19,7 @@ namespace ManagedCode.Storage.VirtualFileSystem.Implementations;
 /// <summary>
 /// Implementation of a virtual file
 /// </summary>
-public class VirtualFile : IVirtualFile
+public partial class VirtualFile : IVirtualFile
 {
     private readonly IVirtualFileSystem _vfs;
     private readonly IMetadataManager _metadataManager;
@@ -190,27 +190,6 @@ public class VirtualFile : IVirtualFile
     }
 
     /// <inheritdoc />
-    public async ValueTask<byte[]> ReadRangeAsync(
-        long offset,
-        int count,
-        CancellationToken cancellationToken = default)
-    {
-        _logger.LogDebug("Reading range: {Path}, offset: {Offset}, count: {Count}", _path, offset, count);
-
-        await using var stream = await OpenReadAsync(
-            new StreamOptions { RangeStart = offset, RangeEnd = offset + count - 1 },
-            cancellationToken);
-
-        var buffer = new byte[count];
-        var bytesRead = await stream.ReadAsync(buffer, 0, count, cancellationToken);
-
-        if (bytesRead < count)
-        {
-            Array.Resize(ref buffer, bytesRead);
-        }
-
-        return buffer;
-    }
 
     /// <inheritdoc />
     public async Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)

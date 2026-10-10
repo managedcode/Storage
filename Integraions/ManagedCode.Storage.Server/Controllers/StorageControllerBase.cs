@@ -157,7 +157,7 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
 
     /// <inheritdoc />
     [HttpPost("upload-chunks/upload"), ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
-    public virtual async Task<Result> UploadChunkAsync([FromForm] FileUploadPayload payload, CancellationToken cancellationToken)
+    public virtual async Task<Result> UploadChunkAsync([FromForm(Name = "")] FileUploadPayload payload, CancellationToken cancellationToken)
     {
         if (payload?.File is null)
         {

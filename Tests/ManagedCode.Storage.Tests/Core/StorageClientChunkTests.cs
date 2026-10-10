@@ -64,7 +64,7 @@ public class StorageClientChunkTests
         {
             progressEvents.Add(progress);
             finalProgress = progress;
-        });
+        }, TestContext.Current.CancellationToken);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(expectedChecksum);
@@ -105,7 +105,7 @@ public class StorageClientChunkTests
         client.SetChunkSize(256 * 1024);
 
         using var payloadStream = new MemoryStream(payload, writable: false);
-        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null, TestContext.Current.CancellationToken);
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(expectedChecksum);
@@ -145,7 +145,7 @@ public class StorageClientChunkTests
         };
 
         using var payloadStream = new MemoryStream(payload, writable: false);
-        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(expectedChecksum);
     }
@@ -178,7 +178,7 @@ public class StorageClientChunkTests
         };
 
         using var payloadStream = new MemoryStream(payload, writable: false);
-        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeFalse();
     }
 
@@ -222,7 +222,7 @@ public class StorageClientChunkTests
         };
 
         using var payloadStream = new MemoryStream(payload, writable: false);
-        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null);
+        var result = await client.UploadLargeFile(payloadStream, UploadUrl, CompleteUrl, null, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBe(expectedChecksum);
     }

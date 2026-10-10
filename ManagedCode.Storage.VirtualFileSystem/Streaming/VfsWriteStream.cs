@@ -95,6 +95,7 @@ internal class VfsWriteStream : Stream
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error uploading data during stream dispose: {BlobKey}", _blobKey);
+                throw;
             }
             finally
             {

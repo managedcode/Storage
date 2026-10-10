@@ -35,13 +35,13 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
-        var file = await vfs.GetFileAsync(new VfsPath("/docs/readme.txt"));
-        await file.WriteAllTextAsync("Hello Virtual FS!");
+        var file = await vfs.GetFileAsync(new VfsPath("/docs/readme.txt"), TestContext.Current.CancellationToken);
+        await file.WriteAllTextAsync("Hello Virtual FS!", cancellationToken: TestContext.Current.CancellationToken);
 
-        var content = await file.ReadAllTextAsync();
+        var content = await file.ReadAllTextAsync(cancellationToken: TestContext.Current.CancellationToken);
         content.ShouldBe("Hello Virtual FS!");
 
-        (await vfs.FileExistsAsync(new VfsPath("/docs/readme.txt"))).ShouldBeTrue();
+        (await vfs.FileExistsAsync(new VfsPath("/docs/readme.txt"), TestContext.Current.CancellationToken)).ShouldBeTrue();
     }
 
     [Fact]
@@ -52,16 +52,16 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         var metadataManager = context.MetadataManager;
 
         var path = new VfsPath("/cache/sample.txt");
-        var file = await vfs.GetFileAsync(path);
-        await file.WriteAllTextAsync("cached");
+        var file = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
+        await file.WriteAllTextAsync("cached", cancellationToken: TestContext.Current.CancellationToken);
 
         metadataManager.ResetCounters();
-        var firstCheck = await vfs.FileExistsAsync(path);
+        var firstCheck = await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken);
         firstCheck.ShouldBeTrue();
         metadataManager.BlobInfoRequests.ShouldBe(0);
 
         metadataManager.ResetCounters();
-        var secondCheck = await vfs.FileExistsAsync(path);
+        var secondCheck = await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken);
         secondCheck.ShouldBeTrue();
         metadataManager.BlobInfoRequests.ShouldBe(0);
     }
@@ -71,16 +71,16 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
     {
         await using var context = await CreateContextAsync();
         var path = new VfsPath($"/fresh/{Guid.NewGuid():N}.txt");
-        (await context.FileSystem.FileExistsAsync(path)).ShouldBeFalse();
+        (await context.FileSystem.FileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeFalse();
 
         var upload = await context.Storage.UploadAsync("created externally", new UploadOptions
         {
             FileName = path.ToBlobKey()
-        });
+        }, TestContext.Current.CancellationToken);
         upload.ThrowIfProblem();
 
-        (await context.FileSystem.StorageFileExistsAsync(path)).ShouldBeTrue();
-        (await context.FileSystem.FileExistsAsync(path)).ShouldBeFalse();
+        (await context.FileSystem.StorageFileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeTrue();
+        (await context.FileSystem.FileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeFalse();
     }
 
     [Fact]
@@ -97,16 +97,16 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
 
         for (var i = 0; i < 5; i++)
         {
-            var file = await vfs.GetFileAsync(new VfsPath($"/reports/file-{i}.txt"));
-            await file.WriteAllTextAsync($"report-{i}");
+            var file = await vfs.GetFileAsync(new VfsPath($"/reports/file-{i}.txt"), TestContext.Current.CancellationToken);
+            await file.WriteAllTextAsync($"report-{i}", cancellationToken: TestContext.Current.CancellationToken);
         }
 
-        var sampleMetadata = await metadataManager.GetBlobInfoAsync("reports/file-0.txt");
+        var sampleMetadata = await metadataManager.GetBlobInfoAsync("reports/file-0.txt", TestContext.Current.CancellationToken);
         sampleMetadata.ShouldNotBeNull();
         sampleMetadata!.FullName.ShouldBe("reports/file-0.txt");
 
         var entries = new List<IVfsNode>();
-        await foreach (var entry in vfs.ListAsync(new VfsPath("/reports"), new ListOptions { PageSize = 2 }))
+        await foreach (var entry in vfs.ListAsync(new VfsPath("/reports"), new ListOptions { PageSize = 2 }, TestContext.Current.CancellationToken))
         {
             entries.Add(entry);
         }
@@ -128,22 +128,22 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         var metadataManager = context.MetadataManager;
 
         var path = new VfsPath("/temp/remove.me");
-        var file = await vfs.GetFileAsync(path);
-        await file.WriteAllTextAsync("to delete");
+        var file = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
+        await file.WriteAllTextAsync("to delete", cancellationToken: TestContext.Current.CancellationToken);
 
         metadataManager.ResetCounters();
-        await vfs.FileExistsAsync(path);
+        await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken);
         metadataManager.ResetCounters();
 
-        var deleted = await file.DeleteAsync();
+        var deleted = await file.DeleteAsync(TestContext.Current.CancellationToken);
         deleted.ShouldBeTrue();
 
-        var existsAfterDelete = await vfs.FileExistsAsync(path);
+        var existsAfterDelete = await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken);
         existsAfterDelete.ShouldBeFalse();
         metadataManager.BlobInfoRequests.ShouldBe(0);
 
         metadataManager.ResetCounters();
-        var secondCheck = await vfs.FileExistsAsync(path);
+        var secondCheck = await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken);
         secondCheck.ShouldBeFalse();
         metadataManager.BlobInfoRequests.ShouldBe(0);
     }
@@ -155,7 +155,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         var path = new VfsPath($"/missing/{Guid.NewGuid():N}.txt");
 
         context.MetadataManager.ResetCounters();
-        var exists = await context.FileSystem.FileExistsAsync(path);
+        var exists = await context.FileSystem.FileExistsAsync(path, TestContext.Current.CancellationToken);
 
         exists.ShouldBeFalse();
         context.MetadataManager.BlobInfoRequests.ShouldBe(0);
@@ -168,22 +168,22 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         var vfs = context.FileSystem;
         var metadataManager = context.MetadataManager;
 
-        var file = await vfs.GetFileAsync(new VfsPath("/meta/info.txt"));
-        await file.WriteAllTextAsync("meta");
+        var file = await vfs.GetFileAsync(new VfsPath("/meta/info.txt"), TestContext.Current.CancellationToken);
+        await file.WriteAllTextAsync("meta", cancellationToken: TestContext.Current.CancellationToken);
 
         await file.SetMetadataAsync(new Dictionary<string, string>
         {
             ["owner"] = "qa",
             ["region"] = "eu"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         metadataManager.ResetCounters();
-        var metadata = await file.GetMetadataAsync();
+        var metadata = await file.GetMetadataAsync(TestContext.Current.CancellationToken);
         metadata.ShouldContainKey("owner");
         metadataManager.CustomMetadataRequests.ShouldBe(1);
 
         metadataManager.ResetCounters();
-        var secondLookup = await file.GetMetadataAsync();
+        var secondLookup = await file.GetMetadataAsync(TestContext.Current.CancellationToken);
         secondLookup.ShouldContainKey("region");
         metadataManager.CustomMetadataRequests.ShouldBe(0);
     }
@@ -199,18 +199,18 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         var vfs = context.FileSystem;
 
         var path = new VfsPath($"/international/{directoryName}/{fileName}.txt");
-        var file = await vfs.GetFileAsync(path);
+        var file = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
 
-        await file.WriteAllTextAsync(content);
+        await file.WriteAllTextAsync(content, cancellationToken: TestContext.Current.CancellationToken);
 
-        (await file.ReadAllTextAsync()).ShouldBe(content);
+        (await file.ReadAllTextAsync(cancellationToken: TestContext.Current.CancellationToken)).ShouldBe(content);
         file.Path.GetFileName().ShouldBe($"{fileName}.txt");
         file.Path.GetFileNameWithoutExtension().ShouldBe(fileName);
         file.Path.GetExtension().ShouldBe(".txt");
         file.Path.GetParent().Value.ShouldBe($"/international/{directoryName}");
         file.Path.ToBlobKey().ShouldBe($"international/{directoryName}/{fileName}.txt");
 
-        (await vfs.FileExistsAsync(path)).ShouldBeTrue();
+        (await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeTrue();
 
         if (Capabilities.SupportsListing)
         {
@@ -220,7 +220,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
                 IncludeFiles = true,
                 IncludeDirectories = false,
                 Recursive = false
-            }))
+            }, TestContext.Current.CancellationToken))
             {
                 entries.Add(entry);
             }
@@ -228,8 +228,8 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
             entries.ShouldContain(e => e.Path.Value == path.Value);
         }
 
-        (await file.DeleteAsync()).ShouldBeTrue();
-        (await vfs.FileExistsAsync(path)).ShouldBeFalse();
+        (await file.DeleteAsync(TestContext.Current.CancellationToken)).ShouldBeTrue();
+        (await vfs.FileExistsAsync(path, TestContext.Current.CancellationToken)).ShouldBeFalse();
     }
 
     [Fact]
@@ -243,14 +243,14 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
-        await (await vfs.GetFileAsync(new VfsPath("/nonrec/root.txt"))).WriteAllTextAsync("root");
-        await (await vfs.GetFileAsync(new VfsPath("/nonrec/sub/nested.txt"))).WriteAllTextAsync("child");
+        await (await vfs.GetFileAsync(new VfsPath("/nonrec/root.txt"), TestContext.Current.CancellationToken)).WriteAllTextAsync("root", cancellationToken: TestContext.Current.CancellationToken);
+        await (await vfs.GetFileAsync(new VfsPath("/nonrec/sub/nested.txt"), TestContext.Current.CancellationToken)).WriteAllTextAsync("child", cancellationToken: TestContext.Current.CancellationToken);
 
-        var result = await vfs.DeleteDirectoryAsync(new VfsPath("/nonrec"), recursive: false);
+        var result = await vfs.DeleteDirectoryAsync(new VfsPath("/nonrec"), recursive: false, cancellationToken: TestContext.Current.CancellationToken);
         result.FilesDeleted.ShouldBe(1);
 
-        (await vfs.FileExistsAsync(new VfsPath("/nonrec/root.txt"))).ShouldBeFalse();
-        (await vfs.FileExistsAsync(new VfsPath("/nonrec/sub/nested.txt"))).ShouldBeTrue();
+        (await vfs.FileExistsAsync(new VfsPath("/nonrec/root.txt"), TestContext.Current.CancellationToken)).ShouldBeFalse();
+        (await vfs.FileExistsAsync(new VfsPath("/nonrec/sub/nested.txt"), TestContext.Current.CancellationToken)).ShouldBeTrue();
     }
 
     [Fact]
@@ -264,14 +264,14 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
-        await (await vfs.GetFileAsync(new VfsPath("/recursive/root.txt"))).WriteAllTextAsync("root");
-        await (await vfs.GetFileAsync(new VfsPath("/recursive/sub/nested.txt"))).WriteAllTextAsync("child");
+        await (await vfs.GetFileAsync(new VfsPath("/recursive/root.txt"), TestContext.Current.CancellationToken)).WriteAllTextAsync("root", cancellationToken: TestContext.Current.CancellationToken);
+        await (await vfs.GetFileAsync(new VfsPath("/recursive/sub/nested.txt"), TestContext.Current.CancellationToken)).WriteAllTextAsync("child", cancellationToken: TestContext.Current.CancellationToken);
 
-        var result = await vfs.DeleteDirectoryAsync(new VfsPath("/recursive"), recursive: true);
+        var result = await vfs.DeleteDirectoryAsync(new VfsPath("/recursive"), recursive: true, cancellationToken: TestContext.Current.CancellationToken);
         result.FilesDeleted.ShouldBe(2);
 
-        (await vfs.FileExistsAsync(new VfsPath("/recursive/root.txt"))).ShouldBeFalse();
-        (await vfs.FileExistsAsync(new VfsPath("/recursive/sub/nested.txt"))).ShouldBeFalse();
+        (await vfs.FileExistsAsync(new VfsPath("/recursive/root.txt"), TestContext.Current.CancellationToken)).ShouldBeFalse();
+        (await vfs.FileExistsAsync(new VfsPath("/recursive/sub/nested.txt"), TestContext.Current.CancellationToken)).ShouldBeFalse();
     }
 
     [Fact]
@@ -287,16 +287,16 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
 
         var sourcePath = new VfsPath("/docs/report.pdf");
         var destPath = new VfsPath("/archive/report.pdf");
-        var file = await vfs.GetFileAsync(sourcePath);
-        await file.WriteAllBytesAsync(new byte[] { 1, 2, 3, 4 });
+        var file = await vfs.GetFileAsync(sourcePath, TestContext.Current.CancellationToken);
+        await file.WriteAllBytesAsync(new byte[] { 1, 2, 3, 4 }, cancellationToken: TestContext.Current.CancellationToken);
 
-        await vfs.MoveAsync(sourcePath, destPath);
+        await vfs.MoveAsync(sourcePath, destPath, cancellationToken: TestContext.Current.CancellationToken);
 
-        var moved = await vfs.GetFileAsync(destPath);
-        var bytes = await moved.ReadAllBytesAsync();
+        var moved = await vfs.GetFileAsync(destPath, TestContext.Current.CancellationToken);
+        var bytes = await moved.ReadAllBytesAsync(TestContext.Current.CancellationToken);
         bytes.ShouldBe(new byte[] { 1, 2, 3, 4 });
 
-        var original = await vfs.GetFileAsync(sourcePath);
+        var original = await vfs.GetFileAsync(sourcePath, TestContext.Current.CancellationToken);
         await Should.ThrowAsync<VfsException>(() => original.ReadAllBytesAsync());
     }
 
@@ -313,24 +313,24 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
 
         for (var i = 0; i < 3; i++)
         {
-            var file = await vfs.GetFileAsync(new VfsPath($"/src/data-{i}.bin"));
-            await file.WriteAllBytesAsync(new byte[] { (byte)i });
+            var file = await vfs.GetFileAsync(new VfsPath($"/src/data-{i}.bin"), TestContext.Current.CancellationToken);
+            await file.WriteAllBytesAsync(new byte[] { (byte)i }, cancellationToken: TestContext.Current.CancellationToken);
         }
 
-        var nested = await vfs.GetFileAsync(new VfsPath("/src/nested/item.txt"));
-        await nested.WriteAllTextAsync("nested");
+        var nested = await vfs.GetFileAsync(new VfsPath("/src/nested/item.txt"), TestContext.Current.CancellationToken);
+        await nested.WriteAllTextAsync("nested", cancellationToken: TestContext.Current.CancellationToken);
 
-        await vfs.CopyAsync(new VfsPath("/src"), new VfsPath("/dest"), new CopyOptions { Recursive = true, Overwrite = true });
+        await vfs.CopyAsync(new VfsPath("/src"), new VfsPath("/dest"), new CopyOptions { Recursive = true, Overwrite = true }, cancellationToken: TestContext.Current.CancellationToken);
 
         for (var i = 0; i < 3; i++)
         {
-            var copied = await vfs.GetFileAsync(new VfsPath($"/dest/data-{i}.bin"));
-            var bytes = await copied.ReadAllBytesAsync();
+            var copied = await vfs.GetFileAsync(new VfsPath($"/dest/data-{i}.bin"), TestContext.Current.CancellationToken);
+            var bytes = await copied.ReadAllBytesAsync(TestContext.Current.CancellationToken);
             bytes.ShouldBe(new byte[] { (byte)i });
         }
 
-        var copiedNested = await vfs.GetFileAsync(new VfsPath("/dest/nested/item.txt"));
-        (await copiedNested.ReadAllTextAsync()).ShouldBe("nested");
+        var copiedNested = await vfs.GetFileAsync(new VfsPath("/dest/nested/item.txt"), TestContext.Current.CancellationToken);
+        (await copiedNested.ReadAllTextAsync(cancellationToken: TestContext.Current.CancellationToken)).ShouldBe("nested");
     }
 
     [Fact]
@@ -339,10 +339,10 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
-        var file = await vfs.GetFileAsync(new VfsPath("/ranges/sample.bin"));
-        await file.WriteAllBytesAsync(Enumerable.Range(0, 100).Select(i => (byte)i).ToArray());
+        var file = await vfs.GetFileAsync(new VfsPath("/ranges/sample.bin"), TestContext.Current.CancellationToken);
+        await file.WriteAllBytesAsync(Enumerable.Range(0, 100).Select(i => (byte)i).ToArray(), cancellationToken: TestContext.Current.CancellationToken);
 
-        var slice = await file.ReadRangeAsync(0, 5);
+        var slice = await file.ReadRangeAsync(0, 5, TestContext.Current.CancellationToken);
         slice.ShouldBe(new byte[] { 0, 1, 2, 3, 4 });
     }
 
@@ -357,8 +357,8 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
-        await (await vfs.GetFileAsync(new VfsPath("/filter/a.txt"))).WriteAllTextAsync("A");
-        await (await vfs.GetFileAsync(new VfsPath("/filter/b.log"))).WriteAllTextAsync("B");
+        await (await vfs.GetFileAsync(new VfsPath("/filter/a.txt"), TestContext.Current.CancellationToken)).WriteAllTextAsync("A", cancellationToken: TestContext.Current.CancellationToken);
+        await (await vfs.GetFileAsync(new VfsPath("/filter/b.log"), TestContext.Current.CancellationToken)).WriteAllTextAsync("B", cancellationToken: TestContext.Current.CancellationToken);
 
         var entries = new List<IVfsNode>();
         await foreach (var entry in vfs.ListAsync(new VfsPath("/filter"), new ListOptions
@@ -366,7 +366,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
             IncludeDirectories = false,
             IncludeFiles = true,
             Recursive = false
-        }))
+        }, TestContext.Current.CancellationToken))
         {
             entries.Add(entry);
         }
@@ -389,11 +389,11 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
-        await (await vfs.GetFileAsync(new VfsPath("/stats/one.txt"))).WriteAllTextAsync("one");
-        await (await vfs.GetFileAsync(new VfsPath("/stats/two.bin"))).WriteAllBytesAsync(new byte[] { 1, 2, 3, 4 });
+        await (await vfs.GetFileAsync(new VfsPath("/stats/one.txt"), TestContext.Current.CancellationToken)).WriteAllTextAsync("one", cancellationToken: TestContext.Current.CancellationToken);
+        await (await vfs.GetFileAsync(new VfsPath("/stats/two.bin"), TestContext.Current.CancellationToken)).WriteAllBytesAsync(new byte[] { 1, 2, 3, 4 }, cancellationToken: TestContext.Current.CancellationToken);
 
-        var directory = await vfs.GetDirectoryAsync(new VfsPath("/stats"));
-        var stats = await directory.GetStatsAsync();
+        var directory = await vfs.GetDirectoryAsync(new VfsPath("/stats"), TestContext.Current.CancellationToken);
+        var stats = await directory.GetStatsAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         stats.FileCount.ShouldBeGreaterThanOrEqualTo(2);
         stats.FilesByExtension.ShouldContainKey(".txt");
@@ -412,11 +412,11 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
         await using var context = await CreateContextAsync();
         var vfs = context.FileSystem;
 
-        await using var sourceFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        await using var sourceFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin", cancellationToken: TestContext.Current.CancellationToken);
         var expectedCrc = LargeFileTestHelper.CalculateFileCrc(sourceFile.FilePath);
 
         var path = new VfsPath($"/large/{Guid.NewGuid():N}.bin");
-        var file = await vfs.GetFileAsync(path);
+        var file = await vfs.GetFileAsync(path, TestContext.Current.CancellationToken);
 
         await using (var writeStream = await file.OpenWriteAsync(cancellationToken: CancellationToken.None))
         await using (var readSource = File.OpenRead(sourceFile.FilePath))
@@ -430,7 +430,7 @@ public abstract class VirtualFileSystemTests<TFixture> : IClassFixture<TFixture>
             actualCrc.ShouldBe(expectedCrc);
         }
 
-        (await file.DeleteAsync()).ShouldBeTrue();
+        (await file.DeleteAsync(TestContext.Current.CancellationToken)).ShouldBeTrue();
     }
 }
 

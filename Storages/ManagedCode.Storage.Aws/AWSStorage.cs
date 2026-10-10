@@ -238,6 +238,9 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
             var isExist = await ExistsAsync(ExistOptions.FromBaseOptions(options), cancellationToken);
 
+            if (isExist.IsFailed)
+                return isExist;
+
             if (!isExist.Value)
                 return Result<bool>.Succeed(false);
 

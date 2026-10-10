@@ -46,7 +46,7 @@ public class FileSystemSecurityTests : IDisposable
         };
 
         // Act
-        var result = await _storage.UploadAsync(stream, options);
+        var result = await _storage.UploadAsync(stream, options, TestContext.Current.CancellationToken);
 
         // Assert - security validation should reject path traversal
         result.IsFailed.ShouldBeTrue();
@@ -65,7 +65,7 @@ public class FileSystemSecurityTests : IDisposable
         };
 
         // Act
-        var result = await _storage.UploadAsync(stream, options);
+        var result = await _storage.UploadAsync(stream, options, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -87,7 +87,7 @@ public class FileSystemSecurityTests : IDisposable
         };
 
         // Act
-        var result = await _storage.UploadAsync(stream, options);
+        var result = await _storage.UploadAsync(stream, options, TestContext.Current.CancellationToken);
 
         // Assert - security validation should reject path traversal
         result.IsFailed.ShouldBeTrue();
@@ -107,7 +107,7 @@ public class FileSystemSecurityTests : IDisposable
         };
 
         // Act
-        var result = await _storage.UploadAsync(stream, options);
+        var result = await _storage.UploadAsync(stream, options, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();

@@ -28,7 +28,7 @@ public class AzureBlobTests : BlobTests<AzuriteContainer>
             },
             logger);
 
-        var result = await storage.GetBlobMetadataAsync($"missing-{Guid.NewGuid():N}.txt");
+        var result = await storage.GetBlobMetadataAsync($"missing-{Guid.NewGuid():N}.txt", TestContext.Current.CancellationToken);
 
         result.IsSuccess.ShouldBeFalse();
         logger.Exceptions.ShouldBeEmpty();

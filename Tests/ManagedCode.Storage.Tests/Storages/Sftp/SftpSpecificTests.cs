@@ -34,7 +34,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
     public async Task TestConnectionAsync_ShouldReturnSuccess()
     {
         var storage = ServiceProvider.GetRequiredService<ISftpStorage>();
-        var result = await storage.TestConnectionAsync();
+        var result = await storage.TestConnectionAsync(TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldBeTrue();
     }
@@ -43,7 +43,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
     public async Task GetWorkingDirectoryAsync_ShouldReturnDirectory()
     {
         var storage = ServiceProvider.GetRequiredService<ISftpStorage>();
-        var result = await storage.GetWorkingDirectoryAsync();
+        var result = await storage.GetWorkingDirectoryAsync(TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         result.Value.ShouldNotBeNullOrEmpty();
     }
@@ -52,7 +52,8 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
     public async Task ChangeWorkingDirectoryAsync_ShouldSucceed()
     {
         var storage = ServiceProvider.GetRequiredService<ISftpStorage>();
-        var result = await storage.ChangeWorkingDirectoryAsync(SftpContainerFactory.RemoteDirectory);
+        (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        var result = await storage.ChangeWorkingDirectoryAsync(SftpContainerFactory.RemoteDirectory, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
     }
 
@@ -64,20 +65,20 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         var content = "Stream based upload";
 
         await using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-        var writeResult = await storage.OpenWriteStreamAsync(fileName);
+        var writeResult = await storage.OpenWriteStreamAsync(fileName, TestContext.Current.CancellationToken);
         writeResult.IsSuccess.ShouldBeTrue();
         var destinationStream = writeResult.Value ?? throw new InvalidOperationException("Write stream is null");
 
         await using (destinationStream)
         {
-            await uploadStream.CopyToAsync(destinationStream);
+            await uploadStream.CopyToAsync(destinationStream, TestContext.Current.CancellationToken);
         }
 
-        var readResult = await storage.OpenReadStreamAsync(fileName);
+        var readResult = await storage.OpenReadStreamAsync(fileName, TestContext.Current.CancellationToken);
         readResult.IsSuccess.ShouldBeTrue();
         var sourceStream = readResult.Value ?? throw new InvalidOperationException("Read stream is null");
         using var reader = new StreamReader(sourceStream);
-        var downloadedContent = await reader.ReadToEndAsync();
+        var downloadedContent = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
 
         downloadedContent.ShouldBe(content);
     }
@@ -88,11 +89,11 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         var storage = ServiceProvider.GetRequiredService<ISftpStorage>();
         var fileName = "list-test.txt";
 
-        var uploadResult = await storage.UploadAsync("List test", options => options.FileName = fileName);
+        var uploadResult = await storage.UploadAsync("List test", options => options.FileName = fileName, TestContext.Current.CancellationToken);
         uploadResult.IsSuccess.ShouldBeTrue();
 
         var found = false;
-        await foreach (var item in storage.GetBlobMetadataListAsync())
+        await foreach (var item in storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken))
         {
             if (item.Name == fileName)
             {
@@ -115,16 +116,16 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         {
             options.FileName = fileName;
             options.Directory = directory;
-        });
+        }, TestContext.Current.CancellationToken);
 
-        var deleteResult = await storage.DeleteDirectoryAsync(directory);
+        var deleteResult = await storage.DeleteDirectoryAsync(directory, TestContext.Current.CancellationToken);
         deleteResult.IsSuccess.ShouldBeTrue();
 
         var existsResult = await storage.ExistsAsync(new ExistOptions
         {
             Directory = directory,
             FileName = fileName
-        });
+        }, TestContext.Current.CancellationToken);
 
         existsResult.IsSuccess.ShouldBeTrue();
         existsResult.Value.ShouldBeFalse();
@@ -138,7 +139,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         var bytes = new byte[1024 * 1024];
         new Random().NextBytes(bytes);
 
-        var result = await storage.UploadAsync(bytes, options => options.FileName = fileName);
+        var result = await storage.UploadAsync(bytes, options => options.FileName = fileName, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
     }
 }

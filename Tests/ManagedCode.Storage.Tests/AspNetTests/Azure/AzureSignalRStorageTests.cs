@@ -13,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Microsoft.AspNetCore.SignalR;
-using Xunit.Abstractions;
 
 namespace ManagedCode.Storage.Tests.AspNetTests.Azure;
 
@@ -84,7 +83,7 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         status.IsCompleted.ShouldBeTrue();
         status.Metadata.ShouldNotBeNull();
 
-        var exists = await storage.ExistsAsync(status.Metadata!.FullName ?? status.Metadata.Name ?? descriptor.FileName);
+        var exists = await storage.ExistsAsync(status.Metadata!.FullName ?? status.Metadata.Name ?? descriptor.FileName, TestContext.Current.CancellationToken);
         exists.IsSuccess.ShouldBeTrue();
         exists.Value.ShouldBeTrue();
 
@@ -92,8 +91,8 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         lastProgress!.IsCompleted.ShouldBeTrue();
         lastProgress.BytesTransferred.ShouldBeGreaterThan(0);
 
-        await storage.DeleteAsync(status.Metadata.FullName ?? status.Metadata.Name ?? descriptor.FileName);
-        await client.DisconnectAsync();
+        await storage.DeleteAsync(status.Metadata.FullName ?? status.Metadata.Name ?? descriptor.FileName, TestContext.Current.CancellationToken);
+        await client.DisconnectAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -120,12 +119,12 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
 
         var expectedCrc = Crc32Helper.CalculateFileCrc(localFile.FilePath);
         memory.Position = 0;
-        await using var downloadedFile = await LocalFile.FromStreamAsync(memory, Environment.CurrentDirectory, Guid.NewGuid().ToString("N") + localFile.FileInfo.Extension);
+        await using var downloadedFile = await LocalFile.FromStreamAsync(memory, Environment.CurrentDirectory, Guid.NewGuid().ToString("N") + localFile.FileInfo.Extension, TestContext.Current.CancellationToken);
         var downloadedCrc = Crc32Helper.CalculateFileCrc(downloadedFile.FilePath);
         downloadedCrc.ShouldBe(expectedCrc);
 
-        await storage.DeleteAsync(localFile.FileInfo.Name);
-        await client.DisconnectAsync();
+        await storage.DeleteAsync(localFile.FileInfo.Name, TestContext.Current.CancellationToken);
+        await client.DisconnectAsync(TestContext.Current.CancellationToken);
     }
 
     [Theory]
@@ -137,7 +136,7 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
     {
         var sizeBytes = LargeFileTestHelper.ResolveSizeBytes(gigabytes);
 
-        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin");
+        await using var localFile = await LargeFileTestHelper.CreateRandomFileAsync(sizeBytes, ".bin", cancellationToken: TestContext.Current.CancellationToken);
         var expectedCrc = LargeFileTestHelper.CalculateFileCrc(localFile.FilePath);
 
         var descriptor = CreateDescriptor(Path.GetFileName(localFile.FilePath), "application/octet-stream", sizeBytes);
@@ -174,6 +173,6 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         downloadedCrc.ShouldBe(expectedCrc);
 
         await storage.DeleteAsync(remoteName, CancellationToken.None);
-        await client.DisconnectAsync();
+        await client.DisconnectAsync(TestContext.Current.CancellationToken);
     }
 }

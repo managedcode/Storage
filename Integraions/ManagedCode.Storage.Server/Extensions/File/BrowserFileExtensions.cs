@@ -10,10 +10,16 @@ public static class BrowserFileExtensions
     public static async Task<LocalFile> ToLocalFileAsync(this IBrowserFile formFile, CancellationToken cancellationToken = default)
     {
         var localFile = LocalFile.FromRandomNameWithExtension(formFile.Name);
-        await using (var stream = formFile.OpenReadStream(cancellationToken: cancellationToken))
+        try
         {
+            await using var stream = formFile.OpenReadStream(maxAllowedSize: formFile.Size, cancellationToken: cancellationToken);
             await localFile.CopyFromStreamAsync(stream, cancellationToken);
+            return localFile;
         }
-        return localFile;
+        catch
+        {
+            await localFile.DisposeAsync();
+            throw;
+        }
     }
 }

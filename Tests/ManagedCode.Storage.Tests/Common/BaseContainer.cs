@@ -19,7 +19,7 @@ public abstract class BaseContainer<T> : IAsyncLifetime where T : IContainer
     protected ServiceProvider ServiceProvider { get; private set; } = default!;
 
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         Container = Build();
         await Container.StartAsync();
@@ -27,10 +27,10 @@ public abstract class BaseContainer<T> : IAsyncLifetime where T : IContainer
         Storage = ServiceProvider.GetService<IStorage>()!;
     }
 
-    public Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return Container.DisposeAsync()
-            .AsTask();
+        await Container.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 
     protected abstract T Build();

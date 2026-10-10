@@ -329,13 +329,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
 
             if (hasLegalHold && !_lockedFiles.ContainsKey(filePath))
             {
-                var file = await DownloadAsync(filePath, cancellationToken);
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (file.IsFailed)
-                    return Result.Fail(file.Problem);
-
-                var fileStream = File.OpenRead(file.Value!.FilePath);
+                var fileStream = File.OpenRead(filePath);
                 if (!OperatingSystem.IsMacOS())
                     fileStream.Lock(0, fileStream.Length);
 

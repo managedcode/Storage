@@ -53,3 +53,7 @@ Parent: `../AGENTS.md`
 - Preserve keyed and default storage resolution semantics because VFS, server integrations, and Orleans depend on them.
 
 - Shared low-level storage contracts and value types belong in `ManagedCode.Storage.Core.Primitives`; do not introduce a generic `Objects` namespace.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- `LocalFile` and `BaseStorage` already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

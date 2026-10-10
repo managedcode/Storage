@@ -23,7 +23,7 @@ public sealed class VerifiedObjectUploadBytesTests
         };
         var bytes = Encoding.UTF8.GetBytes("{\"value\":1}");
 
-        var result = await storage.WriteBytesIfAbsentOrSameAsync("payload.json", bytes, options);
+        var result = await storage.WriteBytesIfAbsentOrSameAsync("payload.json", bytes, options, cancellationToken: TestContext.Current.CancellationToken);
 
         result.ReusedExisting.ShouldBeTrue();
         result.Info.Length.ShouldBe(bytes.Length);

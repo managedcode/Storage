@@ -19,7 +19,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
     private readonly string _root = Path.Combine(Environment.CurrentDirectory, "managedcode-chunk-tests", Guid.NewGuid().ToString());
     private ChunkUploadOptions _options = null!;
 
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
         Directory.CreateDirectory(_root);
         _options = new ChunkUploadOptions
@@ -28,24 +28,25 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             SessionTtl = TimeSpan.FromMinutes(10),
             MaxActiveSessions = 4
         };
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         if (Directory.Exists(_root))
         {
             Directory.Delete(_root, recursive: true);
         }
 
-        return Task.CompletedTask;
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 
     [Fact]
     public async Task CompleteAsync_WithCommit_ShouldMergeChunksAndUpload()
     {
         using var storage = CreateStorage();
-        await storage.CreateContainerAsync();
+        await storage.CreateContainerAsync(TestContext.Current.CancellationToken);
 
         var service = new ChunkUploadService(_options);
         var uploadId = Guid.NewGuid().ToString("N");
@@ -79,7 +80,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
                     TotalChunks = totalChunks,
                     FileSize = payload.Length
                 }
-            }, default);
+            }, TestContext.Current.CancellationToken);
 
             appendResult.IsSuccess.ShouldBeTrue();
         }
@@ -89,25 +90,25 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             UploadId = uploadId,
             FileName = fileName,
             CommitToStorage = true
-        }, storage, default);
+        }, storage, TestContext.Current.CancellationToken);
 
         completeResult.IsSuccess.ShouldBeTrue();
         var completion = completeResult.Value ?? throw new InvalidOperationException("Completion result is null");
         completion.Checksum.ShouldBe(checksum);
         completion.Metadata.ShouldNotBeNull();
 
-        var metadata = await storage.GetBlobMetadataAsync(fileName);
+        var metadata = await storage.GetBlobMetadataAsync(fileName, TestContext.Current.CancellationToken);
         metadata.IsSuccess.ShouldBeTrue();
         (metadata.Value ?? throw new InvalidOperationException("Metadata value is null")).Length.ShouldBe((ulong)payload.Length);
 
-        var download = await storage.DownloadAsync(fileName);
+        var download = await storage.DownloadAsync(fileName, TestContext.Current.CancellationToken);
         download.IsSuccess.ShouldBeTrue();
         var downloadedFile = download.Value ?? throw new InvalidOperationException("Download returned null file");
         using var ms = new MemoryStream();
-        await downloadedFile.FileStream.CopyToAsync(ms);
+        await downloadedFile.FileStream.CopyToAsync(ms, TestContext.Current.CancellationToken);
         ms.ToArray().ShouldBe(payload);
 
-        var repeat = await service.CompleteAsync(new ChunkUploadCompleteRequest { UploadId = uploadId }, storage, default);
+        var repeat = await service.CompleteAsync(new ChunkUploadCompleteRequest { UploadId = uploadId }, storage, TestContext.Current.CancellationToken);
         repeat.IsSuccess.ShouldBeFalse();
     }
 
@@ -131,7 +132,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
                 ChunkSize = chunkBytes.Length,
                 TotalChunks = 1
             }
-        }, default);
+        }, TestContext.Current.CancellationToken);
 
         append.IsSuccess.ShouldBeTrue();
         var workingDirectory = Path.Combine(_options.TempPath, uploadId);
@@ -183,7 +184,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
     public async Task CompleteAsync_WithLargeChunkSize_ShouldPreserveChecksum()
     {
         using var storage = CreateStorage();
-        await storage.CreateContainerAsync();
+        await storage.CreateContainerAsync(TestContext.Current.CancellationToken);
 
         var service = new ChunkUploadService(_options);
         var uploadId = Guid.NewGuid().ToString("N");
@@ -208,7 +209,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
                 TotalChunks = 1,
                 FileSize = payload.Length
             }
-        }, default);
+        }, TestContext.Current.CancellationToken);
 
         appendResult.IsSuccess.ShouldBeTrue();
 
@@ -217,7 +218,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
             UploadId = uploadId,
             FileName = fileName,
             CommitToStorage = true
-        }, storage, default);
+        }, storage, TestContext.Current.CancellationToken);
 
         complete.IsSuccess.ShouldBeTrue();
         (complete.Value ?? throw new InvalidOperationException("Completion result is null")).Checksum.ShouldBe(checksum);

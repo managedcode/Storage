@@ -55,7 +55,7 @@ public class GraphOneDriveClientTests
         await using (var downloaded = await storageClient.DownloadAsync("me", "work/doc.txt", CancellationToken.None))
         using (var reader = new StreamReader(downloaded))
         {
-            (await reader.ReadToEndAsync()).ShouldBe("graph payload");
+            (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("graph payload");
         }
 
         var listed = new List<DriveItem>();

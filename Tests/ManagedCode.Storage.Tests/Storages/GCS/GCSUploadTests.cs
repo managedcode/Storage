@@ -11,8 +11,7 @@ public class GCSUploadTests : UploadTests<FakeGcsServerContainer>
 {
     protected override FakeGcsServerContainer Build()
     {
-        return new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
-            .Build();
+        return GcsContainerFactory.Create("filesystem");
     }
 
     protected override ServiceProvider ConfigureServices()
@@ -20,14 +19,13 @@ public class GCSUploadTests : UploadTests<FakeGcsServerContainer>
         return GCSConfigurator.ConfigureServices(Container.GetConnectionString());
     }
 
-    [Theory(Skip = "FakeGcsServer currently throttles uploads beyond ~10MB; skip large-stream scenario for emulator")]
+    [Theory]
     [Trait("Category", "LargeFile")]
     [InlineData(1)]
     [InlineData(3)]
     [InlineData(5)]
     public override Task UploadAsync_LargeStream_ShouldRoundTrip(int gigabytes)
     {
-        _ = gigabytes;
-        return Task.CompletedTask;
+        return base.UploadAsync_LargeStream_ShouldRoundTrip(gigabytes);
     }
 }

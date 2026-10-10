@@ -1,0 +1,87 @@
+@page "/coverage-playground"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using System.IO
+@using System.Threading
+@using ManagedCode.Storage.Browser
+@using ManagedCode.Storage.Browser.Extensions
+@using ManagedCode.Storage.Browser.Options
+@using ManagedCode.Storage.Core
+@using ManagedCode.Storage.Core.Models
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.JSInterop
+@inject IJSRuntime JsRuntime
+
+<button id="run-contracts" @onclick="RunAsync">Run browser storage contracts</button>
+<p id="contract-status">@_status</p>
+
+@code {
+    private string _status = "ready";
+
+    private async Task RunAsync()
+    {
+        try
+        {
+            for (var registration = 0; registration < 6; registration++)
+                await VerifyRegistrationAsync(registration);
+            _status = "all-contracts-passed";
+        }
+        catch (Exception exception) { _status = exception.ToString(); }
+    }
+
+    private async Task VerifyRegistrationAsync(int registration)
+    {
+        var options = new BrowserStorageOptions { DatabaseName = "browser-contract-" + Guid.NewGuid().ToString("N"), ContainerName = "contract", ChunkSizeBytes = 1024 };
+        void Configure(BrowserStorageOptions target)
+        { target.DatabaseName = options.DatabaseName; target.ContainerName = options.ContainerName; target.ChunkSizeBytes = options.ChunkSizeBytes; }
+        var services = new ServiceCollection();
+        services.AddSingleton(JsRuntime);
+        switch (registration)
+        {
+            case 0: services.AddBrowserStorage(options); break;
+            case 1: services.AddBrowserStorage(Configure); break;
+            case 2: services.AddBrowserStorageAsDefault(options); break;
+            case 3: services.AddBrowserStorageAsDefault(Configure); break;
+            case 4: services.AddBrowserStorage("browser", Configure); break;
+            case 5: services.AddBrowserStorageAsDefault("browser", Configure); break;
+        }
+        await using var provider = services.BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+        var storage = registration >= 4 ? scope.ServiceProvider.GetRequiredKeyedService<IBrowserStorage>("browser") : scope.ServiceProvider.GetRequiredService<IBrowserStorage>();
+        Require((await storage.CreateContainerAsync()).IsSuccess, "create");
+        var bytes = new byte[4107];
+        Random.Shared.NextBytes(bytes);
+        Require((await storage.UploadAsync(bytes, new UploadOptions { FileName = "content.bin" })).IsSuccess, "upload");
+        var downloaded = await storage.DownloadAsync("content.bin");
+        Require(downloaded.IsSuccess, "download");
+        await using (var local = downloaded.Value!)
+            Require((await local.ReadAllBytesAsync()).SequenceEqual(bytes), "download bytes");
+        Require((await storage.SetLegalHoldAsync(true, "content.bin")).IsSuccess, "set hold");
+        Require((await storage.HasLegalHoldAsync("content.bin")).Value, "hold persisted");
+        Require((await storage.SetLegalHoldAsync(false, "content.bin")).IsSuccess, "clear hold");
+        var opened = await storage.GetStreamAsync("content.bin");
+        Require(opened.IsSuccess, "open");
+        await using (var stream = opened.Value!)
+        {
+            Require(stream.Length == bytes.Length && stream.CanSeek && !stream.CanWrite, "capabilities");
+            Require(stream.Seek(3, SeekOrigin.Begin) == 3, "seek begin");
+            var buffer = new byte[9];
+            Require(await stream.ReadAsync(buffer.AsMemory()) == 9 && buffer.SequenceEqual(bytes[3..12]), "range bytes");
+            Require(stream.Seek(-3, SeekOrigin.End) == bytes.Length - 3, "seek end");
+            Require(await stream.ReadAsync(buffer.AsMemory()) == 3 && buffer[..3].SequenceEqual(bytes[^3..]), "short read");
+            Require(await stream.ReadAsync(buffer.AsMemory()) == 0, "eof");
+            stream.Seek(0, SeekOrigin.Begin);
+            Require(await Task.Run(() => stream.Read(buffer, 1, 3)) == 3 && buffer[1..4].SequenceEqual(bytes[..3]), "sync read");
+        }
+        var missing = await storage.DownloadAsync("missing");
+        Require(missing.IsFailed, "missing download");
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+        Require((await storage.UploadAsync(bytes, new UploadOptions { FileName = "canceled" }, canceled.Token)).IsFailed, "cancellation");
+        Require((await storage.GetBlobMetadataAsync("missing")).IsFailed, "missing metadata");
+        Require((await storage.RemoveContainerAsync()).IsSuccess, "remove");
+        await ((BrowserStorage)storage).DisposeAsync();
+    }
+
+    private static void Require(bool condition, string operation)
+    { if (!condition) throw new InvalidOperationException("Browser contract failed: " + operation); }
+}

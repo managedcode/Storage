@@ -23,7 +23,7 @@ public class LocalFileTests
         await using (var stream = localFile.OpenReadStream())
         {
             var buffer = new byte[payload.Length];
-            var read = await stream.ReadAsync(buffer, 0, buffer.Length);
+            var read = await stream.ReadAsync(buffer, 0, buffer.Length, TestContext.Current.CancellationToken);
             read.ShouldBe(buffer.Length);
             buffer.ShouldBe(payload);
         }
@@ -43,7 +43,7 @@ public class LocalFileTests
         await using (var stream = localFile.OpenReadStream(disposeOwner: false))
         {
             var reader = new StreamReader(stream, leaveOpen: false);
-            var text = await reader.ReadToEndAsync();
+            var text = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
             text.ShouldBe("pong");
         }
 

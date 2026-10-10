@@ -18,13 +18,13 @@ public sealed class CartographStorageAdditionalFlowTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        await using var original = (await storage.GetStreamAsync("root.txt")).Value.ShouldNotBeNull();
+        await using var original = (await storage.GetStreamAsync("root.txt", TestContext.Current.CancellationToken)).Value.ShouldNotBeNull();
         var second = fixture.WriteArtifact("second.ctg", entries => entries[0] = CartographArtifactFixture.Change(entries[0], path: "changed.txt"));
-        (await storage.SetStorageOptions(options => options.ArtifactPath = second)).IsSuccess.ShouldBeTrue();
-        (await storage.ExistsAsync("root.txt")).Value.ShouldBeFalse();
-        (await storage.ExistsAsync("changed.txt")).Value.ShouldBeTrue();
+        (await storage.SetStorageOptions(options => options.ArtifactPath = second, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        (await storage.ExistsAsync("root.txt", TestContext.Current.CancellationToken)).Value.ShouldBeFalse();
+        (await storage.ExistsAsync("changed.txt", TestContext.Current.CancellationToken)).Value.ShouldBeTrue();
         var bytes = new byte[fixture.Files["root.txt"].Length];
-        await original.ReadExactlyAsync(bytes);
+        await original.ReadExactlyAsync(bytes, TestContext.Current.CancellationToken);
         bytes.ShouldBe(fixture.Files["root.txt"]);
     }
 
@@ -33,16 +33,16 @@ public sealed class CartographStorageAdditionalFlowTests
     {
         using var fixture = new CartographArtifactFixture();
         using var storage = fixture.CreateStorage();
-        await using var stream = (await storage.GetStreamAsync("root.txt")).Value.ShouldNotBeNull();
+        await using var stream = (await storage.GetStreamAsync("root.txt", TestContext.Current.CancellationToken)).Value.ShouldNotBeNull();
         stream.Read(Span<byte>.Empty).ShouldBe(0);
-        (await stream.ReadAsync(Memory<byte>.Empty)).ShouldBe(0);
+        (await stream.ReadAsync(Memory<byte>.Empty, TestContext.Current.CancellationToken)).ShouldBe(0);
         var buffer = new byte[8];
         var count = await stream.ReadAsync(buffer, 2, 3, CancellationToken.None);
         count.ShouldBe(3);
         buffer.AsSpan(2, 3).ToArray().ShouldBe(fixture.Files["root.txt"].AsSpan(0, 3).ToArray());
         buffer[0].ShouldBe((byte)0);
         stream.Position.ShouldBe(3);
-        await stream.FlushAsync();
+        await stream.FlushAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -63,10 +63,10 @@ public sealed class CartographStorageAdditionalFlowTests
         using var fixture = new CartographArtifactFixture();
         var path = fixture.WriteArtifact("empty.ctg", entries => entries.Clear());
         using var storage = fixture.CreateStorage(path);
-        (await storage.CreateContainerAsync()).IsSuccess.ShouldBeTrue();
-        (await storage.ExistsAsync("root.txt")).Value.ShouldBeFalse();
+        (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        (await storage.ExistsAsync("root.txt", TestContext.Current.CancellationToken)).Value.ShouldBeFalse();
         var entries = new List<BlobMetadata>();
-        await foreach (var metadata in storage.GetBlobMetadataListAsync())
+        await foreach (var metadata in storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken))
             entries.Add(metadata);
         entries.ShouldBeEmpty();
     }
@@ -79,7 +79,7 @@ public sealed class CartographStorageAdditionalFlowTests
         writer.AddSegment().AddRecord("arbitrary record bytes"u8);
         writer.Save(fixture.DestinationPath);
         using var storage = fixture.CreateStorage(fixture.DestinationPath);
-        (await storage.CreateContainerAsync()).IsFailed.ShouldBeTrue();
+        (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsFailed.ShouldBeTrue();
     }
 
     [Theory]
@@ -89,15 +89,15 @@ public sealed class CartographStorageAdditionalFlowTests
     {
         using var fixture = new CartographArtifactFixture();
         File.CreateSymbolicLink(fixture.DestinationPath, fixture.ArtifactPath);
-        var original = await File.ReadAllBytesAsync(fixture.ArtifactPath);
+        var original = await File.ReadAllBytesAsync(fixture.ArtifactPath, TestContext.Current.CancellationToken);
         using var storage = fixture.CreateStorage(destinationIsLink ? fixture.ArtifactPath : fixture.DestinationPath);
         var result = await storage.DownloadAsync(new DownloadOptions
         {
             FileName = "root.txt",
             LocalPath = destinationIsLink ? fixture.DestinationPath : fixture.ArtifactPath
-        });
+        }, TestContext.Current.CancellationToken);
         result.IsFailed.ShouldBeTrue();
-        (await File.ReadAllBytesAsync(fixture.ArtifactPath)).ShouldBe(original);
+        (await File.ReadAllBytesAsync(fixture.ArtifactPath, TestContext.Current.CancellationToken)).ShouldBe(original);
     }
 
     [Fact]
@@ -105,10 +105,10 @@ public sealed class CartographStorageAdditionalFlowTests
     {
         using var fixture = new CartographArtifactFixture();
         fixture.CorruptFirstPayload();
-        await File.WriteAllTextAsync(fixture.DestinationPath, "existing destination");
+        await File.WriteAllTextAsync(fixture.DestinationPath, "existing destination", TestContext.Current.CancellationToken);
         using var storage = fixture.CreateStorage();
-        var result = await storage.DownloadAsync(new DownloadOptions { FileName = "root.txt", LocalPath = fixture.DestinationPath });
+        var result = await storage.DownloadAsync(new DownloadOptions { FileName = "root.txt", LocalPath = fixture.DestinationPath }, TestContext.Current.CancellationToken);
         result.IsFailed.ShouldBeTrue();
-        (await File.ReadAllTextAsync(fixture.DestinationPath)).ShouldBe("existing destination");
+        (await File.ReadAllTextAsync(fixture.DestinationPath, TestContext.Current.CancellationToken)).ShouldBe("existing destination");
     }
 }

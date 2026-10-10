@@ -50,3 +50,7 @@ Parent: `../../AGENTS.md`
 - Keep default and keyed DI registrations aligned with StorageFactory conventions and the provider-specific interface exposure.
 - Do not leak vendor SDK types outside provider-specific options, interfaces, or client wrappers.
 - Preserve GCS bucket and object semantics plus credential-driven client creation without leaking Google SDK details across boundaries.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- the existing GCPStorage type already exceeds the inherited size limits. This repair keeps public signatures stable and changes only defects captured by real-runtime regressions. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider semantics and be reviewed separately.

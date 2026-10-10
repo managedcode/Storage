@@ -19,9 +19,9 @@ public sealed class FileSystemReadOnlyContainerTests
 
         try
         {
-            var exists = await storage.ExistsAsync("nested/settings.json");
-            var stream = await storage.GetStreamAsync("nested/settings.json");
-            var metadata = await storage.GetBlobMetadataAsync("nested/settings.json");
+            var exists = await storage.ExistsAsync("nested/settings.json", TestContext.Current.CancellationToken);
+            var stream = await storage.GetStreamAsync("nested/settings.json", TestContext.Current.CancellationToken);
+            var metadata = await storage.GetBlobMetadataAsync("nested/settings.json", TestContext.Current.CancellationToken);
 
             exists.IsSuccess.ShouldBeTrue();
             exists.Value.ShouldBeFalse();
@@ -45,9 +45,9 @@ public sealed class FileSystemReadOnlyContainerTests
 
         try
         {
-            var exists = await storage.ExistsAsync("nested/settings.json");
-            var stream = await storage.GetStreamAsync("nested/settings.json");
-            var metadata = await storage.GetBlobMetadataAsync("nested/settings.json");
+            var exists = await storage.ExistsAsync("nested/settings.json", TestContext.Current.CancellationToken);
+            var stream = await storage.GetStreamAsync("nested/settings.json", TestContext.Current.CancellationToken);
+            var metadata = await storage.GetBlobMetadataAsync("nested/settings.json", TestContext.Current.CancellationToken);
 
             exists.IsSuccess.ShouldBeTrue();
             exists.Value.ShouldBeFalse();
@@ -72,7 +72,7 @@ public sealed class FileSystemReadOnlyContainerTests
             var upload = await storage.UploadAsync(new byte[] { 1, 2, 3 }, new UploadOptions
             {
                 FileName = "nested/settings.json"
-            });
+            }, TestContext.Current.CancellationToken);
 
             upload.IsFailed.ShouldBeTrue();
             Directory.Exists(root).ShouldBeFalse();
@@ -91,7 +91,7 @@ public sealed class FileSystemReadOnlyContainerTests
 
         try
         {
-            var created = await storage.CreateContainerAsync();
+            var created = await storage.CreateContainerAsync(TestContext.Current.CancellationToken);
 
             created.IsSuccess.ShouldBeTrue();
             Directory.Exists(root).ShouldBeTrue();

@@ -22,7 +22,7 @@ public class FormFileExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        var localFile = await formFile.ToLocalFileAsync();
+        var localFile = await formFile.ToLocalFileAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         localFile.FileStream.Length.ShouldBe(formFile.Length);
@@ -38,7 +38,7 @@ public class FormFileExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        var localFile = await formFile.ToLocalFileAsync();
+        var localFile = await formFile.ToLocalFileAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         localFile.FileStream.Length.ShouldBe(formFile.Length);
@@ -61,7 +61,7 @@ public class FormFileExtensionsTests
         }
 
         // Act
-        var localFiles = await collection.ToLocalFilesAsync().ToListAsync();
+        var localFiles = await collection.ToLocalFilesAsync(cancellationToken: TestContext.Current.CancellationToken).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         localFiles.Count.ShouldBe(filesCount);

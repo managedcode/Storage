@@ -52,7 +52,7 @@ public class GoogleDriveClientHttpTests
         await using (var downloaded = await client.DownloadAsync(TestOptions.RootFolderId, "dir/file.txt", TestOptions.SupportsAllDrives, CancellationToken.None))
         using (var reader = new StreamReader(downloaded))
         {
-            (await reader.ReadToEndAsync()).ShouldBe("google payload");
+            (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("google payload");
         }
 
         var listed = new List<DriveFile>();

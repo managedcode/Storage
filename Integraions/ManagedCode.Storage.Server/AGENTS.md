@@ -50,3 +50,7 @@ Parent: `../../AGENTS.md`
 - Base controllers and hubs must stay minimal and customizable; do not hardcode routes, auth policy, or provider-specific behavior.
 - Preserve streaming and chunked-upload paths as incremental flows; do not add whole-file buffering.
 - Keep server contracts aligned with both HTTP and SignalR client packages.
+
+## Scoped Coverage Repair Maintainability Exception
+
+- the existing `StorageControllerBase` source file already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.

@@ -32,6 +32,7 @@ public class GoogleDriveStorageProvider(IServiceProvider serviceProvider, Google
             RootFolderId = defaultOptions.RootFolderId,
             DriveService = defaultOptions.DriveService,
             Client = defaultOptions.Client,
+            SupportsAllDrives = defaultOptions.SupportsAllDrives,
             CreateContainerIfNotExists = defaultOptions.CreateContainerIfNotExists
         };
     }

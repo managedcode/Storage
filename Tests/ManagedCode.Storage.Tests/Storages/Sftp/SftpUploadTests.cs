@@ -23,10 +23,9 @@ public class SftpUploadTests : UploadTests<SftpContainer>
             SftpContainerFactory.RemoteDirectory);
     }
 
-    [Fact(Skip = "Cancellation not working reliably with containerized SFTP server - uploads complete too quickly to cancel")]
+    [Fact]
     public override async Task UploadAsync_WithCancellationToken_BigFile_ShouldCancel()
     {
-        // This method is skipped - the containerized SFTP server completes uploads too quickly to be cancelled effectively
-        await Task.CompletedTask;
+        await base.UploadAsync_WithCancellationToken_BigFile_ShouldCancel();
     }
 }

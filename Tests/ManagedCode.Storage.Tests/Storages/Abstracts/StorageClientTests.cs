@@ -42,7 +42,7 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var fileName = "testFile.txt";
         var apiUrl = "https://loader.com";
 
-        var result = await _storageClient.DownloadFile(fileName, apiUrl);
+        var result = await _storageClient.DownloadFile(fileName, apiUrl, cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsSuccess
             .ShouldBeTrue();
@@ -56,7 +56,7 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var fileName = "testFile.txt";
         var apiUrl = "https://invalid-url.com";
 
-        var result = await _storageClient.DownloadFile(fileName, apiUrl);
+        var result = await _storageClient.DownloadFile(fileName, apiUrl, cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsSuccess
             .ShouldBeFalse();
@@ -69,7 +69,7 @@ public abstract class StorageClientTests<T> : BaseContainer<T> where T : IContai
         var fileName = "testFile.txt";
         var apiUrl = "https://loader.com";
 
-        var result = await _storageClient.DownloadFile(fileName, apiUrl + "/invalid-endpoint");
+        var result = await _storageClient.DownloadFile(fileName, apiUrl + "/invalid-endpoint", cancellationToken: TestContext.Current.CancellationToken);
 
         result.IsSuccess
             .ShouldBeFalse();

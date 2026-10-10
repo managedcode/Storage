@@ -18,13 +18,13 @@ public sealed class VerifiedContentSnapshotTests
         await using var source = new MemoryStream(bytes);
         var digest = Convert.ToHexStringLower(SHA256.HashData(bytes));
 
-        await using var snapshot = await VerifiedContentSnapshot.CreateAsync(source, bytes.Length, digest);
+        await using var snapshot = await VerifiedContentSnapshot.CreateAsync(source, bytes.Length, digest, TestContext.Current.CancellationToken);
 
         snapshot.ShouldNotBeNull();
         snapshot!.CanSeek.ShouldBeTrue();
         snapshot.Position.ShouldBe(0);
         using var result = new MemoryStream();
-        await snapshot.CopyToAsync(result);
+        await snapshot.CopyToAsync(result, TestContext.Current.CancellationToken);
         result.ToArray().ShouldBe(bytes);
     }
 
@@ -37,7 +37,7 @@ public sealed class VerifiedContentSnapshotTests
         await using var source = new MemoryStream(Encoding.UTF8.GetBytes("ab"));
         var digest = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(digestSource)));
 
-        var snapshot = await VerifiedContentSnapshot.CreateAsync(source, expectedLength, digest);
+        var snapshot = await VerifiedContentSnapshot.CreateAsync(source, expectedLength, digest, TestContext.Current.CancellationToken);
 
         snapshot.ShouldBeNull();
     }

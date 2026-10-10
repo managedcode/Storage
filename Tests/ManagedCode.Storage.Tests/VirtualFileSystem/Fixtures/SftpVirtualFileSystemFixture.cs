@@ -21,13 +21,13 @@ public sealed class SftpVirtualFileSystemFixture : IVirtualFileSystemFixture, IA
         SupportsMove: false,
         SupportsDirectoryStats: false);
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _container = SftpContainerFactory.Create();
         await _container.StartAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_container is not null)
         {

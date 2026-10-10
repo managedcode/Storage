@@ -30,7 +30,7 @@ jobs:
       id: version
       run: |
         VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" Directory.Build.props)
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         echo "Version from Directory.Build.props: $VERSION"
 
     - name: Restore dependencies
@@ -45,8 +45,18 @@ jobs:
     - name: Install Playwright browser
       run: dotnet playwright -p Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj install chromium
 
-    - name: Test
-      run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build --verbosity normal --filter "Category!=BrowserStress"
+    - name: Test with production coverage
+      run: dotnet test Tests/ManagedCode.Storage.Tests/ManagedCode.Storage.Tests.csproj --configuration Release --no-build --verbosity normal --filter "Category!=BrowserStress" /p:CollectCoverage=true --logger "trx;LogFileName=storage-tests.trx"
+
+    - name: Preserve coverage and test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-quality-results
+        path: |
+          artifacts/coverage/coverage.*
+          Tests/ManagedCode.Storage.Tests/*.trx
+        if-no-files-found: error
 
     - name: Pack NuGet packages
       run: dotnet pack ManagedCode.Storage.slnx --configuration Release --no-build -p:IncludeSymbols=false -p:SymbolPackageFormat=snupkg --output ./artifacts
@@ -89,6 +99,7 @@ jobs:
 
   publish-nuget:
     name: Publish to NuGet
+    timeout-minutes: 20
     needs:
     - build
     - browser-stress
@@ -116,7 +127,6 @@ jobs:
 
     - name: Publish to NuGet
       id: publish
-      continue-on-error: true
       run: |
         set +e
         OUTPUT=""
@@ -144,12 +154,15 @@ jobs:
         done
 
         if [ "$PUBLISHED" = true ] || echo "$OUTPUT" | grep -q "Your package was pushed"; then
-          echo "published=true" >> $GITHUB_OUTPUT
+          echo "published=true" >> "$GITHUB_OUTPUT"
           echo "At least one package was successfully published"
         else
-          echo "published=false" >> $GITHUB_OUTPUT
+          echo "published=false" >> "$GITHUB_OUTPUT"
           echo "No new packages were published (all already exist)"
         fi
+
+    - name: Verify every package on the public feed
+      run: python3 .github/scripts/verify-published-packages.py ./artifacts "${{ github.sha }}"
 
   create-release:
     name: Create GitHub Release and Tag
@@ -181,12 +194,12 @@ jobs:
 
         if git rev-parse "$TAG" >/dev/null 2>&1; then
           echo "Tag $TAG already exists"
-          echo "tag_exists=true" >> $GITHUB_OUTPUT
+          echo "tag_exists=true" >> "$GITHUB_OUTPUT"
         else
           echo "Creating tag $TAG"
           git tag -a "$TAG" -m "Release $VERSION"
           git push origin "$TAG"
-          echo "tag_exists=false" >> $GITHUB_OUTPUT
+          echo "tag_exists=false" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Get previous tag
@@ -197,7 +210,7 @@ jobs:
         if [ "$PREVIOUS_TAG" = "$CURRENT_TAG" ] || [ -z "$PREVIOUS_TAG" ]; then
           PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^$CURRENT_TAG$" | head -n1 || echo "")
         fi
-        echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+        echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
         echo "Current tag: $CURRENT_TAG"
         echo "Previous tag: $PREVIOUS_TAG"
 
@@ -205,53 +218,49 @@ jobs:
       id: release_notes
       run: |
         VERSION="${{ needs.publish-nuget.outputs.version }}"
-        CURRENT_TAG="v$VERSION"
         PREVIOUS_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
 
-        echo "# Release $VERSION" > release_notes.md
-        echo "" >> release_notes.md
-        echo "Released on $(date +'%Y-%m-%d')" >> release_notes.md
-        echo "" >> release_notes.md
+        {
+          echo "# Release $VERSION"
+          echo ""
+          echo "Released on $(date +'%Y-%m-%d')"
+          echo ""
 
-        if [ -n "$PREVIOUS_TAG" ]; then
-          echo "## 📋 Changes since $PREVIOUS_TAG" >> release_notes.md
-          echo "" >> release_notes.md
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## 📋 Changes since $PREVIOUS_TAG"
+            echo ""
+            echo "### ✨ Features"
+            git log --pretty=format:"- %s (%h)" "$PREVIOUS_TAG..HEAD" --grep="^feat" --grep="^feature" || true
+            echo ""
+            echo "### 🐛 Bug Fixes"
+            git log --pretty=format:"- %s (%h)" "$PREVIOUS_TAG..HEAD" --grep="^fix" --grep="^bugfix" || true
+            echo ""
+            echo "### 📚 Documentation"
+            git log --pretty=format:"- %s (%h)" "$PREVIOUS_TAG..HEAD" --grep="^docs" --grep="^doc" || true
+            echo ""
+            echo "### 🔧 Other Changes"
+            git log --pretty=format:"- %s (%h)" "$PREVIOUS_TAG..HEAD" --invert-grep --grep="^feat" --grep="^feature" --grep="^fix" --grep="^bugfix" --grep="^docs" --grep="^doc" || true
+            echo ""
+          else
+            echo "## 🎉 Initial Release"
+            echo ""
+            echo "### Recent Changes"
+            git log --pretty=format:"- %s (%h)" --max-count=20 || true
+            echo ""
+          fi
 
-          echo "### ✨ Features" >> release_notes.md
-          git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD --grep="^feat" --grep="^feature" >> release_notes.md || true
-          echo "" >> release_notes.md
-
-          echo "### 🐛 Bug Fixes" >> release_notes.md
-          git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD --grep="^fix" --grep="^bugfix" >> release_notes.md || true
-          echo "" >> release_notes.md
-
-          echo "### 📚 Documentation" >> release_notes.md
-          git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD --grep="^docs" --grep="^doc" >> release_notes.md || true
-          echo "" >> release_notes.md
-
-          echo "### 🔧 Other Changes" >> release_notes.md
-          git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD --invert-grep --grep="^feat" --grep="^feature" --grep="^fix" --grep="^bugfix" --grep="^docs" --grep="^doc" >> release_notes.md || true
-          echo "" >> release_notes.md
-        else
-          echo "## 🎉 Initial Release" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "### Recent Changes" >> release_notes.md
-          git log --pretty=format:"- %s (%h)" --max-count=20 >> release_notes.md
-          echo "" >> release_notes.md
-        fi
-
-        echo "" >> release_notes.md
-        echo "## 📦 NuGet Packages" >> release_notes.md
-        echo "" >> release_notes.md
-        for package in ./artifacts/*.nupkg; do
-          PACKAGE_NAME=$(basename "$package" .nupkg)
-          BASE_NAME=$(echo "$PACKAGE_NAME" | sed "s/\.$VERSION//")
-          echo "- [$BASE_NAME v$VERSION](https://www.nuget.org/packages/$BASE_NAME/$VERSION)" >> release_notes.md
-        done
-
-        echo "" >> release_notes.md
-        echo "---" >> release_notes.md
-        echo "*This release was automatically created by GitHub Actions*" >> release_notes.md
+          echo ""
+          echo "## 📦 NuGet Packages"
+          echo ""
+          for package in ./artifacts/*.nupkg; do
+            PACKAGE_NAME=$(basename "$package" .nupkg)
+            BASE_NAME="${PACKAGE_NAME%."$VERSION"}"
+            echo "- [$BASE_NAME v$VERSION](https://www.nuget.org/packages/$BASE_NAME/$VERSION)"
+          done
+          echo ""
+          echo "---"
+          echo "*This release was automatically created by GitHub Actions*"
+        } > release_notes.md
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2

@@ -13,7 +13,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
     [Fact]
     public async Task CreateContainer_ShouldBeSuccess()
     {
-        var container = await Storage.CreateContainerAsync();
+        var container = await Storage.CreateContainerAsync(TestContext.Current.CancellationToken);
         container.IsSuccess
             .ShouldBeTrue();
     }
@@ -27,11 +27,11 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
     [Fact]
     public async Task RemoveContainer_ShouldBeSuccess()
     {
-        var createResult = await Storage.CreateContainerAsync();
+        var createResult = await Storage.CreateContainerAsync(TestContext.Current.CancellationToken);
         createResult.IsSuccess
             .ShouldBeTrue();
 
-        var result = await Storage.RemoveContainerAsync();
+        var result = await Storage.RemoveContainerAsync(TestContext.Current.CancellationToken);
 
         result.IsSuccess
             .ShouldBeTrue(result.Problem?.Detail ?? "Failed without details");
@@ -44,8 +44,7 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
         await UploadTestFileAsync();
         await UploadTestFileAsync();
 
-        var files = await Storage.GetBlobMetadataListAsync()
-            .ToListAsync();
+        var files = await Storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         files.Count
             .ShouldBeGreaterThanOrEqualTo(3);
     }
@@ -58,9 +57,8 @@ public abstract class ContainerTests<T> : BaseContainer<T> where T : IContainer
         await UploadTestFileListAsync(directory, 3);
 
         // Act
-        var result = await Storage.DeleteDirectoryAsync(directory);
-        var blobs = await Storage.GetBlobMetadataListAsync(directory)
-            .ToListAsync();
+        var result = await Storage.DeleteDirectoryAsync(directory, TestContext.Current.CancellationToken);
+        var blobs = await Storage.GetBlobMetadataListAsync(directory, TestContext.Current.CancellationToken).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess

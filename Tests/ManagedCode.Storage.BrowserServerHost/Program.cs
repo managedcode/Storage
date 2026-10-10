@@ -36,4 +36,14 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapPost("/__test/shutdown", (HttpContext context, IHostApplicationLifetime lifetime) =>
+{
+    context.Response.OnCompleted(() =>
+    {
+        lifetime.StopApplication();
+        return Task.CompletedTask;
+    });
+    return Results.Ok();
+});
+
 app.Run();

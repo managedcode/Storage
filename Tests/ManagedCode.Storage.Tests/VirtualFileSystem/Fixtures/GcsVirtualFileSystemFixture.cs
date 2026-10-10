@@ -18,15 +18,14 @@ public sealed class GcsVirtualFileSystemFixture : IVirtualFileSystemFixture, IAs
 
     public VirtualFileSystemCapabilities Capabilities { get; } = new(Enabled: false);
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
-        _container = new FakeGcsServerBuilder(ContainerImages.FakeGCSServer)
-            .Build();
+        _container = GcsContainerFactory.Create();
 
         await _container.StartAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_container is not null)
         {

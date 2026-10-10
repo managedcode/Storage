@@ -17,20 +17,18 @@ namespace ManagedCode.Storage.Azure.DataLake;
 
 public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureDataLakeStorageOptions>, IAzureDataLakeStorage
 {
-    private readonly DataLakeServiceClient _dataLakeServiceClient;
     private readonly ILogger<AzureDataLakeStorage>? _logger;
 
     public AzureDataLakeStorage(AzureDataLakeStorageOptions options, ILogger<AzureDataLakeStorage>? logger = null) : base(options)
     {
         _logger = logger;
-        _dataLakeServiceClient = new DataLakeServiceClient(options.ConnectionString);
     }
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            await _dataLakeServiceClient.DeleteFileSystemAsync(StorageOptions.FileSystem, cancellationToken: cancellationToken);
+            await StorageClient.DeleteAsync(cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             return Result.Succeed();
         }
@@ -139,14 +137,14 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
 
     protected override DataLakeFileSystemClient CreateStorageClient()
     {
-        return _dataLakeServiceClient.GetFileSystemClient(StorageOptions.FileSystem);
+        return new DataLakeServiceClient(StorageOptions.ConnectionString).GetFileSystemClient(StorageOptions.FileSystem);
     }
 
     protected override async Task<Result> CreateContainerInternalAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            await _dataLakeServiceClient.CreateFileSystemAsync(StorageOptions.FileSystem, StorageOptions.PublicAccessType, cancellationToken);
+            await StorageClient.CreateAsync(StorageOptions.PublicAccessType, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             return Result.Succeed();
         }

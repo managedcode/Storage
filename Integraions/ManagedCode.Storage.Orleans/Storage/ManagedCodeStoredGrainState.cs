@@ -6,5 +6,7 @@ public sealed class ManagedCodeStoredGrainState<T>
 
     public string? ETag { get; set; }
 
+    [System.ComponentModel.DefaultValue(true)]
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.Never)]
     public bool RecordExists { get; set; } = true;
 }

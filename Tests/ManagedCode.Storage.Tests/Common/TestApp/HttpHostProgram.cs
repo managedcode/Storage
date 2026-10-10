@@ -8,40 +8,40 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.Storage.Tests.Common.TestApp;
 
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+
 public class HttpHostProgram
 {
-    public static void Main(string[] args)
+    public static Microsoft.Extensions.Hosting.IHostBuilder CreateHostBuilder(string[] args)
     {
-        var options = new WebApplicationOptions
-        {
-            Args = args,
-            ContentRootPath = Directory.GetCurrentDirectory()
-        };
-        var builder = WebApplication.CreateBuilder(options);
-
-        builder.Services.AddControllers();
-        builder.Services.AddSignalR(options =>
-        {
-            options.EnableDetailedErrors = true;
-            options.MaximumReceiveMessageSize = 8L * 1024 * 1024; // 8 MB
-        });
-        builder.Services.AddEndpointsApiExplorer();
-
-        // Configure form options for large file uploads
-        builder.Services.Configure<FormOptions>(options =>
-        {
-            options.ValueLengthLimit = int.MaxValue;
-            options.MultipartBodyLengthLimit = long.MaxValue;
-            options.MultipartHeadersLengthLimit = int.MaxValue;
-        });
-
-
-        var app = builder.Build();
-
-        app.UseRouting();
-        app.MapControllers();
-        app.MapStorageHub();
-
-        app.Run();
+        return Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(web => web
+                .ConfigureServices(services =>
+                {
+                    services.AddControllers();
+                    services.AddSignalR(options =>
+                    {
+                        options.EnableDetailedErrors = true;
+                        options.MaximumReceiveMessageSize = 8L * 1024 * 1024;
+                    });
+                    services.Configure<FormOptions>(options =>
+                    {
+                        options.ValueLengthLimit = int.MaxValue;
+                        options.MultipartBodyLengthLimit = long.MaxValue;
+                        options.MultipartHeadersLengthLimit = int.MaxValue;
+                    });
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapControllers();
+                        endpoints.MapStorageHub();
+                    });
+                }));
     }
+
+    public static void Main(string[] args) => CreateHostBuilder(args).Build().Run();
 }

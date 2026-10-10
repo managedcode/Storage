@@ -109,7 +109,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         {
             await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetBlobClient(fileName);
-            var stream = await blobClient.OpenWriteAsync(false, cancellationToken: cancellationToken);
+            var stream = await blobClient.OpenWriteAsync(overwrite: true, cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             return Result<Stream>.Succeed(stream);
         }
@@ -141,10 +141,31 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
 
     public async Task<Result> SetStorageOptions(Action<IStorageOptions> options, CancellationToken cancellationToken = default)
     {
-        var type = options.GetType()
-            .GetGenericArguments()[0];
-
-        var clonedOptions = JsonSerializer.Deserialize(JsonSerializer.Serialize(StorageOptions), type) as IAzureStorageOptions;
+        IAzureStorageOptions? clonedOptions = StorageOptions switch
+        {
+            AzureStorageOptions source => new AzureStorageOptions
+            {
+                ConnectionString = source.ConnectionString,
+                Container = source.Container,
+                PublicAccessType = source.PublicAccessType,
+                OriginalOptions = source.OriginalOptions,
+                UploadTransferOptions = source.UploadTransferOptions,
+                CreateContainerIfNotExists = source.CreateContainerIfNotExists
+            },
+            AzureStorageCredentialsOptions source => new AzureStorageCredentialsOptions
+            {
+                ServiceUri = source.ServiceUri,
+                AccountName = source.AccountName,
+                ContainerName = source.ContainerName,
+                Credentials = source.Credentials,
+                Container = source.Container,
+                PublicAccessType = source.PublicAccessType,
+                OriginalOptions = source.OriginalOptions,
+                UploadTransferOptions = source.UploadTransferOptions,
+                CreateContainerIfNotExists = source.CreateContainerIfNotExists
+            },
+            _ => null
+        };
         if (clonedOptions is null)
             return Result.Fail(new InvalidOperationException($"Unable to clone {nameof(IAzureStorageOptions)}."));
 

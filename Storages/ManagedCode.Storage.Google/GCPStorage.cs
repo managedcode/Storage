@@ -343,8 +343,11 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
             cancellationToken.ThrowIfCancellationRequested();
             storageObject.TemporaryHold = hasLegalHold;
 
-            await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
+            var updatedObject = await StorageClient.UpdateObjectAsync(storageObject, cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+
+            if ((updatedObject.TemporaryHold ?? false) != hasLegalHold)
+                return Result.Fail("Storage service did not apply the requested temporary hold.");
 
             return Result.Succeed();
         }

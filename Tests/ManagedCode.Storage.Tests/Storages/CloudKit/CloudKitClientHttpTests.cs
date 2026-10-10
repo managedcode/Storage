@@ -54,7 +54,7 @@ public class CloudKitClientHttpTests
         await using (var downloaded = await client.DownloadAsync(recordName, CancellationToken.None))
         using (var reader = new StreamReader(downloaded, Encoding.UTF8))
         {
-            (await reader.ReadToEndAsync()).ShouldBe("cloudkit payload");
+            (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("cloudkit payload");
         }
 
         var listed = new List<CloudKitRecord>();

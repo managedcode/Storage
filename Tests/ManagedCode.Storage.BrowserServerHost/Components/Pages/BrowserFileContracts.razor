@@ -1,0 +1,67 @@
+@page "/browser-file-contracts"
+@rendermode @(new Microsoft.AspNetCore.Components.Web.InteractiveServerRenderMode(prerender: false))
+@using System.Security.Cryptography
+@using ManagedCode.Storage.Core
+@using ManagedCode.Storage.Core.Models
+@using ManagedCode.Storage.FileSystem
+@using ManagedCode.Storage.FileSystem.Options
+@using ManagedCode.Storage.Server.Extensions.Storage
+@using ManagedCode.Storage.Server.Extensions.Controller
+@using ManagedCode.Storage.Server.Controllers
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.Extensions.DependencyInjection
+
+<InputFile id="browser-file" OnChange="RunAsync" />
+<p id="browser-file-status">@_status</p>
+
+@code {
+    private string _status = "ready";
+
+    private async Task RunAsync(InputFileChangeEventArgs args)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "storage-browser-file-contracts", Guid.NewGuid().ToString("N"));
+        var extension = Path.GetExtension(args.File.Name);
+        try
+        {
+            var file = args.File;
+            _status = "reading-source";
+            StateHasChanged();
+            await using var original = file.OpenReadStream(1024 * 1024);
+            var expected = await SHA256.HashDataAsync(original);
+            var storage = new FileSystemStorage(new FileSystemStorageOptions { BaseFolder = root, CreateContainerIfNotExists = true });
+            for (var mode = 0; mode < 6; mode++)
+            {
+                var options = new StorageServerOptions { InMemoryUploadThresholdBytes = mode % 2 == 0 ? 64 : 1024 * 1024 };
+                var name = $"contract-{mode}.bin";
+                if (mode < 2)
+                    (await storage.UploadToStorageAsync(file, new UploadOptions(name), serverOptions: options)).ThrowIfFail();
+                else if (mode < 4)
+                    (await storage.UploadToStorageAsync(file, upload => upload.FileName = name, serverOptions: options)).ThrowIfFail();
+                else
+                {
+                    await using var services = new ServiceCollection().AddSingleton(options).BuildServiceProvider();
+                    var controller = new BrowserUploadController { ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { RequestServices = services } } };
+                    await controller.UploadFromBrowserFileAsync(storage, file, new UploadOptions(name));
+                }
+                var result = await storage.DownloadAsync(name);
+                result.ThrowIfFail();
+                await using var downloaded = result.Value!;
+                await using var read = downloaded.OpenReadStream(disposeOwner: false);
+                if (!(await SHA256.HashDataAsync(read)).AsSpan().SequenceEqual(expected))
+                    throw new InvalidOperationException($"Browser file mismatch in mode {mode}.");
+                if (Directory.GetFiles(Path.GetTempPath(), "*" + extension).Length != 0)
+                    throw new InvalidOperationException($"Temporary browser upload was not disposed in mode {mode}.");
+            }
+            _status = Convert.ToHexString(expected);
+        }
+        catch (Exception exception) { _status = exception.ToString(); }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private sealed class BrowserUploadController : ControllerBase { }
+}

@@ -47,6 +47,7 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
             else if (StorageClient.Exists(root))
             {
                 await DeleteDirectoryRecursiveAsync(root, cancellationToken);
+                StorageClient.DeleteDirectory(root);
             }
 
             IsContainerCreated = false;
@@ -247,14 +248,7 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
     {
         try
         {
-            EnsureConnected();
-
-            var root = NormalizeRemotePath(StorageOptions.RemoteDirectory);
-            if (!StorageClient.Exists(root))
-            {
-                StorageClient.CreateDirectory(root);
-            }
-
+            CreateRootDirectory(cancellationToken);
             return Result.Succeed();
         }
         catch (Exception ex)
@@ -301,11 +295,7 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
                 stream.Position = 0;
             }
 
-            await Task.Run(() =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                StorageClient.UploadFile(stream, remotePath, true);
-            }, cancellationToken);
+            await StorageClient.UploadFileAsync(stream, remotePath, cancellationToken);
 
             var metadataOptions = MetadataOptions.FromBaseOptions(options);
             return await GetBlobMetadataInternalAsync(metadataOptions, cancellationToken);
@@ -451,6 +441,21 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
 
     private string CurrentRoot => NormalizeRemotePath(StorageOptions.RemoteDirectory, allowEmpty: false);
 
+    private void CreateRootDirectory(CancellationToken cancellationToken)
+    {
+        if (!StorageClient.IsConnected) StorageClient.Connect();
+        var root = NormalizeRemotePath(StorageOptions.RemoteDirectory);
+        var path = "/";
+        foreach (var segment in root.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            path = path == "/" ? path + segment : path + "/" + segment;
+            if (!StorageClient.Exists(path)) StorageClient.CreateDirectory(path);
+            if (!StorageClient.GetAttributes(path).IsDirectory)
+                throw new InvalidOperationException($"SFTP container path is not a directory: {path}");
+        }
+    }
+
     private void EnsureConnected()
     {
         if (!StorageClient.IsConnected)
@@ -466,7 +471,7 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
         {
             if (StorageOptions.CreateContainerIfNotExists && !StorageClient.Exists(CurrentRoot))
             {
-                StorageClient.CreateDirectory(CurrentRoot);
+                CreateRootDirectory(CancellationToken.None);
                 StorageClient.ChangeDirectory(CurrentRoot);
             }
             else
@@ -594,7 +599,6 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
             if (entry.IsDirectory)
             {
                 DeleteDirectoryRecursive(entry.FullName, cancellationToken);
-                StorageClient.DeleteDirectory(entry.FullName);
             }
             else
             {
@@ -623,7 +627,6 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
                 if (entry.IsDirectory)
                 {
                     DeleteDirectoryRecursive(entry.FullName, cancellationToken);
-                    StorageClient.DeleteDirectory(entry.FullName);
                 }
                 else
                 {

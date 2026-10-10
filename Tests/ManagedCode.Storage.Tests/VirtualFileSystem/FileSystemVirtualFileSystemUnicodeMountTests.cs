@@ -27,7 +27,7 @@ public sealed class FileSystemVirtualFileSystemUnicodeMountTests
         Directory.CreateDirectory(internationalFolder);
 
         var seededFilePath = Path.Combine(internationalFolder, $"{fileName}.txt");
-        await File.WriteAllTextAsync(seededFilePath, content);
+        await File.WriteAllTextAsync(seededFilePath, content, TestContext.Current.CancellationToken);
 
         var options = new FileSystemStorageOptions
         {
@@ -62,10 +62,10 @@ public sealed class FileSystemVirtualFileSystemUnicodeMountTests
         var vfs = context.FileSystem;
         var expectedPath = new VfsPath($"/international/{directoryName}/{fileName}.txt");
 
-        (await vfs.FileExistsAsync(expectedPath)).ShouldBeTrue();
+        (await vfs.FileExistsAsync(expectedPath, TestContext.Current.CancellationToken)).ShouldBeTrue();
 
-        var file = await vfs.GetFileAsync(expectedPath);
-        var actualContent = await file.ReadAllTextAsync();
+        var file = await vfs.GetFileAsync(expectedPath, TestContext.Current.CancellationToken);
+        var actualContent = await file.ReadAllTextAsync(cancellationToken: TestContext.Current.CancellationToken);
         actualContent.ShouldBe(content);
 
         var entries = new List<IVfsNode>();
@@ -74,7 +74,7 @@ public sealed class FileSystemVirtualFileSystemUnicodeMountTests
             IncludeDirectories = false,
             IncludeFiles = true,
             Recursive = false
-        }))
+        }, TestContext.Current.CancellationToken))
         {
             entries.Add(entry);
         }

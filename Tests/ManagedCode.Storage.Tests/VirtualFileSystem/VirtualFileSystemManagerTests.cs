@@ -19,7 +19,7 @@ public class VirtualFileSystemManagerTests : IAsyncLifetime
     private ServiceProvider _serviceProvider = null!;
     private IStorage _storage = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         Directory.CreateDirectory(_basePath);
         var services = new ServiceCollection();
@@ -42,7 +42,7 @@ public class VirtualFileSystemManagerTests : IAsyncLifetime
         await _storage.CreateContainerAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_serviceProvider.GetService<IVirtualFileSystemManager>() is IAsyncDisposable asyncManager)
         {
@@ -56,17 +56,18 @@ public class VirtualFileSystemManagerTests : IAsyncLifetime
         {
             Directory.Delete(_basePath, recursive: true);
         }
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
     public async Task MountAndResolvePaths_ShouldWork()
     {
         var manager = _serviceProvider.GetRequiredService<IVirtualFileSystemManager>();
-        await manager.MountAsync("/fs", _storage, new VfsOptions { DefaultContainer = string.Empty });
+        await manager.MountAsync("/fs", _storage, new VfsOptions { DefaultContainer = string.Empty }, TestContext.Current.CancellationToken);
 
         var vfs = manager.GetMount("/fs");
-        var file = await vfs.GetFileAsync(new VfsPath("/sample.txt"));
-        await file.WriteAllTextAsync("manager-test");
+        var file = await vfs.GetFileAsync(new VfsPath("/sample.txt"), TestContext.Current.CancellationToken);
+        await file.WriteAllTextAsync("manager-test", cancellationToken: TestContext.Current.CancellationToken);
 
         var (mountPoint, relativePath) = manager.ResolvePath("/fs/sample.txt");
         mountPoint.ShouldBe("/fs");
@@ -75,7 +76,7 @@ public class VirtualFileSystemManagerTests : IAsyncLifetime
         var mounts = manager.GetMounts();
         mounts.ShouldContainKey("/fs");
 
-        await manager.UnmountAsync("/fs");
+        await manager.UnmountAsync("/fs", TestContext.Current.CancellationToken);
         mounts = manager.GetMounts();
         mounts.ShouldBeEmpty();
 

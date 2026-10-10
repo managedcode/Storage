@@ -21,11 +21,11 @@ public static class StorageBrowserFileExtensions
 
         if (formFile.Size > threshold)
         {
-            var localFile = await formFile.ToLocalFileAsync(cancellationToken);
+            await using var localFile = await formFile.ToLocalFileAsync(cancellationToken);
             return await storage.UploadAsync(localFile.FileInfo, options, cancellationToken);
         }
 
-        await using (var stream = formFile.OpenReadStream(cancellationToken: cancellationToken))
+        await using (var stream = formFile.OpenReadStream(maxAllowedSize: threshold, cancellationToken: cancellationToken))
         {
             return await storage.UploadAsync(stream, options, cancellationToken);
         }
@@ -41,11 +41,11 @@ public static class StorageBrowserFileExtensions
 
         if (formFile.Size > threshold)
         {
-            var localFile = await formFile.ToLocalFileAsync(cancellationToken);
+            await using var localFile = await formFile.ToLocalFileAsync(cancellationToken);
             return await storage.UploadAsync(localFile.FileInfo, newOptions, cancellationToken);
         }
 
-        await using (var stream = formFile.OpenReadStream(cancellationToken: cancellationToken))
+        await using (var stream = formFile.OpenReadStream(maxAllowedSize: threshold, cancellationToken: cancellationToken))
         {
             return await storage.UploadAsync(stream, newOptions, cancellationToken);
         }

@@ -41,13 +41,13 @@ public class BlobStream : Stream
 
     public override bool CanRead => false;
     public override bool CanSeek => false;
-    public override bool CanWrite => true;
+    public override bool CanWrite => !_disposed;
     public override long Length => _metadata.Length = Math.Max(_metadata.Length, _metadata.Position);
 
     public override long Position
     {
         get => _metadata.Position;
-        set => throw new NotImplementedException();
+        set => throw new NotSupportedException();
     }
 
     protected override void Dispose(bool disposing)
@@ -60,8 +60,20 @@ public class BlobStream : Stream
 
         if (disposing)
         {
-            Flush(true);
-            CompleteUpload();
+            if (_metadata.Position == 0 && _metadata.UploadId is null)
+            {
+                _s3.PutObjectAsync(new PutObjectRequest
+                {
+                    BucketName = _metadata.BucketName,
+                    Key = _metadata.Key,
+                    InputStream = Stream.Null
+                }).GetAwaiter().GetResult();
+            }
+            else
+            {
+                Flush(true);
+                CompleteUpload();
+            }
         }
 
         _disposed = true;
@@ -70,12 +82,12 @@ public class BlobStream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public override long Seek(long offset, SeekOrigin origin)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public override void SetLength(long value)
@@ -95,6 +107,7 @@ public class BlobStream : Stream
 
     public override void Flush()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         Flush(false);
     }
 
@@ -160,6 +173,13 @@ public class BlobStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(buffer);
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(offset, buffer.Length);
+        if (count > buffer.Length - offset)
+            throw new ArgumentException("The requested range exceeds the buffer length.", nameof(count));
         if (count == 0) return;
 
         // write as much of the buffer as will fit to the current part, and if needed

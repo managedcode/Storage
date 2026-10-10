@@ -44,8 +44,8 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        await Storage.UploadToStorageAsync(formFile);
-        var localFile = await Storage.DownloadAsync(fileName);
+        await Storage.UploadToStorageAsync(formFile, cancellationToken: TestContext.Current.CancellationToken);
+        var localFile = await Storage.DownloadAsync(fileName, TestContext.Current.CancellationToken);
 
         // Assert
         localFile.IsSuccess.ShouldBeTrue();
@@ -53,7 +53,7 @@ public class StorageExtensionsTests
         downloaded.FileInfo.Length.ShouldBe(formFile.Length);
         downloaded.Name.ShouldBe(formFile.FileName);
 
-        await Storage.DeleteAsync(fileName);
+        await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -65,16 +65,16 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        var uploadResult = await Storage.UploadToStorageAsync(formFile);
+        var uploadResult = await Storage.UploadToStorageAsync(formFile, cancellationToken: TestContext.Current.CancellationToken);
         uploadResult.IsSuccess.ShouldBeTrue();
-        var result = await Storage.DownloadAsync(fileName);
+        var result = await Storage.DownloadAsync(fileName, TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
         var downloaded = result.Value ?? throw new InvalidOperationException("Download result is missing a file");
         downloaded.Name.ShouldBe(formFile.FileName);
 
-        await Storage.DeleteAsync(fileName);
+        await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -86,10 +86,10 @@ public class StorageExtensionsTests
         var formFile = FileHelper.GenerateFormFile(fileName, size);
 
         // Act
-        var result = await Storage.UploadToStorageAsync(formFile);
+        var result = await Storage.UploadToStorageAsync(formFile, cancellationToken: TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
         var uploaded = result.Value ?? throw new InvalidOperationException("Upload result is missing metadata");
-        var localFile = await Storage.DownloadAsync(uploaded.Name);
+        var localFile = await Storage.DownloadAsync(uploaded.Name, TestContext.Current.CancellationToken);
 
         // Assert
         localFile.IsSuccess.ShouldBeTrue();
@@ -97,7 +97,7 @@ public class StorageExtensionsTests
         downloaded.FileInfo.Length.ShouldBe(formFile.Length);
         downloaded.Name.ShouldBe(fileName);
 
-        await Storage.DeleteAsync(fileName);
+        await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -109,9 +109,9 @@ public class StorageExtensionsTests
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         // Act
-        var uploadResult = await Storage.UploadAsync(localFile.FileInfo);
+        var uploadResult = await Storage.UploadAsync(localFile.FileInfo, TestContext.Current.CancellationToken);
         uploadResult.IsSuccess.ShouldBeTrue();
-        var result = await Storage.DownloadAsFileResult(fileName);
+        var result = await Storage.DownloadAsFileResult(fileName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -119,7 +119,7 @@ public class StorageExtensionsTests
         fileResult.ContentType.ShouldBe(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         fileResult.FileDownloadName.ShouldBe(localFile.Name);
 
-        await Storage.DeleteAsync(fileName);
+        await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -131,8 +131,8 @@ public class StorageExtensionsTests
         var localFile = FileHelper.GenerateLocalFile(fileName, size);
 
         // Act
-        await Storage.UploadAsync(localFile.FileInfo, options => { options.FileName = fileName; });
-        var result = await Storage.DownloadAsFileResult(fileName);
+        await Storage.UploadAsync(localFile.FileInfo, options => { options.FileName = fileName; }, TestContext.Current.CancellationToken);
+        var result = await Storage.DownloadAsFileResult(fileName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
@@ -140,7 +140,7 @@ public class StorageExtensionsTests
         fileResult.ContentType.ShouldBe(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         fileResult.FileDownloadName.ShouldBe(localFile.Name);
 
-        await Storage.DeleteAsync(fileName);
+        await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class StorageExtensionsTests
         var fileName = FileHelper.GenerateRandomFileName();
 
         // Act
-        var fileResult = await Storage.DownloadAsFileResult(fileName);
+        var fileResult = await Storage.DownloadAsFileResult(fileName, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         fileResult.IsSuccess.ShouldBeFalse();
@@ -165,7 +165,7 @@ public class StorageExtensionsTests
         BlobMetadata blobMetadata = new() { Name = fileName };
 
         // Act
-        var fileResult = await Storage.DownloadAsFileResult(blobMetadata);
+        var fileResult = await Storage.DownloadAsFileResult(blobMetadata, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         fileResult.IsSuccess.ShouldBeFalse();
