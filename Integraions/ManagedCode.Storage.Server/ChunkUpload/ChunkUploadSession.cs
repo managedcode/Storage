@@ -67,7 +67,7 @@ internal sealed class ChunkUploadSession
         }
     }
 
-    public void Cleanup()
+    public void Cleanup(bool keepMergedFile = false)
     {
         foreach (var (_, path) in _chunkFiles)
         {
@@ -77,7 +77,7 @@ internal sealed class ChunkUploadSession
             }
         }
 
-        if (Directory.Exists(WorkingDirectory))
+        if (!keepMergedFile && Directory.Exists(WorkingDirectory))
         {
             Directory.Delete(WorkingDirectory, recursive: true);
         }

@@ -42,22 +42,14 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         await using var client = CreateClient();
         await client.ConnectAsync(CancellationToken.None);
 
-        StorageTransferStatus? lastProgress = null;
+        var completion = new TaskCompletionSource<StorageTransferStatus>(TaskCreationOptions.RunContinuationsAsynchronously);
         StorageTransferStatus? faultStatus = null;
-
-        client.TransferProgress += (_, status) =>
-        {
-            if (status.TransferId == descriptor.TransferId)
-            {
-                lastProgress = status;
-            }
-        };
 
         client.TransferCompleted += (_, status) =>
         {
             if (status.TransferId == descriptor.TransferId)
             {
-                lastProgress = status;
+                completion.TrySetResult(status);
             }
         };
 
@@ -87,9 +79,9 @@ public class AzureSignalRStorageTests : BaseSignalRStorageTests
         exists.IsSuccess.ShouldBeTrue();
         exists.Value.ShouldBeTrue();
 
-        lastProgress.ShouldNotBeNull();
-        lastProgress!.IsCompleted.ShouldBeTrue();
-        lastProgress.BytesTransferred.ShouldBeGreaterThan(0);
+        var completedEvent = await completion.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        completedEvent.IsCompleted.ShouldBeTrue();
+        completedEvent.BytesTransferred.ShouldBeGreaterThan(0);
 
         await storage.DeleteAsync(status.Metadata.FullName ?? status.Metadata.Name ?? descriptor.FileName, TestContext.Current.CancellationToken);
         await client.DisconnectAsync(TestContext.Current.CancellationToken);

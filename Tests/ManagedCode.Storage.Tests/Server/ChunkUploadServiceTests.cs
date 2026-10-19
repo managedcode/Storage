@@ -135,7 +135,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
         }, TestContext.Current.CancellationToken);
 
         append.IsSuccess.ShouldBeTrue();
-        var workingDirectory = Path.Combine(_options.TempPath, uploadId);
+        var workingDirectory = Directory.GetDirectories(_options.TempPath).ShouldHaveSingleItem();
         Directory.Exists(workingDirectory).ShouldBeTrue();
 
         service.Abort(uploadId);

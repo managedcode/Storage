@@ -65,6 +65,19 @@ Client-side:
 ## Tests
 
 - `Tests/ManagedCode.Storage.Tests/Server/ChunkUploadServiceTests.cs`
+- `Tests/ManagedCode.Storage.Tests/Server/ChunkUploadPathIntegrityTests.cs`: original
+  outside-file bytes, part-name collision, rejected identity isolation and explicit
+  merged-file retention using the real filesystem provider.
 - `Tests/ManagedCode.Storage.Tests/Core/StorageClientChunkTests.cs`
 - Controller-level flows:
   - `Tests/ManagedCode.Storage.Tests/AspNetTests/Abstracts/BaseUploadControllerTests.cs`
+
+## Temporary file ownership
+
+Session directories are derived from the exact validated upload identity. IDs
+accept ASCII letters, digits, hyphens and underscores, up to 128 characters;
+invalid IDs are rejected rather than normalized into another session. The
+service generates the merged staging filename independently of client file
+names. Client names cannot overwrite files outside a session or collide with
+numbered part files. `KeepMergedFile` retains only the merged content after the
+part files are cleaned; callers requesting retention own its eventual cleanup.

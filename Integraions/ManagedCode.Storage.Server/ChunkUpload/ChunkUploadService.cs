@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,13 +49,13 @@ public sealed class ChunkUploadService
         var descriptor = payload.Payload;
         var uploadId = ChunkUploadDescriptor.ResolveUploadId(descriptor);
 
-        // Sanitize upload ID to prevent path traversal
-        var sanitizedUploadId = SanitizeUploadId(uploadId);
+        var validatedUploadId = ValidateUploadId(uploadId);
 
-        var session = _sessions.GetOrAdd(sanitizedUploadId, static (key, state) =>
+        var session = _sessions.GetOrAdd(validatedUploadId, static (key, state) =>
         {
             var descriptor = state.Payload;
-            var workingDirectory = Path.Combine(state.Options.TempPath, key);
+            var directoryKey = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(key)));
+            var workingDirectory = Path.Combine(state.Options.TempPath, directoryKey);
             Directory.CreateDirectory(workingDirectory);
             return new ChunkUploadSession(
                 key,
@@ -108,7 +110,7 @@ public sealed class ChunkUploadService
                 .Select(x => x.Value)
                 .ToArray();
 
-            var mergedFilePath = Path.Combine(session.WorkingDirectory, session.FileName);
+            var mergedFilePath = Path.Combine(session.WorkingDirectory, "merged.bin");
             await MergeChunksAsync(mergedFilePath, orderedChunks, cancellationToken);
 
             BlobMetadata? metadata = null;
@@ -127,7 +129,7 @@ public sealed class ChunkUploadService
                 File.Delete(mergedFilePath);
             }
 
-            session.Cleanup();
+            session.Cleanup(request.KeepMergedFile);
             _sessions.TryRemove(request.UploadId, out _);
 
             return Result<ChunkUploadCompleteResponse>.Succeed(new ChunkUploadCompleteResponse
@@ -154,27 +156,15 @@ public sealed class ChunkUploadService
         }
     }
 
-    private static string SanitizeUploadId(string uploadId)
+    private static string ValidateUploadId(string uploadId)
     {
         if (string.IsNullOrWhiteSpace(uploadId))
             throw new ArgumentException("Upload ID cannot be null or empty", nameof(uploadId));
 
-        // Remove any path traversal sequences
-        uploadId = uploadId.Replace("..", string.Empty, StringComparison.Ordinal);
-        uploadId = uploadId.Replace("/", string.Empty, StringComparison.Ordinal);
-        uploadId = uploadId.Replace("\\", string.Empty, StringComparison.Ordinal);
+        if (uploadId.Length > 128 || uploadId.Any(c => !char.IsAsciiLetterOrDigit(c) && c is not '-' and not '_'))
+            throw new ArgumentException("Upload ID must contain at most 128 ASCII letters, digits, hyphens or underscores", nameof(uploadId));
 
-        // Only allow alphanumeric characters, hyphens, and underscores
-        var allowedChars = uploadId.Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_').ToArray();
-        var sanitized = new string(allowedChars);
-
-        if (string.IsNullOrWhiteSpace(sanitized))
-            throw new ArgumentException("Upload ID contains only invalid characters", nameof(uploadId));
-
-        if (sanitized.Length > 128)
-            throw new ArgumentException("Upload ID is too long", nameof(uploadId));
-
-        return sanitized;
+        return uploadId;
     }
 
     private static async Task MergeChunksAsync(string destinationFile, IReadOnlyCollection<string> chunkFiles, CancellationToken cancellationToken)
