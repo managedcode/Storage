@@ -40,7 +40,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result.Fail(ex);
+            return Result.Fail(ProviderFailure(ex));
         }
     }
 
@@ -96,10 +96,14 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
             cancellationToken.ThrowIfCancellationRequested();
             return Result<Stream>.Succeed(stream);
         }
+        catch (RequestFailedException ex) when (ex.Status is 404)
+        {
+            return Result<Stream>.Fail(ProviderFailure(ex));
+        }
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<Stream>.Fail(ex);
+            return Result<Stream>.Fail(ProviderFailure(ex));
         }
     }
 
@@ -116,7 +120,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<Stream>.Fail(ex);
+            return Result<Stream>.Fail(ProviderFailure(ex));
         }
     }
 
@@ -230,7 +234,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result.Fail(ex);
+            return Result.Fail(ProviderFailure(ex));
         }
     }
 
@@ -254,7 +258,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result.Fail(ex);
+            return Result.Fail(ProviderFailure(ex));
         }
     }
 
@@ -305,7 +309,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<BlobMetadata>.Fail(ex);
+            return Result<BlobMetadata>.Fail(ProviderFailure(ex));
         }
     }
 
@@ -345,7 +349,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<LocalFile>.Fail(ex);
+            return Result<LocalFile>.Fail(ProviderFailure(ex));
         }
     }
 
@@ -367,7 +371,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<bool>.Fail(ex);
+            return Result<bool>.Fail(ProviderFailure(ex));
         }
     }
 
@@ -385,7 +389,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<bool>.Fail(ex);
+            return Result<bool>.Fail(ProviderFailure(ex));
         }
     }
 
@@ -417,12 +421,12 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         }
         catch (RequestFailedException ex) when (ex.Status is 404)
         {
-            return Result<BlobMetadata>.Fail(ex);
+            return Result<BlobMetadata>.Fail(ProviderFailure(ex));
         }
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<BlobMetadata>.Fail(ex);
+            return Result<BlobMetadata>.Fail(ProviderFailure(ex));
         }
     }
 
@@ -441,7 +445,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result.Fail(ex);
+            return Result.Fail(ProviderFailure(ex));
         }
     }
 
@@ -458,7 +462,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         catch (Exception ex)
         {
             logger.LogException(ex);
-            return Result<bool>.Fail(ex);
+            return Result<bool>.Fail(ProviderFailure(ex));
         }
     }
 }

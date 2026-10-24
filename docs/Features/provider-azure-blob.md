@@ -97,3 +97,7 @@ remain readable without reinterpretation of percent escapes or value prefixes.
 
 - `README.md` (package list + general usage)
 - Azure SDK docs (Blob Storage)
+
+## Result failure status
+
+The `IStorage` result APIs preserve an Azure service failure's HTTP status and native error code. Missing blob stream/metadata/download reads return a failed result with status 404 and `BlobNotFound`; authentication failures retain their actual 403 status and Azure code. A normal missing stream is returned without an exception-level log. Successful streaming, idempotent deletion and the optional object-capability throwing contracts keep their existing semantics. Unexpected non-service failures retain the standard problem classification.
