@@ -71,12 +71,7 @@ public abstract class BaseTestController<TStorage> : ControllerBase where TStora
         var completeResult = await this.CompleteChunkUploadAsync(_chunkUploadService, Storage, request, cancellationToken);
         if (completeResult.IsFailed)
         {
-            if (completeResult.Problem is not null)
-            {
-                return Result<uint>.Fail(completeResult.Problem);
-            }
-
-            return Result<uint>.Fail("Chunk upload completion failed");
+            return Result<uint>.Fail(completeResult.Problem);
         }
 
         Console.Error.WriteLine($"Server computed checksum: {completeResult.Value.Checksum}");

@@ -72,7 +72,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         result.IsFailed
             .ShouldBeTrue();
         result.Problem
-            ?.StatusCode
+            .StatusCode
             .ShouldBe((int)HttpStatusCode.BadRequest);
     }
 
@@ -179,7 +179,7 @@ public abstract class BaseUploadControllerTests : BaseControllerTests
         {
             var uploadResult = await storageClient.UploadFile(readStream, _uploadEndpoint, "file", CancellationToken.None);
             uploadResult.IsSuccess.ShouldBeTrue();
-            var metadata = uploadResult.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+            var metadata = uploadResult.Value;
 
             var downloadResult = await storageClient.DownloadFile(
                 metadata.FullName ?? metadata.Name ?? localFile.Name,

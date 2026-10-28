@@ -71,7 +71,7 @@ public sealed class VirtualFileSystemTestContext : IAsyncDisposable
             NullLogger<VfsImplementation>.Instance);
 
         var createResult = await storage.CreateContainerAsync();
-        if (!createResult.IsSuccess)
+        if (createResult.IsFailed)
         {
             throw new InvalidOperationException($"Failed to create container '{containerName}'.");
         }

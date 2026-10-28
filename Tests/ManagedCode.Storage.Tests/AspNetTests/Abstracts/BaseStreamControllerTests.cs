@@ -36,7 +36,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         await using var uploadStream = localFile.FileStream; // Get stream once
         var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
         uploadFileBlob.IsSuccess.ShouldBeTrue();
-        var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+        var uploadedMetadata = uploadFileBlob.Value;
 
         // Act
         var streamFileResult = await storageClient.GetFileStream(uploadedMetadata.FullName, _streamEndpoint, TestContext.Current.CancellationToken);
@@ -44,7 +44,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         // Assert
         streamFileResult.IsSuccess
             .ShouldBeTrue();
-        var streamedValue = streamFileResult.Value ?? throw new InvalidOperationException("Stream result does not contain a stream");
+        var streamedValue = streamFileResult.Value;
 
         await using var stream = streamedValue;
         await using var newLocalFile = await LocalFile.FromStreamAsync(stream, Environment.CurrentDirectory, Guid.NewGuid()
@@ -68,7 +68,7 @@ public abstract class BaseStreamControllerTests : BaseControllerTests
         streamFileResult.IsFailed
             .ShouldBeTrue();
         streamFileResult.Problem
-            ?.StatusCode
+            .StatusCode
             .ShouldBe((int)HttpStatusCode.InternalServerError);
     }
 }

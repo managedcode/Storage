@@ -41,7 +41,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         await using var localFileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(localFileStream, options, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
-        var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+        var uploaded = result.Value;
 
         await using var blobStream = storage.GetBlobStream(uploaded.FullName);
 
@@ -72,7 +72,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         await using var fileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(fileStream, options, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
-        var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+        var uploaded = result.Value;
 
         await using var blobStream = storage.GetBlobStream(uploaded.FullName);
 
@@ -144,7 +144,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         var fileResult = await storage.DownloadAsync(fullFileName, TestContext.Current.CancellationToken);
         fileResult.IsSuccess
             .ShouldBeTrue();
-        var downloaded = fileResult.Value ?? throw new InvalidOperationException("Download result is null");
+        var downloaded = fileResult.Value;
         await using var fileStream = downloaded.FileStream;
         using var streamReader = new StreamReader(fileStream);
         var fileContent = await streamReader.ReadLineAsync(TestContext.Current.CancellationToken);
@@ -165,7 +165,7 @@ public class AzureBlobStreamTests : StreamTests<AzuriteContainer>
         await using var localFileStream = localFile.FileInfo.OpenRead();
         var result = await storage.UploadAsync(localFileStream, options, TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
-        var uploaded = result.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+        var uploaded = result.Value;
 
         await using var blobStream = storage.GetBlobStream(uploaded.FullName);
 

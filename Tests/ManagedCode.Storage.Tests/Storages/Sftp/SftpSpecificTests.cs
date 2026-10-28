@@ -67,7 +67,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
         await using var uploadStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
         var writeResult = await storage.OpenWriteStreamAsync(fileName, TestContext.Current.CancellationToken);
         writeResult.IsSuccess.ShouldBeTrue();
-        var destinationStream = writeResult.Value ?? throw new InvalidOperationException("Write stream is null");
+        var destinationStream = writeResult.Value;
 
         await using (destinationStream)
         {
@@ -76,7 +76,7 @@ public class SftpSpecificTests : BaseContainer<SftpContainer>
 
         var readResult = await storage.OpenReadStreamAsync(fileName, TestContext.Current.CancellationToken);
         readResult.IsSuccess.ShouldBeTrue();
-        var sourceStream = readResult.Value ?? throw new InvalidOperationException("Read stream is null");
+        var sourceStream = readResult.Value;
         using var reader = new StreamReader(sourceStream);
         var downloadedContent = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
 

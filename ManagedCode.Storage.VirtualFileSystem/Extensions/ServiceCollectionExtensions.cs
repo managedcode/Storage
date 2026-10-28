@@ -121,7 +121,7 @@ internal class DefaultMetadataManager : BaseMetadataManager
         try
         {
             var blobMetadata = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
-            if (blobMetadata.IsSuccess && blobMetadata.Value != null)
+            if (blobMetadata.IsSuccess)
             {
                 // Update existing metadata
                 var existingMetadata = blobMetadata.Value.Metadata ?? new Dictionary<string, string>();
@@ -151,7 +151,7 @@ internal class DefaultMetadataManager : BaseMetadataManager
         try
         {
             var blobMetadata = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
-            if (!blobMetadata.IsSuccess || blobMetadata.Value?.Metadata == null)
+            if (blobMetadata.IsFailed || blobMetadata.Value.Metadata == null)
             {
                 return null;
             }
@@ -174,7 +174,7 @@ internal class DefaultMetadataManager : BaseMetadataManager
         try
         {
             var blobMetadata = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
-            if (!blobMetadata.IsSuccess || blobMetadata.Value?.Metadata == null)
+            if (blobMetadata.IsFailed || blobMetadata.Value.Metadata == null)
             {
                 return new Dictionary<string, string>();
             }

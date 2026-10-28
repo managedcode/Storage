@@ -37,7 +37,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         await using var uploadStream = localFile.FileStream; // Get stream once
         var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
         uploadFileBlob.IsSuccess.ShouldBeTrue();
-        var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+        var uploadedMetadata = uploadFileBlob.Value;
 
         // Act
         var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadEndpoint, cancellationToken: TestContext.Current.CancellationToken);
@@ -45,7 +45,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         // Assert
         downloadedFileResult.IsSuccess
             .ShouldBeTrue();
-        var downloadedLocal = downloadedFileResult.Value ?? throw new InvalidOperationException("Download result does not contain a file");
+        var downloadedLocal = downloadedFileResult.Value;
         var downloadedFileCRC = Crc32Helper.CalculateFileCrc(downloadedLocal.FilePath);
         downloadedFileCRC.ShouldBe(fileCRC);
     }
@@ -63,14 +63,14 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         await using var uploadStream = localFile.FileStream; // Get stream once
         var uploadFileBlob = await storageClient.UploadFile(uploadStream, _uploadEndpoint, contentName, TestContext.Current.CancellationToken);
         uploadFileBlob.IsSuccess.ShouldBeTrue();
-        var uploadedMetadata = uploadFileBlob.Value ?? throw new InvalidOperationException("Upload did not return metadata");
+        var uploadedMetadata = uploadFileBlob.Value;
 
         // Act
         var downloadedFileResult = await storageClient.DownloadFile(uploadedMetadata.FullName, _downloadBytesEndpoint, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         downloadedFileResult.IsSuccess.ShouldBeTrue();
-        var downloadedLocal = downloadedFileResult.Value ?? throw new InvalidOperationException("Download result does not contain a file");
+        var downloadedLocal = downloadedFileResult.Value;
         var downloadedFileCRC = Crc32Helper.CalculateFileCrc(downloadedLocal.FilePath);
         downloadedFileCRC.ShouldBe(fileCRC);
     }
@@ -89,7 +89,7 @@ public abstract class BaseDownloadControllerTests : BaseControllerTests
         downloadedFileResult.IsFailed
             .ShouldBeTrue();
         downloadedFileResult.Problem
-            ?.StatusCode
+            .StatusCode
             .ShouldBe((int)HttpStatusCode.InternalServerError);
     }
 }

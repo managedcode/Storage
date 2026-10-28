@@ -113,7 +113,7 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         var result = await Storage.GetStreamAsync(path, cancellationToken);
         if (result.IsFailed)
         {
-            return Problem(result.Problem?.Title ?? "File not found", statusCode: (int?)result.Problem?.StatusCode ?? StatusCodes.Status404NotFound);
+            return Problem(result.Problem.Title ?? "File not found", statusCode: (int?)result.Problem.StatusCode ?? StatusCodes.Status404NotFound);
         }
 
         return File(result.Value, MimeHelper.GetMimeType(path), path, enableRangeProcessing: _options.EnableRangeProcessing);
@@ -131,7 +131,7 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         var streamResult = await Storage.GetStreamAsync(path, cancellationToken);
         if (streamResult.IsFailed)
         {
-            return Problem(streamResult.Problem?.Title ?? "File not found", statusCode: (int?)streamResult.Problem?.StatusCode ?? StatusCodes.Status404NotFound);
+            return Problem(streamResult.Problem.Title ?? "File not found", statusCode: (int?)streamResult.Problem.StatusCode ?? StatusCodes.Status404NotFound);
         }
 
         return File(streamResult.Value, MimeHelper.GetMimeType(path), fileDownloadName: null, enableRangeProcessing: _options.EnableRangeProcessing);
@@ -149,7 +149,7 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
         var streamResult = await Storage.GetStreamAsync(path, cancellationToken);
         if (streamResult.IsFailed)
         {
-            return Problem(streamResult.Problem?.Title ?? "File not found", statusCode: (int?)streamResult.Problem?.StatusCode ?? StatusCodes.Status404NotFound);
+            return Problem(streamResult.Problem.Title ?? "File not found", statusCode: (int?)streamResult.Problem.StatusCode ?? StatusCodes.Status404NotFound);
         }
 
         return File(streamResult.Value, MimeHelper.GetMimeType(path), path, enableRangeProcessing: _options.EnableRangeProcessing);

@@ -144,7 +144,7 @@ public partial class VirtualFile : IVirtualFile
         {
             var result = await _vfs.Storage.GetStreamAsync(_path.ToBlobKey(), cancellationToken);
 
-            if (!result.IsSuccess || result.Value == null)
+            if (result.IsFailed)
             {
                 throw new VfsOperationException($"Failed to open read stream for file: {_path}");
             }
@@ -205,7 +205,7 @@ public partial class VirtualFile : IVirtualFile
 
         var result = await _vfs.Storage.DownloadAsync(_path.ToBlobKey(), cancellationToken);
 
-        if (!result.IsSuccess || result.Value == null)
+        if (result.IsFailed)
         {
             throw new VfsOperationException($"Failed to read all bytes for file: {_path}");
         }

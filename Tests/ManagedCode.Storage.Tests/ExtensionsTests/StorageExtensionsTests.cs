@@ -49,7 +49,7 @@ public class StorageExtensionsTests
 
         // Assert
         localFile.IsSuccess.ShouldBeTrue();
-        var downloaded = localFile.Value ?? throw new InvalidOperationException("Download result is missing a file");
+        var downloaded = localFile.Value;
         downloaded.FileInfo.Length.ShouldBe(formFile.Length);
         downloaded.Name.ShouldBe(formFile.FileName);
 
@@ -71,7 +71,7 @@ public class StorageExtensionsTests
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        var downloaded = result.Value ?? throw new InvalidOperationException("Download result is missing a file");
+        var downloaded = result.Value;
         downloaded.Name.ShouldBe(formFile.FileName);
 
         await Storage.DeleteAsync(fileName, TestContext.Current.CancellationToken);
@@ -88,12 +88,12 @@ public class StorageExtensionsTests
         // Act
         var result = await Storage.UploadToStorageAsync(formFile, cancellationToken: TestContext.Current.CancellationToken);
         result.IsSuccess.ShouldBeTrue();
-        var uploaded = result.Value ?? throw new InvalidOperationException("Upload result is missing metadata");
+        var uploaded = result.Value;
         var localFile = await Storage.DownloadAsync(uploaded.Name, TestContext.Current.CancellationToken);
 
         // Assert
         localFile.IsSuccess.ShouldBeTrue();
-        var downloaded = localFile.Value ?? throw new InvalidOperationException("Download result is missing a file");
+        var downloaded = localFile.Value;
         downloaded.FileInfo.Length.ShouldBe(formFile.Length);
         downloaded.Name.ShouldBe(fileName);
 
@@ -115,7 +115,7 @@ public class StorageExtensionsTests
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        var fileResult = result.Value ?? throw new InvalidOperationException("Download result is missing file info");
+        var fileResult = result.Value;
         fileResult.ContentType.ShouldBe(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         fileResult.FileDownloadName.ShouldBe(localFile.Name);
 
@@ -136,7 +136,7 @@ public class StorageExtensionsTests
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
-        var fileResult = result.Value ?? throw new InvalidOperationException("Download result is missing file info");
+        var fileResult = result.Value;
         fileResult.ContentType.ShouldBe(MimeHelper.GetMimeType(localFile.FileInfo.Extension));
         fileResult.FileDownloadName.ShouldBe(localFile.Name);
 

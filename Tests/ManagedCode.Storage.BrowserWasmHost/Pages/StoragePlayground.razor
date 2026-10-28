@@ -91,16 +91,16 @@
     private async Task SaveTextAsync()
     {
         var result = await Storage.UploadAsync(content, new UploadOptions { FileName = fileName, Directory = directory });
-        status = result.IsSuccess ? $"saved:{result.Value!.FullName}" : $"save-failed:{result.Problem?.Detail}";
+        status = result.IsSuccess ? $"saved:{result.Value.FullName}" : $"save-failed:{result.Problem.Detail}";
     }
 
     private async Task LoadTextAsync()
     {
         var result = await Storage.GetStreamAsync(GetResolvedFileName());
-        if (result.IsFailed || result.Value is null)
+        if (result.IsFailed)
         {
             loadedContent = string.Empty;
-            status = $"load-failed:{result.Problem?.Detail}";
+            status = $"load-failed:{result.Problem.Detail}";
             return;
         }
 
@@ -136,7 +136,7 @@
             if (result.IsFailed)
             {
                 largeOutput = $"generated:{stream.Position}";
-                status = $"large-save-failed:{result.Problem?.Detail}";
+                status = $"large-save-failed:{result.Problem.Detail}";
                 return;
             }
 
@@ -176,10 +176,10 @@
             var resolvedFileName = GetResolvedFileName();
             var startedAt = Stopwatch.StartNew();
             var result = await Storage.GetStreamAsync(GetResolvedFileName());
-            if (result.IsFailed || result.Value is null)
+            if (result.IsFailed)
             {
                 largeOutput = "error";
-                status = $"large-load-failed:{result.Problem?.Detail}";
+                status = $"large-load-failed:{result.Problem.Detail}";
                 return;
             }
 
@@ -204,7 +204,7 @@
     {
         var result = await Storage.ExistsAsync(new ExistOptions { FileName = fileName, Directory = directory });
         existsOutput = result.IsSuccess ? result.Value.ToString() : "error";
-        status = result.IsSuccess ? $"exists:{result.Value}" : $"exists-failed:{result.Problem?.Detail}";
+        status = result.IsSuccess ? $"exists:{result.Value}" : $"exists-failed:{result.Problem.Detail}";
     }
 
     private async Task ListAsync()
@@ -216,7 +216,7 @@
     private async Task DeleteAsync()
     {
         var result = await Storage.DeleteAsync(new DeleteOptions { FileName = fileName, Directory = directory });
-        status = result.IsSuccess ? $"deleted:{result.Value}" : $"delete-failed:{result.Problem?.Detail}";
+        status = result.IsSuccess ? $"deleted:{result.Value}" : $"delete-failed:{result.Problem.Detail}";
     }
 
     private string GetResolvedFileName()

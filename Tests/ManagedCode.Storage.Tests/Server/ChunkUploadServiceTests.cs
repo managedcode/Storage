@@ -93,17 +93,17 @@ public class ChunkUploadServiceTests : IAsyncLifetime
         }, storage, TestContext.Current.CancellationToken);
 
         completeResult.IsSuccess.ShouldBeTrue();
-        var completion = completeResult.Value ?? throw new InvalidOperationException("Completion result is null");
+        var completion = completeResult.Value;
         completion.Checksum.ShouldBe(checksum);
         completion.Metadata.ShouldNotBeNull();
 
         var metadata = await storage.GetBlobMetadataAsync(fileName, TestContext.Current.CancellationToken);
         metadata.IsSuccess.ShouldBeTrue();
-        (metadata.Value ?? throw new InvalidOperationException("Metadata value is null")).Length.ShouldBe((ulong)payload.Length);
+        (metadata.Value).Length.ShouldBe((ulong)payload.Length);
 
         var download = await storage.DownloadAsync(fileName, TestContext.Current.CancellationToken);
         download.IsSuccess.ShouldBeTrue();
-        var downloadedFile = download.Value ?? throw new InvalidOperationException("Download returned null file");
+        var downloadedFile = download.Value;
         using var ms = new MemoryStream();
         await downloadedFile.FileStream.CopyToAsync(ms, TestContext.Current.CancellationToken);
         ms.ToArray().ShouldBe(payload);
@@ -221,7 +221,7 @@ public class ChunkUploadServiceTests : IAsyncLifetime
         }, storage, TestContext.Current.CancellationToken);
 
         complete.IsSuccess.ShouldBeTrue();
-        (complete.Value ?? throw new InvalidOperationException("Completion result is null")).Checksum.ShouldBe(checksum);
+        (complete.Value).Checksum.ShouldBe(checksum);
     }
 
     private FileSystemStorage CreateStorage()

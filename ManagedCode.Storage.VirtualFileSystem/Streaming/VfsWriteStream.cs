@@ -147,7 +147,7 @@ internal class VfsWriteStream : Stream
             };
 
             var result = await _storage.UploadAsync(_bufferStream, uploadOptions);
-            if (!result.IsSuccess)
+            if (result.IsFailed)
                 throw new VfsOperationException($"Failed to upload data for: {_blobKey}. Error: {result.Problem}");
 
             InvalidateCache();

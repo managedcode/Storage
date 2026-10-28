@@ -192,7 +192,7 @@ public sealed class ManagedCodeGrainStorage(
         }
 
         throw new InvalidOperationException(
-            result.Problem?.Detail ?? result.Problem?.Title ?? message);
+            result.Problem.Detail ?? result.Problem.Title ?? message);
     }
 
     private static void ThrowIfFailed<T>(Result<T> result, string message)
@@ -203,7 +203,7 @@ public sealed class ManagedCodeGrainStorage(
         }
 
         throw new InvalidOperationException(
-            result.Problem?.Detail ?? result.Problem?.Title ?? message);
+            result.Problem.Detail ?? result.Problem.Title ?? message);
     }
 
     private static StorageAbstraction ResolveStorage(IServiceProvider serviceProvider, ManagedCodeStorageGrainStorageOptions options)

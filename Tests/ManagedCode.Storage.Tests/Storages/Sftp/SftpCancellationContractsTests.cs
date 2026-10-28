@@ -32,7 +32,7 @@ public sealed class SftpCancellationContractsTests : BaseContainer<SftpContainer
         stream.BytesRead.ShouldBeGreaterThan(0);
         stream.BytesRead.ShouldBeLessThan(file.FileInfo.Length);
         var metadata = await Storage.GetBlobMetadataAsync("canceled.bin", token);
-        if (metadata.IsSuccess) metadata.Value!.Length.ShouldBeLessThan((ulong)file.FileInfo.Length);
+        if (metadata.IsSuccess) metadata.Value.Length.ShouldBeLessThan((ulong)file.FileInfo.Length);
     }
 
     // Real file input with a deterministic cancellation boundary; the SFTP SDK and server remain real.
