@@ -49,6 +49,7 @@ metadata stays native, while Unicode/control-character dictionaries use one
 versioned ASCII envelope decoded across all metadata reads. See the
 [Azure provider](Features/provider-azure-blob.md#metadata-transport) for its
 physical representation, collision handling and metadata-size constraints.
+VFS metadata reads return absence only for a provider 404. Cancellation and other provider failures propagate to the caller and never populate missing-file metadata caches. A later uncancelled read remains able to read the retained file.
 VFS writes persist zero-byte files and truncate existing files on empty overwrite.
 `IVirtualFile.RefreshAsync` invalidates cached existence after refreshing provider metadata, so externally committed or deleted objects are visible to subsequent existence checks and reads.
 `FileExistsAsync` remains a cached, best-effort convenience query. Consumers that

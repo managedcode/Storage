@@ -230,7 +230,7 @@ public sealed class BrowserStorage : BaseStorage<IJSRuntime, BrowserStorageOptio
         {
             var storedBlob = await ReadStoredBlobAsync(options, cancellationToken);
             return storedBlob is null
-                ? Result<BlobMetadata>.Fail("File not found")
+                ? Result<BlobMetadata>.FailNotFound("File not found")
                 : Result<BlobMetadata>.Succeed(ToBlobMetadata(storedBlob));
         }
         catch (Exception ex)

@@ -18,6 +18,8 @@ This is *not* a separate cloud provider. It is an abstraction layer that sits ab
 
 ### File operations
 
+Metadata reads return null or empty metadata only for a real provider 404 or absent metadata fields. Cancellation propagates, including cancellation returned inside a portable provider Result. Other provider failures throw with their original Problem instead of becoming a missing file; failed reads do not populate the metadata cache. Reusing the handle after cancellation can read the retained file. Real-provider regressions cover cancelled reads, rejected reads, write/delete/missing lookup and read recovery.
+
 After a write or deletion through the backing provider, call `IVirtualFile.RefreshAsync` on an existing file handle. It refreshes metadata and invalidates cached existence, including a cached miss before a multipart commit. The next existence check and read observe the committed object.
 
 ```mermaid

@@ -1,3 +1,4 @@
+using Azure;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -264,6 +265,10 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
                 Metadata = properties.Value.Metadata.ToDictionary(k => k.Key, v => v.Value),
                 MimeType = properties.Value.ContentType
             });
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return Result<BlobMetadata>.Fail(Problem.FromException(ex, 404));
         }
         catch (Exception ex)
         {

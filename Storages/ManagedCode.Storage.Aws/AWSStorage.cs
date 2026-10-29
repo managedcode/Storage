@@ -312,6 +312,10 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
             return Result<BlobMetadata>.Succeed(metadata);
         }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return Result<BlobMetadata>.Fail(Problem.FromException(ex, 404));
+        }
         catch (Exception ex)
         {
             _logger.LogException(ex);

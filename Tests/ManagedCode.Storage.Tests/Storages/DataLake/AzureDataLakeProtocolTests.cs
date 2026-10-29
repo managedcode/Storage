@@ -73,6 +73,9 @@ public sealed class AzureDataLakeProtocolTests(DataLakeProtocolHost host) : ICla
         }
         (await storage.DeleteAsync(key, token)).IsSuccess.ShouldBeTrue();
         (await storage.ExistsAsync(key, token)).Value.ShouldBeFalse();
+        var missingMetadata = await storage.GetBlobMetadataAsync(key, token);
+        missingMetadata.IsFailed.ShouldBeTrue();
+        missingMetadata.Problem.StatusCode.ShouldBe(404);
         (await storage.RemoveContainerAsync(token)).IsSuccess.ShouldBeTrue();
     }
 

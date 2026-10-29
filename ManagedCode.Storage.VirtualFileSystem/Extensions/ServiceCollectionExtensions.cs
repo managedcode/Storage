@@ -146,64 +146,35 @@ internal class DefaultMetadataManager : BaseMetadataManager
         string blobName,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Getting VFS metadata for: {BlobName}", blobName);
-
-        try
-        {
-            var blobMetadata = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
-            if (blobMetadata.IsFailed || blobMetadata.Value.Metadata == null)
-            {
-                return null;
-            }
-
-            return ParseVfsMetadata(blobMetadata.Value.Metadata);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting VFS metadata for: {BlobName}", blobName);
-            return null;
-        }
+        var metadata = await GetBlobInfoAsync(blobName, cancellationToken);
+        return metadata?.Metadata is { } values ? ParseVfsMetadata(values) : null;
     }
 
     public override async Task<IReadOnlyDictionary<string, string>> GetCustomMetadataAsync(
         string blobName,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Getting custom metadata for: {BlobName}", blobName);
-
-        try
-        {
-            var blobMetadata = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
-            if (blobMetadata.IsFailed || blobMetadata.Value.Metadata == null)
-            {
-                return new Dictionary<string, string>();
-            }
-
-            return ExtractCustomMetadata(blobMetadata.Value.Metadata);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting custom metadata for: {BlobName}", blobName);
-            return new Dictionary<string, string>();
-        }
+        var metadata = await GetBlobInfoAsync(blobName, cancellationToken);
+        return metadata?.Metadata is { } values
+            ? ExtractCustomMetadata(values)
+            : new Dictionary<string, string>();
     }
 
     public override async Task<BlobMetadata?> GetBlobInfoAsync(
         string blobName,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Getting blob info for: {BlobName}", blobName);
-
-        try
+        cancellationToken.ThrowIfCancellationRequested();
+        var result = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
+        // Portable providers may return cancellation as a failed Result. It must
+        // neither become a missing file nor populate the VFS metadata cache.
+        cancellationToken.ThrowIfCancellationRequested();
+        if (result.IsFailed && result.Problem.StatusCode == 404)
         {
-            var result = await _storage.GetBlobMetadataAsync(blobName, cancellationToken);
-            return result.IsSuccess ? result.Value : null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "Blob not found or error getting blob info: {BlobName}", blobName);
             return null;
         }
+        result.ThrowIfProblem();
+        return result.Value;
     }
 }
 

@@ -294,7 +294,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
 
             var fileInfo = new FileInfo(filePath);
             if (!fileInfo.Exists)
-                return Result<BlobMetadata>.Fail("File not found");
+                return Result<BlobMetadata>.FailNotFound("File not found");
 
             var relativePath = Path.GetRelativePath(StorageClient, filePath)
                 .Replace('\\', '/');

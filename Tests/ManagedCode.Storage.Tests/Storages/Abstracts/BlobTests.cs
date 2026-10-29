@@ -12,6 +12,17 @@ namespace ManagedCode.Storage.Tests.Storages.Abstracts;
 public abstract class BlobTests<T> : BaseContainer<T> where T : IContainer
 {
     [Fact]
+    public async Task MissingBlobMetadata_PreservesNotFoundAfterARealWriteAndDelete()
+    {
+        var file = await UploadTestFileAsync();
+        (await Storage.GetBlobMetadataAsync(file.Name, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        (await Storage.DeleteAsync(file.Name, TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
+        var missing = await Storage.GetBlobMetadataAsync(file.Name, TestContext.Current.CancellationToken);
+        missing.IsFailed.ShouldBeTrue();
+        missing.Problem.StatusCode.ShouldBe(404);
+    }
+
+    [Fact]
     public async Task GetBlobListAsync_WithoutOptions()
     {
         // Arrange

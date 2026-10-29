@@ -400,7 +400,7 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
             var remotePath = BuildPath(options.FullPath);
             if (!StorageClient.Exists(remotePath))
             {
-                return Result<BlobMetadata>.Fail("File not found");
+                return Result<BlobMetadata>.FailNotFound("File not found");
             }
 
             var attributes = StorageClient.GetAttributes(remotePath);

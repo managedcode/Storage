@@ -325,6 +325,10 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
                 Length = obj.Size ?? 0
             });
         }
+        catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
+        {
+            return Result<BlobMetadata>.Fail(Problem.FromException(ex, 404));
+        }
         catch (Exception ex)
         {
             _logger.LogException(ex);
