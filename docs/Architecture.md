@@ -66,7 +66,9 @@ bounded, file-backed SHA-256 read and `VerifiedObjectUpload` for immutable
 stream or byte writes with exact retry comparison, including reconciliation
 after a write commits but its response is lost. `ObjectStorageBytes` adds in-memory
 `WriteObjectAsync` and `StagePartAsync` overloads that write array-backed
-memory in place, copying only memory without a backing array.
+memory in place, copying only memory without a backing array. Verified writes
+accept an optional expected SHA-256 and throw `StorageUploadDigestException`
+before commit when the staged content differs.
 
 ## Cartograph artifact provider
 

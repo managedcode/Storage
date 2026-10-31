@@ -9,12 +9,21 @@ namespace ManagedCode.Storage.Core.Primitives;
 public static partial class VerifiedObjectUpload
 {
     /// <summary>Atomically writes a small immutable object and accepts only an exact existing retry.</summary>
-    public static async Task<VerifiedObjectUploadResult> WriteBytesIfAbsentOrSameAsync(
+    public static Task<VerifiedObjectUploadResult> WriteBytesIfAbsentOrSameAsync(
         this IObjectStorage storage,
         string path,
         ReadOnlyMemory<byte> content,
         StorageWriteOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        WriteBytesVerifiedAsync(storage, path, content, null, options, cancellationToken);
+
+    private static async Task<VerifiedObjectUploadResult> WriteBytesVerifiedAsync(
+        IObjectStorage storage,
+        string path,
+        ReadOnlyMemory<byte> content,
+        byte[]? expectedSha256,
+        StorageWriteOptions? options,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(storage);
         options ??= new StorageWriteOptions();
@@ -23,7 +32,8 @@ public static partial class VerifiedObjectUpload
             throw new ArgumentException("An immutable write cannot use IfMatch.", nameof(options));
         }
 
-        var expectedHash = SHA256.HashData(content.Span);
+        var contentHash = SHA256.HashData(content.Span);
+        ThrowIfDigestDiffers(contentHash, expectedSha256);
         StorageObjectInfo info;
         var reused = false;
         try
@@ -41,7 +51,7 @@ public static partial class VerifiedObjectUpload
                  !string.Equals(info.ContentEncoding, options.ContentEncoding, StringComparison.OrdinalIgnoreCase)) ||
                 (options.Metadata is not null && !MetadataMatches(options.Metadata, info.Metadata)) ||
                 !await MatchesExistingAsync(storage, path, info.ETag, content.Length,
-                    expectedHash, cancellationToken).ConfigureAwait(false))
+                    contentHash, cancellationToken).ConfigureAwait(false))
             {
                 throw;
             }
@@ -54,6 +64,6 @@ public static partial class VerifiedObjectUpload
             throw new StorageUploadLengthException(info.Length > content.Length);
         }
 
-        return new VerifiedObjectUploadResult(info, Convert.ToHexStringLower(expectedHash), reused);
+        return new VerifiedObjectUploadResult(info, Convert.ToHexStringLower(contentHash), reused);
     }
 }

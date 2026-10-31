@@ -481,6 +481,8 @@ Immutable uploads can call `WriteIfAbsentOrSameAsync` on `IObjectStorage` with a
 
 Payloads already in memory can use the `ReadOnlyMemory<byte>` overloads of `WriteObjectAsync` and `StagePartAsync` (and `WriteBytesIfAbsentOrSameAsync` for immutable writes). Array-backed memory, including slices, is written in place without copying.
 
+When the caller already knows the content digest, the `WriteIfAbsentOrSameAsync` and `WriteBytesIfAbsentOrSameAsync` overloads with an `expectedSha256` (64 hexadecimal characters) verify it before committing. A mismatch throws `StorageUploadDigestException` and leaves no object behind.
+
 ### ASP.NET Streaming Controllers
 
 Controllers in `ManagedCode.Storage.Server` expose minimal routes that stream directly between HTTP clients and blob providers. Uploads arrive as multipart forms or raw streams, flow through the unified `IStorage` abstraction, and land in whichever provider is registered. Downloads return `FileStreamResult` responses so browsers, SDKs, or background jobs can read blobs without buffering the whole payload in memory.

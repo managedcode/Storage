@@ -20,13 +20,23 @@ public static partial class VerifiedObjectUpload
     private const int PartBytes = 4 * 1024 * 1024;
 
     /// <summary>Stages and verifies an immutable upload before atomic commit. Identical retries reuse the existing revision.</summary>
-    public static async Task<VerifiedObjectUploadResult> WriteIfAbsentOrSameAsync(
+    public static Task<VerifiedObjectUploadResult> WriteIfAbsentOrSameAsync(
         this IObjectStorage storage,
         string path,
         Stream content,
         long expectedLength,
         StorageWriteOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        WriteVerifiedAsync(storage, path, content, expectedLength, null, options, cancellationToken);
+
+    private static async Task<VerifiedObjectUploadResult> WriteVerifiedAsync(
+        IObjectStorage storage,
+        string path,
+        Stream content,
+        long expectedLength,
+        byte[]? expectedSha256,
+        StorageWriteOptions? options,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(storage);
         ArgumentNullException.ThrowIfNull(content);
@@ -44,6 +54,7 @@ public static partial class VerifiedObjectUpload
 
         var (partIds, inputHash) = await StageAsync(multipart, path, content, expectedLength,
             cancellationToken).ConfigureAwait(false);
+        ThrowIfDigestDiffers(inputHash, expectedSha256);
         StorageObjectInfo info;
         var reused = false;
         try
