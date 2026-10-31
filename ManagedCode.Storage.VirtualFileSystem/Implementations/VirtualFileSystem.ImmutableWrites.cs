@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core.Primitives;
@@ -18,14 +19,34 @@ public partial class VirtualFileSystem
         ThrowIfDisposed();
         var result = await _storage.RequireObjectStorage().WriteBytesIfAbsentOrSameAsync(
             path.ToBlobKey(), content, options, cancellationToken).ConfigureAwait(false);
+        InvalidateImmutableWriteCaches(path);
+        return result;
+    }
 
-        if (_options.EnableCache)
+    /// <inheritdoc />
+    public async Task<VerifiedObjectUploadResult> WriteIfAbsentOrSameAsync(
+        VfsPath path,
+        Stream content,
+        long expectedLength,
+        StorageWriteOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var result = await _storage.RequireObjectStorage().WriteIfAbsentOrSameAsync(
+            path.ToBlobKey(), content, expectedLength, options, cancellationToken).ConfigureAwait(false);
+        InvalidateImmutableWriteCaches(path);
+        return result;
+    }
+
+    private void InvalidateImmutableWriteCaches(VfsPath path)
+    {
+        if (!_options.EnableCache)
         {
-            _cache.Remove($"file_exists:{ContainerName}:{path}");
-            _cache.Remove($"file_metadata:{ContainerName}:{path}");
-            _cache.Remove($"file_custom_metadata:{ContainerName}:{path}");
+            return;
         }
 
-        return result;
+        _cache.Remove($"file_exists:{ContainerName}:{path}");
+        _cache.Remove($"file_metadata:{ContainerName}:{path}");
+        _cache.Remove($"file_custom_metadata:{ContainerName}:{path}");
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -66,6 +67,19 @@ public interface IVirtualFileSystem : IAsyncDisposable
         CancellationToken cancellationToken = default) =>
         Storage.RequireObjectStorage().WriteBytesIfAbsentOrSameAsync(
             path.ToBlobKey(), content, options, cancellationToken);
+
+    /// <summary>
+    /// Streams an immutable upload of the declared length through SHA-256 and commits it atomically,
+    /// accepting a retry only when content and metadata match. A length mismatch fails before commit.
+    /// </summary>
+    Task<VerifiedObjectUploadResult> WriteIfAbsentOrSameAsync(
+        VfsPath path,
+        Stream content,
+        long expectedLength,
+        StorageWriteOptions? options = null,
+        CancellationToken cancellationToken = default) =>
+        Storage.RequireObjectStorage().WriteIfAbsentOrSameAsync(
+            path.ToBlobKey(), content, expectedLength, options, cancellationToken);
 
     /// <summary>
     /// Deletes a file

@@ -45,6 +45,16 @@ removed. Only the overlay's reserved version, timestamp, attribute and internal
 custom-state fields are filtered; a user field merely containing those names is
 preserved. A matching retry retains the existing object and ETag.
 
+`IVirtualFileSystem.WriteIfAbsentOrSameAsync` is the streaming form for large
+immutable payloads. The caller passes the content stream and its declared length;
+the overlay delegates to `VerifiedObjectUpload.WriteIfAbsentOrSameAsync`, which
+stages the stream in bounded parts through SHA-256 and commits it atomically. It
+returns the digest, ETag and whether an identical retry reused the existing
+revision. Different content or placement metadata keeps the provider conflict, and
+a stream shorter or longer than the declared length fails before commit. Both
+immutable writes invalidate the cached existence and metadata entries for the
+path. The streaming form requires a provider with staged multipart writes.
+
 ## Components
 
 Key files:
@@ -103,6 +113,8 @@ public sealed class MyService(IVirtualFileSystem vfs)
 
 - `Tests/ManagedCode.Storage.Tests/VirtualFileSystem/VirtualFileSystemTests.cs`
 - `Tests/ManagedCode.Storage.Tests/VirtualFileSystem/VirtualFileSystemManagerTests.cs`
+- `Tests/ManagedCode.Storage.Tests/VirtualFileSystem/VfsImmutableMetadataTests.cs`
+- `Tests/ManagedCode.Storage.Tests/VirtualFileSystem/VfsImmutableStreamWriteTests.cs`
 - `Tests/ManagedCode.Storage.Tests/VirtualFileSystem/*VirtualFileSystemFixture.cs` (cross-provider fixtures)
 
 ## References
