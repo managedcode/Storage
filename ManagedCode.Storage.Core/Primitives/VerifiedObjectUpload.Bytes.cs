@@ -28,8 +28,7 @@ public static partial class VerifiedObjectUpload
         var reused = false;
         try
         {
-            using var source = new MemoryStream(content.ToArray(), writable: false);
-            info = await storage.WriteObjectAsync(path, source, options with { IfAbsent = true },
+            info = await storage.WriteObjectAsync(path, content, options with { IfAbsent = true },
                 cancellationToken).ConfigureAwait(false);
         }
         catch (IOException) when (!cancellationToken.IsCancellationRequested)

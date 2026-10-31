@@ -97,10 +97,8 @@ public static partial class VerifiedObjectUpload
 
             hash.AppendData(buffer.AsSpan(0, partLength));
             var partId = PartId(transferId, ids.Count);
-            using (var part = new MemoryStream(buffer, 0, partLength, writable: false))
-            {
-                await storage.StagePartAsync(path, partId, part, cancellationToken).ConfigureAwait(false);
-            }
+            await storage.StagePartAsync(path, partId, buffer.AsMemory(0, partLength), cancellationToken)
+                .ConfigureAwait(false);
 
             ids.Add(partId);
             total += partLength;

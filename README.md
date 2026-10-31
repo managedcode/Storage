@@ -479,6 +479,8 @@ Keyed provider registrations let you resolve multiple named instances from depen
 
 Immutable uploads can call `WriteIfAbsentOrSameAsync` on `IObjectStorage` with a declared length. The operation streams and verifies the content, and an identical retry with matching content type, encoding, and metadata returns the existing object revision. A different payload or placement metadata keeps the storage conflict.
 
+Payloads already in memory can use the `ReadOnlyMemory<byte>` overloads of `WriteObjectAsync` and `StagePartAsync` (and `WriteBytesIfAbsentOrSameAsync` for immutable writes). Array-backed memory, including slices, is written in place without copying.
+
 ### ASP.NET Streaming Controllers
 
 Controllers in `ManagedCode.Storage.Server` expose minimal routes that stream directly between HTTP clients and blob providers. Uploads arrive as multipart forms or raw streams, flow through the unified `IStorage` abstraction, and land in whichever provider is registered. Downloads return `FileStreamResult` responses so browsers, SDKs, or background jobs can read blobs without buffering the whole payload in memory.
