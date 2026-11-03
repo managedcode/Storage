@@ -252,15 +252,34 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
             blobName, null, cancellationToken);
         byte[]? buffer = null;
         Exception? failure = null;
-        var wasCanceled = false;
 
         var token = registration.Cancellation.Token;
 
         try
         {
-            await using var sourceStream = await OpenDownloadStreamAsync(blobName, token).ConfigureAwait(false);
-            registration.Status.TotalBytes = sourceStream.CanSeek ? sourceStream.Length : null;
-            buffer = ArrayPool<byte>.Shared.Rent(_options.StreamBufferSize);
+            Stream openedStream;
+            try
+            {
+                openedStream = await OpenDownloadStreamAsync(blobName, token).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "DownloadStreamAsync could not open {TransferId}", transferId);
+                failure = ex;
+                throw;
+            }
+
+            await using var sourceStream = openedStream;
+            try
+            {
+                registration.Status.TotalBytes = sourceStream.CanSeek ? sourceStream.Length : null;
+                buffer = ArrayPool<byte>.Shared.Rent(_options.StreamBufferSize);
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+                throw;
+            }
 
             while (true)
             {
@@ -272,7 +291,6 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                 catch (OperationCanceledException oce)
                 {
                     failure = oce;
-                    wasCanceled = true;
                     throw;
                 }
                 catch (Exception ex)
@@ -293,35 +311,14 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                 registration.Touch();
 
                 var progressSnapshot = CreateStatusSnapshot(registration.Status);
-                try
-                {
-                    await NotifyClientAsync(StorageHubEvents.TransferProgress, progressSnapshot, token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException oce)
-                {
-                    failure = oce;
-                    wasCanceled = true;
-                    throw;
-                }
-                catch (HubException)
-                {
-                    throw;
-                }
+                await NotifyClientAsync(StorageHubEvents.TransferProgress, progressSnapshot, token).ConfigureAwait(false);
                 yield return chunk;
             }
 
+            token.ThrowIfCancellationRequested();
             registration.Status.IsCompleted = true;
             var completionSnapshot = CreateStatusSnapshot(registration.Status);
-            try
-            {
-                await NotifyClientAsync(StorageHubEvents.TransferCompleted, completionSnapshot, token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException oce)
-            {
-                failure = oce;
-                wasCanceled = true;
-                throw;
-            }
+            await NotifyClientAsync(StorageHubEvents.TransferCompleted, completionSnapshot, token).ConfigureAwait(false);
         }
         finally
         {
@@ -329,19 +326,13 @@ public abstract class StorageHubBase<TStorage> : Hub where TStorage : IStorage
                 ArrayPool<byte>.Shared.Return(buffer);
             Transfers.Remove(registration);
 
-            if (failure is not null)
+            if (!registration.Status.IsCompleted && (failure is not null || token.IsCancellationRequested))
             {
-                if (wasCanceled)
-                {
-                    registration.Status.IsCanceled = true;
-                    registration.Status.Error ??= "Transfer canceled";
-                    _ = NotifyClientAsync(StorageHubEvents.TransferCanceled, CreateStatusSnapshot(registration.Status), CancellationToken.None);
-                }
-                else
-                {
-                    registration.Status.Error = failure.Message;
-                    _ = NotifyClientAsync(StorageHubEvents.TransferFaulted, CreateStatusSnapshot(registration.Status), CancellationToken.None);
-                }
+                var canceled = failure is OperationCanceledException || token.IsCancellationRequested;
+                registration.Status.IsCanceled = canceled;
+                registration.Status.Error = canceled ? "Transfer canceled" : "Download failed";
+                var eventName = canceled ? StorageHubEvents.TransferCanceled : StorageHubEvents.TransferFaulted;
+                await NotifyClientAsync(eventName, CreateStatusSnapshot(registration.Status), CancellationToken.None).ConfigureAwait(false);
             }
         }
     }

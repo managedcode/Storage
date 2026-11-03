@@ -8,6 +8,7 @@ using ManagedCode.Storage.FileSystem.Extensions;
 using ManagedCode.Storage.FileSystem.Options;
 using ManagedCode.Storage.Server.Controllers;
 using ManagedCode.Storage.Server.Extensions.DependencyInjection;
+using ManagedCode.Storage.Server.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -34,6 +35,8 @@ public sealed class StorageHttpRuntimeHost : IAsyncLifetime
         builder.Services.AddControllers().AddApplicationPart(typeof(RuntimeStorageController).Assembly);
         builder.Services.AddFileSystemStorageAsDefault(new FileSystemStorageOptions { BaseFolder = _root });
         builder.Services.AddStorageServer();
+        builder.Services.AddSignalR();
+        builder.Services.AddSingleton(new StorageHubOptions { TempPath = Path.Combine(_root, "signalr-temp") });
         builder.Services.AddSingleton(new StorageServerOptions
         {
             MaxFileSize = 16 * 1024,
@@ -42,6 +45,7 @@ public sealed class StorageHttpRuntimeHost : IAsyncLifetime
         });
         _app = builder.Build();
         _app.MapControllers();
+        _app.MapHub<AliasedDownloadHub>(AliasedDownloadHub.Route);
         await _app.StartAsync(TestContext.Current.CancellationToken);
         (await Storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
         var endpoint = _app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();

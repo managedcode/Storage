@@ -134,16 +134,7 @@ public enum VfsAttributes
 /// <summary>
 /// Cache entry for metadata
 /// </summary>
-internal class MetadataCacheEntry
-{
-    public VfsMetadata Metadata { get; set; } = null!;
-    public IReadOnlyDictionary<string, string> CustomMetadata { get; set; } = new Dictionary<string, string>();
-    public DateTimeOffset CachedAt { get; set; } = DateTimeOffset.UtcNow;
-    public string? ETag { get; set; }
-    public long Size { get; set; }
-    public string? ContentType { get; set; }
-    public BlobMetadata? BlobMetadata { get; set; }
-}
+internal sealed record MetadataCacheEntry(BlobMetadata? BlobMetadata, VfsMetadata? Metadata, string? ETag);
 
 /// <summary>
 /// Base implementation for metadata managers

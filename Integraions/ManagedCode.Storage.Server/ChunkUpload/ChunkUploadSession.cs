@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -8,7 +7,8 @@ namespace ManagedCode.Storage.Server.ChunkUpload;
 
 internal sealed class ChunkUploadSession
 {
-    private readonly ConcurrentDictionary<int, string> _chunkFiles = new();
+    private readonly Dictionary<int, (string Path, long Length)> _chunkFiles = new();
+    private long _acceptedBytes;
 
     public ChunkUploadSession(string uploadId, string fileName, string? contentType, int totalChunks, int chunkSize, long? fileSize, string workingDirectory)
     {
@@ -34,6 +34,8 @@ internal sealed class ChunkUploadSession
 
     public long? FileSize { get; }
 
+    public long? ExpectedLength => ResolveExpectedLength(TotalChunks, FileSize);
+
     public string WorkingDirectory { get; }
 
     public SemaphoreSlim Gate { get; } = new(1, 1);
@@ -42,18 +44,24 @@ internal sealed class ChunkUploadSession
 
     public DateTimeOffset LastTouchedUtc { get; private set; }
 
-    public IReadOnlyDictionary<int, string> ChunkFiles => _chunkFiles;
+    public IReadOnlyDictionary<int, (string Path, long Length)> ChunkFiles => _chunkFiles;
+
+    public static long? ResolveExpectedLength(int totalChunks, long? fileSize) =>
+        totalChunks == 0 && fileSize == 0 ? null : fileSize;
 
     public void Touch()
     {
         LastTouchedUtc = DateTimeOffset.UtcNow;
     }
 
-    public string RegisterChunk(int index, string path)
+    public bool CanAcceptChunk(int index, long length) =>
+        ExpectedLength is not long expected || length <= expected - _acceptedBytes + _chunkFiles.GetValueOrDefault(index).Length;
+
+    public void RegisterChunk(int index, string path, long length)
     {
-        _chunkFiles[index] = path;
+        _acceptedBytes += length - _chunkFiles.GetValueOrDefault(index).Length;
+        _chunkFiles[index] = (path, length);
         Touch();
-        return path;
     }
 
     public void EnsureAllChunksPresent()
@@ -71,7 +79,7 @@ internal sealed class ChunkUploadSession
 
     public void Cleanup(bool keepMergedFile = false)
     {
-        foreach (var (_, path) in _chunkFiles)
+        foreach (var (path, _) in _chunkFiles.Values)
         {
             if (File.Exists(path))
             {

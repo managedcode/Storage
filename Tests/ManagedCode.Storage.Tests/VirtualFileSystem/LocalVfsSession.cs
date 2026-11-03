@@ -30,14 +30,16 @@ internal sealed class LocalVfsSession : IAsyncDisposable
     public IVirtualFileSystem FileSystem { get; }
 
     public static async Task<LocalVfsSession> CreateAsync(bool cache = true,
-        DirectoryStrategy strategy = DirectoryStrategy.Virtual, int pageSize = 100, bool initialize = true)
+        DirectoryStrategy strategy = DirectoryStrategy.Virtual, int pageSize = 100, bool initialize = true,
+        Func<FileSystemStorageOptions, FileSystemStorage>? createStorage = null)
     {
         var root = Path.Combine(Path.GetTempPath(), "managedcode-vfs-contracts", Guid.NewGuid().ToString("N"));
-        var storage = new FileSystemStorage(new FileSystemStorageOptions
+        var storageOptions = new FileSystemStorageOptions
         {
             BaseFolder = root,
             CreateContainerIfNotExists = true
-        });
+        };
+        var storage = createStorage?.Invoke(storageOptions) ?? new FileSystemStorage(storageOptions);
         if (initialize)
             (await storage.CreateContainerAsync(TestContext.Current.CancellationToken)).IsSuccess.ShouldBeTrue();
         var services = new ServiceCollection();

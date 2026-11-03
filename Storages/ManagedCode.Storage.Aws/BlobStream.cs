@@ -102,6 +102,8 @@ public class BlobStream : Stream
 
     public override void SetLength(long value)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentOutOfRangeException.ThrowIfNegative(value);
         _metadata.Length = Math.Max(_metadata.Length, value);
         _metadata.PartLength = Math.Max(MIN_PART_LENGTH, Math.Min(MAX_PART_LENGTH, _metadata.Length / MAX_PART_COUNT));
     }
@@ -132,7 +134,7 @@ public class BlobStream : Stream
     private void FlushPart(bool disposing)
     {
         var part = _metadata.CurrentStream;
-        if (part is null || (part.Length < MIN_PART_LENGTH && !disposing))
+        if (part is null || (part.Position < MIN_PART_LENGTH && !disposing))
             return;
 
         if (_metadata.Tasks.Count == MaxPendingParts)
@@ -241,11 +243,21 @@ public class BlobStream : Stream
         ArgumentOutOfRangeException.ThrowIfGreaterThan(offset, buffer.Length);
         if (count > buffer.Length - offset)
             throw new ArgumentException("The requested range exceeds the buffer length.", nameof(count));
-        if (count == 0) return;
 
+        WriteBuffered(buffer.AsSpan(offset, count));
+    }
+
+    public override void Write(ReadOnlySpan<byte> buffer)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        WriteBuffered(buffer);
+    }
+
+    private void WriteBuffered(ReadOnlySpan<byte> buffer)
+    {
         try
         {
-            WriteParts(buffer, offset, count);
+            WriteParts(buffer);
         }
         catch (Exception failure)
         {
@@ -254,23 +266,20 @@ public class BlobStream : Stream
         }
     }
 
-    private void WriteParts(byte[] buffer, int offset, int count)
+    private void WriteParts(ReadOnlySpan<byte> buffer)
     {
-        // write as much of the buffer as will fit to the current part, and if needed
-        // allocate a new part and continue writing to it (and so on).
-        while (count > 0)
+        while (!buffer.IsEmpty)
         {
-            if (_metadata.CurrentStream == null || _metadata.CurrentStream.Length >= _metadata.PartLength)
+            if (_metadata.CurrentStream == null || _metadata.CurrentStream.Position >= _metadata.PartLength)
                 StartNewPart();
 
             var currentStream = _metadata.CurrentStream ?? throw new InvalidOperationException("Multipart upload stream was not initialized.");
-            var remaining = _metadata.PartLength - currentStream.Length;
-            var written = (int)Math.Min(count, remaining);
-            currentStream.Write(buffer, offset, written);
+            var remaining = _metadata.PartLength - currentStream.Position;
+            var written = (int)Math.Min(buffer.Length, remaining);
+            currentStream.Write(buffer[..written]);
 
             _metadata.Position += written;
-            count -= written;
-            offset += written;
+            buffer = buffer[written..];
         }
     }
 

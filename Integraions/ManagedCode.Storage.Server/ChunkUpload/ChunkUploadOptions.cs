@@ -14,7 +14,8 @@ public class ChunkUploadOptions
     public string TempPath { get; set; } = Path.Combine(Path.GetTempPath(), "managedcode-storage", "chunks");
 
     /// <summary>
-    /// How long chunks are kept on disk after the last write. Expired sessions are cleaned up on completion or abort.
+    /// Idle time after which an upload session expires. Append and completion requests clean up expired sessions.
+    /// A nonpositive value disables expiration.
     /// </summary>
     public TimeSpan SessionTtl { get; set; } = TimeSpan.FromHours(1);
 

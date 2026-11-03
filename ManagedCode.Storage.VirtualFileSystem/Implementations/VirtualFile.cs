@@ -10,6 +10,7 @@ using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.VirtualFileSystem.Core;
 using ManagedCode.Storage.VirtualFileSystem.Exceptions;
+using ManagedCode.Storage.VirtualFileSystem.Extensions;
 using ManagedCode.Storage.VirtualFileSystem.Metadata;
 using ManagedCode.Storage.VirtualFileSystem.Options;
 using ManagedCode.Storage.VirtualFileSystem.Streaming;
@@ -29,7 +30,6 @@ public partial class VirtualFile : IVirtualFile
 
     private BlobMetadata? _blobMetadata;
     private VfsMetadata? _vfsMetadata;
-    private bool _metadataLoaded;
 
     /// <summary>
     /// Initializes a new instance of VirtualFile
@@ -86,30 +86,21 @@ public partial class VirtualFile : IVirtualFile
     {
         _logger.LogDebug("Refreshing file metadata: {Path}", _path);
 
-        _blobMetadata = await _metadataManager.GetBlobInfoAsync(_path.ToBlobKey(), cancellationToken);
-        _vfsMetadata = await _metadataManager.GetVfsMetadataAsync(_path.ToBlobKey(), cancellationToken);
-        _metadataLoaded = true;
+        var key = _path.ToBlobKey();
+        var blobMetadata = await _metadataManager.GetBlobInfoAsync(key, cancellationToken);
+        var vfsMetadata = _metadataManager is DefaultMetadataManager defaultManager
+            ? defaultManager.DecodeVfsMetadata(blobMetadata)
+            : await _metadataManager.GetVfsMetadataAsync(key, cancellationToken);
 
-        if (_blobMetadata != null)
-        {
-            ETag = _blobMetadata.Uri?.Query.Contains("sv=") == true ?
-                ExtractETagFromUri(_blobMetadata.Uri) : null;
-        }
+        _blobMetadata = blobMetadata;
+        _vfsMetadata = vfsMetadata;
+        ETag = blobMetadata?.Uri?.Query.Contains("sv=") == true ? ExtractETagFromUri(blobMetadata.Uri) : null;
 
         if (_vfs.Options.EnableCache)
         {
             _cache.Remove(VfsCacheKey.For(_vfs, VfsCacheKind.FileExists, _path));
             var metadataKey = VfsCacheKey.For(_vfs, VfsCacheKind.Metadata, _path);
-            var entry = new MetadataCacheEntry
-            {
-                Metadata = _vfsMetadata ?? new VfsMetadata(),
-                CustomMetadata = new Dictionary<string, string>(),
-                CachedAt = DateTimeOffset.UtcNow,
-                ETag = ETag,
-                Size = (long)(_blobMetadata?.Length ?? 0),
-                ContentType = _blobMetadata?.MimeType,
-                BlobMetadata = _blobMetadata
-            };
+            var entry = new MetadataCacheEntry(blobMetadata, vfsMetadata, ETag);
             _cache.Set(metadataKey, entry, _vfs.Options.CacheTTL);
 
             var customKey = VfsCacheKey.For(_vfs, VfsCacheKind.CustomMetadata, _path);
@@ -275,12 +266,6 @@ public partial class VirtualFile : IVirtualFile
         if (_vfs.Options.EnableCache)
         {
             _cache.Set(cacheKey, metadata, _vfs.Options.CacheTTL);
-            var metadataKey = VfsCacheKey.For(_vfs, VfsCacheKind.Metadata, _path);
-            if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry? entry) && entry is not null)
-            {
-                entry.CustomMetadata = metadata;
-                _cache.Set(metadataKey, entry, _vfs.Options.CacheTTL);
-            }
         }
 
         _logger.LogDebug("File metadata: {Path}, count: {Count}", _path, metadata.Count);
@@ -345,11 +330,6 @@ public partial class VirtualFile : IVirtualFile
 
     private async Task EnsureMetadataLoadedAsync(CancellationToken cancellationToken)
     {
-        if (_metadataLoaded)
-        {
-            return;
-        }
-
         if (_vfs.Options.EnableCache)
         {
             var metadataKey = VfsCacheKey.For(_vfs, VfsCacheKind.Metadata, _path);
@@ -358,7 +338,6 @@ public partial class VirtualFile : IVirtualFile
                 _vfsMetadata = entry.Metadata;
                 _blobMetadata = entry.BlobMetadata;
                 ETag = entry.ETag;
-                _metadataLoaded = true;
                 return;
             }
         }

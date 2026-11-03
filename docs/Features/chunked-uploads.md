@@ -76,10 +76,13 @@ Client-side:
 
 ## Temporary file ownership
 
-Session directories are derived from the exact validated upload identity. IDs
-accept ASCII letters, digits, hyphens and underscores, up to 128 characters;
-invalid IDs are rejected rather than normalized into another session. The
+Each admitted session gets a new server-generated working directory, including
+when a previously completed upload ID is reused. IDs accept ASCII letters,
+digits, hyphens and underscores, up to 128 characters. The
 service generates the merged staging filename independently of client file
 names. Client names cannot overwrite files outside a session or collide with
 numbered part files. `KeepMergedFile` retains only the merged content after the
 part files are cleaned; callers requesting retention own its eventual cleanup.
+Expired sessions are cleaned up before completion can write to storage.
+For a known upload length, append requests check the combined size before staging.
+A replacement counts only its new size, and a rejected replacement preserves the accepted chunk.

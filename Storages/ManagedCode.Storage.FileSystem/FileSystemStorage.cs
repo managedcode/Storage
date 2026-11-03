@@ -15,7 +15,10 @@ namespace ManagedCode.Storage.FileSystem;
 
 public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<string, FileSystemStorageOptions>(options), IFileSystemStorage
 {
-    private readonly Dictionary<string, FileStream> _lockedFiles = new();
+    private static readonly StringComparison PathComparison =
+        OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+    private readonly Dictionary<string, FileStream> _lockedFiles = new(StringComparer.FromComparison(PathComparison));
+    private readonly Lock _legalHoldGate = new();
 
     public override async Task<Result> RemoveContainerAsync(CancellationToken cancellationToken = default)
     {
@@ -24,8 +27,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await Task.Yield();
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (Directory.Exists(StorageClient))
-                Directory.Delete(StorageClient, true);
+            DeleteUnheldDirectory(Path.GetFullPath(StorageClient));
 
             return Result.Succeed();
         }
@@ -153,8 +155,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             cancellationToken.ThrowIfCancellationRequested();
             var path = GetDirectoryPath(directory, allowRoot: false);
 
-            if (Directory.Exists(path))
-                Directory.Delete(path, true);
+            DeleteUnheldDirectory(path);
 
             return Result.Succeed();
         }
@@ -175,21 +176,15 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             var filePath = GetPathFromOptions(options);
             cancellationToken.ThrowIfCancellationRequested();
 
-            const int bufferSize = 4096 * 1024; // 4MB buffer
-            await using var fileStream = new FileStream(
-                filePath,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.None,
-                bufferSize,
-                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            const int copyBufferSize = 256 * 1024;
+            await using var fileStream = OpenUnheldFileForUpload(filePath);
 
             if (stream.CanSeek)
             {
                 stream.Position = 0;
             }
 
-            await stream.CopyToAsync(fileStream, bufferSize, cancellationToken);
+            await stream.CopyToAsync(fileStream, copyBufferSize, cancellationToken);
             await fileStream.FlushAsync(cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -255,10 +250,14 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             var filePath = GetPathFromOptions(options, createDirectories: false);
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!File.Exists(filePath))
-                return Result<bool>.Succeed(false);
+            lock (_legalHoldGate)
+            {
+                ThrowIfHeld(filePath);
+                if (!File.Exists(filePath))
+                    return Result<bool>.Succeed(false);
 
-            File.Delete(filePath);
+                File.Delete(filePath);
+            }
             return Result<bool>.Succeed(true);
         }
         catch (Exception ex)
@@ -331,22 +330,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (hasLegalHold && !_lockedFiles.ContainsKey(filePath))
-            {
-                var fileStream = File.OpenRead(filePath);
-                if (!OperatingSystem.IsMacOS())
-                    fileStream.Lock(0, fileStream.Length);
-
-                _lockedFiles.Add(filePath, fileStream);
-            }
-            else if (!hasLegalHold && _lockedFiles.TryGetValue(filePath, out var lockedFile))
-            {
-                if (!OperatingSystem.IsMacOS())
-                    lockedFile.Unlock(0, lockedFile.Length);
-
-                lockedFile.Dispose();
-                _lockedFiles.Remove(filePath);
-            }
+            SetLegalHold(filePath, hasLegalHold);
 
             return Result.Succeed();
         }
@@ -364,12 +348,73 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
-            return Result<bool>.Succeed(_lockedFiles.ContainsKey(filePath));
+            lock (_legalHoldGate)
+                return Result<bool>.Succeed(_lockedFiles.ContainsKey(filePath));
         }
         catch (Exception ex)
         {
             return Result<bool>.Fail(ex);
         }
+    }
+
+    private void SetLegalHold(string filePath, bool hasLegalHold)
+    {
+        lock (_legalHoldGate)
+        {
+            if (hasLegalHold && !_lockedFiles.ContainsKey(filePath))
+            {
+                var fileStream = File.OpenRead(filePath);
+                try
+                {
+                    if (!OperatingSystem.IsMacOS())
+                        fileStream.Lock(0, fileStream.Length);
+
+                    _lockedFiles.Add(filePath, fileStream);
+                }
+                catch
+                {
+                    fileStream.Dispose();
+                    throw;
+                }
+            }
+            else if (!hasLegalHold && _lockedFiles.Remove(filePath, out var fileStream))
+            {
+                fileStream.Dispose();
+            }
+        }
+    }
+
+    private FileStream OpenUnheldFileForUpload(string filePath)
+    {
+        lock (_legalHoldGate)
+        {
+            ThrowIfHeld(filePath);
+            // CopyToAsync supplies the transfer buffer.
+            return new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None,
+                bufferSize: 1, options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+        }
+    }
+
+    private void DeleteUnheldDirectory(string path)
+    {
+        var prefix = Path.EndsInDirectorySeparator(path) ? path : path + Path.DirectorySeparatorChar;
+        lock (_legalHoldGate)
+        {
+            foreach (var heldPath in _lockedFiles.Keys)
+            {
+                if (heldPath.StartsWith(prefix, PathComparison))
+                    throw new UnauthorizedAccessException($"Directory contains a file on legal hold: {heldPath}");
+            }
+
+            if (Directory.Exists(path))
+                Directory.Delete(path, true);
+        }
+    }
+
+    private void ThrowIfHeld(string filePath)
+    {
+        if (_lockedFiles.ContainsKey(filePath))
+            throw new UnauthorizedAccessException($"File is on legal hold: {filePath}");
     }
 
     private string GetPathFromOptions(BaseOptions options, bool createDirectories = true)

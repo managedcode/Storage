@@ -50,8 +50,10 @@ builder.Services.AddFileSystemStorageAsDefault(options =>
 
 - `BaseFolder` acts as the container root.
 - Supports directory creation when `CreateContainerIfNotExists = true`.
+- Uploads use a 256 KiB copy buffer and leave the source stream under caller ownership.
 - Directory listing and deletion accept paths relative to `BaseFolder`. Use `RemoveContainerAsync` to delete the container root.
 - File and directory operations reject paths that traverse symbolic links or reparse points below the configured root. Recursive listings skip those entries.
+- A legal hold in the provider instance blocks overwrite and deletion of the file. Deleting a directory or the container also fails while it contains a held file.
 
 ## Tests
 

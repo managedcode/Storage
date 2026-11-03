@@ -25,6 +25,27 @@ public sealed class VfsImmutableMetadataTests : IAsyncLifetime
     public ValueTask DisposeAsync() => _container.DisposeAsync();
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Copy_WithMetadata_CommitsExactBytesAndCustomFields(bool directory)
+    {
+        await using var provider = CreateProvider(true);
+        await using var scope = provider.CreateAsyncScope();
+        var token = TestContext.Current.CancellationToken;
+        var vfs = scope.ServiceProvider.GetRequiredService<IVirtualFileSystem>();
+        var metadata = new Dictionary<string, string> { ["title"] = "Копія", ["owner"] = "source" };
+        var source = await vfs.GetFileAsync("/source/file.txt", token);
+        await source.WriteAllTextAsync("source content", options: new() { Metadata = metadata }, cancellationToken: token);
+
+        await vfs.CopyAsync(directory ? "/source" : "/source/file.txt",
+            directory ? "/destination" : "/destination/file.txt", cancellationToken: token);
+
+        var destination = await vfs.GetFileAsync("/destination/file.txt", token);
+        (await destination.ReadAllTextAsync(cancellationToken: token)).ShouldBe("source content");
+        AssertMetadata(await destination.GetMetadataAsync(token), metadata);
+    }
+
+    [Theory]
     [InlineData(false, "material.txt")]
     [InlineData(true, "material.txt")]
     [InlineData(false, "матеріал.txt")]

@@ -26,6 +26,8 @@ internal class VfsWriteStream : Stream
     private bool _abortUpload;
     private bool _disposed;
 
+    internal void Abort() => _abortUpload = true;
+
     public VfsWriteStream(
         IVirtualFileSystem vfs,
         VfsPath path,

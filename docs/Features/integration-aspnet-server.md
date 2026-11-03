@@ -37,6 +37,7 @@ sequenceDiagram
 ### SignalR streaming
 
 - `StorageHub` streams bytes over SignalR and bridges to `IStorage` stream operations.
+- Failed download opens and reads emit a terminal transfer status to the caller. Canceled downloads emit the cancellation status.
 
 ## Quickstart
 

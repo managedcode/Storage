@@ -47,7 +47,7 @@ public sealed class AwsMultipartStreamContractsTests : BaseContainer<LocalStackC
         stream.CanSeek.ShouldBeFalse();
         stream.CanWrite.ShouldBeTrue();
         stream.SetLength(content.Length);
-        stream.Write(content, 0, 5 * 1024 * 1024);
+        stream.Write(content.AsSpan(0, 5 * 1024 * 1024));
         stream.Flush();
         stream.Write(content, 5 * 1024 * 1024, 257);
         stream.Write(content, 0, 0);
@@ -61,6 +61,26 @@ public sealed class AwsMultipartStreamContractsTests : BaseContainer<LocalStackC
         (await SHA256.HashDataAsync(downloaded.ResponseStream, token)).ShouldBe(SHA256.HashData(content));
         var pending = await client.ListMultipartUploadsAsync(new ListMultipartUploadsRequest { BucketName = bucket }, token);
         (pending.MultipartUploads?.Count ?? 0).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task LengthHint_RejectsNegativeAndDisposedChanges()
+    {
+        using var client = CreateClient();
+        var token = TestContext.Current.CancellationToken;
+        var bucket = "length-contract-" + Guid.NewGuid().ToString("N");
+        await client.PutBucketAsync(bucket, token);
+        using var stream = new BlobStream(client, bucket, "file");
+
+        var negativeError = Record.Exception(() => stream.SetLength(-1));
+        stream.Write(new byte[] { 7, 8 }.AsSpan());
+        stream.Dispose();
+        var disposedError = Record.Exception(() => stream.SetLength(3));
+
+        negativeError.ShouldBeOfType<ArgumentOutOfRangeException>();
+        disposedError.ShouldBeOfType<ObjectDisposedException>();
+        using var downloaded = await client.GetObjectAsync(bucket, "file", token);
+        (await SHA256.HashDataAsync(downloaded.ResponseStream, token)).ShouldBe(SHA256.HashData(new byte[] { 7, 8 }));
     }
 
     [Fact]

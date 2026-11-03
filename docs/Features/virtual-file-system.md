@@ -22,6 +22,10 @@ Metadata reads return null or empty metadata only for a real provider 404 or abs
 
 After a write or deletion through the backing provider, call `IVirtualFile.RefreshAsync` on an existing file handle. It refreshes metadata and invalidates cached existence, including a cached miss before a multipart commit. The next existence check and read observe the committed object.
 
+Writes and deletes through the VFS invalidate shared metadata for existing handles. Reads resolve metadata through that cache or the provider. The default metadata manager builds each refreshed snapshot from one provider lookup.
+
+`ReadRangeAsync` returns the available bytes when a range reaches the end of a file. Seekable reads cap allocation at the remaining length. Large ranges on forward-only streams use a pooled transfer buffer and grow the result as bytes arrive.
+
 ```mermaid
 flowchart TD
   A[Caller] --> VFS[IVirtualFileSystem]
@@ -33,6 +37,9 @@ flowchart TD
 ### Directory operations
 
 - Directory listing is implemented by prefix-listing blob metadata via `IStorage.GetBlobMetadataListAsync(...)`.
+- Search patterns match names with `*` for zero or more characters and `?` for one character. Matching uses ordinal comparison and ignores case by default.
+- A directory move rejects overlapping source and destination paths. With overwrite disabled, a destination file conflict leaves the source files in place. The move removes only the source files it copied, and reports an error if a source cannot be removed. Copies completed before a failure can remain at the destination.
+- A copy stages each file and sends its bytes and selected metadata in the same upload. If reading that file fails, an existing destination retains its content. A directory copy scans for progress totals only when a progress reporter is supplied.
 
 ### Immutable content and metadata
 

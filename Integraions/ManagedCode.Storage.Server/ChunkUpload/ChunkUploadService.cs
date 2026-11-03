@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -48,10 +46,13 @@ public sealed class ChunkUploadService
 
         var descriptor = payload.Payload;
         var uploadId = ValidateUploadId(ChunkUploadDescriptor.ResolveUploadId(descriptor));
+        var chunkLength = payload.File.Length;
         if (descriptor.ChunkIndex <= 0 || descriptor.TotalChunks < 0 ||
             (descriptor.TotalChunks > 0 && descriptor.ChunkIndex > descriptor.TotalChunks) ||
-            descriptor.ChunkSize <= 0 || descriptor.FileSize < 0 || payload.File.Length > descriptor.ChunkSize)
+            descriptor.ChunkSize <= 0 || descriptor.FileSize < 0 || chunkLength < 0 || chunkLength > descriptor.ChunkSize)
             return Result.Fail(HttpStatusCode.BadRequest, "Invalid chunk index or declared size");
+        if (chunkLength > ChunkUploadSession.ResolveExpectedLength(descriptor.TotalChunks, descriptor.FileSize))
+            return Result.Fail(HttpStatusCode.BadRequest, "Upload exceeds its declared length");
 
         RemoveExpiredSessions();
         var session = AdmitSession(uploadId, descriptor);
@@ -63,10 +64,14 @@ public sealed class ChunkUploadService
         {
             if (session.Closed)
                 return Result.Fail("Upload session is closed");
+            if (TryExpireSession(session, DateTimeOffset.UtcNow))
+                return Result.Fail("Upload session has expired");
             if (session.TotalChunks != descriptor.TotalChunks || session.FileSize != descriptor.FileSize)
                 return Result.Fail(HttpStatusCode.BadRequest, "Chunk does not match the upload session");
+            if (!session.CanAcceptChunk(descriptor.ChunkIndex, chunkLength))
+                return Result.Fail(HttpStatusCode.BadRequest, "Upload exceeds its declared length");
 
-            await ChunkUploadFiles.StageChunkAsync(session, payload, cancellationToken).ConfigureAwait(false);
+            await ChunkUploadFiles.StageChunkAsync(session, payload, chunkLength, cancellationToken).ConfigureAwait(false);
             return Result.Succeed();
         }
         finally
@@ -84,8 +89,7 @@ public sealed class ChunkUploadService
             if (_options.MaxActiveSessions > 0 && _sessions.Count >= _options.MaxActiveSessions)
                 return null;
 
-            var directoryKey = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(uploadId)));
-            var directory = Path.Combine(_options.TempPath, directoryKey);
+            var directory = Path.Combine(_options.TempPath, Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(directory);
             var session = new ChunkUploadSession(uploadId, descriptor.FileName ?? descriptor.UploadId,
                 descriptor.ContentType, descriptor.TotalChunks, descriptor.ChunkSize, descriptor.FileSize, directory);
@@ -118,17 +122,18 @@ public sealed class ChunkUploadService
             acquired = true;
             if (session.Closed)
                 return Result<ChunkUploadCompleteResponse>.Fail("Upload session is closed");
+            if (TryExpireSession(session, DateTimeOffset.UtcNow))
+                return Result<ChunkUploadCompleteResponse>.Fail("Upload session has expired");
 
             session.Touch();
             session.EnsureAllChunksPresent();
             var orderedChunks = session.ChunkFiles
                 .OrderBy(x => x.Key)
-                .Select(x => x.Value)
+                .Select(x => x.Value.Path)
                 .ToArray();
 
             var mergedFilePath = Path.Combine(session.WorkingDirectory, "merged.bin");
-            var expectedLength = session.TotalChunks == 0 && session.FileSize == 0 ? null : session.FileSize;
-            var crc = await ChunkUploadFiles.MergeChunksAsync(mergedFilePath, orderedChunks, expectedLength, cancellationToken).ConfigureAwait(false);
+            var crc = await ChunkUploadFiles.MergeChunksAsync(mergedFilePath, orderedChunks, session.ExpectedLength, cancellationToken).ConfigureAwait(false);
 
             BlobMetadata? metadata = null;
             if (request.CommitToStorage)
@@ -211,7 +216,7 @@ public sealed class ChunkUploadService
             return;
         }
 
-        var expirationThreshold = DateTimeOffset.UtcNow - _options.SessionTtl;
+        var now = DateTimeOffset.UtcNow;
         foreach (var (_, session) in _sessions)
         {
             if (!session.Gate.Wait(0))
@@ -219,13 +224,23 @@ public sealed class ChunkUploadService
 
             try
             {
-                if (!session.Closed && session.LastTouchedUtc < expirationThreshold)
-                    CloseSession(session);
+                if (!session.Closed)
+                    TryExpireSession(session, now);
             }
             finally
             {
                 session.Gate.Release();
             }
         }
+    }
+
+    private bool TryExpireSession(ChunkUploadSession session, DateTimeOffset now)
+    {
+        var ttl = _options.SessionTtl;
+        if (ttl <= TimeSpan.Zero || now - session.LastTouchedUtc < ttl)
+            return false;
+
+        CloseSession(session);
+        return true;
     }
 }

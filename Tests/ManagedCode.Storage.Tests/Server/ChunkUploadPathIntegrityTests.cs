@@ -112,9 +112,58 @@ public sealed class ChunkUploadPathIntegrityTests : IAsyncLifetime
         CreateContainerIfNotExists = true
     });
 
-    private static async Task AppendAsync(ChunkUploadService service, string id, string name)
+    [Fact]
+    public async Task ExpiredSession_CannotCommitAndReleasesItsSlot()
     {
-        using var content = new MemoryStream(new byte[] { 1, 2, 3 }, writable: false);
+        var token = TestContext.Current.CancellationToken;
+        var options = new ChunkUploadOptions { TempPath = Path.Combine(_root, "chunks"), MaxActiveSessions = 1 };
+        var service = new ChunkUploadService(options);
+        using var storage = CreateStorage();
+        await AppendAsync(service, "expired", "expired.bin");
+        options.SessionTtl = TimeSpan.FromTicks(1);
+
+        var result = await service.CompleteAsync(new ChunkUploadCompleteRequest { UploadId = "expired" }, storage, token);
+
+        result.IsFailed.ShouldBeTrue();
+        (await storage.ExistsAsync("expired.bin", token)).Value.ShouldBeFalse();
+        Directory.GetDirectories(options.TempPath).ShouldBeEmpty();
+        options.SessionTtl = TimeSpan.FromHours(1);
+        await AppendAsync(service, "fresh", "fresh.bin");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ReusingId_LeavesPreviouslyRetainedBytesIntact(bool keepSecond)
+    {
+        var token = TestContext.Current.CancellationToken;
+        var chunks = Path.Combine(_root, "chunks");
+        var service = new ChunkUploadService(new ChunkUploadOptions { TempPath = chunks });
+        using var storage = CreateStorage();
+        await AppendAsync(service, "reused", "first.bin");
+        (await service.CompleteAsync(new ChunkUploadCompleteRequest
+        {
+            UploadId = "reused",
+            CommitToStorage = false,
+            KeepMergedFile = true
+        }, storage, token)).IsSuccess.ShouldBeTrue();
+        var retained = Directory.GetFiles(chunks, "*.bin", SearchOption.AllDirectories).ShouldHaveSingleItem();
+
+        await AppendAsync(service, "reused", "second.bin", [8, 9, 10]);
+        (await service.CompleteAsync(new ChunkUploadCompleteRequest
+        {
+            UploadId = "reused",
+            CommitToStorage = false,
+            KeepMergedFile = keepSecond
+        }, storage, token)).IsSuccess.ShouldBeTrue();
+
+        (await File.ReadAllBytesAsync(retained, token)).ShouldBe(new byte[] { 1, 2, 3 });
+        Directory.GetFiles(chunks, "*.bin", SearchOption.AllDirectories).Length.ShouldBe(keepSecond ? 2 : 1);
+    }
+
+    private static async Task AppendAsync(ChunkUploadService service, string id, string name, byte[]? bytes = null)
+    {
+        using var content = new MemoryStream(bytes ?? [1, 2, 3], writable: false);
         var result = await service.AppendChunkAsync(new FileUploadPayload
         {
             File = new FormFile(content, 0, content.Length, "file", name),

@@ -249,7 +249,7 @@ public class SearchPattern
         return IsWildcardMatch(Pattern, name, comparison);
     }
 
-    private static bool IsWildcardMatch(string pattern, string input, StringComparison comparison)
+    private static bool IsWildcardMatch(ReadOnlySpan<char> pattern, ReadOnlySpan<char> input, StringComparison comparison)
     {
         int patternIndex = 0;
         int inputIndex = 0;
@@ -258,17 +258,17 @@ public class SearchPattern
 
         while (inputIndex < input.Length)
         {
-            if (patternIndex < pattern.Length && (pattern[patternIndex] == '?' ||
-                string.Equals(pattern[patternIndex].ToString(), input[inputIndex].ToString(), comparison)))
-            {
-                patternIndex++;
-                inputIndex++;
-            }
-            else if (patternIndex < pattern.Length && pattern[patternIndex] == '*')
+            if (patternIndex < pattern.Length && pattern[patternIndex] == '*')
             {
                 starIndex = patternIndex;
                 match = inputIndex;
                 patternIndex++;
+            }
+            else if (patternIndex < pattern.Length && (pattern[patternIndex] == '?' ||
+                pattern.Slice(patternIndex, 1).Equals(input.Slice(inputIndex, 1), comparison)))
+            {
+                patternIndex++;
+                inputIndex++;
             }
             else if (starIndex != -1)
             {

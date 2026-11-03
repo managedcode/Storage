@@ -13,7 +13,8 @@ internal static class ChunkUploadFiles
 {
     private const int CopyBufferSize = 64 * 1024;
 
-    internal static async Task StageChunkAsync(ChunkUploadSession session, FileUploadPayload payload, CancellationToken cancellationToken)
+    internal static async Task StageChunkAsync(ChunkUploadSession session, FileUploadPayload payload, long length,
+        CancellationToken cancellationToken)
     {
         var chunkIndex = payload.Payload.ChunkIndex;
         var chunkFilePath = Path.Combine(session.WorkingDirectory, $"{chunkIndex:D6}.part");
@@ -24,11 +25,13 @@ internal static class ChunkUploadFiles
             await using (var source = payload.File.OpenReadStream())
             {
                 await source.CopyToAsync(target, CopyBufferSize, cancellationToken).ConfigureAwait(false);
+                if (target.Position != length)
+                    throw new InvalidDataException("The staged chunk differs from its form file length.");
             }
 
             cancellationToken.ThrowIfCancellationRequested();
             File.Move(stagingPath, chunkFilePath, overwrite: true);
-            session.RegisterChunk(chunkIndex, chunkFilePath);
+            session.RegisterChunk(chunkIndex, chunkFilePath, length);
         }
         finally
         {

@@ -75,9 +75,21 @@ public sealed class SignalRRuntimeContractsTests(StorageTestApplication app) : B
         await using var client = CreateClient();
         var token = TestContext.Current.CancellationToken;
         await client.ConnectAsync(token);
+        var name = "missing-" + Guid.NewGuid().ToString("N");
+        var terminal = new TaskCompletionSource<StorageTransferStatus>(TaskCreationOptions.RunContinuationsAsynchronously);
+        client.TransferFaulted += (_, status) => terminal.TrySetResult(status);
         await using var output = new MemoryStream();
-        await Should.ThrowAsync<HubException>(() => client.DownloadAsync("missing-" + Guid.NewGuid().ToString("N"), output, new StatusRecorder(), token));
+
+        await Should.ThrowAsync<HubException>(() => client.DownloadAsync(name, output, new StatusRecorder(), token));
+
         output.Length.ShouldBe(0);
+        var fault = await terminal.Task.WaitAsync(TimeSpan.FromSeconds(5), token);
+        fault.ResourceName.ShouldBe(name);
+        fault.Operation.ShouldBe("download");
+        fault.BytesTransferred.ShouldBe(0);
+        fault.IsCompleted.ShouldBeFalse();
+        fault.Error.ShouldBe("Download failed");
+        (await client.GetStatusAsync(fault.TransferId, token)).ShouldBeNull();
     }
 
     [Theory]

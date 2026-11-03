@@ -146,9 +146,11 @@ internal class DefaultMetadataManager : BaseMetadataManager
         string blobName,
         CancellationToken cancellationToken = default)
     {
-        var metadata = await GetBlobInfoAsync(blobName, cancellationToken);
-        return metadata?.Metadata is { } values ? ParseVfsMetadata(values) : null;
+        return DecodeVfsMetadata(await GetBlobInfoAsync(blobName, cancellationToken));
     }
+
+    internal VfsMetadata? DecodeVfsMetadata(BlobMetadata? metadata) =>
+        metadata?.Metadata is { } values ? ParseVfsMetadata(values) : null;
 
     public override async Task<IReadOnlyDictionary<string, string>> GetCustomMetadataAsync(
         string blobName,

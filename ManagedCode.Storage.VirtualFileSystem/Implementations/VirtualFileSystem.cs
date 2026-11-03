@@ -11,6 +11,7 @@ using ManagedCode.Storage.VirtualFileSystem.Core;
 using ManagedCode.Storage.VirtualFileSystem.Exceptions;
 using ManagedCode.Storage.VirtualFileSystem.Metadata;
 using ManagedCode.Storage.VirtualFileSystem.Options;
+using ManagedCode.Storage.VirtualFileSystem.Streaming;
 
 namespace ManagedCode.Storage.VirtualFileSystem.Implementations;
 
@@ -280,28 +281,58 @@ public partial class VirtualFileSystem : IVirtualFileSystem
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+        if (source == destination)
+            throw new VfsOperationException($"Cannot move a path onto itself: {source}");
+
         options ??= new MoveOptions();
 
         _logger.LogDebug("Moving: {Source} -> {Destination}", source, destination);
 
-        // For now, implement as copy + delete
-        await CopyAsync(source, destination, new CopyOptions
+        var copyOptions = new CopyOptions
         {
             Overwrite = options.Overwrite,
             PreserveMetadata = options.PreserveMetadata
-        }, null, cancellationToken);
+        };
 
-        // Delete source
-        if (await FileExistsAsync(source, cancellationToken))
+        if (await StorageFileExistsAsync(source, cancellationToken))
         {
-            await DeleteFileAsync(source, cancellationToken);
+            await CopyFileAsync(source, destination, copyOptions, null, cancellationToken);
+            await DeleteMovedSourceAsync(source, cancellationToken);
         }
         else if (await DirectoryExistsAsync(source, cancellationToken))
         {
-            await DeleteDirectoryAsync(source, true, cancellationToken);
+            await MoveDirectoryAsync(source, destination, copyOptions, cancellationToken);
+        }
+        else
+        {
+            throw new VfsNotFoundException(source);
         }
 
         _logger.LogDebug("Move completed: {Source} -> {Destination}", source, destination);
+    }
+
+    private async Task MoveDirectoryAsync(VfsPath source, VfsPath destination, CopyOptions options,
+        CancellationToken cancellationToken)
+    {
+        if (source.IsRoot || destination.IsRoot ||
+            destination.Value.StartsWith(source.Value + "/", StringComparison.Ordinal) ||
+            source.Value.StartsWith(destination.Value + "/", StringComparison.Ordinal))
+        {
+            throw new VfsOperationException($"Cannot move overlapping directories: {source} and {destination}");
+        }
+
+        var copiedSources = new List<VfsPath>();
+        await CopyDirectoryAsync(source, destination, options, null, cancellationToken, copiedSources);
+        foreach (var path in copiedSources)
+            await DeleteMovedSourceAsync(path, cancellationToken);
+    }
+
+    private async Task DeleteMovedSourceAsync(VfsPath source, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!await DeleteFileAsync(source, cancellationToken))
+            throw new VfsOperationException($"Copied the file but failed to remove its source: {source}");
     }
 
     /// <inheritdoc />
@@ -317,8 +348,10 @@ public partial class VirtualFileSystem : IVirtualFileSystem
 
         _logger.LogDebug("Copying: {Source} -> {Destination}", source, destination);
 
-        // Check if source is a file
-        if (await FileExistsAsync(source, cancellationToken))
+        if (source == destination)
+            throw new VfsOperationException($"Cannot copy a path onto itself: {source}");
+
+        if (await StorageFileExistsAsync(source, cancellationToken))
         {
             await CopyFileAsync(source, destination, options, progress, cancellationToken);
         }
@@ -351,35 +384,18 @@ public partial class VirtualFileSystem : IVirtualFileSystem
         var sourceFile = await GetFileAsync(source, cancellationToken);
         var destinationFile = await GetFileAsync(destination, cancellationToken);
 
-        if (await destinationFile.ExistsAsync(cancellationToken) && !options.Overwrite)
+        if (!options.Overwrite && await StorageFileExistsAsync(destination, cancellationToken))
         {
             throw new VfsAlreadyExistsException(destination);
         }
 
-        progress?.Report(new CopyProgress
+        if (progress is not null)
         {
-            TotalFiles = 1,
-            TotalBytes = sourceFile.Size,
-            CurrentFile = source
-        });
-
-        // Copy content
-        await using var sourceStream = await sourceFile.OpenReadAsync(cancellationToken: cancellationToken);
-        await using var destinationStream = await destinationFile.OpenWriteAsync(
-            new WriteOptions { Overwrite = options.Overwrite }, cancellationToken);
-
-        await sourceStream.CopyToAsync(destinationStream, cancellationToken);
-
-        // Copy metadata if requested
-        if (options.PreserveMetadata)
-        {
-            var metadata = await sourceFile.GetMetadataAsync(cancellationToken);
-            if (metadata.Count > 0)
-            {
-                var metadataDict = new Dictionary<string, string>(metadata);
-                await destinationFile.SetMetadataAsync(metadataDict, cancellationToken: cancellationToken);
-            }
+            await sourceFile.RefreshAsync(cancellationToken);
+            progress.Report(new CopyProgress { TotalFiles = 1, TotalBytes = sourceFile.Size, CurrentFile = source });
         }
+
+        await CopyContentAsync(sourceFile, destinationFile, options, cancellationToken);
 
         progress?.Report(new CopyProgress
         {
@@ -396,69 +412,45 @@ public partial class VirtualFileSystem : IVirtualFileSystem
         VfsPath destination,
         CopyOptions options,
         IProgress<CopyProgress>? progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        List<VfsPath>? copiedSources = null)
     {
         var sourceDir = await GetDirectoryAsync(source, cancellationToken);
 
-        // Calculate total work for progress reporting
-        var totalFiles = 0;
-        var totalBytes = 0L;
+        if (source.IsRoot || destination.Value.StartsWith(source.Value + "/", StringComparison.Ordinal))
+            throw new VfsOperationException($"Cannot copy a directory into itself: {source} and {destination}");
 
-        await foreach (var entry in sourceDir.GetEntriesAsync(recursive: true, cancellationToken: cancellationToken))
-        {
-            if (entry.Type == VfsEntryType.File && entry is IVirtualFile file)
-            {
-                totalFiles++;
-                totalBytes += file.Size;
-            }
-        }
-
+        var (totalFiles, totalBytes) = progress is null ? (0, 0L) : await GetCopyTotalsAsync(source, cancellationToken);
         var copiedFiles = 0;
         var copiedBytes = 0L;
 
-        await foreach (var entry in sourceDir.GetEntriesAsync(recursive: true, cancellationToken: cancellationToken))
+        await foreach (var sourceFile in sourceDir.GetFilesAsync(recursive: true, cancellationToken: cancellationToken))
         {
-            if (entry.Type == VfsEntryType.File && entry is IVirtualFile sourceFile)
+            var relativePath = sourceFile.Path.Value[source.Value.Length..].TrimStart('/');
+            var destPath = destination.Combine(relativePath);
+
+            if (!options.Overwrite && await StorageFileExistsAsync(destPath, cancellationToken))
             {
-                var relativePath = entry.Path.Value[source.Value.Length..].TrimStart('/');
-                var destPath = destination.Combine(relativePath);
-                var destFile = await GetFileAsync(destPath, cancellationToken);
+                if (copiedSources is not null)
+                    throw new VfsAlreadyExistsException(destPath);
 
-                if (await destFile.ExistsAsync(cancellationToken) && !options.Overwrite)
-                {
-                    continue; // Skip existing files
-                }
-
-                progress?.Report(new CopyProgress
-                {
-                    TotalFiles = totalFiles,
-                    CopiedFiles = copiedFiles,
-                    TotalBytes = totalBytes,
-                    CopiedBytes = copiedBytes,
-                    CurrentFile = entry.Path
-                });
-
-                // Copy file content
-                await using var sourceStream = await sourceFile.OpenReadAsync(cancellationToken: cancellationToken);
-                await using var destStream = await destFile.OpenWriteAsync(
-                    new WriteOptions { Overwrite = options.Overwrite }, cancellationToken);
-
-                await sourceStream.CopyToAsync(destStream, cancellationToken);
-
-                // Copy metadata if requested
-                if (options.PreserveMetadata)
-                {
-                    var metadata = await sourceFile.GetMetadataAsync(cancellationToken);
-                    if (metadata.Count > 0)
-                    {
-                        var metadataDict = new Dictionary<string, string>(metadata);
-                        await destFile.SetMetadataAsync(metadataDict, cancellationToken: cancellationToken);
-                    }
-                }
-
-                copiedFiles++;
-                copiedBytes += sourceFile.Size;
+                continue;
             }
+
+            progress?.Report(new CopyProgress
+            {
+                TotalFiles = totalFiles,
+                CopiedFiles = copiedFiles,
+                TotalBytes = totalBytes,
+                CopiedBytes = copiedBytes,
+                CurrentFile = sourceFile.Path
+            });
+
+            var destFile = await GetFileAsync(destPath, cancellationToken);
+            await CopyContentAsync(sourceFile, destFile, options, cancellationToken);
+            copiedFiles++;
+            copiedBytes += sourceFile.Size;
+            copiedSources?.Add(sourceFile.Path);
         }
 
         progress?.Report(new CopyProgress
@@ -468,6 +460,48 @@ public partial class VirtualFileSystem : IVirtualFileSystem
             TotalBytes = totalBytes,
             CopiedBytes = copiedBytes
         });
+    }
+
+    private async Task<(int Files, long Bytes)> GetCopyTotalsAsync(VfsPath source, CancellationToken cancellationToken)
+    {
+        var totalFiles = 0;
+        var totalBytes = 0L;
+        await foreach (var blob in _storage.GetBlobMetadataListAsync(source.ToBlobKey() + "/", cancellationToken))
+        {
+            if (!string.IsNullOrEmpty(blob?.FullName))
+            {
+                totalFiles++;
+                totalBytes += (long)blob.Length;
+            }
+        }
+
+        return (totalFiles, totalBytes);
+    }
+
+    private static async Task CopyContentAsync(IVirtualFile source, IVirtualFile destination, CopyOptions options,
+        CancellationToken cancellationToken)
+    {
+        await using var sourceStream = await source.OpenReadAsync(cancellationToken: cancellationToken);
+        var writeOptions = new WriteOptions { Overwrite = options.Overwrite };
+        if (options.PreserveMetadata)
+        {
+            writeOptions.ContentType = source.ContentType;
+            var metadata = await source.GetMetadataAsync(cancellationToken);
+            if (metadata.Count > 0)
+                writeOptions.Metadata = new Dictionary<string, string>(metadata);
+        }
+
+        await using var destinationStream = await destination.OpenWriteAsync(writeOptions, cancellationToken);
+        try
+        {
+            await sourceStream.CopyToAsync(destinationStream, cancellationToken);
+        }
+        catch
+        {
+            if (destinationStream is VfsWriteStream bufferedStream)
+                bufferedStream.Abort();
+            throw;
+        }
     }
 
     /// <inheritdoc />
