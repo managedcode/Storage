@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Linq;
@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
-using ManagedCode.Storage.Core.Helpers;
 using ManagedCode.Storage.Core.Models;
 using ManagedCode.Storage.Server.Models;
 
@@ -20,9 +19,9 @@ namespace ManagedCode.Storage.Server.ChunkUpload;
 /// </summary>
 public sealed class ChunkUploadService
 {
-    private const int MergeBufferSize = 81920;
     private readonly ChunkUploadOptions _options;
     private readonly ConcurrentDictionary<string, ChunkUploadSession> _sessions = new();
+    private readonly object _admission = new();
 
     /// <summary>
     /// Initialises the service with the specified options.
@@ -45,44 +44,54 @@ public sealed class ChunkUploadService
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(payload.File);
         ArgumentNullException.ThrowIfNull(payload.Payload);
+        cancellationToken.ThrowIfCancellationRequested();
 
         var descriptor = payload.Payload;
-        var uploadId = ChunkUploadDescriptor.ResolveUploadId(descriptor);
+        var uploadId = ValidateUploadId(ChunkUploadDescriptor.ResolveUploadId(descriptor));
+        if (descriptor.ChunkIndex <= 0 || descriptor.TotalChunks < 0 ||
+            (descriptor.TotalChunks > 0 && descriptor.ChunkIndex > descriptor.TotalChunks) ||
+            descriptor.ChunkSize <= 0 || descriptor.FileSize < 0 || payload.File.Length > descriptor.ChunkSize)
+            return Result.Fail(HttpStatusCode.BadRequest, "Invalid chunk index or declared size");
 
-        var validatedUploadId = ValidateUploadId(uploadId);
-
-        var session = _sessions.GetOrAdd(validatedUploadId, static (key, state) =>
-        {
-            var descriptor = state.Payload;
-            var directoryKey = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(key)));
-            var workingDirectory = Path.Combine(state.Options.TempPath, directoryKey);
-            Directory.CreateDirectory(workingDirectory);
-            return new ChunkUploadSession(
-                key,
-                descriptor.FileName ?? descriptor.UploadId,
-                descriptor.ContentType,
-                descriptor.TotalChunks,
-                descriptor.ChunkSize,
-                descriptor.FileSize,
-                workingDirectory);
-        }, (Payload: descriptor, Options: _options));
-
-        if (_options.MaxActiveSessions > 0 && _sessions.Count > _options.MaxActiveSessions)
-        {
-            return Result.Fail("Maximum number of parallel chunk uploads exceeded");
-        }
-
-        var chunkFilePath = Path.Combine(session.WorkingDirectory, $"{descriptor.ChunkIndex:D6}.part");
-
-        await using (var targetStream = new FileStream(chunkFilePath, FileMode.Create, FileAccess.Write, FileShare.None, descriptor.ChunkSize, useAsync: true))
-        await using (var sourceStream = payload.File.OpenReadStream())
-        {
-            await sourceStream.CopyToAsync(targetStream, descriptor.ChunkSize, cancellationToken);
-        }
-
-        session.RegisterChunk(descriptor.ChunkIndex, chunkFilePath);
         RemoveExpiredSessions();
-        return Result.Succeed();
+        var session = AdmitSession(uploadId, descriptor);
+        if (session is null)
+            return Result.Fail("Maximum number of parallel chunk uploads exceeded");
+
+        await session.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (session.Closed)
+                return Result.Fail("Upload session is closed");
+            if (session.TotalChunks != descriptor.TotalChunks || session.FileSize != descriptor.FileSize)
+                return Result.Fail(HttpStatusCode.BadRequest, "Chunk does not match the upload session");
+
+            await ChunkUploadFiles.StageChunkAsync(session, payload, cancellationToken).ConfigureAwait(false);
+            return Result.Succeed();
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+    }
+
+    private ChunkUploadSession? AdmitSession(string uploadId, FilePayload descriptor)
+    {
+        lock (_admission)
+        {
+            if (_sessions.TryGetValue(uploadId, out var existing))
+                return existing;
+            if (_options.MaxActiveSessions > 0 && _sessions.Count >= _options.MaxActiveSessions)
+                return null;
+
+            var directoryKey = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(uploadId)));
+            var directory = Path.Combine(_options.TempPath, directoryKey);
+            Directory.CreateDirectory(directory);
+            var session = new ChunkUploadSession(uploadId, descriptor.FileName ?? descriptor.UploadId,
+                descriptor.ContentType, descriptor.TotalChunks, descriptor.ChunkSize, descriptor.FileSize, directory);
+            _sessions[uploadId] = session;
+            return session;
+        }
     }
 
     /// <summary>
@@ -102,8 +111,15 @@ public sealed class ChunkUploadService
             return Result<ChunkUploadCompleteResponse>.Fail("Upload session not found");
         }
 
+        var acquired = false;
         try
         {
+            await session.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            acquired = true;
+            if (session.Closed)
+                return Result<ChunkUploadCompleteResponse>.Fail("Upload session is closed");
+
+            session.Touch();
             session.EnsureAllChunksPresent();
             var orderedChunks = session.ChunkFiles
                 .OrderBy(x => x.Key)
@@ -111,26 +127,20 @@ public sealed class ChunkUploadService
                 .ToArray();
 
             var mergedFilePath = Path.Combine(session.WorkingDirectory, "merged.bin");
-            await MergeChunksAsync(mergedFilePath, orderedChunks, cancellationToken);
+            var expectedLength = session.TotalChunks == 0 && session.FileSize == 0 ? null : session.FileSize;
+            var crc = await ChunkUploadFiles.MergeChunksAsync(mergedFilePath, orderedChunks, expectedLength, cancellationToken).ConfigureAwait(false);
 
             BlobMetadata? metadata = null;
             if (request.CommitToStorage)
             {
                 var uploadOptions = new UploadOptions(request.FileName ?? session.FileName, request.Directory, request.ContentType, request.Metadata);
-                var uploadResult = await storage.UploadAsync(new FileInfo(mergedFilePath), uploadOptions, cancellationToken);
+                var uploadResult = await storage.UploadAsync(new FileInfo(mergedFilePath), uploadOptions, cancellationToken)
+                    .ConfigureAwait(false);
                 uploadResult.ThrowIfFail();
                 metadata = uploadResult.Value;
             }
 
-            var crc = Crc32Helper.CalculateFileCrc(mergedFilePath);
-
-            if (!request.KeepMergedFile)
-            {
-                File.Delete(mergedFilePath);
-            }
-
-            session.Cleanup(request.KeepMergedFile);
-            _sessions.TryRemove(request.UploadId, out _);
+            CloseSession(session, request.KeepMergedFile);
 
             return Result<ChunkUploadCompleteResponse>.Succeed(new ChunkUploadCompleteResponse
             {
@@ -142,6 +152,11 @@ public sealed class ChunkUploadService
         {
             return Result<ChunkUploadCompleteResponse>.Fail(ex);
         }
+        finally
+        {
+            if (acquired)
+                session.Gate.Release();
+        }
     }
 
     /// <summary>
@@ -150,9 +165,31 @@ public sealed class ChunkUploadService
     /// <param name="uploadId">Upload identifier.</param>
     public void Abort(string uploadId)
     {
-        if (_sessions.TryRemove(uploadId, out var session))
+        if (!_sessions.TryGetValue(uploadId, out var session))
+            return;
+
+        session.Gate.Wait();
+        try
         {
-            session.Cleanup();
+            if (!session.Closed)
+                CloseSession(session);
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+    }
+
+    private void CloseSession(ChunkUploadSession session, bool keepMergedFile = false)
+    {
+        session.Closed = true;
+        try
+        {
+            session.Cleanup(keepMergedFile);
+        }
+        finally
+        {
+            _sessions.TryRemove(session.UploadId, out _);
         }
     }
 
@@ -167,17 +204,6 @@ public sealed class ChunkUploadService
         return uploadId;
     }
 
-    private static async Task MergeChunksAsync(string destinationFile, IReadOnlyCollection<string> chunkFiles, CancellationToken cancellationToken)
-    {
-        await using var destination = new FileStream(destinationFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: MergeBufferSize, useAsync: true);
-
-        foreach (var chunk in chunkFiles)
-        {
-            await using var source = new FileStream(chunk, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: MergeBufferSize, useAsync: true);
-            await source.CopyToAsync(destination, MergeBufferSize, cancellationToken);
-        }
-    }
-
     private void RemoveExpiredSessions()
     {
         if (_options.SessionTtl <= TimeSpan.Zero)
@@ -186,14 +212,19 @@ public sealed class ChunkUploadService
         }
 
         var expirationThreshold = DateTimeOffset.UtcNow - _options.SessionTtl;
-        foreach (var (uploadId, session) in _sessions)
+        foreach (var (_, session) in _sessions)
         {
-            if (session.LastTouchedUtc < expirationThreshold)
+            if (!session.Gate.Wait(0))
+                continue;
+
+            try
             {
-                if (_sessions.TryRemove(uploadId, out var expired))
-                {
-                    expired.Cleanup();
-                }
+                if (!session.Closed && session.LastTouchedUtc < expirationThreshold)
+                    CloseSession(session);
+            }
+            finally
+            {
+                session.Gate.Release();
             }
         }
     }

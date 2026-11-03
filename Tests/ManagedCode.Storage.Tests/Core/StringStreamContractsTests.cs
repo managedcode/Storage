@@ -44,4 +44,38 @@ public sealed class StringStreamContractsTests
         Should.Throw<ArgumentException>(() => stream.Read(new byte[4], offset, count));
         stream.Position.ShouldBe(0);
     }
+
+    [Fact]
+    public void SeekBeforeStart_DoesNotChangePosition()
+    {
+        using var stream = new StringStream("AB");
+        stream.Position = 1;
+
+        Should.Throw<ArgumentOutOfRangeException>(() => stream.Position = -1);
+        Should.Throw<ArgumentOutOfRangeException>(() => stream.Seek(-2, SeekOrigin.Current));
+        stream.Position.ShouldBe(1);
+        stream.ReadByte().ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData(0, 8)]
+    [InlineData(1, 5)]
+    [InlineData(2, 3)]
+    [InlineData(7, 4)]
+    public void Read_PreservesRawCodeUnitsAtEvenAndOddOffsets(int start, int count)
+    {
+        using var stream = new StringStream("A\u1234\ud800B");
+        byte[] codeUnits = [0x41, 0, 0x34, 0x12, 0, 0xd8, 0x42, 0];
+        byte[] destination = new byte[count + 2];
+        Array.Fill(destination, (byte)0xff);
+        stream.Position = start;
+
+        var read = stream.Read(destination, 1, count);
+
+        read.ShouldBe(Math.Min(count, codeUnits.Length - start));
+        destination[1..(read + 1)].ShouldBe(codeUnits[start..(start + read)]);
+        destination[0].ShouldBe((byte)0xff);
+        destination[read + 1].ShouldBe((byte)0xff);
+        stream.Position.ShouldBe(start + read);
+    }
 }

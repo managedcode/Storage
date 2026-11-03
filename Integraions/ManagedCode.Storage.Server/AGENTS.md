@@ -54,3 +54,4 @@ Parent: `../../AGENTS.md`
 ## Scoped Coverage Repair Maintainability Exception
 
 - the existing `StorageControllerBase` source file already contain responsibilities above the inherited size limits. This repair keeps existing public contracts stable and limits implementation changes to directly tested defects. Do not expand unrelated behavior under this exception. Further decomposition must preserve provider/transport semantics and be reviewed as a separate change.
+- The existing `StorageHubBase` type exceeds the type size limit because it contains both streaming iterators and their event contracts. Transfer registration and cancellation live in a separate registry. A future split of the iterators must preserve hub message shapes and transfer cleanup.

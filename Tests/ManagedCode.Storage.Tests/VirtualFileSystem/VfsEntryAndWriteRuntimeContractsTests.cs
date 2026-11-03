@@ -91,4 +91,74 @@ public sealed class VfsEntryAndWriteRuntimeContractsTests
         }
         finally { File.Delete(session.RootDirectory); }
     }
+
+    [Fact]
+    public async Task CancelledWholeFileWrite_PreservesTheExistingFile()
+    {
+        await using var session = await LocalVfsSession.CreateAsync();
+        var token = TestContext.Current.CancellationToken;
+        var file = await session.FileSystem.GetFileAsync("/target.txt", token);
+        await file.WriteAllTextAsync("original", cancellationToken: token);
+
+        await Should.ThrowAsync<OperationCanceledException>(() =>
+            file.WriteAllTextAsync("replacement", cancellationToken: new CancellationToken(canceled: true)));
+
+        (await file.ReadAllTextAsync(cancellationToken: token)).ShouldBe("original");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CancelledStreamWrite_DiscardsBufferedBytesOnDisposal(bool asynchronous)
+    {
+        await using var session = await LocalVfsSession.CreateAsync();
+        var token = TestContext.Current.CancellationToken;
+        var file = await session.FileSystem.GetFileAsync("/target.txt", token);
+        await file.WriteAllTextAsync("original", cancellationToken: token);
+
+        var stream = await file.OpenWriteAsync(cancellationToken: token);
+        await stream.WriteAsync(Encoding.UTF8.GetBytes("partial"), token);
+        await Should.ThrowAsync<OperationCanceledException>(() =>
+            stream.WriteAsync(Encoding.UTF8.GetBytes(" remainder"), new CancellationToken(canceled: true)).AsTask());
+        if (asynchronous)
+            await stream.DisposeAsync();
+        else
+            await Task.Run(stream.Dispose, token);
+
+        (await file.ReadAllTextAsync(cancellationToken: token)).ShouldBe("original");
+    }
+
+    [Fact]
+    public async Task SynchronousDisposal_CommitsFromAThreadWithAnExclusiveScheduler()
+    {
+        await using var session = await LocalVfsSession.CreateAsync(initialize: false);
+        var token = TestContext.Current.CancellationToken;
+        var file = await session.FileSystem.GetFileAsync("/target.txt", token);
+        var stream = await file.OpenWriteAsync(cancellationToken: token);
+        await stream.WriteAsync(Encoding.UTF8.GetBytes("committed"), token);
+        var scheduler = new ConcurrentExclusiveSchedulerPair();
+
+        await Task.Factory.StartNew(stream.Dispose, token, TaskCreationOptions.None, scheduler.ExclusiveScheduler)
+            .WaitAsync(TimeSpan.FromSeconds(10), token);
+        scheduler.Complete();
+
+        (await file.ReadAllTextAsync(cancellationToken: token)).ShouldBe("committed");
+    }
+
+    [Fact]
+    public async Task CancellationBeforeDisposal_PreservesTheExistingFile()
+    {
+        await using var session = await LocalVfsSession.CreateAsync();
+        var token = TestContext.Current.CancellationToken;
+        var file = await session.FileSystem.GetFileAsync("/target.txt", token);
+        await file.WriteAllTextAsync("original", cancellationToken: token);
+        using var upload = CancellationTokenSource.CreateLinkedTokenSource(token);
+        var stream = await file.OpenWriteAsync(cancellationToken: upload.Token);
+        await stream.WriteAsync(Encoding.UTF8.GetBytes("replacement"), token);
+        await upload.CancelAsync();
+
+        await Should.ThrowAsync<OperationCanceledException>(() => stream.DisposeAsync().AsTask());
+
+        (await file.ReadAllTextAsync(cancellationToken: token)).ShouldBe("original");
+    }
 }

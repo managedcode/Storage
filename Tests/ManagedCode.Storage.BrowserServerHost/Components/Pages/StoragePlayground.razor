@@ -26,6 +26,9 @@
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <button id="save-text-button" @onclick="SaveTextAsync">Save Text</button>
+        <button id="cancel-upload-button" @onclick="CancelUploadAsync">Cancel Upload</button>
+        <button id="stage-upload-button" @onclick="StageUploadAsync">Stage Upload</button>
+        <button id="release-upload-button" @onclick="ReleaseUpload">Release Upload</button>
         <button id="load-text-button" @onclick="LoadTextAsync">Load Text</button>
         <button id="save-large-button" @onclick="SaveLargeAsync">Save Large</button>
         <button id="load-large-button" @onclick="LoadLargeAsync">Load Large</button>
@@ -93,6 +96,42 @@
     {
         var result = await Storage.UploadAsync(content, new UploadOptions { FileName = fileName, Directory = directory });
         status = result.IsSuccess ? $"saved:{result.Value.FullName}" : $"save-failed:{result.Problem.Detail}";
+    }
+
+    private TaskCompletionSource? releaseUpload;
+
+    private async Task CancelUploadAsync()
+    {
+        using var cancellation = new CancellationTokenSource();
+        await using var stream = new DeterministicPayloadStream(2 * 1024 * 1024, 1, 1, _ => cancellation.Cancel());
+        var result = await Storage.UploadAsync(stream, new UploadOptions(fileName, directory), cancellation.Token);
+        status = result.IsFailed && stream.Position > 0 ? "upload-canceled" : "unexpected-upload-result";
+    }
+
+    private async Task StageUploadAsync()
+    {
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        releaseUpload = release;
+        using var stream = new GatedUploadStream(Encoding.UTF8.GetBytes(content), async token =>
+        {
+            status = "upload-staged";
+            await InvokeAsync(StateHasChanged);
+            await release.Task.WaitAsync(token);
+        });
+        var result = await Storage.UploadAsync(stream, new UploadOptions(fileName, directory));
+        status = result.IsSuccess ? $"saved:{result.Value.FullName}" : $"save-failed:{result.Problem.Detail}";
+    }
+
+    private void ReleaseUpload() => releaseUpload?.TrySetResult();
+
+    private sealed class GatedUploadStream(byte[] bytes, Func<CancellationToken, Task> wait) : MemoryStream(bytes)
+    {
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (Position == 0)
+                await wait(cancellationToken);
+            return await base.ReadAsync(buffer, cancellationToken);
+        }
     }
 
     private async Task LoadTextAsync()

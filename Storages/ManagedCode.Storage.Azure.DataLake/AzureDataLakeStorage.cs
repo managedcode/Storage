@@ -45,8 +45,8 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         try
         {
             var fileClient = GetFileClient(options);
-            var stream = await fileClient.OpenReadAsync(options.Position, options.BufferSize, cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            var stream = await fileClient.OpenReadAsync(options.Position, options.BufferSize, cancellationToken: cancellationToken);
             return Result.Succeed(stream);
         }
         catch (Exception ex)
@@ -61,8 +61,8 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         try
         {
             var fileClient = GetFileClient(options);
-            var stream = await fileClient.OpenWriteAsync(options.Overwrite, cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            var stream = await fileClient.OpenWriteAsync(options.Overwrite, cancellationToken: cancellationToken);
             return Result.Succeed(stream);
         }
         catch (Exception ex)
@@ -86,7 +86,11 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
             {
                 yield return new BlobMetadata
                 {
-                    Name = item.Name
+                    FullName = item.Name,
+                    Name = item.Name,
+                    Container = StorageOptions.FileSystem,
+                    Length = (ulong)item.ContentLength.GetValueOrDefault(),
+                    LastModified = item.LastModified
                 };
             }
 
@@ -188,20 +192,8 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
         {
             var fileClient = GetFileClient(options);
             var downloadResponse = await fileClient.ReadAsync(cancellationToken);
-            var reader = new BinaryReader(downloadResponse.Value.Content);
-            var fileStream = localFile.FileStream;
-
-            var bufferSize = 4096;
-            var buffer = new byte[bufferSize];
-            int count;
-
-            while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
-                await fileStream.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
-
-            await fileStream.FlushAsync(cancellationToken);
-
-            fileStream.Close();
-            cancellationToken.ThrowIfCancellationRequested();
+            await using var content = downloadResponse.Value.Content;
+            await localFile.CopyFromStreamAsync(content, cancellationToken);
 
             return Result<LocalFile>.Succeed(localFile);
         }
@@ -256,6 +248,7 @@ public class AzureDataLakeStorage : BaseStorage<DataLakeFileSystemClient, AzureD
             cancellationToken.ThrowIfCancellationRequested();
             return Result<BlobMetadata>.Succeed(new BlobMetadata
             {
+                FullName = fileClient.Path,
                 Name = fileClient.Name,
                 Uri = fileClient.Uri,
                 Container = fileClient.FileSystemName,

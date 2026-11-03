@@ -20,6 +20,11 @@ namespace ManagedCode.Storage.Google;
 
 public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPStorage
 {
+    private static readonly HttpClient SignedReadClient = new(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+    });
+
     private readonly ILogger<GCPStorage>? _logger;
     private readonly UrlSigner? _urlSigner;
 
@@ -61,7 +66,7 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
             if (cancellationToken.IsCancellationRequested)
                 yield break;
 
-            var blobMetadata = new BlobMetadata();
+            BlobMetadata blobMetadata;
             try
             {
                 blobMetadata = new BlobMetadata
@@ -129,9 +134,7 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
             var signedUrl = _urlSigner.Sign(StorageOptions.BucketOptions.Bucket, fileName, TimeSpan.FromHours(1), HttpMethod.Get);
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var httpClient = new HttpClient();
-            var stream = await httpClient.GetStreamAsync(signedUrl, cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
+            var stream = await SignedReadClient.GetStreamAsync(signedUrl, cancellationToken);
             return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
@@ -246,8 +249,11 @@ public class GCPStorage : BaseStorage<StorageClient, GCPStorageOptions>, IGCPSto
         {
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            await StorageClient.DownloadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath, localFile.FileStream, null,
-                cancellationToken);
+            await using var destination = localFile.FileStream;
+            destination.SetLength(0);
+            destination.Position = 0;
+            await StorageClient.DownloadObjectAsync(StorageOptions.BucketOptions.Bucket, options.FullPath,
+                destination, null, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             return Result<LocalFile>.Succeed(localFile);

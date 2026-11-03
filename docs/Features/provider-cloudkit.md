@@ -58,6 +58,8 @@ builder.Services.AddCloudKitStorageAsDefault(options =>
 
 ## Current Behavior
 
+- Uploads leave the caller's source stream open. Downloads to an explicit local path replace its previous bytes in full.
+
 - Supports multiple auth modes:
   - API token (`ckAPIToken`) via `CloudKitStorageOptions.ApiToken`
   - optional web auth token (`ckWebAuthToken`) for user-scoped scenarios (rotated by CloudKit on each request)

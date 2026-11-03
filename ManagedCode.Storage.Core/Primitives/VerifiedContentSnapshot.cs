@@ -38,24 +38,27 @@ public static class VerifiedContentSnapshot
         {
             using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
             using var buffer = MemoryPool<byte>.Shared.Rent();
+            var memory = buffer.Memory;
             long length = 0;
             while (true)
             {
-                var read = await source.ReadAsync(buffer.Memory, cancellationToken).ConfigureAwait(false);
+                var remaining = expectedLength - length;
+                var requested = remaining >= memory.Length ? memory : memory[..((int)remaining + 1)];
+                var read = await source.ReadAsync(requested, cancellationToken).ConfigureAwait(false);
                 if (read == 0)
                 {
                     break;
                 }
 
-                length = checked(length + read);
-                if (length > expectedLength)
+                if (read > remaining)
                 {
                     await snapshot.DisposeAsync().ConfigureAwait(false);
                     return null;
                 }
 
-                hash.AppendData(buffer.Memory.Span[..read]);
-                await snapshot.WriteAsync(buffer.Memory[..read], cancellationToken).ConfigureAwait(false);
+                length += read;
+                hash.AppendData(memory.Span[..read]);
+                await snapshot.WriteAsync(memory[..read], cancellationToken).ConfigureAwait(false);
             }
 
             if (length != expectedLength ||

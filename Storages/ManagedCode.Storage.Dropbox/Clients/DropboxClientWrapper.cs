@@ -68,8 +68,16 @@ public class DropboxClientWrapper : IDropboxClientWrapper, IDisposable
         var fullPath = Combine(rootPath, path);
         cancellationToken.ThrowIfCancellationRequested();
         var response = await _client.Files.DownloadAsync(fullPath);
-        cancellationToken.ThrowIfCancellationRequested();
-        return await response.GetContentAsStreamAsync();
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return await response.GetContentAsStreamAsync();
+        }
+        catch
+        {
+            response.Dispose();
+            throw;
+        }
     }
 
     public async Task<bool> DeleteAsync(string rootPath, string path, CancellationToken cancellationToken)

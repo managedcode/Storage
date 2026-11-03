@@ -97,6 +97,8 @@ If you prefer to wire storage resolution manually, configure `StorageFactory`, `
 
 ## Storage Semantics
 
+State reads deserialize from the provider's read stream. Providers that report missing streams generically are checked for record existence before resetting grain state.
+
 - `StateDirectory` controls the root prefix for persisted grain state files.
 - `PathBuilder` lets you fully control the blob/path naming strategy.
 - `DeleteStateOnClear` decides whether `ClearStateAsync` deletes the state file or writes a tombstone record.

@@ -53,6 +53,25 @@ public sealed class CartographStorageReadTests
     }
 
     [Fact]
+    public async Task GetStreamAsync_WhenCatalogOrderDiffersFromSegmentOrder_UsesPhysicalOffsets()
+    {
+        using var fixture = new CartographArtifactFixture();
+        using var storage = fixture.CreateStorage(
+            fixture.WriteArtifact("segmented.ctg", entries => entries.Reverse(), splitByFile: true));
+        var token = TestContext.Current.CancellationToken;
+        foreach (var (name, expected) in fixture.Files)
+        {
+            var opened = await storage.GetStreamAsync(name, token);
+            opened.IsSuccess.ShouldBeTrue();
+            await using var stream = opened.Value;
+            var actual = new byte[expected.Length];
+            await stream.ReadExactlyAsync(actual, token);
+            actual.ShouldBe(expected);
+            stream.ReadByte().ShouldBe(-1);
+        }
+    }
+
+    [Fact]
     public async Task GetStreamAsync_WhenSeveralReadersRunConcurrently_KeepsSnapshotsIndependent()
     {
         using var fixture = new CartographArtifactFixture();

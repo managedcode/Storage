@@ -56,6 +56,7 @@ var result = await client.UploadLargeFile(
 
 - `StorageClient.ChunkSize` must be set before `UploadLargeFile(...)`.
 - CRC is computed during upload using `ManagedCode.Storage.Core.Helpers.Crc32Helper`.
+- The client checks the completion checksum against the uploaded bytes. For streams with unknown length, it reports 100% after successful completion.
 - MIME type is resolved via `MimeHelper` based on file name.
 
 ## Tests

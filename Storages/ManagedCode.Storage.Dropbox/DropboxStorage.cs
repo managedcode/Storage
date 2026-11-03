@@ -147,14 +147,9 @@ public class DropboxStorage : BaseStorage<IDropboxClientWrapper, DropboxStorageO
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(options.FullPath);
-            var remoteStream = await StorageClient.DownloadAsync(StorageOptions.RootPath, path, cancellationToken);
-
-            var fileStream = localFile.FileStream;
-            await using (remoteStream)
-            {
-                await remoteStream.CopyToAsync(fileStream, cancellationToken);
-                fileStream.Position = 0;
-            }
+            await using var remoteStream = await StorageClient.DownloadAsync(StorageOptions.RootPath, path, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            await localFile.CopyFromStreamAsync(remoteStream, cancellationToken);
 
             return Result<LocalFile>.Succeed(localFile);
         }

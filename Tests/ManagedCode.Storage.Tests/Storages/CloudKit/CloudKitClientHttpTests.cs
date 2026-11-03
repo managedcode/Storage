@@ -47,6 +47,8 @@ public class CloudKitClientHttpTests
             uploaded.Path.ShouldBe(internalPath);
             uploaded.ContentType.ShouldBe("text/plain");
             uploaded.Size.ShouldBe((ulong)"cloudkit payload".Length);
+            uploadStream.Position = 0;
+            uploadStream.ReadByte().ShouldBe((int)'c');
         }
 
         (await client.ExistsAsync(recordName, CancellationToken.None)).ShouldBeTrue();

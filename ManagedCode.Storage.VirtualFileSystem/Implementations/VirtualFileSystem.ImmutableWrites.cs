@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core.Primitives;
 using ManagedCode.Storage.VirtualFileSystem.Core;
+using ManagedCode.Storage.VirtualFileSystem.Metadata;
 
 namespace ManagedCode.Storage.VirtualFileSystem.Implementations;
 
@@ -19,7 +20,7 @@ public partial class VirtualFileSystem
         ThrowIfDisposed();
         var result = await _storage.RequireObjectStorage().WriteBytesIfAbsentOrSameAsync(
             path.ToBlobKey(), content, options, cancellationToken).ConfigureAwait(false);
-        InvalidateImmutableWriteCaches(path);
+        VfsCacheKey.InvalidateFile(_cache, this, path);
         return result;
     }
 
@@ -34,19 +35,7 @@ public partial class VirtualFileSystem
         ThrowIfDisposed();
         var result = await _storage.RequireObjectStorage().WriteIfAbsentOrSameAsync(
             path.ToBlobKey(), content, expectedLength, options, cancellationToken).ConfigureAwait(false);
-        InvalidateImmutableWriteCaches(path);
+        VfsCacheKey.InvalidateFile(_cache, this, path);
         return result;
-    }
-
-    private void InvalidateImmutableWriteCaches(VfsPath path)
-    {
-        if (!_options.EnableCache)
-        {
-            return;
-        }
-
-        _cache.Remove($"file_exists:{ContainerName}:{path}");
-        _cache.Remove($"file_metadata:{ContainerName}:{path}");
-        _cache.Remove($"file_custom_metadata:{ContainerName}:{path}");
     }
 }

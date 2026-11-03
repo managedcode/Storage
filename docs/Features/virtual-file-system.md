@@ -104,9 +104,9 @@ public sealed class MyService(IVirtualFileSystem vfs)
 
 ## Current Behavior
 
-- Existence checks and metadata can be cached in `IMemoryCache` when enabled via `VfsOptions`.
+- Existence checks and metadata can be cached in `IMemoryCache` when enabled via `VfsOptions`. Each VFS instance has its own cache keys, including when several mounts share a container name. Successful writes and deletions invalidate file entries and cached existence for ancestor directories.
 - File existence checks use `IStorage.ExistsAsync(...)`; they do not fetch blob metadata or turn an expected missing file into provider exception telemetry.
-- `OpenWriteAsync` currently uses a buffered write stream (`VfsWriteStream`) that uploads when the stream is disposed.
+- `OpenWriteAsync` returns a file-backed stream that uploads on disposal. A failed or cancelled write discards its buffered content. Disposal checks the opening cancellation token before starting the provider upload.
 - Concurrency checks can be enforced via `WriteOptions.ExpectedETag` where supported by the underlying provider.
 
 ## Tests

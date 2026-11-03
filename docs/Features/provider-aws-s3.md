@@ -49,6 +49,9 @@ builder.Services.AddAWSStorageAsDefault(options =>
 
 ## Current Behavior
 
+- Downloads read the body and metadata from one S3 response. Metadata returns the object key relative to its bucket. Listings follow the service's continuation tokens.
+- The multipart write stream buffers parts in temporary files and keeps at most two part uploads in flight. If a write or upload fails, it closes the buffers and aborts the pending multipart upload.
+
 - Supports multiple auth modes (access keys / role / instance profile) via `AWSStorageOptions`.
 - Can create the bucket when `CreateContainerIfNotExists = true`.
 

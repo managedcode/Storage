@@ -61,6 +61,8 @@ builder.Services.AddOneDriveStorageAsDefault(options =>
 
 ## Current Behavior
 
+- Downloads to a local path replace the destination's previous bytes in full.
+
 - You can provide either:
   - `OneDriveStorageOptions.Client` (custom `IOneDriveClient` swap point, mainly for tests), or
   - `OneDriveStorageOptions.GraphClient` (official SDK client)

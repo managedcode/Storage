@@ -44,13 +44,16 @@ internal sealed class BrowserIndexedDbInterop(IJSRuntime jsRuntime) : IAsyncDisp
         return UseModuleAsync(module => module.InvokeAsync<BrowserStoredBlob[]>("listBlobs", cancellationToken, databaseName, containerName, prefix));
     }
 
-    public Task PutBlobAsync(string databaseName, BrowserStoredBlob blob, CancellationToken cancellationToken = default)
+    public Task<BrowserStoredBlob> PutBlobAsync(string databaseName, BrowserStoredBlob blob)
     {
-        return UseModuleAsync(async module =>
-        {
-            await module.InvokeVoidAsync("putBlob", cancellationToken, databaseName, blob);
-            return 0;
-        });
+        return UseModuleAsync(module => module.InvokeAsync<BrowserStoredBlob>("putBlob", databaseName, blob));
+    }
+
+    public Task<bool> SetBlobLegalHoldAsync(string databaseName, string blobKey, bool hasLegalHold,
+        DateTimeOffset modified, CancellationToken cancellationToken)
+    {
+        return UseModuleAsync(module => module.InvokeAsync<bool>(
+            "setBlobLegalHold", cancellationToken, databaseName, blobKey, hasLegalHold, modified));
     }
 
     public Task<bool> DeleteBlobAsync(string databaseName, string blobKey, CancellationToken cancellationToken = default)

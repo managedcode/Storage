@@ -56,6 +56,10 @@ Key files:
   - `IsSuccess` and (when successful) `Value`
   - exceptions captured and returned as failed results
 - MIME type lookups should flow through `MimeHelper` (do not add ad-hoc MIME detection).
+- `StringStream` exposes the original UTF-16 code units as little-endian bytes. Byte positions can be odd or past the end of the stream. Attempts to move before the beginning fail and preserve the current position.
+- `VerifiedContentSnapshot` checks the declared length and SHA-256 before returning a file-backed snapshot. It reads at most one byte beyond the declared length to detect trailing content.
+- `LocalFile.FromStreamAsync` copies from a caller-owned stream and replaces the destination contents. On failure it closes the destination and removes a newly created file. Copies to an existing named destination write in place.
+- Downloads release their temporary destination when the provider reports failure or returns a file at a different path. A caller-supplied destination stays on disk.
 
 ## Tests
 

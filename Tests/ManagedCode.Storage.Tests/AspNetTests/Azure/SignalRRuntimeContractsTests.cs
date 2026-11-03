@@ -42,6 +42,10 @@ public sealed class SignalRRuntimeContractsTests(StorageTestApplication app) : B
             liveStatus.ShouldNotBeNull();
             liveStatus!.IsCompleted.ShouldBeFalse();
             liveStatus.BytesTransferred.ShouldBeGreaterThan(0);
+            await using var stranger = CreateClient();
+            await stranger.ConnectAsync(token);
+            (await stranger.GetStatusAsync(active.TransferId, token)).ShouldBeNull();
+            await stranger.CancelTransferAsync(active.TransferId, token);
         }
         finally { input.Resume(); }
         var status = await upload;
@@ -74,6 +78,54 @@ public sealed class SignalRRuntimeContractsTests(StorageTestApplication app) : B
         await using var output = new MemoryStream();
         await Should.ThrowAsync<HubException>(() => client.DownloadAsync("missing-" + Guid.NewGuid().ToString("N"), output, new StatusRecorder(), token));
         output.Length.ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(4)]
+    public async Task UploadWithWrongLength_DoesNotCommit(int declared)
+    {
+        var token = TestContext.Current.CancellationToken;
+        await using var client = CreateClient();
+        await client.ConnectAsync(token);
+        var name = $"wrong-size-{Guid.NewGuid():N}.bin";
+        using var input = new MemoryStream(new byte[3]);
+
+        await Should.ThrowAsync<HubException>(() => client.UploadAsync(
+            input, CreateDescriptor(name, "application/octet-stream", declared), cancellationToken: token));
+
+        await using var scope = TestApplication.Services.CreateAsyncScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IAzureStorage>();
+        (await storage.ExistsAsync(name, token)).Value.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ClientTransferId_CannotSelectTheStagingFilePath()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var id = Path.Combine(Environment.CurrentDirectory, $"signalr-{Guid.NewGuid():N}");
+        var outside = id + ".upload";
+        var name = $"isolated-{Guid.NewGuid():N}.bin";
+        await using var scope = TestApplication.Services.CreateAsyncScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IAzureStorage>();
+        try
+        {
+            await File.WriteAllTextAsync(outside, "original", token);
+            await using var client = CreateClient();
+            await client.ConnectAsync(token);
+            var descriptor = CreateDescriptor(name, "application/octet-stream", 1);
+            descriptor.TransferId = id;
+            using var input = new MemoryStream(new byte[1]);
+
+            (await client.UploadAsync(input, descriptor, cancellationToken: token)).IsCompleted.ShouldBeTrue();
+
+            (await File.ReadAllTextAsync(outside, token)).ShouldBe("original");
+        }
+        finally
+        {
+            File.Delete(outside);
+            await storage.DeleteAsync(name, token);
+        }
     }
 
     [Theory]

@@ -1,12 +1,57 @@
+using System;
 using System.Threading.Tasks;
 using System.Globalization;
 using Microsoft.Playwright;
+using Shouldly;
 using static Microsoft.Playwright.Assertions;
 
 namespace ManagedCode.Storage.Tests.Storages.Browser;
 
 internal static class BrowserStoragePage
 {
+    internal static async Task VerifyCanceledUploadAsync(BrowserPlaywrightHostFixtureBase fixture)
+    {
+        await using var context = await fixture.CreateContextAsync();
+        var page = await context.NewPageAsync();
+        var directory = $"cancel-{Guid.NewGuid():N}";
+        const string name = "content.bin";
+        await OpenPlaygroundAsync(page);
+        await FillInputsAsync(page, directory, name, "original");
+        await page.ClickAsync("#save-text-button");
+        await Expect(page.Locator("#status-output")).ToHaveTextAsync($"saved:{directory}/{name}");
+
+        await page.ClickAsync("#cancel-upload-button");
+        await Expect(page.Locator("#status-output")).ToHaveTextAsync("upload-canceled");
+
+        (await ReadOpfsPayloadFileCountAsync(page, fixture, $"{fixture.ContainerKey}::{directory}/{name}::payload::")).ShouldBe(1);
+        await page.ClickAsync("#load-text-button");
+        await Expect(page.Locator("#loaded-output")).ToHaveTextAsync("original");
+    }
+
+    internal static async Task VerifyConcurrentOverwriteAsync(BrowserPlaywrightHostFixtureBase fixture)
+    {
+        await using var context = await fixture.CreateContextAsync();
+        var first = await context.NewPageAsync();
+        var second = await context.NewPageAsync();
+        var directory = $"overwrite-{Guid.NewGuid():N}";
+        const string name = "content.bin";
+        await Task.WhenAll(OpenPlaygroundAsync(first), OpenPlaygroundAsync(second));
+        await FillInputsAsync(first, directory, name, "first");
+        await FillInputsAsync(second, directory, name, "second");
+
+        await Task.WhenAll(first.ClickAsync("#stage-upload-button"), second.ClickAsync("#stage-upload-button"));
+        await Task.WhenAll(Expect(first.Locator("#status-output")).ToHaveTextAsync("upload-staged"),
+            Expect(second.Locator("#status-output")).ToHaveTextAsync("upload-staged"));
+        await first.ClickAsync("#release-upload-button");
+        await Expect(first.Locator("#status-output")).ToHaveTextAsync($"saved:{directory}/{name}");
+        await second.ClickAsync("#release-upload-button");
+        await Expect(second.Locator("#status-output")).ToHaveTextAsync($"saved:{directory}/{name}");
+
+        (await ReadOpfsPayloadFileCountAsync(first, fixture, $"{fixture.ContainerKey}::{directory}/{name}::payload::")).ShouldBe(1);
+        await first.ClickAsync("#load-text-button");
+        await Expect(first.Locator("#loaded-output")).ToHaveTextAsync("second");
+    }
+
     public static async Task OpenPlaygroundAsync(IPage page)
     {
         await page.GotoAsync("/storage-playground");

@@ -10,6 +10,12 @@ namespace ManagedCode.Storage.Tests.Storages.Browser;
 public sealed class BrowserWasmStorageIntegrationTests(BrowserWasmHostFixture fixture)
 {
     [Fact]
+    public Task CanceledUpload_LeavesOnlyThePublishedOpfsPayload() => BrowserStoragePage.VerifyCanceledUploadAsync(fixture);
+
+    [Fact]
+    public Task ConcurrentOverwrite_LeavesOnlyTheWinningOpfsPayload() => BrowserStoragePage.VerifyConcurrentOverwriteAsync(fixture);
+
+    [Fact]
     public async Task BrowserStorage_WasmHost_TextFlow_ShouldPersistListAndDelete()
     {
         await using var context = await fixture.CreateContextAsync();

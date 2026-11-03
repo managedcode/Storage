@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Cartograph.Catalog;
 using Cartograph.Format;
 
@@ -20,9 +19,13 @@ internal sealed class CartographArtifact : IDisposable
 
         using var record = artifact.ReadRecord(0);
         Catalog = FileCatalog.Deserialize(record.Sequence);
+        var segmentStarts = new long[artifact.Segments.Count];
+        for (var index = 1; index < segmentStarts.Length; index++)
+            segmentStarts[index] = checked(segmentStarts[index - 1] + artifact.Segments[index - 1].RecordCount);
+
         foreach (var entry in Catalog.Entries)
         {
-            ValidateEntry(entry);
+            ValidateEntry(entry, segmentStarts);
             if (!_entries.TryAdd(entry.RelativePath, entry))
                 throw new InvalidDataException($"Duplicate catalog path '{entry.RelativePath}'.");
         }
@@ -57,7 +60,7 @@ internal sealed class CartographArtifact : IDisposable
         return new CartographReadStream(this, entry);
     }
 
-    private void ValidateEntry(CatalogEntry entry)
+    private void ValidateEntry(CatalogEntry entry, long[] segmentStarts)
     {
         CartographPath.ValidateCatalogPath(entry.RelativePath);
         if (entry.Length < 0 || entry.SegmentIndex <= 0 || entry.SegmentIndex >= Artifact.Segments.Count ||
@@ -71,7 +74,7 @@ internal sealed class CartographArtifact : IDisposable
         if (entry.RecordIndex > segment.RecordCount || entry.RecordCount > segment.RecordCount - entry.RecordIndex)
             throw new InvalidDataException($"Catalog record span is out of bounds for '{entry.RelativePath}'.");
 
-        var globalStart = Artifact.Segments.Take(entry.SegmentIndex).Sum(item => (long)item.RecordCount);
+        var globalStart = segmentStarts[entry.SegmentIndex];
         if (entry.GlobalIndex != globalStart + entry.RecordIndex)
             throw new InvalidDataException($"Catalog record indices disagree for '{entry.RelativePath}'.");
 

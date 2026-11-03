@@ -93,6 +93,9 @@ public class DropboxClientWrapperHttpTests
         {
             (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("dropbox payload");
         }
+
+        await CloudDriveDownloadAssertions.ReplacesPreviousContentAsync(
+            storage, "file.json", "dropbox payload", TestContext.Current.CancellationToken);
     }
 
     private sealed class FakeDropboxHttpHandler : HttpMessageHandler

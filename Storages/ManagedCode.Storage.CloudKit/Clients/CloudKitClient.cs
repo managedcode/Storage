@@ -227,7 +227,7 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
 
         using var request = new HttpRequestMessage(HttpMethod.Post, uploadUrl)
         {
-            Content = new StreamContent(content)
+            Content = new StreamContent(new BorrowedReadStream(content))
         };
 
         request.Content.Headers.ContentType = new MediaTypeHeaderValue(string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType);
@@ -368,14 +368,19 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
     private async Task<Stream> DownloadFromUrlAsync(Uri downloadUrl, CancellationToken cancellationToken)
     {
         var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        try
+        {
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException($"CloudKit asset download failed: {(int)response.StatusCode} {response.ReasonPhrase}", null, response.StatusCode);
+
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            return new ResponseDisposingStream(stream, response);
+        }
+        catch
         {
             response.Dispose();
-            throw new HttpRequestException($"CloudKit asset download failed: {(int)response.StatusCode} {response.ReasonPhrase}", null, response.StatusCode);
+            throw;
         }
-
-        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        return new ResponseDisposingStream(stream, response);
     }
 
     private string BuildSubpath(string operation)
@@ -610,38 +615,32 @@ public sealed class CloudKitClient : ICloudKitClient, IDisposable
 
         public override int Read(byte[] buffer, int offset, int count) => _inner.Read(buffer, offset, count);
 
+        public override int Read(Span<byte> buffer) => _inner.Read(buffer);
+
         public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
 
         public override void SetLength(long value) => _inner.SetLength(value);
 
         public override void Write(byte[] buffer, int offset, int count) => _inner.Write(buffer, offset, count);
 
-        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        {
-            return await _inner.ReadAsync(buffer, cancellationToken);
-        }
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            _inner.ReadAsync(buffer, offset, count, cancellationToken);
 
-        public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
-        {
-            await _inner.CopyToAsync(destination, bufferSize, cancellationToken);
-        }
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            _inner.ReadAsync(buffer, cancellationToken);
+
+        public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken) =>
+            _inner.CopyToAsync(destination, bufferSize, cancellationToken);
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _inner.Dispose();
                 _response.Dispose();
             }
 
             base.Dispose(disposing);
         }
 
-        public override async ValueTask DisposeAsync()
-        {
-            await _inner.DisposeAsync();
-            _response.Dispose();
-            await base.DisposeAsync();
-        }
     }
 }

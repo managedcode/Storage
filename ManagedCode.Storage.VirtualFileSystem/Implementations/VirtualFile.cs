@@ -98,8 +98,8 @@ public partial class VirtualFile : IVirtualFile
 
         if (_vfs.Options.EnableCache)
         {
-            _cache.Remove($"file_exists:{_vfs.ContainerName}:{_path}");
-            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            _cache.Remove(VfsCacheKey.For(_vfs, VfsCacheKind.FileExists, _path));
+            var metadataKey = VfsCacheKey.For(_vfs, VfsCacheKind.Metadata, _path);
             var entry = new MetadataCacheEntry
             {
                 Metadata = _vfsMetadata ?? new VfsMetadata(),
@@ -112,7 +112,7 @@ public partial class VirtualFile : IVirtualFile
             };
             _cache.Set(metadataKey, entry, _vfs.Options.CacheTTL);
 
-            var customKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
+            var customKey = VfsCacheKey.For(_vfs, VfsCacheKind.CustomMetadata, _path);
             _cache.Remove(customKey);
         }
     }
@@ -163,6 +163,7 @@ public partial class VirtualFile : IVirtualFile
         WriteOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         options ??= new WriteOptions();
 
         _logger.LogDebug("Opening write stream: {Path}", _path);
@@ -186,7 +187,8 @@ public partial class VirtualFile : IVirtualFile
         }
 
         // Return a file-backed write stream that uploads on dispose to avoid buffering large payloads in memory.
-        return new VfsWriteStream(_vfs.Storage, _path.ToBlobKey(), options, _cache, _vfs.Options, _logger);
+        cancellationToken.ThrowIfCancellationRequested();
+        return new VfsWriteStream(_vfs, _path, options, _cache, _logger, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -258,7 +260,7 @@ public partial class VirtualFile : IVirtualFile
     public async ValueTask<IReadOnlyDictionary<string, string>> GetMetadataAsync(
         CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
+        var cacheKey = VfsCacheKey.For(_vfs, VfsCacheKind.CustomMetadata, _path);
 
         if (_vfs.Options.EnableCache
             && _cache.TryGetValue(cacheKey, out IReadOnlyDictionary<string, string>? cached)
@@ -273,7 +275,7 @@ public partial class VirtualFile : IVirtualFile
         if (_vfs.Options.EnableCache)
         {
             _cache.Set(cacheKey, metadata, _vfs.Options.CacheTTL);
-            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            var metadataKey = VfsCacheKey.For(_vfs, VfsCacheKind.Metadata, _path);
             if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry? entry) && entry is not null)
             {
                 entry.CustomMetadata = metadata;
@@ -319,9 +321,9 @@ public partial class VirtualFile : IVirtualFile
         // Invalidate cache
         if (_vfs.Options.EnableCache)
         {
-            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            var metadataKey = VfsCacheKey.For(_vfs, VfsCacheKind.Metadata, _path);
             _cache.Remove(metadataKey);
-            var customKey = $"file_custom_metadata:{_vfs.ContainerName}:{_path}";
+            var customKey = VfsCacheKey.For(_vfs, VfsCacheKind.CustomMetadata, _path);
             _cache.Remove(customKey);
         }
     }
@@ -350,7 +352,7 @@ public partial class VirtualFile : IVirtualFile
 
         if (_vfs.Options.EnableCache)
         {
-            var metadataKey = $"file_metadata:{_vfs.ContainerName}:{_path}";
+            var metadataKey = VfsCacheKey.For(_vfs, VfsCacheKind.Metadata, _path);
             if (_cache.TryGetValue(metadataKey, out MetadataCacheEntry? entry) && entry is not null)
             {
                 _vfsMetadata = entry.Metadata;

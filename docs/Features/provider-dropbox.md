@@ -67,6 +67,8 @@ builder.Services.AddDropboxStorageAsDefault(options =>
 
 ## Current Behavior
 
+- Downloads to a local path replace the destination's previous bytes in full.
+
 Supported configuration modes:
 
 - Provide a swap point (tests / custom behaviour):

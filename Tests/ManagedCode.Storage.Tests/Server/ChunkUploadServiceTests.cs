@@ -175,9 +175,80 @@ public class ChunkUploadServiceTests : IAsyncLifetime
 
         (await Append("upload-a")).ShouldBeTrue();
         (await Append("upload-b")).ShouldBeFalse();
+        Directory.GetDirectories(options.TempPath).Length.ShouldBe(1);
+        (await Append("upload-a")).ShouldBeTrue();
 
         service.Abort("upload-a");
-        service.Abort("upload-b");
+        (await Append("upload-c")).ShouldBeTrue();
+        service.Abort("upload-c");
+    }
+
+    [Fact]
+    public async Task CancelledChunkRetry_PreservesPreviouslyAcceptedBytes()
+    {
+        using var storage = CreateStorage();
+        var service = new ChunkUploadService(_options);
+        const string uploadId = "retry";
+        const string fileName = "content.bin";
+        var token = TestContext.Current.CancellationToken;
+        byte[] original = [4, 8, 15, 16, 23, 42];
+        var descriptor = new FilePayload
+        {
+            UploadId = uploadId,
+            FileName = fileName,
+            ChunkIndex = 1,
+            TotalChunks = 1,
+            ChunkSize = original.Length,
+            FileSize = original.Length
+        };
+        using var form = CreateFormFile(original, fileName);
+        (await service.AppendChunkAsync(new FileUploadPayload { File = form, Payload = descriptor }, token))
+            .IsSuccess.ShouldBeTrue();
+        using var retry = CreateFormFile(new byte[original.Length], fileName);
+
+        await Should.ThrowAsync<OperationCanceledException>(() => service.AppendChunkAsync(
+            new FileUploadPayload { File = retry, Payload = descriptor }, new CancellationToken(canceled: true)));
+
+        var result = await service.CompleteAsync(new ChunkUploadCompleteRequest
+        {
+            UploadId = uploadId,
+            CommitToStorage = true
+        }, storage, token);
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.Checksum.ShouldBe(Crc32Helper.Calculate(original));
+    }
+
+    [Fact]
+    public async Task CompleteAsync_WithMismatchedDeclaredSize_DoesNotCommit()
+    {
+        using var storage = CreateStorage();
+        var service = new ChunkUploadService(_options);
+        const string uploadId = "short";
+        const string fileName = "incomplete.bin";
+        var token = TestContext.Current.CancellationToken;
+        using var form = CreateFormFile([1, 2], fileName);
+        (await service.AppendChunkAsync(new FileUploadPayload
+        {
+            File = form,
+            Payload = new FilePayload
+            {
+                UploadId = uploadId,
+                FileName = fileName,
+                ChunkIndex = 1,
+                TotalChunks = 1,
+                ChunkSize = 2,
+                FileSize = 3
+            }
+        }, token)).IsSuccess.ShouldBeTrue();
+
+        var result = await service.CompleteAsync(new ChunkUploadCompleteRequest
+        {
+            UploadId = uploadId,
+            CommitToStorage = true
+        }, storage, token);
+
+        result.IsFailed.ShouldBeTrue();
+        (await storage.ExistsAsync(fileName, token)).Value.ShouldBeFalse();
     }
 
     [Fact]

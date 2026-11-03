@@ -52,6 +52,8 @@ builder.Services.AddGCPStorageAsDefault(options =>
 
 ## Current Behavior
 
+- Downloads to a local path replace the destination's previous bytes in full.
+
 - Supports file-based auth (`AuthFileName`) and direct `GoogleCredential`.
 - Bucket creation can be enabled via `CreateContainerIfNotExists`.
 

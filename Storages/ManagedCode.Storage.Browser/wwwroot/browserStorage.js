@@ -139,28 +139,53 @@ export async function listBlobs(databaseName, containerName, prefix) {
 export async function putBlob(databaseName, blob) {
   const database = await openDatabase(databaseName);
   const transaction = database.transaction(blobStoreName, "readwrite");
-  transaction.objectStore(blobStoreName).put(blob);
+  const store = transaction.objectStore(blobStoreName);
+  const existing = await requestToPromise(store.get(blob.key));
+  if (existing) {
+    blob.createdOn = existing.createdOn ?? blob.createdOn;
+    blob.hasLegalHold = existing.hasLegalHold ?? false;
+  }
+
+  store.put(blob);
   await transactionCompletion(transaction);
+  const previousPayload = resolvePayloadKey(existing);
+  if (previousPayload && previousPayload !== resolvePayloadKey(blob)) {
+    await tryDeletePayloadFileInternal(databaseName, previousPayload);
+  }
+
+  return blob;
+}
+
+export async function setBlobLegalHold(databaseName, blobKey, hasLegalHold, lastModified) {
+  const database = await openDatabase(databaseName);
+  const transaction = database.transaction(blobStoreName, "readwrite");
+  const store = transaction.objectStore(blobStoreName);
+  const existing = await requestToPromise(store.get(blobKey));
+  if (existing) {
+    existing.hasLegalHold = hasLegalHold;
+    existing.lastModified = lastModified;
+    store.put(existing);
+  }
+
+  await transactionCompletion(transaction);
+  return existing !== undefined;
 }
 
 export async function deleteBlob(databaseName, blobKey) {
-  const existingBlob = await getBlob(databaseName, blobKey);
-  if (!existingBlob) {
-    return false;
-  }
-
   const database = await openDatabase(databaseName);
   const transaction = database.transaction(blobStoreName, "readwrite");
   const blobStore = transaction.objectStore(blobStoreName);
-
-  blobStore.delete(blobKey);
+  const existingBlob = await requestToPromise(blobStore.get(blobKey));
+  if (existingBlob) {
+    blobStore.delete(blobKey);
+  }
   await transactionCompletion(transaction);
   const payloadKey = resolvePayloadKey(existingBlob);
   if (payloadKey) {
     await tryDeletePayloadFileInternal(databaseName, payloadKey);
   }
 
-  return true;
+  return existingBlob !== undefined;
 }
 
 export async function deletePayloadFile(databaseName, payloadKey) {
@@ -231,6 +256,7 @@ const browserStorageApi = {
   getBlob,
   listBlobs,
   putBlob,
+  setBlobLegalHold,
   deleteBlob,
   deletePayloadFile,
   deleteByPrefix,

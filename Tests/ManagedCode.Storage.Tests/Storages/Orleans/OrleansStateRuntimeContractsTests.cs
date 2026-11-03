@@ -1,7 +1,12 @@
 using System;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.FileSystem;
+using ManagedCode.Storage.FileSystem.Options;
 using ManagedCode.Storage.Tests.VirtualFileSystem;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -100,6 +105,45 @@ public sealed class OrleansStateRuntimeContractsTests(ManagedCodeOrleansClusterF
             _ => provider.ClearStateAsync("profile", id, state)
         });
         state.RecordExists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ReadState_UsesTheExistingStreamWithoutDownloadingALocalFile()
+    {
+        await using var session = await LocalVfsSession.CreateAsync();
+        using var storage = new ReadTrackingStorage(new FileSystemStorageOptions { BaseFolder = session.RootDirectory });
+        var provider = CreateProvider(storage, CreateOptions("state.json"));
+        var id = GrainId.Create("coverage", "stream");
+        var stored = new GrainState<ManagedCodeStorageBackedState>(new() { Value = "stored" });
+        await provider.WriteStateAsync("profile", id, stored);
+        var readsBefore = storage.StreamReads;
+        var restored = new GrainState<ManagedCodeStorageBackedState>(new());
+
+        await provider.ReadStateAsync("profile", id, restored);
+
+        restored.State.ShouldNotBeNull().Value.ShouldBe("stored");
+        restored.ETag.ShouldBe(stored.ETag);
+        storage.StreamReads.ShouldBe(readsBefore + 1);
+        storage.Downloads.ShouldBe(0);
+    }
+
+    private sealed class ReadTrackingStorage(FileSystemStorageOptions options) : FileSystemStorage(options)
+    {
+        public int StreamReads { get; private set; }
+        public int Downloads { get; private set; }
+
+        public override Task<Result<Stream>> GetStreamAsync(string fileName, CancellationToken cancellationToken = default)
+        {
+            StreamReads++;
+            return base.GetStreamAsync(fileName, cancellationToken);
+        }
+
+        protected override Task<Result<LocalFile>> DownloadInternalAsync(
+            LocalFile localFile, DownloadOptions options, CancellationToken cancellationToken = default)
+        {
+            Downloads++;
+            return base.DownloadInternalAsync(localFile, options, cancellationToken);
+        }
     }
 
     private ManagedCodeStorageGrainStorageOptions CreateOptions(string path)

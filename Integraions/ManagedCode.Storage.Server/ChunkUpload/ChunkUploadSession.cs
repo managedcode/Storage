@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace ManagedCode.Storage.Server.ChunkUpload;
 
@@ -35,6 +36,10 @@ internal sealed class ChunkUploadSession
 
     public string WorkingDirectory { get; }
 
+    public SemaphoreSlim Gate { get; } = new(1, 1);
+
+    public bool Closed { get; set; }
+
     public DateTimeOffset LastTouchedUtc { get; private set; }
 
     public IReadOnlyDictionary<int, string> ChunkFiles => _chunkFiles;
@@ -53,16 +58,13 @@ internal sealed class ChunkUploadSession
 
     public void EnsureAllChunksPresent()
     {
-        if (TotalChunks <= 0)
+        var expectedCount = TotalChunks > 0 ? TotalChunks : _chunkFiles.Count;
+        for (var index = 0; index < expectedCount; index++)
         {
-            return;
-        }
-
-        for (var i = 1; i <= TotalChunks; i++)
-        {
-            if (!_chunkFiles.ContainsKey(i))
+            var chunkIndex = index + 1;
+            if (!_chunkFiles.ContainsKey(chunkIndex))
             {
-                throw new InvalidOperationException($"Missing chunk {i} for upload {UploadId}");
+                throw new InvalidOperationException($"Missing chunk {chunkIndex} for upload {UploadId}");
             }
         }
     }

@@ -148,7 +148,7 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
 
         var chunkSize = (int)Math.Min(ChunkSize, int.MaxValue);
         var totalBytes = file.CanSeek ? file.Length : -1;
-        var totalChunks = totalBytes > 0 ? (int)Math.Ceiling(totalBytes / (double)ChunkSize) : 0;
+        var totalChunks = totalBytes > 0 ? checked((int)(1 + (totalBytes - 1) / chunkSize)) : 0;
 
         var buffer = new byte[chunkSize];
         var chunkIndex = 1;
@@ -163,14 +163,12 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
         var crcState = Crc32Helper.Begin();
 
         int bytesRead;
-        while ((bytesRead = await file.ReadAsync(buffer.AsMemory(0, chunkSize), cancellationToken)) > 0)
+        while ((bytesRead = await file.ReadAtLeastAsync(buffer.AsMemory(), chunkSize,
+                   throwOnEndOfStream: false, cancellationToken: cancellationToken)) > 0)
         {
-            var chunkBytes = new byte[bytesRead];
-            Buffer.BlockCopy(buffer, 0, chunkBytes, 0, bytesRead);
+            crcState = Crc32Helper.Update(crcState, buffer.AsSpan(0, bytesRead));
 
-            crcState = Crc32Helper.Update(crcState, chunkBytes);
-
-            using var memoryStream = new MemoryStream(chunkBytes, writable: false);
+            using var memoryStream = new MemoryStream(buffer, 0, bytesRead, writable: false);
             using var content = new StreamContent(memoryStream);
             using var formData = new MultipartFormDataContent();
 
@@ -274,13 +272,13 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
                 {
                     try
                     {
-                        var dto = JsonSerializer.Deserialize<ChunkUploadCompleteResponseDto>(valueElement.GetRawText());
-                        if (dto == null)
+                        var dto = valueElement.Deserialize<ChunkUploadCompleteResponseDto>(JsonSerializerOptions.Web);
+                        if (dto?.Checksum is not uint serverChecksum)
                         {
-                            return Result<uint>.Fail("Chunk upload completion response is empty");
+                            return Result<uint>.Fail("Chunk upload completion response is missing the checksum");
                         }
 
-                        checksum = dto.Checksum;
+                        checksum = serverChecksum;
                         break;
                     }
                     catch (JsonException ex)
@@ -296,18 +294,20 @@ public class StorageClient(HttpClient httpClient) : IStorageClient
         }
 
         var computedChecksum = Crc32Helper.Complete(crcState);
-        var finalChecksum = checksum;
+        var legacyMissingChecksum = checksum == 0 && valueElement.ValueKind is JsonValueKind.Number or JsonValueKind.String;
+        if (!legacyMissingChecksum && checksum != computedChecksum)
+            return Result<uint>.Fail("The server checksum does not match the uploaded content");
 
-        if (checksum == 0 && computedChecksum != 0)
+        if (totalBytes <= 0)
         {
-            finalChecksum = computedChecksum;
-        }
-        else if (checksum != 0 && checksum != computedChecksum)
-        {
-            finalChecksum = computedChecksum;
+            onProgressChanged?.Invoke(100d);
+            var elapsed = started.Elapsed;
+            var speed = elapsed.TotalSeconds > 0 ? transmitted / elapsed.TotalSeconds : transmitted;
+            OnProgressStatusChanged?.Invoke(this, new ProgressStatus(
+                resolvedFileName, 1, transmitted, transmitted, elapsed, TimeSpan.Zero, $"{speed:F2} B/s"));
         }
 
-        return Result<uint>.Succeed(finalChecksum);
+        return Result<uint>.Succeed(computedChecksum);
     }
 
     public async Task<Result<Stream>> GetFileStream(string fileName, string apiUrl, CancellationToken cancellationToken = default)
@@ -434,6 +434,6 @@ file class ChunkUploadCompleteRequestDto
 
 file class ChunkUploadCompleteResponseDto
 {
-    public uint Checksum { get; set; }
+    public uint? Checksum { get; set; }
     public BlobMetadata? Metadata { get; set; }
 }

@@ -50,6 +50,7 @@ builder.Services.AddSftpStorageAsDefault(options =>
 - Supports password and key-based auth (`PrivateKeyPath` / `PrivateKeyContent`).
 - `AcceptAnyHostKey` exists for dev/test only; production should use `HostKeyFingerprint`.
 - Can create directories automatically (`CreateDirectoryIfNotExists`).
+- Relative listing paths resolve under `RemoteDirectory`. File downloads and directory listings use the SFTP client's cancellable asynchronous APIs.
 
 ## Tests
 

@@ -1,6 +1,7 @@
 using Google.Apis.Drive.v3;
 using Google.Apis.Http;
 using Google.Apis.Services;
+using ManagedCode.Storage.GoogleDrive;
 using ManagedCode.Storage.GoogleDrive.Clients;
 using ManagedCode.Storage.GoogleDrive.Options;
 using Shouldly;
@@ -54,6 +55,16 @@ public class GoogleDriveClientHttpTests
         {
             (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("google payload");
         }
+
+        using var storage = new GoogleDriveStorage(
+            new GoogleDriveStorageOptions
+            {
+                Client = client,
+                RootFolderId = TestOptions.RootFolderId,
+                SupportsAllDrives = TestOptions.SupportsAllDrives
+            });
+        await CloudDriveDownloadAssertions.ReplacesPreviousContentAsync(
+            storage, "dir/file.txt", "google payload", TestContext.Current.CancellationToken);
 
         var listed = new List<DriveFile>();
         await foreach (var item in client.ListAsync(TestOptions.RootFolderId, "dir", TestOptions.SupportsAllDrives, CancellationToken.None))

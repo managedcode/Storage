@@ -91,15 +91,33 @@ public abstract class StorageControllerBase<TStorage> : ControllerBase, IStorage
 
         try
         {
-            await using var uploadStream = Request.Body;
-            var result = await Storage.UploadAsync(uploadStream, options, cancellationToken);
-            return result;
+            if (!_options.EnableFileSizeValidation || _options.MaxFileSize <= 0)
+                return await Storage.UploadAsync(Request.Body, options, cancellationToken);
+
+            var length = Request.ContentLength;
+            if (length > _options.MaxFileSize)
+                return RawUploadTooLarge();
+            if (length.HasValue)
+                return await Storage.UploadAsync(Request.Body, options, cancellationToken);
+
+            await using var localFile = LocalFile.FromTempFile();
+            await using (var destination = localFile.FileStream)
+            {
+                if (!await RequestUploadBuffer.TryCopyAsync(Request.BodyReader, destination, _options.MaxFileSize, cancellationToken))
+                    return RawUploadTooLarge();
+            }
+
+            await using var source = localFile.OpenReadStream();
+            return await Storage.UploadAsync(source, options, cancellationToken);
         }
         catch (Exception ex)
         {
             return Result<BlobMetadata>.Fail(ex);
         }
     }
+
+    private Result<BlobMetadata> RawUploadTooLarge() => Result<BlobMetadata>.Fail(HttpStatusCode.RequestEntityTooLarge,
+        $"File size exceeds the maximum allowed size of {_options.MaxFileSize} bytes");
 
     /// <inheritdoc />
     [HttpGet("download/{*path}")]

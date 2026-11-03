@@ -10,7 +10,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
+using ManagedCode.Storage.OneDrive;
 using ManagedCode.Storage.OneDrive.Clients;
+using ManagedCode.Storage.OneDrive.Options;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Shouldly;
@@ -57,6 +59,10 @@ public class GraphOneDriveClientTests
         {
             (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("graph payload");
         }
+
+        using var storage = new OneDriveStorage(new OneDriveStorageOptions { Client = storageClient });
+        await CloudDriveDownloadAssertions.ReplacesPreviousContentAsync(
+            storage, "work/doc.txt", "graph payload", TestContext.Current.CancellationToken);
 
         var listed = new List<DriveItem>();
         await foreach (var item in storageClient.ListAsync("me", "work", CancellationToken.None))

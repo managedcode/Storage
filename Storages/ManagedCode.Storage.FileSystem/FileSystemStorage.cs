@@ -43,14 +43,18 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
         if (cancellationToken.IsCancellationRequested)
             yield break;
 
-        var searchRoot = string.IsNullOrEmpty(directory)
-            ? StorageClient
-            : Path.Combine(StorageClient, directory!);
+        var searchRoot = GetDirectoryPath(directory);
 
         if (!Directory.Exists(searchRoot))
             yield break;
 
-        foreach (var file in Directory.EnumerateFiles(searchRoot, "*", SearchOption.AllDirectories))
+        var enumeration = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+            IgnoreInaccessible = false
+        };
+        foreach (var file in Directory.EnumerateFiles(searchRoot, "*", enumeration))
         {
             if (cancellationToken.IsCancellationRequested)
                 yield break;
@@ -147,7 +151,7 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var path = Path.Combine(StorageClient, directory);
+            var path = GetDirectoryPath(directory, allowRoot: false);
 
             if (Directory.Exists(path))
                 Directory.Delete(path, true);
@@ -386,28 +390,27 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
         if (createDirectories && !StorageOptions.CreateContainerIfNotExists && !Directory.Exists(StorageClient))
             throw new DirectoryNotFoundException("The configured storage container does not exist and automatic creation is disabled.");
 
-        if (createDirectories && sanitizedDirectory is not null)
-        {
-            EnsureDirectoryExist(sanitizedDirectory);
-        }
-
-        string filePath = sanitizedDirectory is not null
-            ? Path.Combine(StorageClient, sanitizedDirectory, sanitizedFileName)
-            : Path.Combine(StorageClient, sanitizedFileName);
-
-        // Get full paths for comparison
-        var fullPath = Path.GetFullPath(filePath);
-        var baseFullPath = Path.GetFullPath(StorageClient);
-
-        // Verify the final path is within StorageClient directory
-        if (!fullPath.StartsWith(baseFullPath, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new UnauthorizedAccessException($"Access to path '{options.FileName}' is denied. Path traversal detected.");
-        }
+        var relativePath = sanitizedDirectory is null
+            ? sanitizedFileName
+            : Path.Combine(sanitizedDirectory, sanitizedFileName);
+        var fullPath = StoragePath.Resolve(StorageClient, relativePath);
 
         if (createDirectories)
-            EnsureDirectoryExist(Path.GetDirectoryName(fullPath)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
         return fullPath;
+    }
+
+    private string GetDirectoryPath(string? directory, bool allowRoot = true)
+    {
+        var normalized = directory?.Replace('\\', '/') ?? string.Empty;
+        if (Path.IsPathRooted(normalized))
+            throw new UnauthorizedAccessException("Storage directories must be relative to the storage root.");
+
+        var relativePath = SanitizeDirectory(normalized);
+        if (!allowRoot && relativePath.Length == 0)
+            throw new ArgumentException("A subdirectory is required.", nameof(directory));
+
+        return StoragePath.Resolve(StorageClient, relativePath);
     }
 
     private static (string? Directory, string FileName) SplitDirectoryFromFileName(string fileName)
@@ -517,10 +520,4 @@ public class FileSystemStorage(FileSystemStorageOptions options) : BaseStorage<s
         return string.Join(Path.DirectorySeparatorChar, segments);
     }
 
-    private void EnsureDirectoryExist(string directory)
-    {
-        var path = Path.Combine(StorageClient, directory);
-        if (!Directory.Exists(path))
-            Directory.CreateDirectory(path);
-    }
 }

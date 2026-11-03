@@ -4,41 +4,45 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
+using ManagedCode.Storage.VirtualFileSystem.Core;
 using ManagedCode.Storage.VirtualFileSystem.Exceptions;
+using ManagedCode.Storage.VirtualFileSystem.Metadata;
 using ManagedCode.Storage.VirtualFileSystem.Options;
 
 namespace ManagedCode.Storage.VirtualFileSystem.Streaming;
 
 internal class VfsWriteStream : Stream
 {
-    private readonly IStorage _storage;
+    private readonly IVirtualFileSystem _vfs;
+    private readonly VfsPath _path;
     private readonly string _blobKey;
     private readonly WriteOptions _options;
     private readonly IMemoryCache _cache;
-    private readonly VfsOptions _vfsOptions;
     private readonly ILogger _logger;
     private readonly LocalFile _bufferFile;
     private readonly FileStream _bufferStream;
+    private readonly CancellationToken _cancellationToken;
+    private bool _abortUpload;
     private bool _disposed;
 
     public VfsWriteStream(
-        IStorage storage,
-        string blobKey,
+        IVirtualFileSystem vfs,
+        VfsPath path,
         WriteOptions options,
         IMemoryCache cache,
-        VfsOptions vfsOptions,
-        ILogger logger)
+        ILogger logger,
+        CancellationToken cancellationToken)
     {
-        _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-        _blobKey = blobKey ?? throw new ArgumentNullException(nameof(blobKey));
+        _vfs = vfs ?? throw new ArgumentNullException(nameof(vfs));
+        _path = path;
+        _blobKey = path.ToBlobKey();
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
-        _vfsOptions = vfsOptions ?? throw new ArgumentNullException(nameof(vfsOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cancellationToken = cancellationToken;
 
-        _bufferFile = LocalFile.FromRandomNameWithExtension(blobKey);
+        _bufferFile = LocalFile.FromRandomNameWithExtension(_blobKey);
         _bufferStream = new FileStream(_bufferFile.FilePath, new FileStreamOptions
         {
             Mode = FileMode.Create,
@@ -62,47 +66,58 @@ internal class VfsWriteStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        ThrowIfDisposed();
-        _bufferStream.Write(buffer, offset, count);
+        ValidateBufferArguments(buffer, offset, count);
+        Write(buffer.AsSpan(offset, count));
     }
 
     public override void Write(ReadOnlySpan<byte> buffer)
     {
         ThrowIfDisposed();
-        _bufferStream.Write(buffer);
+        try
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+            _bufferStream.Write(buffer);
+        }
+        catch
+        {
+            _abortUpload = true;
+            throw;
+        }
     }
 
     public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
-        ThrowIfDisposed();
-        return _bufferStream.WriteAsync(buffer, offset, count, cancellationToken);
+        ValidateBufferArguments(buffer, offset, count);
+        return WriteAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
     }
 
-    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        return _bufferStream.WriteAsync(buffer, cancellationToken);
+        try
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+            await _bufferStream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            _abortUpload = true;
+            throw;
+        }
     }
 
     protected override void Dispose(bool disposing)
     {
         if (!_disposed && disposing)
         {
-            try
-            {
-                UploadBufferedDataAsync().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error uploading data during stream dispose: {BlobKey}", _blobKey);
-                throw;
-            }
-            finally
-            {
-                _bufferStream.Dispose();
-                _bufferFile.Dispose();
-                _disposed = true;
-            }
+            _disposed = true;
+            using var file = _bufferFile;
+            using var buffer = _bufferStream;
+            // Provider continuations must be able to run while the synchronous caller waits.
+            var upload = SynchronizationContext.Current is null && TaskScheduler.Current == TaskScheduler.Default
+                ? UploadBufferedDataAsync()
+                : Task.Run(UploadBufferedDataAsync);
+            upload.GetAwaiter().GetResult();
         }
 
         base.Dispose(disposing);
@@ -110,34 +125,33 @@ internal class VfsWriteStream : Stream
 
     public override async ValueTask DisposeAsync()
     {
-        if (_disposed) { await base.DisposeAsync(); return; }
-
         try
         {
-            await UploadBufferedDataAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error uploading data during stream dispose: {BlobKey}", _blobKey);
-            throw;
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            await using var file = _bufferFile.ConfigureAwait(false);
+            await using var buffer = _bufferStream.ConfigureAwait(false);
+            await UploadBufferedDataAsync().ConfigureAwait(false);
         }
         finally
         {
-            await _bufferStream.DisposeAsync();
-            await _bufferFile.DisposeAsync();
-            _disposed = true;
+            await base.DisposeAsync().ConfigureAwait(false);
         }
-
-        await base.DisposeAsync();
     }
 
     private async Task UploadBufferedDataAsync()
     {
+        if (_abortUpload)
+            return;
+
+        _cancellationToken.ThrowIfCancellationRequested();
         _logger.LogDebug("Uploading buffered data: {BlobKey}, size: {Size}", _blobKey, _bufferStream.Length);
 
         try
         {
-            await _bufferStream.FlushAsync();
+            await _bufferStream.FlushAsync(_cancellationToken).ConfigureAwait(false);
             _bufferStream.Position = 0;
 
             var uploadOptions = new UploadOptions(_blobKey)
@@ -146,28 +160,23 @@ internal class VfsWriteStream : Stream
                 Metadata = _options.Metadata
             };
 
-            var result = await _storage.UploadAsync(_bufferStream, uploadOptions);
+            _cancellationToken.ThrowIfCancellationRequested();
+            var result = await _vfs.Storage.UploadAsync(_bufferStream, uploadOptions)
+                .ConfigureAwait(false);
             if (result.IsFailed)
                 throw new VfsOperationException($"Failed to upload data for: {_blobKey}. Error: {result.Problem}");
 
-            InvalidateCache();
+            VfsCacheKey.InvalidateFile(_cache, _vfs, _path);
             _logger.LogDebug("Successfully uploaded data: {BlobKey}", _blobKey);
         }
-        catch (Exception ex) when (ex is not VfsOperationException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error uploading buffered data: {BlobKey}", _blobKey);
+            if (ex is VfsOperationException)
+                throw;
+
             throw new VfsOperationException($"Failed to upload data for: {_blobKey}", ex);
         }
-    }
-
-    private void InvalidateCache()
-    {
-        if (!_vfsOptions.EnableCache)
-            return;
-
-        _cache.Remove($"file_exists:{_vfsOptions.DefaultContainer}:{_blobKey}");
-        _cache.Remove($"file_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}");
-        _cache.Remove($"file_custom_metadata:{_vfsOptions.DefaultContainer}:{_blobKey}");
     }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);

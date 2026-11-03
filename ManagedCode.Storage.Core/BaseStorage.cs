@@ -144,36 +144,47 @@ public abstract class BaseStorage<T, TOptions> : IStorage<T, TOptions> where TOp
         return await UploadInternalAsync(stream, SetUploadOptions(options), cancellationToken);
     }
 
-    public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default)
-    {
-        var file = new LocalFile();
-        DownloadOptions options = new() { FileName = fileName };
-        return DownloadInternalAsync(file, options, cancellationToken);
-    }
+    public Task<Result<LocalFile>> DownloadAsync(string fileName, CancellationToken cancellationToken = default) =>
+        DownloadAsync(new DownloadOptions { FileName = fileName }, cancellationToken);
 
-    public Task<Result<LocalFile>> DownloadAsync(BlobMetadata metadata, CancellationToken cancellationToken = default)
-    {
-        var file = new LocalFile();
-        DownloadOptions options = new() { FileName = metadata.FullName };
-        return DownloadInternalAsync(file, options, cancellationToken);
-    }
+    public Task<Result<LocalFile>> DownloadAsync(BlobMetadata metadata, CancellationToken cancellationToken = default) =>
+        DownloadAsync(new DownloadOptions { FileName = metadata.FullName }, cancellationToken);
 
     public Task<Result<LocalFile>> DownloadAsync(DownloadOptions options, CancellationToken cancellationToken = default)
     {
-        var keepAlive = options.LocalPath is not null;
-        LocalFile file = new(options.LocalPath, keepAlive);
-
-        return DownloadInternalAsync(file, options, cancellationToken);
+        var destination = new LocalFile(options.LocalPath, keepAlive: options.LocalPath is not null);
+        return DownloadWithDestinationAsync(destination, options, cancellationToken);
     }
 
     public Task<Result<LocalFile>> DownloadAsync(Action<DownloadOptions> action, CancellationToken cancellationToken = default)
     {
         DownloadOptions options = new();
         action.Invoke(options);
+        return DownloadAsync(options, cancellationToken);
+    }
 
-        var keepAlive = options.LocalPath is not null;
-        LocalFile file = new(options.LocalPath, keepAlive);
-        return DownloadInternalAsync(file, options, cancellationToken);
+    private async Task<Result<LocalFile>> DownloadWithDestinationAsync(LocalFile destination, DownloadOptions options,
+        CancellationToken cancellationToken)
+    {
+        LocalFile? downloaded = null;
+        try
+        {
+            var result = await DownloadInternalAsync(destination, options, cancellationToken).ConfigureAwait(false);
+            if (result.IsSuccess)
+                downloaded = result.Value;
+
+            return result;
+        }
+        finally
+        {
+            if (!ReferenceEquals(destination, downloaded))
+            {
+                if (downloaded?.FilePath == destination.FilePath)
+                    destination.KeepAlive = true;
+
+                await destination.DisposeAsync().ConfigureAwait(false);
+            }
+        }
     }
 
     public Task<Result<bool>> DeleteAsync(string fileName, CancellationToken cancellationToken = default)

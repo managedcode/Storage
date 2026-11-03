@@ -85,7 +85,7 @@ public static partial class VerifiedObjectUpload
             throw new StorageUploadLengthException(info.Length > expectedLength);
         }
 
-        return new VerifiedObjectUploadResult(info, Convert.ToHexString(inputHash).ToLowerInvariant(), reused);
+        return new VerifiedObjectUploadResult(info, Convert.ToHexStringLower(inputHash), reused);
     }
 
     private static async Task<(IReadOnlyList<string> PartIds, byte[] Hash)> StageAsync(
@@ -95,7 +95,7 @@ public static partial class VerifiedObjectUpload
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var ids = new List<string>();
         var transferId = RandomNumberGenerator.GetBytes(8);
-        var buffer = new byte[PartBytes];
+        var buffer = new byte[(int)Math.Min(expectedLength, PartBytes)];
         long total = 0;
         while (total < expectedLength)
         {
@@ -199,7 +199,7 @@ public static partial class VerifiedObjectUpload
         CancellationToken cancellationToken)
     {
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        var buffer = new byte[81920];
+        var buffer = new byte[(int)Math.Clamp(expectedLength, 1, 81920)];
         long total = 0;
         while (true)
         {

@@ -49,6 +49,8 @@ builder.Services.AddAzureDataLakeStorageAsDefault(options =>
 
 - Uses `ConnectionString` + `FileSystem` as the “container” equivalent.
 - Creates the filesystem automatically when `CreateContainerIfNotExists = true`.
+- File metadata carries the full filesystem-relative key. Listing entries include the key, length and last-modified timestamp.
+- Downloads stream into the local destination and replace its previous content in full.
 
 ## Tests
 

@@ -25,31 +25,34 @@ public sealed class AzureMetadataEncodingTests : IAsyncLifetime
     public ValueTask InitializeAsync() => new(_container.StartAsync());
     public ValueTask DisposeAsync() => _container.DisposeAsync();
 
-    [Fact]
-    public async Task PortableUpload_PreservesUnicodeMetadataAcrossReadsAndDownload()
+    [Theory]
+    [InlineData("material.txt")]
+    [InlineData("nested/матеріал #1?.txt")]
+    public async Task PortableUpload_PreservesUnicodeMetadataAcrossReadsAndDownload(string fileName)
     {
         using var storage = CreateStorage();
         var metadata = UnicodeMetadata();
         using var content = Content("unchanged material");
         var upload = await storage.UploadAsync(content, new UploadOptions
         {
-            FileName = "material.txt",
+            FileName = fileName,
             MimeType = "text/plain",
             Metadata = metadata
         }, TestContext.Current.CancellationToken);
         upload.IsSuccess.ShouldBeTrue();
         AssertMetadata(upload.Value!.Metadata!, metadata);
-        var stored = await storage.GetBlobMetadataAsync("material.txt", TestContext.Current.CancellationToken);
+        var stored = await storage.GetBlobMetadataAsync(fileName, TestContext.Current.CancellationToken);
         stored.IsSuccess.ShouldBeTrue();
         AssertMetadata(stored.Value!.Metadata!, metadata);
         var listed = await storage.GetBlobMetadataListAsync(cancellationToken: TestContext.Current.CancellationToken).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         AssertMetadata(listed.Single().Metadata!, metadata);
-        var downloaded = await storage.DownloadAsync("material.txt", TestContext.Current.CancellationToken);
+        listed.Single().Uri.ShouldBe(stored.Value.Uri);
+        var downloaded = await storage.DownloadAsync(fileName, TestContext.Current.CancellationToken);
         downloaded.IsSuccess.ShouldBeTrue();
         using var file = downloaded.Value!;
         AssertMetadata(file.BlobMetadata!.Metadata!, metadata);
         (await File.ReadAllTextAsync(file.FileInfo.FullName, TestContext.Current.CancellationToken)).ShouldBe("unchanged material");
-        var native = await NativeContainer(storage).GetBlobClient("material.txt").GetPropertiesAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var native = await NativeContainer(storage).GetBlobClient(fileName).GetPropertiesAsync(cancellationToken: TestContext.Current.CancellationToken);
         native.Value.Metadata.Values.All(value => value.All(c => c is >= ' ' and <= '~')).ShouldBeTrue();
     }
 

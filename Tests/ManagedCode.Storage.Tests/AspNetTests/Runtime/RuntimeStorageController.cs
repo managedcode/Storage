@@ -1,6 +1,10 @@
+using System.Threading;
+using System.Threading.Tasks;
+using ManagedCode.Communication;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Server.ChunkUpload;
 using ManagedCode.Storage.Server.Controllers;
+using ManagedCode.Storage.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Storage.Tests.AspNetTests.Runtime;
@@ -20,5 +24,16 @@ public sealed class RuntimeStorageController(IStorage storage, ChunkUploadServic
             return Ok(metadata);
         }
         catch (System.Exception exception) { return BadRequest(exception.Message); }
+    }
+
+    [HttpPost("upload-chunks/wrong-checksum")]
+    public async Task<Result<ChunkUploadCompleteResponse>> CompleteWithWrongChecksumAsync(
+        [FromBody] ChunkUploadCompleteRequest request, CancellationToken cancellationToken)
+    {
+        var completed = await CompleteChunksAsync(request, cancellationToken);
+        if (completed.IsSuccess)
+            completed.Value.Checksum ^= 1;
+
+        return completed;
     }
 }

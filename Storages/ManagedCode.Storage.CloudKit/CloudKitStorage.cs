@@ -96,15 +96,9 @@ public class CloudKitStorage : BaseStorage<ICloudKitClient, CloudKitStorageOptio
             await EnsureContainerExist(cancellationToken);
             var recordName = CreateRecordName(BuildInternalPath(NormalizeRelativePath(options.FullPath)));
 
-            var remoteStream = await StorageClient.DownloadAsync(recordName, cancellationToken);
+            await using var remoteStream = await StorageClient.DownloadAsync(recordName, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-
-            var fileStream = localFile.FileStream;
-            await using (remoteStream)
-            {
-                await remoteStream.CopyToAsync(fileStream, cancellationToken);
-                fileStream.Position = 0;
-            }
+            await localFile.CopyFromStreamAsync(remoteStream, cancellationToken);
 
             return Result<LocalFile>.Succeed(localFile);
         }

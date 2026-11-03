@@ -50,6 +50,8 @@ builder.Services.AddFileSystemStorageAsDefault(options =>
 
 - `BaseFolder` acts as the container root.
 - Supports directory creation when `CreateContainerIfNotExists = true`.
+- Directory listing and deletion accept paths relative to `BaseFolder`. Use `RemoveContainerAsync` to delete the container root.
+- File and directory operations reject paths that traverse symbolic links or reparse points below the configured root. Recursive listings skip those entries.
 
 ## Tests
 

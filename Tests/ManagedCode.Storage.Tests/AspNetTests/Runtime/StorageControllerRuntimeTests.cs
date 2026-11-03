@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Storage.Client;
@@ -63,14 +64,19 @@ public sealed class StorageControllerRuntimeTests(StorageHttpRuntimeHost host) :
         output.ToArray().ShouldBe(bytes);
     }
 
-    [Fact]
-    public async Task RawUpload_AndHttpRanges_PreserveRequestedBytes()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RawUpload_AndHttpRanges_PreserveRequestedBytes(bool chunked)
     {
         var bytes = new byte[1234];
         Random.Shared.NextBytes(bytes);
         var name = Guid.NewGuid().ToString("N") + ".bin";
         var token = TestContext.Current.CancellationToken;
-        using var request = new HttpRequestMessage(HttpMethod.Post, Root + "upload/stream") { Content = new ByteArrayContent(bytes) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, Root + "upload/stream")
+        {
+            Content = chunked ? new StreamContent(new ShortReadStream(bytes, false)) : new ByteArrayContent(bytes)
+        };
         request.Headers.Add(StorageServerHeaders.FileName, name);
         request.Headers.Add(StorageServerHeaders.ContentType, "application/octet-stream");
         request.Headers.Add(StorageServerHeaders.Directory, "nested");
@@ -86,15 +92,18 @@ public sealed class StorageControllerRuntimeTests(StorageHttpRuntimeHost host) :
         }
     }
 
-    [Fact]
-    public async Task ChunkUpload_CompletesWithMatchingChecksumAndPersistedBytes()
+    [Theory]
+    [InlineData(9237, false, true)]
+    [InlineData(9238, true, true)]
+    [InlineData(9239, true, false)]
+    public async Task ChunkUpload_CompletesWithMatchingChecksumAndPersistedBytes(int length, bool shortReads, bool seekable)
     {
-        var bytes = new byte[9237];
+        var bytes = new byte[length];
         Random.Shared.NextBytes(bytes);
         var client = new StorageClient(host.Client);
         client.SetChunkSize(1024);
         double progress = 0;
-        using var stream = new MemoryStream(bytes);
+        using var stream = shortReads ? new ShortReadStream(bytes, seekable) : new MemoryStream(bytes);
         var completed = await client.UploadLargeFile(stream, Root + "upload-chunks/upload", Root + "upload-chunks/complete",
             value => progress = value, TestContext.Current.CancellationToken);
         completed.IsSuccess.ShouldBeTrue(System.Text.Json.JsonSerializer.Serialize(completed.Problem));
@@ -110,6 +119,54 @@ public sealed class StorageControllerRuntimeTests(StorageHttpRuntimeHost host) :
             found = true;
         }
         found.ShouldBeTrue();
+    }
+
+    private sealed class ShortReadStream(byte[] data, bool seekable) : MemoryStream(data)
+    {
+        public override bool CanSeek => seekable;
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            base.ReadAsync(buffer[..Math.Min(buffer.Length, 113)], cancellationToken);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RawUpload_RejectsOversizedBodyAndPreservesTheStoredFile(bool chunked)
+    {
+        var token = TestContext.Current.CancellationToken;
+        var name = $"limit-{Guid.NewGuid():N}.bin";
+        (await host.Storage.UploadAsync("original", new UploadOptions(name), token)).IsSuccess.ShouldBeTrue();
+        var bytes = new byte[16 * 1024 + 1];
+        using var request = new HttpRequestMessage(HttpMethod.Post, Root + "upload/stream")
+        {
+            Content = chunked ? new StreamContent(new ShortReadStream(bytes, false)) : new ByteArrayContent(bytes)
+        };
+        request.Headers.Add(StorageServerHeaders.FileName, name);
+
+        using var response = await host.Client.SendAsync(request, token);
+        var result = await response.Content.ReadFromJsonAsync<Result<BlobMetadata>>(cancellationToken: token);
+
+        result!.IsFailed.ShouldBeTrue();
+        result.Problem.StatusCode.ShouldBe(413);
+        var stored = await host.Storage.DownloadAsync(name, token);
+        stored.IsSuccess.ShouldBeTrue();
+        await using var file = stored.Value.ShouldNotBeNull();
+        (await file.ReadAllTextAsync(token)).ShouldBe("original");
+    }
+
+    [Fact]
+    public async Task ChunkUpload_ReportsServerChecksumMismatch()
+    {
+        var client = new StorageClient(host.Client);
+        client.SetChunkSize(1024);
+        using var stream = new MemoryStream(new byte[23]);
+
+        var result = await client.UploadLargeFile(stream, Root + "upload-chunks/upload",
+            Root + "upload-chunks/wrong-checksum", null, TestContext.Current.CancellationToken);
+
+        result.IsFailed.ShouldBeTrue();
+        result.Problem.Title.ShouldNotBeNull().ShouldContain("checksum");
     }
 
     [Fact]

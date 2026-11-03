@@ -41,4 +41,16 @@ public sealed class VerifiedContentSnapshotTests
 
         snapshot.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task CreateAsync_WhenSourceIsTooLong_ReadsOnlyTheFirstExtraByte()
+    {
+        using var source = new MemoryStream(new byte[128 * 1024], writable: false);
+        var digest = Convert.ToHexStringLower(SHA256.HashData(new byte[1]));
+
+        var snapshot = await VerifiedContentSnapshot.CreateAsync(source, 1, digest, TestContext.Current.CancellationToken);
+
+        snapshot.ShouldBeNull();
+        source.Position.ShouldBe(2);
+    }
 }

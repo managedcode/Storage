@@ -57,6 +57,8 @@ Client-side:
 ## Current Behavior
 
 - Chunks are staged under the server temp path (controlled by server options).
+- A session is admitted only when capacity is available. Retries replace a part after the incoming bytes have been staged successfully.
+- Completion checks the declared length when available and computes CRC32 during the merge before committing.
 - Completion step merges chunks in order and can:
   - keep merged file on disk (`KeepMergedFile`)
   - commit merged file to `IStorage` (`CommitToStorage`)

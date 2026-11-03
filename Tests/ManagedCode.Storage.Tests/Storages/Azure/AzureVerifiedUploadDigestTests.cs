@@ -23,13 +23,16 @@ public sealed class AzureVerifiedUploadDigestTests : IAsyncLifetime
     public ValueTask InitializeAsync() => new(_container.StartAsync());
     public ValueTask DisposeAsync() => _container.DisposeAsync();
 
-    [Fact]
-    public async Task StreamUpload_WithMatchingDigest_CommitsAndReusesRetry()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4096)]
+    [InlineData(MultipartPayloadBytes)]
+    public async Task StreamUpload_WithMatchingDigest_CommitsAndReusesRetry(int payloadSize)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var storage = CreateStorage();
         var objects = await CreateContainerAsync(storage);
-        var bytes = RandomNumberGenerator.GetBytes(MultipartPayloadBytes);
+        var bytes = RandomNumberGenerator.GetBytes(payloadSize);
         var digest = Convert.ToHexString(SHA256.HashData(bytes));
 
         using var first = new MemoryStream(bytes, writable: false);

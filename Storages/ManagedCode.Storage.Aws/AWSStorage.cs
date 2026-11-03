@@ -43,18 +43,17 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var objectsRequest = new ListObjectsRequest
+        var objectsRequest = new ListObjectsV2Request
         {
             BucketName = StorageOptions.Bucket,
-            Prefix = directory,
-            MaxKeys = 1_000_000
+            Prefix = directory
         };
 
         await EnsureContainerExist(cancellationToken);
 
         do
         {
-            var objectsResponse = await StorageClient.ListObjectsAsync(objectsRequest, cancellationToken);
+            var objectsResponse = await StorageClient.ListObjectsV2Async(objectsRequest, cancellationToken);
 
             if (cancellationToken.IsCancellationRequested)
                 yield break;
@@ -78,7 +77,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 yield return new BlobMetadata
                 {
                     Name = entry.Key,
-                    FullName = $"{StorageOptions.Bucket}/{entry.Key}",
+                    FullName = entry.Key,
                     Container = StorageOptions.Bucket,
                     Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{entry.Key}"),
                     LastModified = objectMetaResponse.LastModified.HasValue ? new DateTimeOffset(objectMetaResponse.LastModified.Value) : DateTimeOffset.MinValue,
@@ -88,9 +87,9 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 };
             }
 
-            // If response is truncated, set the marker to get the next set of keys.
             if (objectsResponse.IsTruncated == true)
-                objectsRequest.Marker = objectsResponse.NextMarker;
+                objectsRequest.ContinuationToken = objectsResponse.NextContinuationToken
+                    ?? throw new InvalidDataException("S3 returned a truncated object list without a continuation token.");
             else
                 objectsRequest = null;
         } while (objectsRequest is not null);
@@ -100,8 +99,8 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
     {
         try
         {
-            var stream = await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, fileName, null, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            var stream = await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, fileName, null, cancellationToken);
             return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
@@ -204,10 +203,11 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
         {
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
+            using var response = await StorageClient.GetObjectAsync(StorageOptions.Bucket, options.FullPath, null, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             localFile.BlobMetadata = new BlobMetadata
             {
+                FullName = options.FullPath,
                 Name = options.FileName,
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),
@@ -217,8 +217,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
                 Length = (ulong)response.Headers.ContentLength
             };
 
-            await localFile.CopyFromStreamAsync(await StorageClient.GetObjectStreamAsync(StorageOptions.Bucket, options.FullPath, null,
-                cancellationToken), cancellationToken);
+            await localFile.CopyFromStreamAsync(response.ResponseStream, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
             return Result<LocalFile>.Succeed(localFile);
@@ -301,6 +300,7 @@ public class AWSStorage : BaseStorage<IAmazonS3, AWSStorageOptions>, IAWSStorage
 
             var metadata = new BlobMetadata
             {
+                FullName = options.FullPath,
                 Name = options.FileName,
                 Container = StorageOptions.Bucket,
                 Uri = new Uri($"https://s3.amazonaws.com/{StorageOptions.Bucket}/{options.FullPath}"),

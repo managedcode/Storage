@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -115,6 +116,70 @@ public class FileSystemSecurityTests : IDisposable
         // Verify file is in correct location
         var expectedPath = Path.Combine(_testBasePath, "subfolder", "nested", "file.txt");
         File.Exists(expectedPath).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DirectoryOperations_RejectPathsOutsideStorageRoot(bool rooted)
+    {
+        var token = TestContext.Current.CancellationToken;
+        var outside = Directory.CreateDirectory(_testBasePath + "-sibling");
+        try
+        {
+            var directory = rooted ? outside.FullName : Path.GetRelativePath(_testBasePath, outside.FullName);
+            var marker = Path.Combine(outside.FullName, "keep.txt");
+            await File.WriteAllTextAsync(marker, "keep", token);
+
+            var deleted = await _storage.DeleteDirectoryAsync(directory, token);
+
+            deleted.IsFailed.ShouldBeTrue();
+            File.Exists(marker).ShouldBeTrue();
+            await Should.ThrowAsync<UnauthorizedAccessException>(() => ListNamesAsync(directory));
+        }
+        finally
+        {
+            if (Directory.Exists(outside.FullName))
+                outside.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FileOperations_RejectLinksOutsideRootAndListingSkipsThem()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var outside = Directory.CreateDirectory(_testBasePath + "-link-target");
+        try
+        {
+            var target = Path.Combine(outside.FullName, "keep.txt");
+            await File.WriteAllTextAsync(target, "keep", token);
+            Directory.CreateSymbolicLink(Path.Combine(_testBasePath, "external"), outside.FullName);
+            File.CreateSymbolicLink(Path.Combine(_testBasePath, "linked.txt"), target);
+            await File.WriteAllTextAsync(Path.Combine(_testBasePath, "internal.txt"), "internal", token);
+
+            (await _storage.GetStreamAsync("linked.txt", token)).IsFailed.ShouldBeTrue();
+            (await _storage.UploadAsync("replace", new UploadOptions { FileName = "external/new/keep.txt" }, token))
+                .IsFailed.ShouldBeTrue();
+            (await _storage.DeleteDirectoryAsync("external", token)).IsFailed.ShouldBeTrue();
+            (await ListNamesAsync(null)).ShouldBe(["internal.txt"]);
+            Directory.Exists(Path.Combine(outside.FullName, "new")).ShouldBeFalse();
+            (await File.ReadAllTextAsync(target, token)).ShouldBe("keep");
+        }
+        finally
+        {
+            outside.Delete(recursive: true);
+        }
+    }
+
+    private async Task<IReadOnlyList<string>> ListNamesAsync(string? directory)
+    {
+        var names = new List<string>();
+        await foreach (var item in _storage.GetBlobMetadataListAsync(directory, TestContext.Current.CancellationToken))
+        {
+            names.Add(item.FullName);
+        }
+
+        return names;
     }
 
     public void Dispose()

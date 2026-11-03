@@ -64,6 +64,8 @@ builder.Services.AddGoogleDriveStorageAsDefault(options =>
 
 ## Current Behavior
 
+- Downloads to a local path replace the destination's previous bytes in full.
+
 - You can provide either:
   - `GoogleDriveStorageOptions.Client` (custom `IGoogleDriveClient` swap point, mainly for tests), or
   - `GoogleDriveStorageOptions.DriveService` (official SDK client)

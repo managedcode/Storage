@@ -99,4 +99,45 @@ public sealed class AwsMultipartStreamContractsTests : BaseContainer<LocalStackC
         using var downloaded = await client.GetObjectAsync(bucket, "file", token);
         downloaded.ContentLength.ShouldBe(2);
     }
+
+    [Fact]
+    public async Task MultipartWrites_AcceptPartHintsAboveInt32WithoutAllocatingTheHint()
+    {
+        using var client = CreateClient();
+        var token = TestContext.Current.CancellationToken;
+        var bucket = "large-part-contract-" + Guid.NewGuid().ToString("N");
+        await client.PutBucketAsync(bucket, token);
+
+        using (var stream = new BlobStream(client, bucket, "file", 3L * 1024 * 1024 * 1024))
+            stream.Write(new byte[] { 7, 8 }, 0, 2);
+
+        using var downloaded = await client.GetObjectAsync(bucket, "file", token);
+        downloaded.ContentLength.ShouldBe(2);
+        (await SHA256.HashDataAsync(downloaded.ResponseStream, token)).ShouldBe(SHA256.HashData(new byte[] { 7, 8 }));
+    }
+
+    [Fact]
+    public async Task FailedPart_AbortsTheMultipartUploadAndClosesTheWriter()
+    {
+        using var client = CreateClient();
+        var token = TestContext.Current.CancellationToken;
+        var bucket = "failed-part-contract-" + Guid.NewGuid().ToString("N");
+        await client.PutBucketAsync(bucket, token);
+        client.BeforeRequestEvent += (_, args) =>
+        {
+            if (args is WebServiceRequestEventArgs { Request: UploadPartRequest })
+                throw new IOException("Interrupted multipart request.");
+        };
+        var stream = new BlobStream(client, bucket, "file");
+        stream.Write(new byte[] { 7, 8 }, 0, 2);
+
+        Should.Throw<IOException>(stream.Dispose);
+
+        stream.CanWrite.ShouldBeFalse();
+        stream.Dispose();
+        var pending = await client.ListMultipartUploadsAsync(new ListMultipartUploadsRequest { BucketName = bucket }, token);
+        (pending.MultipartUploads?.Count ?? 0).ShouldBe(0);
+        var objects = await client.ListObjectsV2Async(new ListObjectsV2Request { BucketName = bucket }, token);
+        (objects.S3Objects?.Count ?? 0).ShouldBe(0);
+    }
 }

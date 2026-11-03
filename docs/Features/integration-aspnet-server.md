@@ -75,6 +75,8 @@ app.MapStorageHub();  // /hubs/storage
 
 - Controllers are “base-first”: `StorageControllerBase` is intended to be inherited so applications can override routing and auth.
 - Chunk uploads are designed to be storage-provider agnostic (chunks are staged and merged via server-side logic).
+- Raw uploads enforce the configured file-size limit for both fixed-length and chunked requests. A request without a known length is staged to disk up to that limit before writing to storage.
+- SignalR transfer state belongs to the originating connection. The server selects the staging path and checks the declared length when supplied.
 
 ## Tests
 

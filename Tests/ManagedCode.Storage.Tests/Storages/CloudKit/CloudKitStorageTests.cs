@@ -1,9 +1,11 @@
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ManagedCode.Storage.CloudKit;
 using ManagedCode.Storage.CloudKit.Options;
+using ManagedCode.Storage.Core.Models;
 using Shouldly;
 using Xunit;
 
@@ -42,6 +44,22 @@ public class CloudKitStorageTests
         using (var reader = new StreamReader(download.Value.FileStream, Encoding.UTF8))
         {
             (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).ShouldBe("storage payload");
+        }
+
+        var token = TestContext.Current.CancellationToken;
+        var destination = Path.Combine(Environment.CurrentDirectory, $"cloudkit-{Guid.NewGuid():N}");
+        try
+        {
+            await File.WriteAllTextAsync(destination, "old content that is longer", token);
+            var replacement = await storage.DownloadAsync(
+                new DownloadOptions { FileName = "dir/file.txt", LocalPath = destination }, token);
+            replacement.IsSuccess.ShouldBeTrue();
+            await using var file = replacement.Value;
+            (await file.ReadAllTextAsync(token)).ShouldBe("storage payload");
+        }
+        finally
+        {
+            File.Delete(destination);
         }
 
         var existsBeforeDelete = await storage.ExistsAsync("dir/file.txt", TestContext.Current.CancellationToken);

@@ -40,6 +40,7 @@ public sealed class AzureDataLakeProtocolTests(DataLakeProtocolHost host) : ICla
         uploaded.IsSuccess.ShouldBeTrue(uploaded.Problem?.ToString());
         uploaded.Value!.Length.ShouldBe((ulong)content.Length);
         var key = directory is null ? "content.bin" : directory + "/content.bin";
+        uploaded.Value.FullName.ShouldBe(key);
         (await storage.ExistsAsync(key, token)).Value.ShouldBeTrue();
         var downloaded = await storage.DownloadAsync(key, token);
         downloaded.IsSuccess.ShouldBeTrue(downloaded.Problem?.ToString());
@@ -64,7 +65,14 @@ public sealed class AzureDataLakeProtocolTests(DataLakeProtocolHost host) : ICla
             await stream.WriteAsync(content, token);
         var names = new List<string>();
         await foreach (var metadata in storage.GetBlobMetadataListAsync(directory, token))
+        {
             names.Add(metadata.Name!);
+            if (metadata.Name == key)
+            {
+                metadata.FullName.ShouldBe(key);
+                metadata.Length.ShouldBe((ulong)content.Length);
+            }
+        }
         names.ShouldContain(key);
         if (directory is not null)
         {
@@ -77,6 +85,28 @@ public sealed class AzureDataLakeProtocolTests(DataLakeProtocolHost host) : ICla
         missingMetadata.IsFailed.ShouldBeTrue();
         missingMetadata.Problem.StatusCode.ShouldBe(404);
         (await storage.RemoveContainerAsync(token)).IsSuccess.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task DownloadToExistingLongerFile_ReplacesAllPreviousBytes()
+    {
+        using var storage = new AzureDataLakeStorage(Options());
+        var token = TestContext.Current.CancellationToken;
+        (await storage.CreateContainerAsync(token)).IsSuccess.ShouldBeTrue();
+        (await storage.UploadAsync("new", new UploadOptions("source.txt"), token)).IsSuccess.ShouldBeTrue();
+        var path = Path.Combine(Environment.CurrentDirectory, $"datalake-download-{Guid.NewGuid():N}");
+        try
+        {
+            await File.WriteAllTextAsync(path, "previous content", token);
+            var downloaded = await storage.DownloadAsync(new DownloadOptions { FileName = "source.txt", LocalPath = path }, token);
+            downloaded.IsSuccess.ShouldBeTrue(downloaded.Problem?.ToString());
+            await using var file = downloaded.Value;
+            (await File.ReadAllTextAsync(path, token)).ShouldBe("new");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]

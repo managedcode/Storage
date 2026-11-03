@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Cartograph.Catalog;
 using Cartograph.Format;
 using ManagedCode.Storage.Cartograph;
@@ -37,12 +36,24 @@ internal sealed class CartographArtifactFixture : IDisposable
     public string DestinationPath => Path.Combine(_root, "download.bin");
     public CartographStorage CreateStorage(string? path = null) => new(new CartographStorageOptions { ArtifactPath = path ?? ArtifactPath });
 
-    public string WriteArtifact(string name, Action<List<CatalogEntry>>? editCatalog = null)
+    public string WriteArtifact(string name, Action<List<CatalogEntry>>? editCatalog = null, bool splitByFile = false)
     {
         var writer = new SegmentedArtifactWriter();
         var catalogSegment = writer.AddSegment();
-        var content = writer.AddSegment();
-        var entries = Files.Select(file => AddFile(content, file.Key, file.Value)).ToList();
+        var sharedContent = splitByFile ? null : writer.AddSegment();
+        var entries = new List<CatalogEntry>(Files.Count);
+        var segmentIndex = 1;
+        var segmentStart = 1L;
+        foreach (var file in Files)
+        {
+            var content = sharedContent ?? writer.AddSegment();
+            entries.Add(AddFile(content, file.Key, file.Value, segmentIndex, segmentStart));
+            if (splitByFile)
+            {
+                segmentIndex++;
+                segmentStart += content.RecordCount;
+            }
+        }
         editCatalog?.Invoke(entries);
         var catalog = new FileCatalog
         {
@@ -58,7 +69,7 @@ internal sealed class CartographArtifactFixture : IDisposable
         return path;
     }
 
-    private CatalogEntry AddFile(SegmentBuilder content, string relativePath, byte[] bytes)
+    private CatalogEntry AddFile(SegmentBuilder content, string relativePath, byte[] bytes, int segmentIndex, long segmentStart)
     {
         var source = Path.Combine(_root, Guid.NewGuid().ToString("N") + ".source");
         File.WriteAllBytes(source, bytes);
@@ -74,9 +85,9 @@ internal sealed class CartographArtifactFixture : IDisposable
             Length = bytes.Length,
             LastWriteUtcTicks = ModifiedUtc.Ticks,
             Checksum = 0,
-            SegmentIndex = 1,
+            SegmentIndex = segmentIndex,
             RecordIndex = start,
-            GlobalIndex = start + 1,
+            GlobalIndex = segmentStart + start,
             RecordCount = content.RecordCount - start
         };
     }

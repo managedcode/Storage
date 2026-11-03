@@ -98,6 +98,7 @@ builder.Services.AddRazorComponents()
 - Stores payload bytes in OPFS and keeps `IndexedDB` focused on metadata only.
 - Requires OPFS for payload writes and fails fast when the browser does not expose the required OPFS APIs.
 - Uploads streams chunk-by-chunk, can batch multiple contiguous chunks into one JS interop window, and exposes a lazy OPFS-backed `Stream`.
+- A canceled upload discards its staged OPFS payload. Overwrites use one IndexedDB transaction to replace metadata and identify the superseded payload for cleanup, including writes to the same key from different tabs.
 - Exposes a stable static asset path so MVC or Razor Pages apps can reference the same browser script contract.
 - Supports `ManagedCode.Storage.VirtualFileSystem` on top of the same provider without a browser-specific VFS fork; the real browser hosts exercise small-file save and overwrite flows, read, list, move, delete, large-payload roundtrips, and multi-tab flows end to end.
 - The browser host playgrounds emit progress logs every `100 MiB` for the `1 GiB` save and load verification flows.

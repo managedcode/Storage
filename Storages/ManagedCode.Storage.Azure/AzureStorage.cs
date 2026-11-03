@@ -71,7 +71,7 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
                 {
                     FullName = blobItem.Name,
                     Name = Path.GetFileName(blobItem.Name),
-                    Uri = new Uri(StorageClient.Uri, $"{StorageOptions.Container}/{blobItem.Name}"),
+                    Uri = StorageClient.GetBlobClient(blobItem.Name).Uri,
                     Container = StorageOptions.Container,
                     Length = (ulong)blobItem.Properties.ContentLength!.Value,
                     Metadata = AzureMetadataTransport.Decode(blobItem.Metadata),
@@ -92,8 +92,8 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         {
             await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetBlobClient(fileName);
-            var stream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            var stream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
             return Result<Stream>.Succeed(stream);
         }
         catch (RequestFailedException ex) when (ex.Status is 404)
@@ -113,8 +113,8 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
         {
             await EnsureContainerExist(cancellationToken);
             var blobClient = StorageClient.GetBlobClient(fileName);
-            var stream = await blobClient.OpenWriteAsync(overwrite: true, cancellationToken: cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
+            var stream = await blobClient.OpenWriteAsync(overwrite: true, cancellationToken: cancellationToken);
             return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
@@ -328,8 +328,9 @@ public partial class AzureStorage(IAzureStorageOptions options, ILogger<AzureSto
             await EnsureContainerExist(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             var response = await blobClient.DownloadAsync(cancellationToken);
+            await using var content = response.Value.Content;
             cancellationToken.ThrowIfCancellationRequested();
-            await localFile.CopyFromStreamAsync(response.Value.Content, cancellationToken);
+            await localFile.CopyFromStreamAsync(content, cancellationToken);
 
             localFile.BlobMetadata = new BlobMetadata
             {

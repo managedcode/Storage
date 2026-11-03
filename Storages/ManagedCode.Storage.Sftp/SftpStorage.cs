@@ -63,21 +63,17 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
     public override async IAsyncEnumerable<BlobMetadata> GetBlobMetadataListAsync(string? directory = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         await EnsureContainerExist(cancellationToken);
         EnsureConnected();
 
-        var path = NormalizeRemotePath(directory ?? string.Empty, allowEmpty: true);
-        var isRoot = string.IsNullOrEmpty(path);
-        var targetPath = isRoot ? CurrentRoot : path;
-
-        if (!StorageClient.Exists(targetPath))
+        var targetPath = BuildPath(directory ?? string.Empty);
+        if (!await StorageClient.ExistsAsync(targetPath, cancellationToken))
         {
             yield break;
         }
 
-        var listing = StorageClient.ListDirectory(targetPath);
-
-        foreach (var item in listing)
+        await foreach (var item in StorageClient.ListDirectoryAsync(targetPath, cancellationToken))
         {
             if (cancellationToken.IsCancellationRequested)
                 yield break;
@@ -94,16 +90,17 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await EnsureContainerExist(cancellationToken);
             EnsureConnected();
 
             var remotePath = BuildPath(fileName);
-            if (!StorageClient.Exists(remotePath))
+            if (!await StorageClient.ExistsAsync(remotePath, cancellationToken))
             {
                 return Result<Stream>.Fail($"File not found: {fileName}");
             }
 
-            var stream = StorageClient.OpenRead(remotePath);
+            var stream = await StorageClient.OpenAsync(remotePath, FileMode.Open, FileAccess.Read, cancellationToken);
             return Result<Stream>.Succeed(stream);
         }
         catch (Exception ex)
@@ -317,22 +314,20 @@ public class SftpStorage : BaseStorage<SftpClient, SftpStorageOptions>, ISftpSto
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await EnsureContainerExist(cancellationToken);
             EnsureConnected();
 
             var remotePath = BuildPath(options.FullPath);
-            if (!StorageClient.Exists(remotePath))
+            if (!await StorageClient.ExistsAsync(remotePath, cancellationToken))
             {
                 return Result<LocalFile>.Fail("File not found");
             }
 
-            await Task.Run(() =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                using var destinationStream = localFile.FileStream;
-                destinationStream.SetLength(0);
-                StorageClient.DownloadFile(remotePath, destinationStream);
-            }, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            await using var destinationStream = localFile.FileStream;
+            destinationStream.SetLength(0);
+            await StorageClient.DownloadFileAsync(remotePath, destinationStream, cancellationToken);
 
             return Result<LocalFile>.Succeed(localFile);
         }

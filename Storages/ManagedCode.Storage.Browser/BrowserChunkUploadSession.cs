@@ -18,14 +18,29 @@ internal sealed class BrowserChunkUploadSession(BrowserIndexedDbInterop interop,
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
         ArgumentException.ThrowIfNullOrWhiteSpace(blobKey);
 
-        var started = await interop.BeginPayloadWriteAsync(databaseName, blobKey, cancellationToken).ConfigureAwait(false);
-        if (!started)
+        cancellationToken.ThrowIfCancellationRequested();
+        try
         {
-            throw new NotSupportedException(
-                "ManagedCode.Storage.Browser requires Origin Private File System (OPFS) support. This browser does not expose the required OPFS APIs.");
-        }
+            var started = await interop.BeginPayloadWriteAsync(databaseName, blobKey, CancellationToken.None).ConfigureAwait(false);
+            if (!started)
+                throw new NotSupportedException(
+                    "ManagedCode.Storage.Browser requires Origin Private File System (OPFS) support. This browser does not expose the required OPFS APIs.");
 
-        return await WriteToOpfsAsync(stream, databaseName, blobKey, cancellationToken).ConfigureAwait(false);
+            return await WriteToOpfsAsync(stream, databaseName, blobKey, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            try
+            {
+                await interop.AbortPayloadWriteAsync(databaseName, blobKey, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                // A disconnected browser may already have released its worker.
+            }
+
+            throw;
+        }
     }
 
     private static byte[] CopyChunk(byte[] source, int length)
@@ -48,7 +63,7 @@ internal sealed class BrowserChunkUploadSession(BrowserIndexedDbInterop interop,
 
             while (true)
             {
-                var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
+                var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, options.ChunkSizeBytes), cancellationToken).ConfigureAwait(false);
                 if (bytesRead == 0)
                     break;
 
@@ -60,13 +75,9 @@ internal sealed class BrowserChunkUploadSession(BrowserIndexedDbInterop interop,
             }
 
             await FlushOpfsBatchAsync(databaseName, blobKey, batch, cancellationToken).ConfigureAwait(false);
-            await interop.CompletePayloadWriteAsync(databaseName, blobKey, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            await interop.CompletePayloadWriteAsync(databaseName, blobKey, CancellationToken.None).ConfigureAwait(false);
             return CreateWriteResult(length, BrowserPayloadStores.Opfs);
-        }
-        catch
-        {
-            await interop.AbortPayloadWriteAsync(databaseName, blobKey, cancellationToken).ConfigureAwait(false);
-            throw;
         }
         finally
         {

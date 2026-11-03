@@ -118,7 +118,6 @@ public sealed class BrowserStorage : BaseStorage<IJSRuntime, BrowserStorageOptio
             if (containerResult.IsFailed)
                 return Result<BlobMetadata>.Fail(containerResult.Problem);
 
-            var existing = await ReadStoredBlobAsync(options, cancellationToken);
             var blobKey = BuildBlobKey(options);
             var payloadKey = CreatePayloadKey(blobKey);
             var payloadWritten = false;
@@ -145,19 +144,18 @@ public sealed class BrowserStorage : BaseStorage<IJSRuntime, BrowserStorageOptio
                     Length = (ulong)writeResult.Length,
                     ChunkSizeBytes = StorageOptions.ChunkSizeBytes,
                     PayloadStore = writeResult.PayloadStore,
-                    CreatedOn = existing?.CreatedOn ?? now,
-                    LastModified = now,
-                    HasLegalHold = existing?.HasLegalHold ?? false
+                    CreatedOn = now,
+                    LastModified = now
                 };
 
-                await _interop.PutBlobAsync(StorageOptions.DatabaseName, storedBlob, cancellationToken);
-                await DeleteSupersededPayloadAsync(existing, payloadKey, cancellationToken);
-                return Result<BlobMetadata>.Succeed(ToBlobMetadata(storedBlob));
+                cancellationToken.ThrowIfCancellationRequested();
+                var published = await _interop.PutBlobAsync(StorageOptions.DatabaseName, storedBlob);
+                return Result<BlobMetadata>.Succeed(ToBlobMetadata(published));
             }
             catch
             {
                 if (payloadWritten)
-                    await TryDeletePayloadAsync(payloadKey, cancellationToken);
+                    await TryDeletePayloadAsync(payloadKey);
 
                 throw;
             }
@@ -244,14 +242,13 @@ public sealed class BrowserStorage : BaseStorage<IJSRuntime, BrowserStorageOptio
     {
         try
         {
-            var storedBlob = await ReadStoredBlobAsync(options, cancellationToken);
-            if (storedBlob is null)
-                return Result.Fail("File not found");
+            var container = await EnsureContainerReadyAsync(cancellationToken);
+            if (container.IsFailed)
+                return container;
 
-            storedBlob.HasLegalHold = hasLegalHold;
-            storedBlob.LastModified = DateTimeOffset.UtcNow;
-            await _interop.PutBlobAsync(StorageOptions.DatabaseName, storedBlob, cancellationToken);
-            return Result.Succeed();
+            var updated = await _interop.SetBlobLegalHoldAsync(StorageOptions.DatabaseName, BuildBlobKey(options),
+                hasLegalHold, DateTimeOffset.UtcNow, cancellationToken);
+            return updated ? Result.Succeed() : Result.Fail("File not found");
         }
         catch (Exception ex)
         {
@@ -375,23 +372,11 @@ public sealed class BrowserStorage : BaseStorage<IJSRuntime, BrowserStorageOptio
             : storedBlob.PayloadKey;
     }
 
-    private async Task DeleteSupersededPayloadAsync(BrowserStoredBlob? existing, string currentPayloadKey, CancellationToken cancellationToken)
-    {
-        if (existing is null)
-            return;
-
-        var previousPayloadKey = ResolvePayloadKey(existing);
-        if (string.Equals(previousPayloadKey, currentPayloadKey, StringComparison.Ordinal))
-            return;
-
-        await TryDeletePayloadAsync(previousPayloadKey, cancellationToken);
-    }
-
-    private async Task TryDeletePayloadAsync(string payloadKey, CancellationToken cancellationToken)
+    private async Task TryDeletePayloadAsync(string payloadKey)
     {
         try
         {
-            await _interop.DeletePayloadFileAsync(StorageOptions.DatabaseName, payloadKey, cancellationToken);
+            await _interop.DeletePayloadFileAsync(StorageOptions.DatabaseName, payloadKey);
         }
         catch
         {

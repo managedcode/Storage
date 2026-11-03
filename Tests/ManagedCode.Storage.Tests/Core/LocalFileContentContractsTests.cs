@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Storage.Core;
 using ManagedCode.Storage.Core.Models;
@@ -26,6 +27,70 @@ public sealed class LocalFileContentContractsTests
             (await local.ReadAllBytesAsync(TestContext.Current.CancellationToken)).ShouldBe(bytes);
         }
         finally { Directory.Delete(root, recursive: true); }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task NamedStreamFactory_ReplacesExistingContentExactly(bool useDirectory)
+    {
+        var token = TestContext.Current.CancellationToken;
+        var name = $"local-contract-{Guid.NewGuid():N}.txt";
+        var path = Path.Combine(Path.GetTempPath(), useDirectory ? $"{name}.tmp" : name);
+        await File.WriteAllTextAsync(path, "longer existing content", token);
+        try
+        {
+            using var source = new Utf8StringStream("short");
+            await using var file = useDirectory
+                ? await LocalFile.FromStreamAsync(source, Path.GetTempPath(), name, token)
+                : await LocalFile.FromStreamAsync(source, name, token);
+            (await file.ReadAllTextAsync(token)).ShouldBe("short");
+            source.CanRead.ShouldBeTrue();
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task NamedStreamFactory_ReleasesDestinationOnCopyFailure(bool existing)
+    {
+        var token = TestContext.Current.CancellationToken;
+        var name = $"local-contract-{Guid.NewGuid():N}.txt";
+        var path = Path.Combine(Path.GetTempPath(), name);
+        if (existing)
+            await File.WriteAllTextAsync(path, "existing content", token);
+
+        try
+        {
+            var source = new MemoryStream();
+            await source.DisposeAsync();
+            await Should.ThrowAsync<ObjectDisposedException>(() => LocalFile.FromStreamAsync(source, name, token));
+            File.Exists(path).ShouldBe(existing);
+            if (existing)
+            {
+                await using var exclusive = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                exclusive.CanWrite.ShouldBeTrue();
+            }
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task NamedStreamFactory_PreCancelledCopyPreservesExistingBytes()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var name = $"local-contract-{Guid.NewGuid():N}.txt";
+        var path = Path.Combine(Path.GetTempPath(), name);
+        await File.WriteAllTextAsync(path, "existing content", token);
+        try
+        {
+            using var source = new Utf8StringStream("replacement");
+            await Should.ThrowAsync<OperationCanceledException>(
+                () => LocalFile.FromStreamAsync(source, name, new CancellationToken(canceled: true)));
+            (await File.ReadAllTextAsync(path, token)).ShouldBe("existing content");
+        }
+        finally { File.Delete(path); }
     }
 
     [Theory]

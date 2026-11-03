@@ -13,34 +13,37 @@ public class LocalFile : IDisposable, IAsyncDisposable
     private FileStream? _stream;
 
     public LocalFile(string? path = null, bool keepAlive = false)
+        : this(ResolvePath(path), keepAlive, preserveExisting: false)
     {
-        path ??= Path.GetTempFileName();
+    }
 
-        KeepAlive = keepAlive;
-        var resolvedPath = path;
-
-        if (!File.Exists(path) && string.IsNullOrEmpty(Path.GetExtension(path)))
-        {
-            var directoryPath = Path.GetDirectoryName(path);
-            var name = Path.GetFileName(path);
-            resolvedPath = directoryPath is null
-                ? Path.Combine(Path.GetTempPath(), $"{name}.tmp")
-                : Path.Combine(directoryPath, $"{name}.tmp");
-        }
-
-        FilePath = resolvedPath;
+    private LocalFile(string path, bool keepAlive, bool preserveExisting)
+    {
+        FilePath = path;
+        var exists = File.Exists(FilePath);
+        KeepAlive = keepAlive || (preserveExisting && exists);
         var directory = Path.GetDirectoryName(FilePath);
 
         if (!Directory.Exists(directory))
             Directory.CreateDirectory(directory ?? throw new InvalidOperationException());
 
-        if (!string.IsNullOrEmpty(FilePath) && !File.Exists(FilePath))
+        if (!string.IsNullOrEmpty(FilePath) && !exists)
         {
             var fs = File.Create(FilePath);
             fs.Close();
         }
 
         Name = FileInfo.Name;
+    }
+
+    private static string ResolvePath(string? path)
+    {
+        path ??= Path.GetTempFileName();
+        if (File.Exists(path) || !string.IsNullOrEmpty(Path.GetExtension(path)))
+            return path;
+
+        var directory = Path.GetDirectoryName(path);
+        return Path.Combine(directory ?? Path.GetTempPath(), $"{Path.GetFileName(path)}.tmp");
     }
 
     public string FilePath { get; }
@@ -139,31 +142,31 @@ public class LocalFile : IDisposable, IAsyncDisposable
         return this;
     }
 
-    public static async Task<LocalFile> FromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
+    public static Task<LocalFile> FromStreamAsync(Stream stream, CancellationToken cancellationToken = default) =>
+        CreateFromStreamAsync(stream, null, cancellationToken);
+
+    public static Task<LocalFile> FromStreamAsync(Stream stream, string path, string fileName, CancellationToken cancellationToken = default) =>
+        CreateFromStreamAsync(stream, Path.Combine(path, $"{fileName}.tmp"), cancellationToken);
+
+    public static Task<LocalFile> FromStreamAsync(Stream stream, string fileName, CancellationToken cancellationToken = default) =>
+        CreateFromStreamAsync(stream, Path.Combine(Path.GetTempPath(), fileName), cancellationToken);
+
+    private static async Task<LocalFile> CreateFromStreamAsync(Stream stream, string? path, CancellationToken cancellationToken)
     {
-        var file = new LocalFile();
-        await stream.CopyToAsync(file.FileStream, cancellationToken);
-        await file.FileStream.DisposeAsync();
-        return file;
-    }
-
-    public static async Task<LocalFile> FromStreamAsync(Stream stream, string path, string fileName, CancellationToken cancellationToken = default)
-    {
-        var pathWithName = Path.Combine(path, $"{fileName}.tmp");
-        var file = new LocalFile(pathWithName);
-
-        await stream.CopyToAsync(file.FileStream, cancellationToken);
-        await file.FileStream.DisposeAsync();
-
-        return file;
-    }
-
-    public static async Task<LocalFile> FromStreamAsync(Stream stream, string fileName, CancellationToken cancellationToken = default)
-    {
-        var file = FromFileName(fileName);
-        await stream.CopyToAsync(file.FileStream, cancellationToken);
-        await file.FileStream.DisposeAsync();
-        return file;
+        ArgumentNullException.ThrowIfNull(stream);
+        cancellationToken.ThrowIfCancellationRequested();
+        var file = new LocalFile(ResolvePath(path), keepAlive: false, preserveExisting: path is not null);
+        try
+        {
+            await file.CopyFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
+            file.KeepAlive = false;
+            return file;
+        }
+        catch
+        {
+            await file.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     public static LocalFile FromFileName(string fileName)

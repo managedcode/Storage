@@ -69,7 +69,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
     {
         ThrowIfDisposed();
 
-        var cacheKey = $"file_exists:{ContainerName}:{path}";
+        var cacheKey = VfsCacheKey.For(this, VfsCacheKind.FileExists, path);
 
         if (_options.EnableCache && _cache.TryGetValue(cacheKey, out bool cached))
         {
@@ -82,7 +82,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
             var result = await _storage.ExistsAsync(path.ToBlobKey(), cancellationToken);
             var exists = result.IsSuccess && result.Value;
 
-            if (_options.EnableCache)
+            if (_options.EnableCache && result.IsSuccess)
             {
                 _cache.Set(cacheKey, exists, _options.CacheTTL);
             }
@@ -119,15 +119,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
 
             if (result.IsSuccess && result.Value)
             {
-                if (_options.EnableCache)
-                {
-                    var existsKey = $"file_exists:{ContainerName}:{path}";
-                    _cache.Remove(existsKey);
-                    var metadataKey = $"file_metadata:{ContainerName}:{path}";
-                    _cache.Remove(metadataKey);
-                    var customKey = $"file_custom_metadata:{ContainerName}:{path}";
-                    _cache.Remove(customKey);
-                }
+                VfsCacheKey.InvalidateFile(_cache, this, path);
 
                 _logger.LogDebug("File deleted successfully: {Path}", path);
                 return true;
@@ -158,7 +150,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
     {
         ThrowIfDisposed();
 
-        var cacheKey = $"dir_exists:{ContainerName}:{path}";
+        var cacheKey = VfsCacheKey.For(this, VfsCacheKind.DirectoryExists, path);
 
         if (_options.EnableCache && _cache.TryGetValue(cacheKey, out bool cached))
         {
@@ -184,7 +176,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
                 return true;
             }
 
-            if (_options.EnableCache)
+            if (_options.EnableCache && !cancellationToken.IsCancellationRequested)
             {
                 _cache.Set(cacheKey, false, _options.CacheTTL);
             }
@@ -197,23 +189,6 @@ public partial class VirtualFileSystem : IVirtualFileSystem
             _logger.LogWarning(ex, "Error checking directory existence: {Path}", path);
             return false;
         }
-    }
-
-    private void InvalidateDeletedFileCaches(string blobKey)
-    {
-        if (!_options.EnableCache) return;
-
-        var path = new VfsPath(blobKey);
-        _cache.Remove($"file_exists:{ContainerName}:{path}");
-        _cache.Remove($"file_metadata:{ContainerName}:{path}");
-        _cache.Remove($"file_custom_metadata:{ContainerName}:{path}");
-        var parent = path.GetParent();
-        while (!parent.IsRoot)
-        {
-            _cache.Remove($"dir_exists:{ContainerName}:{parent}");
-            parent = parent.GetParent();
-        }
-        _cache.Remove($"dir_exists:{ContainerName}:{parent}");
     }
 
     /// <inheritdoc />
@@ -261,7 +236,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
                     if (deleteResult.IsSuccess && deleteResult.Value)
                     {
                         result.FilesDeleted++;
-                        InvalidateDeletedFileCaches(fileName);
+                        VfsCacheKey.InvalidateFile(_cache, this, new VfsPath(fileName));
                     }
                     else
                     {
@@ -278,7 +253,7 @@ public partial class VirtualFileSystem : IVirtualFileSystem
             // Invalidate cache
             if (_options.EnableCache)
             {
-                var cacheKey = $"dir_exists:{ContainerName}:{path}";
+                var cacheKey = VfsCacheKey.For(this, VfsCacheKind.DirectoryExists, path);
                 _cache.Remove(cacheKey);
             }
 

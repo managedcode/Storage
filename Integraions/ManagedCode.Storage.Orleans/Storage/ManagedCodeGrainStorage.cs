@@ -146,20 +146,23 @@ public sealed class ManagedCodeGrainStorage(
 
     private async Task<ManagedCodeStoredGrainState<T>?> TryReadRecordAsync<T>(string storagePath, CancellationToken cancellationToken)
     {
-        var existsResult = await storage.ExistsAsync(storagePath, cancellationToken).ConfigureAwait(false);
-        ThrowIfFailed(existsResult, $"Failed to probe Orleans grain state '{storagePath}'.");
-
-        if (!existsResult.Value)
+        var opened = await storage.GetStreamAsync(storagePath, cancellationToken).ConfigureAwait(false);
+        if (opened.IsFailed)
         {
-            return null;
+            if (opened.Problem.StatusCode == 404)
+                return null;
+
+            // Some portable providers report a missing stream as a generic failure.
+            var exists = await storage.ExistsAsync(storagePath, cancellationToken).ConfigureAwait(false);
+            ThrowIfFailed(exists, $"Failed to probe Orleans grain state '{storagePath}'.");
+            if (!exists.Value)
+                return null;
+
+            ThrowIfFailed(opened, $"Failed to open Orleans grain state '{storagePath}'.");
         }
 
-        var downloadResult = await storage.DownloadAsync(storagePath, cancellationToken).ConfigureAwait(false);
-        ThrowIfFailed(downloadResult, $"Failed to download Orleans grain state '{storagePath}'.");
-
-        using var localFile = downloadResult.Value ?? throw new InvalidOperationException(
-            $"Storage '{storagePath}' was downloaded without a file payload.");
-        await using var stream = localFile.OpenReadStream(disposeOwner: false);
+        await using var stream = opened.Value ?? throw new InvalidOperationException(
+            $"Storage '{storagePath}' opened without a stream.");
         var payload = await BinaryData.FromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
 
         return options.GrainStorageSerializer.Deserialize<ManagedCodeStoredGrainState<T>>(payload);

@@ -118,15 +118,9 @@ public class OneDriveStorage : BaseStorage<IOneDriveClient, OneDriveStorageOptio
         {
             await EnsureContainerExist(cancellationToken);
             var path = BuildFullPath(options.FullPath);
-            var remoteStream = await StorageClient.DownloadAsync(StorageOptions.DriveId, path, cancellationToken);
+            await using var remoteStream = await StorageClient.DownloadAsync(StorageOptions.DriveId, path, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-
-            var fileStream = localFile.FileStream;
-            await using (remoteStream)
-            {
-                await remoteStream.CopyToAsync(fileStream, cancellationToken);
-                fileStream.Position = 0;
-            }
+            await localFile.CopyFromStreamAsync(remoteStream, cancellationToken);
 
             return Result<LocalFile>.Succeed(localFile);
         }
