@@ -37,6 +37,28 @@ flowchart LR
   - `MimeType` (normalized through `MimeHelper`)
   - per-provider metadata where supported
 
+### 3) Copy and move between storages
+
+`CopyToAsync` and `MoveToAsync` in `ManagedCode.Storage.Core.Extensions` take a source
+storage and path, a destination storage and path, and an optional cancellation token.
+The storages can use different providers. Each successful call returns the destination's
+`BlobMetadata`.
+
+```mermaid
+flowchart LR
+  Source["Read source metadata"] --> Check["Check that destination is vacant"]
+  Check --> Upload["Upload content and verify length"]
+  Upload --> Done["Return destination metadata for copy"]
+  Upload --> Delete["Delete source for move"]
+  Delete --> DoneMove["Return destination metadata after deletion"]
+```
+
+- If the destination already contains a file at the given path, the operation returns a `409` conflict.
+- Content type and custom metadata travel through the destination provider's upload options. What persists depends on the provider.
+- Seekable sources stream directly to the destination. Sequential sources use a temporary local file that the transfer disposes, so providers can determine the length and rewind during upload.
+- Coordinate access so other writers and deleters cannot modify either path during the operation. The existence check, upload, and delete are separate provider calls.
+- A failed or cancelled write preserves the source. A provider can leave data at the destination if its upload fails after writing. If source deletion fails after a completed upload, the destination stays available. Before retrying a partial move, verify both paths and reconcile the existing destination.
+
 ## Components
 
 Key files:
@@ -48,6 +70,7 @@ Key files:
 - `ManagedCode.Storage.Core/Helpers/PathHelper.cs` — shared path manipulation utilities
 - `ManagedCode.Storage.Core/Providers/*` — provider factory abstractions and the default `StorageFactory`
 - `ManagedCode.Storage.Core/Extensions/ServiceCollectionExtensions.cs` — DI helpers
+- [`StorageTransferExtensions`](https://github.com/managed-code-hub/Storage/blob/main/ManagedCode.Storage.Core/Extensions/StorageTransferExtensions.cs) — cross-storage file copy and move
 
 ## Current Behavior
 

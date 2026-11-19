@@ -34,6 +34,7 @@ Cross-provider blob storage toolkit for .NET and ASP.NET streaming scenarios.
 - [Packages](#packages)
 - [Cartograph artifacts](#cartograph-artifacts)
 - [Architecture](#architecture)
+- [Copy and move between storages](#copy-and-move-between-storages)
 - [Virtual File System (VFS)](#virtual-file-system-vfs)
 - [Dependency Injection & Keyed Registrations](#dependency-injection--keyed-registrations)
 - [Orleans Grain Persistence](#orleans-grain-persistence)
@@ -510,6 +511,19 @@ sequenceDiagram
 ```
 
 Controllers remain thin: consumers can inherit and override actions to add custom routing, authorization, or telemetry while leaving the streaming plumbing intact.
+
+## Copy and move between storages
+
+Pass two configured `IStorage` instances and the relative paths in each storage.
+
+```csharp
+using ManagedCode.Storage.Core.Extensions;
+
+var copy = await incomingStorage.CopyToAsync("uploads/report.pdf", archiveStorage, "2026/report.pdf", cancellationToken);
+var move = await incomingStorage.MoveToAsync("uploads/raw.csv", archiveStorage, "2026/raw.csv", cancellationToken);
+```
+
+Both operations return `Result<BlobMetadata>` for the destination. A move deletes the source only after the destination write succeeds. See the [transfer contract](docs/Features/storage-core.md#3-copy-and-move-between-storages) for coordination and recovery.
 
 ## Virtual File System (VFS)
 

@@ -13,6 +13,9 @@ Single source of truth: keep this doc navigational and coarse. Detailed behavior
 - **Entry points:** DI extension methods, `IStorage` and `IStorageFactory`, ASP.NET controllers and hubs, HTTP and SignalR clients, Orleans `IGrainStorage`, and the xUnit test suite.
 - **Dependencies:** providers implement the Core contracts; VFS and integrations consume `IStorage` or `IStorageFactory`; tests compose the real packages plus `ManagedCode.Storage.TestFakes/`.
 
+Core composes two configured `IStorage` instances for
+[cross-storage copy and move](Features/storage-core.md#3-copy-and-move-between-storages).
+
 ## Atomic object capabilities
 
 `IStorage` retains its existing portable API. AzureStorage additionally implements
