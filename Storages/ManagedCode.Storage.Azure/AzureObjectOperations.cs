@@ -50,19 +50,22 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
         ArgumentOutOfRangeException.ThrowIfNegative(options.Offset);
         if (options.Length is <= 0) throw new ArgumentOutOfRangeException(nameof(options));
         var blob = container.GetBlobClient(path);
-        var etag = options.IfMatch ?? (await blob.GetPropertiesAsync(cancellationToken: cancellationToken)).Value.ETag.ToString("H");
+        // The SDK pins subsequent reads to the ETag from its first successful request.
+        var conditions = options.IfMatch is { } etag
+            ? new BlobRequestConditions { IfMatch = new ETag(etag) }
+            : null;
         if (options.Length is null)
         {
             return await blob.OpenReadAsync(new BlobOpenReadOptions(false)
             {
                 Position = options.Offset,
-                Conditions = new BlobRequestConditions { IfMatch = new ETag(etag) }
+                Conditions = conditions
             }, cancellationToken);
         }
         var download = await blob.DownloadStreamingAsync(new BlobDownloadOptions
         {
             Range = new HttpRange(options.Offset, options.Length),
-            Conditions = new BlobRequestConditions { IfMatch = new ETag(etag) }
+            Conditions = conditions
         }, cancellationToken);
         return download.Value.Content;
     });
