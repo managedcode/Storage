@@ -10,7 +10,7 @@ nav_order: 2
 
 ## Prerequisites
 
-- .NET SDK: **.NET 10** (`10.0.x`)
+- Install **.NET 10 SDK** (`10.0.x`). The repository resolves the latest installed stable .NET 10 feature band for builds, tests, and CodeQL.
 - Docker: required for Testcontainers-backed integration tests (Azurite / LocalStack / FakeGcsServer / SFTP)
 
 ## Workflow (Local)

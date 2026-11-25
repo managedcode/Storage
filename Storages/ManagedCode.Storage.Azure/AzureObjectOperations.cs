@@ -14,6 +14,8 @@ namespace ManagedCode.Storage.Azure;
 
 internal sealed class AzureObjectOperations(BlobContainerClient container) : IMultipartObjectStorage
 {
+    private const string DefaultBlobContentType = "application/octet-stream";
+
     public Uri ContainerUri => container.Uri;
 
     public Task<StorageContainerInfo> GetContainerInfoAsync(CancellationToken cancellationToken = default) => ExecuteAsync(async () =>
@@ -73,15 +75,35 @@ internal sealed class AzureObjectOperations(BlobContainerClient container) : IMu
     public Task<StorageObjectInfo> WriteObjectAsync(string path, Stream content, StorageWriteOptions? options = null, CancellationToken cancellationToken = default) => ExecuteAsync(async () =>
     {
         options ??= new StorageWriteOptions();
-        var response = await container.GetBlobClient(path).UploadAsync(content, new BlobUploadOptions
+        ArgumentNullException.ThrowIfNull(content);
+        var headers = Headers(options);
+        var metadata = AzureMetadataTransport.Encode(options.Metadata, out var logicalMetadata);
+        var length = content.CanSeek ? content.Length - content.Position : (long?)null;
+        var progress = length.HasValue ? null : new UploadLengthProgress();
+        var written = (await container.GetBlobClient(path).UploadAsync(content, new BlobUploadOptions
         {
             Conditions = Conditions(options),
-            HttpHeaders = Headers(options),
-            Metadata = AzureMetadataTransport.Encode(options.Metadata),
+            HttpHeaders = headers,
+            Metadata = metadata,
+            ProgressHandler = progress,
             TransferOptions = new global::Azure.Storage.StorageTransferOptions { MaximumConcurrency = 1, InitialTransferSize = 4 * 1024 * 1024, MaximumTransferSize = 4 * 1024 * 1024 }
-        }, cancellationToken);
-        return await ReadWrittenInfoAsync(path, response.Value.ETag, cancellationToken);
+        }, cancellationToken)).Value;
+
+        // The upload response identifies the committed version. Only read its properties
+        // when HTTP header normalization can change one of the values we sent.
+        if (!IsExactHeaderValue(headers.ContentType) || !IsExactHeaderValue(headers.ContentEncoding))
+        {
+            return await ReadWrittenInfoAsync(path, written.ETag, cancellationToken);
+        }
+
+        return new StorageObjectInfo(path, written.ETag.ToString("H"),
+            length ?? checked((long)progress!.BytesTransferred), headers.ContentType ?? DefaultBlobContentType,
+            headers.ContentEncoding, logicalMetadata ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+            written.LastModified);
     });
+
+    private static bool IsExactHeaderValue(string? value) =>
+        value is null || (value.Length > 0 && value.AsSpan().Trim().Length == value.Length);
 
     public Task SetObjectMetadataAsync(string path, IReadOnlyDictionary<string, string> metadata, string? ifMatch = null, CancellationToken cancellationToken = default) => ExecuteAsync(async () =>
     {

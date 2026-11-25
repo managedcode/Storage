@@ -84,6 +84,51 @@ public class AzureUploadTests : UploadTests<AzuriteContainer>
     }
 
     [Theory]
+    [InlineData(true, 7, "text/plain", "identity", "публікація")]
+    [InlineData(true, 0, null, null, "native")]
+    [InlineData(true, 4 * 1024 * 1024 + 7, "application/octet-stream", null, "native")]
+    [InlineData(false, 4 * 1024 * 1024 + 7, null, null, "native")]
+    [InlineData(true, 7, "text/plain", null, " padded ")]
+    [InlineData(true, 7, "text/plain", null, "")]
+    public async Task WriteObjectAsync_ReturnsCommittedProperties_WithoutReadingBlobProperties(
+        bool seekable, int length, string? contentType, string? contentEncoding, string purpose)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var objects = Storage.RequireObjectStorage();
+        await objects.CreatePrivateContainerAsync(cancellationToken: cancellationToken);
+        var bytes = new byte[length];
+        var prefixLength = length == 0 ? 0 : 1;
+        var prefixed = new byte[prefixLength + length];
+        if (prefixLength > 0)
+            prefixed[0] = 1;
+        await using var stream = new MemoryStream(prefixed) { Position = prefixLength };
+        await using var source = seekable ? null : new NonSeekableReadStream(stream);
+        var options = new StorageWriteOptions
+        {
+            IfAbsent = true,
+            ContentType = contentType,
+            ContentEncoding = contentEncoding,
+            Metadata = new Dictionary<string, string> { ["purpose"] = purpose }
+        };
+        _requestPolicy.Reset();
+
+        var written = await objects.WriteObjectAsync(ObservedBlobName, (Stream?)source ?? stream, options, cancellationToken);
+
+        _requestPolicy.BlobHeadRequestCount.ShouldBe(0);
+        _requestPolicy.BlobWriteRequestCount.ShouldBeGreaterThan(0);
+        var persisted = await objects.GetObjectInfoAsync(ObservedBlobName, cancellationToken);
+        written.Length.ShouldBe(length);
+        (written with { Metadata = persisted.Metadata }).ShouldBe(persisted);
+        written.Metadata.Count.ShouldBe(persisted.Metadata.Count);
+        written.Metadata["purpose"].ShouldBe(purpose);
+        persisted.Metadata["purpose"].ShouldBe(purpose);
+        await using var download = await objects.OpenObjectReadAsync(ObservedBlobName, cancellationToken: cancellationToken);
+        using var downloaded = new MemoryStream();
+        await download.CopyToAsync(downloaded, cancellationToken);
+        downloaded.ToArray().ShouldBe(bytes);
+    }
+
+    [Theory]
     [InlineData(false, 1, "payload")]
     [InlineData(true, 0, "ayl")]
     public async Task OpenObjectReadAsync_UsesOnlyRequiredHttpRequests(bool range, int expectedHeadCount, string expectedContent)

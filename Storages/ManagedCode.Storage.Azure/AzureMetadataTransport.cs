@@ -13,12 +13,16 @@ internal static class AzureMetadataTransport
     private const string EnvelopePrefix = "utf8-json-base64:";
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
-    internal static Dictionary<string, string>? Encode(IEnumerable<KeyValuePair<string, string>>? metadata)
+    internal static Dictionary<string, string>? Encode(IEnumerable<KeyValuePair<string, string>>? metadata) =>
+        Encode(metadata, out _);
+
+    internal static Dictionary<string, string>? Encode(IEnumerable<KeyValuePair<string, string>>? metadata,
+        out Dictionary<string, string>? logicalMetadata)
     {
-        if (metadata is null)
+        logicalMetadata = metadata?.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+        if (logicalMetadata is not { } values)
             return null;
 
-        var values = metadata.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
         if (values.All(pair => IsNativeKey(pair.Key) && IsNativeValue(pair.Value)) && !values.ContainsKey(EnvelopeKey))
             return values;
 
@@ -71,5 +75,7 @@ internal static class AzureMetadataTransport
 
     private static bool IsInitialKeyCharacter(char character) => character is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or '_';
 
-    private static bool IsNativeValue(string value) => value is not null && value.All(character => character is >= ' ' and <= '~');
+    // HTTP can trim surrounding spaces before the service verifies the request signature.
+    private static bool IsNativeValue(string value) => value is { Length: > 0 } &&
+        value[0] != ' ' && value[^1] != ' ' && value.All(character => character is >= ' ' and <= '~');
 }
