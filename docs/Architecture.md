@@ -47,9 +47,9 @@ conditions because Azure does not offer that condition for this operation.
 Provider failures become `StorageOperationException` with a status code; task
 cancellation propagates normally. These optional streaming capabilities follow
 the VFS exception model; existing `IStorage` result contracts are unchanged.
-Azure metadata transport belongs exclusively to the provider: printable ASCII
-metadata stays native, while Unicode/control-character dictionaries use one
-versioned ASCII envelope decoded across all metadata reads. See the
+Azure metadata transport belongs exclusively to the provider. Native headers
+carry nonempty printable ASCII values without surrounding spaces. Other
+dictionaries use one versioned ASCII envelope decoded across all metadata reads. See the
 [Azure provider](Features/provider-azure-blob.md#metadata-transport) for its
 physical representation, collision handling and metadata-size constraints.
 VFS metadata reads return absence only for a provider 404. Cancellation and other provider failures propagate to the caller and never populate missing-file metadata caches. A later uncancelled read remains able to read the retained file.

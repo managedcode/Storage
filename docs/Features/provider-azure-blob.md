@@ -54,13 +54,14 @@ builder.Services.AddAzureStorageAsDefault(options =>
 - Blob listing URIs use the SDK's escaping for object keys containing reserved characters.
 - Uses Azure SDK transfer options when configured (`UploadTransferOptions`).
 - Builds the upload result from the successful Azure upload response and the caller's options, without issuing a second blob-properties request that can race with deletion or lifecycle processing.
+- Atomic object writes use the upload response for the committed ETag and time, and the upload length and options for the other properties. They read back properties when content headers can be normalized. Explicit multipart commits also read back properties because the selected parts may have been staged by another process.
 - Returns a failed metadata result for an absent blob without logging the expected Azure `404 BlobNotFound` response as an unhandled exception; other metadata failures retain error logging.
 - Preserves Unicode and control characters in logical metadata through uploads, downloads, metadata/listing reads, conditional object writes, multipart commits and container operations. The Azure provider owns the HTTP-header representation; callers pass their original strings.
 
 ## Metadata transport
 
-Ordinary metadata with native Azure identifier keys and printable ASCII values
-is stored directly. A dictionary requiring encoding is stored as one reserved
+Metadata with native Azure identifier keys and nonempty printable ASCII values
+without surrounding spaces is stored directly. A dictionary requiring encoding is stored as one reserved
 `managedcode_storage_metadata_v1` value: `utf8-json-base64:` followed by the
 base64 of the complete UTF-8 JSON string dictionary. Reads restore the logical
 dictionary once. A caller-supplied reserved key is itself wrapped, so its value
